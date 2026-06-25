@@ -6,6 +6,7 @@ import { Divider, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppBadge } from '@/components/ui/AppBadge';
 import { AppButton } from '@/components/ui/AppButton';
+import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { CategoryBadge } from '@/components/expense/CategoryBadge';
@@ -148,9 +149,11 @@ export default function ExpenseDetailScreen() {
         options={{
           title: t('expenses.expenseDetails'),
           headerRight: () => (
-            <AppButton mode="text" onPress={() => router.push(`/expense/edit/${expense.id}`)}>
-              {t('common.edit')}
-            </AppButton>
+            <StackHeaderActions>
+              <AppButton mode="text" onPress={() => router.push(`/expense/edit/${expense.id}`)}>
+                {t('common.edit')}
+              </AppButton>
+            </StackHeaderActions>
           ),
         }}
       />

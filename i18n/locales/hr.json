@@ -321,6 +321,8 @@
     "typeIrregularHint": "Jednokratni troškovi poput popravaka, novih prozora ili unapređenja",
     "filterByProperty": "Filtriraj po nekretnini",
     "filterByCategory": "Filtriraj po kategoriji",
+    "moreFilters": "Više filtera",
+    "frequency": "Učestalost",
     "searchPlaceholder": "Pretraži troškove…",
     "monthTotal": "Ukupno za {{period}}",
     "saveSuccess": "Trošak spremljen",

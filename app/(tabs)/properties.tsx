@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Building2 } from 'lucide-react-native';
 import { PropertyCard } from '@/components/property/PropertyCard';
 import { PropertyFilters } from '@/components/property/PropertyFilters';
+import { AppExpandableSearch } from '@/components/ui/AppExpandableSearch';
 import { AppFab } from '@/components/ui/AppFab';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -23,6 +24,7 @@ import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
+import { useExpandableSearch } from '@/hooks/useExpandableSearch';
 import { useRefetchOnFocus } from '@/hooks/useRefetchOnFocus';
 import { useTenants } from '@/hooks/useTenants';
 import { useUiStore } from '@/stores/uiStore';
@@ -45,7 +47,12 @@ export default function PropertiesScreen() {
   useRefetchOnFocus(refetchTenants);
   const { profile } = useProfile();
 
-  const [search, setSearch] = useState('');
+  const {
+    search,
+    dismissSearchIfEmpty,
+    searchBarControlProps,
+    listKeyboardProps,
+  } = useExpandableSearch();
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [usageFilter, setUsageFilter] = useState<UsageFilter>('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -155,18 +162,21 @@ export default function PropertiesScreen() {
     [handleArchive, handleDelete, t],
   );
 
-  const renderListHeader = useCallback(
-    () => (
+  const listFiltersHeader = (
+    <>
+      <AppExpandableSearch
+        {...searchBarControlProps}
+        placeholder={t('properties.searchPlaceholder')}
+        style={styles.searchBar}
+      />
       <PropertyFilters
-        search={search}
-        onSearchChange={setSearch}
         typeFilter={typeFilter}
         onTypeFilterChange={setTypeFilter}
         usageFilter={usageFilter}
         onUsageFilterChange={setUsageFilter}
+        onInteraction={dismissSearchIfEmpty}
       />
-    ),
-    [search, typeFilter, usageFilter],
+    </>
   );
 
   if (isLoading && properties.length === 0) {
@@ -187,16 +197,18 @@ export default function PropertiesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={styles.listHeader}>{listFiltersHeader}</View>
       <FlatList
+        style={styles.list}
         data={filteredProperties}
         keyExtractor={(item) => item.id}
+        {...listKeyboardProps}
         contentContainerStyle={[
           styles.listContent,
           filteredProperties.length === 0 && styles.listEmpty,
           { paddingBottom: insets.bottom + 88 },
         ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListHeaderComponent={renderListHeader}
         renderItem={({ item }) => (
           <Swipeable renderRightActions={() => renderRightActions(item.id)}>
             <PropertyCard
@@ -205,7 +217,10 @@ export default function PropertiesScreen() {
               overdueCount={overdueByProperty.get(item.id) ?? 0}
               currency={currency}
               language={language}
-              onPress={() => router.push(`/property/${item.id}`)}
+              onPress={() => {
+                dismissSearchIfEmpty();
+                router.push(`/property/${item.id}`);
+              }}
             />
           </Swipeable>
         )}
@@ -236,12 +251,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  list: {
+    flex: 1,
+  },
   skeleton: {
     padding: Spacing.md,
   },
+  listHeader: {
+    paddingHorizontal: Spacing.md,
+  },
   listContent: {
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
     paddingTop: 0,
+  },
+  searchBar: {
+    paddingTop: Spacing.md,
   },
   listEmpty: {
     flexGrow: 1,

@@ -5,6 +5,7 @@ import { Divider, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppBadge } from '@/components/ui/AppBadge';
 import { AppButton } from '@/components/ui/AppButton';
+import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
@@ -158,9 +159,11 @@ export default function TenantDetailScreen() {
         options={{
           title: fullName,
           headerRight: () => (
-            <AppButton mode="text" onPress={() => router.push(`/tenant/edit/${tenant.id}`)}>
-              {t('common.edit')}
-            </AppButton>
+            <StackHeaderActions>
+              <AppButton mode="text" onPress={() => router.push(`/tenant/edit/${tenant.id}`)}>
+                {t('common.edit')}
+              </AppButton>
+            </StackHeaderActions>
           ),
         }}
       />

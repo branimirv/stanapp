@@ -13,25 +13,26 @@ import { useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExpenseCard } from '@/components/expense/ExpenseCard';
+import {
+  ExpenseFilters,
+  type StatusFilter,
+} from '@/components/expense/ExpenseFilters';
+import type { RecurringFilter, TypeFilter } from '@/components/expense/ExpenseMoreFiltersSheet';
+import { AppExpandableSearch } from '@/components/ui/AppExpandableSearch';
 import { AppFab } from '@/components/ui/AppFab';
-import { AppPicker, type PickerOption } from '@/components/ui/AppPicker';
-import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
-import { AppTextInput } from '@/components/ui/AppTextInput';
+import type { PickerOption } from '@/components/ui/AppPicker';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { Spacing, Typography } from '@/constants/theme';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useExpenses } from '@/hooks/useExpenses';
+import { useExpandableSearch } from '@/hooks/useExpandableSearch';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
 import { useUiStore } from '@/stores/uiStore';
 import { formatPeriod } from '@/utils/formatters';
-import type { Expense, ExpenseStatusFilter, ExpenseType, Language } from '@/types/app.types';
-
-type StatusFilter = 'all' | ExpenseStatusFilter;
-type RecurringFilter = 'all' | 'recurring' | 'one_time';
-type TypeFilter = 'all' | ExpenseType;
+import type { Expense, Language } from '@/types/app.types';
 
 interface ExpenseSection {
   title: string;
@@ -54,7 +55,12 @@ export default function ExpensesScreen() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [propertyFilter, setPropertyFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [search, setSearch] = useState('');
+  const {
+    search,
+    dismissSearchIfEmpty,
+    searchBarControlProps,
+    listKeyboardProps,
+  } = useExpandableSearch();
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -218,13 +224,16 @@ export default function ExpensesScreen() {
           propertyName={propertyMap.get(item.property_id)?.name}
           currency={currency}
           language={language}
-          onPress={() => router.push(`/expense/${item.id}`)}
+          onPress={() => {
+            dismissSearchIfEmpty();
+            router.push(`/expense/${item.id}`);
+          }}
           onMarkPaid={!item.paid_at ? () => handleMarkPaid(item.id) : undefined}
           onDelete={() => handleDelete(item.id)}
         />
       </View>
     ),
-    [categoryMap, currency, handleDelete, handleMarkPaid, language, propertyMap],
+    [categoryMap, currency, dismissSearchIfEmpty, handleDelete, handleMarkPaid, language, propertyMap],
   );
 
   if (isLoading && expenses.length === 0) {
@@ -245,64 +254,39 @@ export default function ExpensesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={styles.listHeader}>
+        <AppExpandableSearch
+          {...searchBarControlProps}
+          placeholder={t('expenses.searchPlaceholder')}
+          style={styles.searchBar}
+        />
+        <ExpenseFilters
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          recurringFilter={recurringFilter}
+          onRecurringFilterChange={setRecurringFilter}
+          typeFilter={typeFilter}
+          onTypeFilterChange={setTypeFilter}
+          propertyFilter={propertyFilter}
+          onPropertyFilterChange={setPropertyFilter}
+          categoryFilter={categoryFilter}
+          onCategoryFilterChange={setCategoryFilter}
+          propertyOptions={propertyOptions}
+          categoryOptions={categoryOptions}
+          onInteraction={dismissSearchIfEmpty}
+        />
+      </View>
       <SectionList
+        style={styles.list}
         sections={sections}
         keyExtractor={(item) => item.id}
         stickySectionHeadersEnabled
+        {...listKeyboardProps}
         contentContainerStyle={[
           sections.length === 0 && styles.listEmpty,
           { paddingBottom: insets.bottom + 88 },
         ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListHeaderComponent={
-          <View style={styles.filters}>
-            <AppTextInput
-              placeholder={t('expenses.searchPlaceholder')}
-              value={search}
-              onChangeText={setSearch}
-            />
-            <AppSegmentedControl
-              segments={[
-                { label: t('expenses.filterAll'), value: 'all' },
-                { label: t('expenses.filterUnpaid'), value: 'unpaid' },
-                { label: t('expenses.filterPaid'), value: 'paid' },
-                { label: t('expenses.overdue'), value: 'overdue' },
-              ]}
-              value={statusFilter}
-              onValueChange={(value) => setStatusFilter(value as StatusFilter)}
-            />
-            <AppSegmentedControl
-              segments={[
-                { label: t('common.all'), value: 'all' },
-                { label: t('expenses.filterRecurring'), value: 'recurring' },
-                { label: t('expenses.filterOneTime'), value: 'one_time' },
-              ]}
-              value={recurringFilter}
-              onValueChange={(value) => setRecurringFilter(value as RecurringFilter)}
-            />
-            <AppSegmentedControl
-              segments={[
-                { label: t('common.all'), value: 'all' },
-                { label: t('expenses.filterRegular'), value: 'regular' },
-                { label: t('expenses.filterIrregular'), value: 'irregular' },
-              ]}
-              value={typeFilter}
-              onValueChange={(value) => setTypeFilter(value as TypeFilter)}
-            />
-            <AppPicker
-              label={t('expenses.filterByProperty')}
-              options={propertyOptions}
-              value={propertyFilter}
-              onValueChange={setPropertyFilter}
-            />
-            <AppPicker
-              label={t('expenses.filterByCategory')}
-              options={categoryOptions}
-              value={categoryFilter}
-              onValueChange={setCategoryFilter}
-            />
-          </View>
-        }
         renderSectionHeader={({ section }) => (
           <View
             style={[
@@ -355,16 +339,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  list: {
+    flex: 1,
+  },
   skeleton: {
     padding: Spacing.md,
   },
-  filters: {
-    gap: Spacing.sm,
-    padding: Spacing.md,
+  listHeader: {
     paddingBottom: Spacing.sm,
   },
   listEmpty: {
     flexGrow: 1,
+  },
+  searchBar: {
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
   },
   sectionHeader: {
     paddingHorizontal: Spacing.md,

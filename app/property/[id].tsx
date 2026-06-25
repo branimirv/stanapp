@@ -14,6 +14,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { TabBar, TabView, type Route } from 'react-native-tab-view';
 import { useTranslation } from 'react-i18next';
 import { AppFab } from '@/components/ui/AppFab';
+import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -551,11 +552,13 @@ export default function PropertyDetailScreen() {
         options={{
           title: property.name,
           headerRight: () => (
-            <IconButton
-              icon={({ size, color }) => <Pencil size={size} color={color} strokeWidth={2} />}
-              onPress={() => router.push(`/property/edit/${property.id}`)}
-              accessibilityLabel={t('common.edit')}
-            />
+            <StackHeaderActions>
+              <IconButton
+                icon={({ size, color }) => <Pencil size={size} color={color} strokeWidth={2} />}
+                onPress={() => router.push(`/property/edit/${property.id}`)}
+                accessibilityLabel={t('common.edit')}
+              />
+            </StackHeaderActions>
           ),
         }}
       />

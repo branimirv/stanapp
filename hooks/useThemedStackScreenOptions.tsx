@@ -1,8 +1,15 @@
 import { useTheme } from 'react-native-paper';
 
+import { SettingsHeaderButton } from '@/components/ui/SettingsHeaderButton';
 import { Colors } from '@/constants/theme';
 
-export function useThemedStackScreenOptions() {
+interface ThemedStackScreenOptions {
+  showSettings?: boolean;
+}
+
+export function useThemedStackScreenOptions({
+  showSettings = false,
+}: ThemedStackScreenOptions = {}) {
   const theme = useTheme();
 
   return {
@@ -14,5 +21,8 @@ export function useThemedStackScreenOptions() {
     contentStyle: {
       backgroundColor: theme.colors.background,
     },
+    ...(showSettings && {
+      headerRight: () => <SettingsHeaderButton />,
+    }),
   };
 }

@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppInlineFilter } from '@/components/ui/AppInlineFilter';
-import { AppTextInput } from '@/components/ui/AppTextInput';
 import { Spacing } from '@/constants/theme';
 import type { PropertyType, UsageStatus } from '@/types/app.types';
 
@@ -10,21 +9,19 @@ type TypeFilter = 'all' | PropertyType;
 type UsageFilter = 'all' | UsageStatus;
 
 export interface PropertyFiltersProps {
-  search: string;
-  onSearchChange: (value: string) => void;
   typeFilter: TypeFilter;
   onTypeFilterChange: (value: TypeFilter) => void;
   usageFilter: UsageFilter;
   onUsageFilterChange: (value: UsageFilter) => void;
+  onInteraction?: () => void;
 }
 
 export function PropertyFilters({
-  search,
-  onSearchChange,
   typeFilter,
   onTypeFilterChange,
   usageFilter,
   onUsageFilterChange,
+  onInteraction,
 }: PropertyFiltersProps) {
   const { t } = useTranslation();
 
@@ -50,11 +47,6 @@ export function PropertyFilters({
 
   return (
     <View style={styles.container}>
-      <AppTextInput
-        placeholder={t('properties.searchPlaceholder')}
-        value={search}
-        onChangeText={onSearchChange}
-      />
       <View style={styles.filterRow}>
         <AppInlineFilter
           options={typeOptions}
@@ -63,6 +55,7 @@ export function PropertyFilters({
           title={t('properties.type')}
           showChevron
           style={styles.typeFilter}
+          onOpen={onInteraction}
         />
         <AppInlineFilter
           options={usageOptions}
@@ -71,6 +64,7 @@ export function PropertyFilters({
           title={t('properties.usageStatus')}
           accent
           style={styles.usageFilter}
+          onOpen={onInteraction}
         />
       </View>
     </View>

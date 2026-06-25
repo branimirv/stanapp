@@ -22,10 +22,12 @@ export interface AppInlineFilterProps<T extends string = string> {
   value: T;
   onValueChange: (value: T) => void;
   title?: string;
+  prefixLabel?: string;
   accent?: boolean;
   showChevron?: boolean;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  onOpen?: () => void;
 }
 
 export function AppInlineFilter<T extends string = string>({
@@ -33,10 +35,12 @@ export function AppInlineFilter<T extends string = string>({
   value,
   onValueChange,
   title,
+  prefixLabel,
   accent = false,
   showChevron = false,
   disabled = false,
   style,
+  onOpen,
 }: AppInlineFilterProps<T>) {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -54,12 +58,13 @@ export function AppInlineFilter<T extends string = string>({
 
   const openPicker = useCallback(() => {
     if (disabled) return;
+    onOpen?.();
     if (useModal) {
       setModalVisible(true);
     } else {
       setMenuVisible(true);
     }
-  }, [disabled, useModal]);
+  }, [disabled, onOpen, useModal]);
 
   const handleSelect = useCallback(
     (nextValue: T) => {
@@ -69,6 +74,11 @@ export function AppInlineFilter<T extends string = string>({
     },
     [onValueChange],
   );
+
+  const displayLabel = selectedOption?.label ?? t('ui.selectOption');
+  const accessibilityLabel = prefixLabel
+    ? `${prefixLabel}: ${displayLabel}`
+    : displayLabel;
 
   const trigger = (
     <Pressable
@@ -80,7 +90,7 @@ export function AppInlineFilter<T extends string = string>({
         style,
       ]}
       accessibilityRole="button"
-      accessibilityLabel={selectedOption?.label ?? title ?? t('common.select')}
+      accessibilityLabel={accessibilityLabel}
     >
       <Text
         style={[
@@ -90,8 +100,16 @@ export function AppInlineFilter<T extends string = string>({
             fontWeight: accent ? '600' : '500',
           },
         ]}
+        numberOfLines={1}
       >
-        {selectedOption?.label ?? t('ui.selectOption')}
+        {prefixLabel ? (
+          <>
+            <Text style={{ color: theme.colors.onSurfaceVariant }}>{prefixLabel} · </Text>
+            {displayLabel}
+          </>
+        ) : (
+          displayLabel
+        )}
       </Text>
       {showChevron ? (
         <ChevronDown size={16} color={labelColor} strokeWidth={2.5} />

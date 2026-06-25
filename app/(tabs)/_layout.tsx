@@ -1,14 +1,8 @@
-import { Link, Tabs } from 'expo-router';
-import {
-  BarChart3,
-  Building2,
-  LayoutDashboard,
-  Receipt,
-  Settings,
-} from 'lucide-react-native';
-import { Pressable } from 'react-native';
+import { Tabs } from 'expo-router';
+import { BarChart3, Building2, LayoutDashboard, Receipt } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'react-native-paper';
+import { SettingsHeaderButton } from '@/components/ui/SettingsHeaderButton';
 import { Colors } from '@/constants/theme';
 
 export default function TabLayout() {
@@ -24,10 +18,12 @@ export default function TabLayout() {
           backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
         },
         headerTintColor: theme.colors.onSurface,
+        headerTitleAlign: 'left',
         tabBarStyle: {
           backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
           borderTopColor: theme.dark ? Colors.borderDark : Colors.border,
         },
+        headerRight: () => <SettingsHeaderButton />,
       }}
     >
       <Tabs.Screen
@@ -36,24 +32,6 @@ export default function TabLayout() {
           title: t('tabs.dashboard'),
           tabBarIcon: ({ color, size }) => (
             <LayoutDashboard color={color} size={size ?? 24} strokeWidth={2} />
-          ),
-          headerRight: () => (
-            <Link href="/settings" asChild>
-              <Pressable
-                style={{ marginRight: 16 }}
-                accessibilityRole="button"
-                accessibilityLabel={t('settings.title')}
-              >
-                {({ pressed }) => (
-                  <Settings
-                    size={22}
-                    color={theme.colors.onSurface}
-                    strokeWidth={2}
-                    opacity={pressed ? 0.5 : 1}
-                  />
-                )}
-              </Pressable>
-            </Link>
           ),
         }}
       />

@@ -7,7 +7,7 @@ import { useThemedStackScreenOptions } from '@/hooks/useThemedStackScreenOptions
 export default function RentLayout() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const screenOptions = useThemedStackScreenOptions();
+  const screenOptions = useThemedStackScreenOptions({ showSettings: true });
 
   return (
     <Stack key={theme.dark ? 'dark' : 'light'} screenOptions={screenOptions}>
