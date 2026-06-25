@@ -1,0 +1,66 @@
+# Dependencies
+node_modules/
+
+# pnpm
+.pnpm-store/
+pnpm-debug.log*
+.pnpm-debug.log
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native (prebuild output)
+/ios
+/android
+.kotlin/
+
+# Metro / bundler
+.metro-health-check*
+
+# Environment & secrets (keep .env.example committed)
+.env
+.env.*
+!.env.example
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Testing
+coverage/
+.jest/
+
+# EAS Build
+.eas/
+
+# macOS
+.DS_Store
+*.pem
+
+# Android signing
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# IDE (keep shared .vscode settings; ignore local overrides)
+.idea/
+*.swp
+*.swo
+.vscode/*.local.*
+.vscode/launch.json
+
+# Temporary files
+tmp/
+temp/
+*.tmp

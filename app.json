@@ -1,0 +1,71 @@
+{
+  "expo": {
+    "name": "StanApp",
+    "slug": "stanapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "stanapp",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2563EB"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.stanapp.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Used to photograph expense receipts",
+        "NSPhotoLibraryUsageDescription": "Used to select property and receipt photos"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundColor": "#2563EB"
+      },
+      "package": "com.stanapp.mobile",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-notifications",
+      "expo-localization",
+      "expo-image",
+      "expo-secure-store",
+      "expo-sharing",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow StanApp to access your photos.",
+          "cameraPermission": "Allow StanApp to use the camera."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#2563EB"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
