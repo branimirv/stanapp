@@ -7,11 +7,14 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { FAB, IconButton, Text, useTheme } from 'react-native-paper';
+import { Pencil } from 'lucide-react-native';
+import { IconButton, Text, useTheme } from 'react-native-paper';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { TabBar, TabView, type Route } from 'react-native-tab-view';
 import { useTranslation } from 'react-i18next';
+import { AppFab } from '@/components/ui/AppFab';
+import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
@@ -35,9 +38,11 @@ import { usePropertyStore } from '@/stores/propertyStore';
 import { useUiStore } from '@/stores/uiStore';
 import type { Property } from '@/types/app.types';
 import { resolveCurrency } from '@/utils/currency';
+import { getCurrentMonthRange, isDateInRange } from '@/utils/dateRange';
 import { formatCurrency, formatDate, formatPeriod } from '@/utils/formatters';
 
 type TabKey = 'overview' | 'tenants' | 'expenses' | 'rent';
+type ExpensePeriodFilter = 'current_month' | 'all';
 
 export default function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -54,6 +59,7 @@ export default function PropertyDetailScreen() {
   const [error, setError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [expensePeriodFilter, setExpensePeriodFilter] = useState<ExpensePeriodFilter>('all');
 
   const { profile } = useProfile();
   const language = profile?.language ?? (i18n.language as 'en' | 'hr');
@@ -80,6 +86,40 @@ export default function PropertyDetailScreen() {
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
     [categories],
+  );
+
+  const currentMonthRange = useMemo(() => getCurrentMonthRange(), []);
+
+  const currentMonthExpenses = useMemo(
+    () =>
+      expenses.filter((expense) =>
+        isDateInRange(expense.billing_date, currentMonthRange.start, currentMonthRange.end),
+      ),
+    [currentMonthRange.end, currentMonthRange.start, expenses],
+  );
+
+  const currentMonthIncome = useMemo(
+    () =>
+      rentPayments
+        .filter(
+          (payment) =>
+            payment.status === 'paid' &&
+            payment.period_month === currentMonthRange.month &&
+            payment.period_year === currentMonthRange.year,
+        )
+        .reduce((sum, payment) => sum + payment.amount, 0),
+    [currentMonthRange.month, currentMonthRange.year, rentPayments],
+  );
+
+  const currentMonthExpenseTotal = useMemo(
+    () => currentMonthExpenses.reduce((sum, expense) => sum + expense.amount, 0),
+    [currentMonthExpenses],
+  );
+
+  const currentMonthPeriodLabel = formatPeriod(
+    currentMonthRange.month,
+    currentMonthRange.year,
+    language,
   );
 
   const loadProperty = useCallback(async () => {
@@ -137,18 +177,22 @@ export default function PropertyDetailScreen() {
     return base;
   }, [isRented, t]);
 
+  const expensesTabIndex = useMemo(
+    () => routes.findIndex((route) => route.key === 'expenses'),
+    [routes],
+  );
+
+  const goToExpensesTab = useCallback(() => {
+    if (expensesTabIndex >= 0) {
+      setIndex(expensesTabIndex);
+    }
+  }, [expensesTabIndex]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([loadProperty(), refetchTenants(), refetchExpenses(), refetchRent()]);
     setRefreshing(false);
   }, [loadProperty, refetchExpenses, refetchRent, refetchTenants]);
-
-  const totalIncome = rentPayments
-    .filter((p) => p.status === 'paid')
-    .reduce((sum, p) => sum + p.amount, 0);
-  const totalExpenses = expenses
-    .filter((e) => e.paid_at)
-    .reduce((sum, e) => sum + e.amount, 0);
 
   const expensesByMonth = useMemo(() => {
     const groups = new Map<string, typeof expenses>();
@@ -231,11 +275,52 @@ export default function PropertyDetailScreen() {
       ) : null}
 
       <PropertyStats
-        totalIncome={totalIncome}
-        totalExpenses={totalExpenses}
+        totalIncome={currentMonthIncome}
+        totalExpenses={currentMonthExpenseTotal}
         currency={currency}
         language={language}
+        periodLabel={currentMonthPeriodLabel}
       />
+
+      <View style={styles.expensesSectionHeader}>
+        <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+          {t('properties.thisMonthExpenses')}
+        </Text>
+        <Text style={{ color: theme.colors.primary }}>
+          {formatCurrency(currentMonthExpenseTotal, currency, language)}
+        </Text>
+      </View>
+
+      {currentMonthExpenses.length === 0 ? (
+        <EmptyState
+          title={t('properties.noExpensesThisMonth')}
+          ctaLabel={t('expenses.addNew')}
+          onCtaPress={() =>
+            router.push({ pathname: '/expense/new', params: { propertyId: id! } })
+          }
+        />
+      ) : (
+        currentMonthExpenses.map((expense) => (
+          <ExpenseCard
+            key={expense.id}
+            expense={expense}
+            category={categoryMap.get(expense.category_id)}
+            currency={currency}
+            language={language}
+            onPress={() => router.push(`/expense/${expense.id}`)}
+            onMarkPaid={!expense.paid_at ? () => handleMarkPaid(expense.id) : undefined}
+          />
+        ))
+      )}
+
+      {expenses.length > 0 ? (
+        <Text
+          style={[styles.viewAllLink, { color: theme.colors.primary }]}
+          onPress={goToExpensesTab}
+        >
+          {t('properties.viewAllExpenses')}
+        </Text>
+      ) : null}
 
       <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
         {t('properties.subProperties')}
@@ -291,12 +376,62 @@ export default function PropertyDetailScreen() {
       );
     }
 
+    const periodFilter = (
+      <View style={styles.expenseFilter}>
+        <AppSegmentedControl
+          segments={[
+            { label: t('properties.expensePeriodThisMonth'), value: 'current_month' },
+            { label: t('properties.expensePeriodAll'), value: 'all' },
+          ]}
+          value={expensePeriodFilter}
+          onValueChange={(value) => setExpensePeriodFilter(value as ExpensePeriodFilter)}
+        />
+      </View>
+    );
+
+    if (expensePeriodFilter === 'current_month') {
+      return (
+        <ScrollView
+          contentContainerStyle={styles.tabContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+          {periodFilter}
+          {currentMonthExpenses.length === 0 ? (
+            <EmptyState title={t('properties.noExpensesThisMonth')} />
+          ) : (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+                  {currentMonthPeriodLabel}
+                </Text>
+                <Text style={{ color: theme.colors.primary }}>
+                  {formatCurrency(currentMonthExpenseTotal, currency, language)}
+                </Text>
+              </View>
+              {currentMonthExpenses.map((item) => (
+                <ExpenseCard
+                  key={item.id}
+                  expense={item}
+                  category={categoryMap.get(item.category_id)}
+                  currency={currency}
+                  language={language}
+                  onPress={() => router.push(`/expense/${item.id}`)}
+                  onMarkPaid={!item.paid_at ? () => handleMarkPaid(item.id) : undefined}
+                />
+              ))}
+            </>
+          )}
+        </ScrollView>
+      );
+    }
+
     return (
       <SectionList
         sections={expensesByMonth}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.tabContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        ListHeaderComponent={periodFilter}
         renderSectionHeader={({ section }) => (
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
@@ -313,7 +448,8 @@ export default function PropertyDetailScreen() {
             category={categoryMap.get(item.category_id)}
             currency={currency}
             language={language}
-            onMarkPaid={handleMarkPaid}
+            onPress={() => router.push(`/expense/${item.id}`)}
+            onMarkPaid={!item.paid_at ? () => handleMarkPaid(item.id) : undefined}
           />
         )}
       />
@@ -416,7 +552,7 @@ export default function PropertyDetailScreen() {
           title: property.name,
           headerRight: () => (
             <IconButton
-              icon="pencil"
+              icon={({ size, color }) => <Pencil size={size} color={color} strokeWidth={2} />}
               onPress={() => router.push(`/property/edit/${property.id}`)}
               accessibilityLabel={t('common.edit')}
             />
@@ -457,8 +593,7 @@ export default function PropertyDetailScreen() {
         )}
       />
 
-      <FAB
-        icon="plus"
+      <AppFab
         style={[styles.fab, { backgroundColor: theme.colors.primary }]}
         color={Colors.textInverse}
         onPress={() => {
@@ -524,6 +659,20 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...Typography.titleMedium,
     marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  expensesSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: Spacing.md,
+  },
+  viewAllLink: {
+    ...Typography.bodyMedium,
+    textAlign: 'center',
+    marginVertical: Spacing.sm,
+  },
+  expenseFilter: {
     marginBottom: Spacing.sm,
   },
   sectionHeader: {

@@ -22,6 +22,8 @@ export type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 
 export type ExpenseCategory = Database['public']['Tables']['expense_categories']['Row'];
 
+export type ExpenseType = 'regular' | 'irregular';
+
 export type PropertyType = 'apartment' | 'house' | 'garage' | 'other';
 export type UsageStatus = 'rented' | 'personal_use' | 'vacant';
 export type PaymentStatus = 'pending' | 'paid' | 'late' | 'partial';

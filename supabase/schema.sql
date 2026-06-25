@@ -75,20 +75,22 @@ CREATE TABLE expense_categories (
   id      UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   key     TEXT NOT NULL UNIQUE,
   icon    TEXT NOT NULL,
-  color   TEXT NOT NULL
+  color   TEXT NOT NULL,
+  type    TEXT NOT NULL DEFAULT 'regular'
+            CHECK (type IN ('regular', 'irregular'))
 );
 
-INSERT INTO expense_categories (key, icon, color) VALUES
-  ('electricity',   'Zap',            '#F59E0B'),
-  ('water',         'Droplets',       '#3B82F6'),
-  ('gas',           'Flame',          '#EF4444'),
-  ('internet',      'Wifi',           '#8B5CF6'),
-  ('communal',      'Building2',      '#10B981'),
-  ('insurance',     'Shield',         '#6366F1'),
-  ('property_tax',  'Landmark',       '#EC4899'),
-  ('maintenance',   'Wrench',         '#14B8A6'),
-  ('repair',        'Hammer',         '#F97316'),
-  ('other',         'MoreHorizontal', '#6B7280');
+INSERT INTO expense_categories (key, icon, color, type) VALUES
+  ('electricity',   'Zap',            '#F59E0B', 'regular'),
+  ('water',         'Droplets',       '#3B82F6', 'regular'),
+  ('gas',           'Flame',          '#EF4444', 'regular'),
+  ('internet',      'Wifi',           '#8B5CF6', 'regular'),
+  ('communal',      'Building2',      '#10B981', 'regular'),
+  ('insurance',     'Shield',         '#6366F1', 'regular'),
+  ('property_tax',  'Landmark',       '#EC4899', 'regular'),
+  ('maintenance',   'Wrench',         '#14B8A6', 'irregular'),
+  ('repair',        'Hammer',         '#F97316', 'irregular'),
+  ('other',         'MoreHorizontal', '#6B7280', 'irregular');
 
 CREATE TABLE expenses (
   id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

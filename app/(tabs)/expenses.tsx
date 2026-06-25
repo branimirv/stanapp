@@ -9,10 +9,11 @@ import {
   Text,
   View,
 } from 'react-native';
-import { FAB, useTheme } from 'react-native-paper';
+import { useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExpenseCard } from '@/components/expense/ExpenseCard';
+import { AppFab } from '@/components/ui/AppFab';
 import { AppPicker, type PickerOption } from '@/components/ui/AppPicker';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { AppTextInput } from '@/components/ui/AppTextInput';
@@ -26,10 +27,11 @@ import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
 import { useUiStore } from '@/stores/uiStore';
 import { formatPeriod } from '@/utils/formatters';
-import type { Expense, ExpenseStatusFilter, Language } from '@/types/app.types';
+import type { Expense, ExpenseStatusFilter, ExpenseType, Language } from '@/types/app.types';
 
 type StatusFilter = 'all' | ExpenseStatusFilter;
 type RecurringFilter = 'all' | 'recurring' | 'one_time';
+type TypeFilter = 'all' | ExpenseType;
 
 interface ExpenseSection {
   title: string;
@@ -49,6 +51,7 @@ export default function ExpensesScreen() {
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [recurringFilter, setRecurringFilter] = useState<RecurringFilter>('all');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [propertyFilter, setPropertyFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
@@ -108,6 +111,10 @@ export default function ExpensesScreen() {
     return expenses.filter((expense) => {
       if (recurringFilter === 'recurring' && !expense.is_recurring) return false;
       if (recurringFilter === 'one_time' && expense.is_recurring) return false;
+      if (typeFilter !== 'all') {
+        const categoryType = categoryMap.get(expense.category_id)?.type;
+        if (categoryType !== typeFilter) return false;
+      }
       if (categoryFilter !== 'all' && expense.category_id !== categoryFilter) return false;
       if (!query) return true;
 
@@ -120,7 +127,7 @@ export default function ExpensesScreen() {
         expense.notes?.toLowerCase().includes(query)
       );
     });
-  }, [categoryFilter, categoryMap, expenses, propertyMap, recurringFilter, search, t]);
+  }, [categoryFilter, categoryMap, expenses, propertyMap, recurringFilter, search, t, typeFilter]);
 
   const sections = useMemo(() => {
     const grouped = new Map<string, ExpenseSection>();
@@ -273,6 +280,15 @@ export default function ExpensesScreen() {
               value={recurringFilter}
               onValueChange={(value) => setRecurringFilter(value as RecurringFilter)}
             />
+            <AppSegmentedControl
+              segments={[
+                { label: t('common.all'), value: 'all' },
+                { label: t('expenses.filterRegular'), value: 'regular' },
+                { label: t('expenses.filterIrregular'), value: 'irregular' },
+              ]}
+              value={typeFilter}
+              onValueChange={(value) => setTypeFilter(value as TypeFilter)}
+            />
             <AppPicker
               label={t('expenses.filterByProperty')}
               options={propertyOptions}
@@ -315,6 +331,7 @@ export default function ExpensesScreen() {
               search ||
               statusFilter !== 'all' ||
               recurringFilter !== 'all' ||
+              typeFilter !== 'all' ||
               propertyFilter !== 'all' ||
               categoryFilter !== 'all'
                 ? t('empty.noResultsHint')
@@ -326,8 +343,7 @@ export default function ExpensesScreen() {
         }
       />
 
-      <FAB
-        icon="plus"
+      <AppFab
         style={[styles.fab, { bottom: insets.bottom + 16 }]}
         onPress={() => router.push('/expense/new')}
       />

@@ -2,14 +2,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { useTheme } from 'react-native-paper';
+import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppDatePicker } from '@/components/ui/AppDatePicker';
 import { AppPicker } from '@/components/ui/AppPicker';
 import { AppTextInput } from '@/components/ui/AppTextInput';
 import { PAYMENT_STATUSES } from '@/constants/config';
-import { Spacing } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
 import type { PaymentStatus, Property, Tenant } from '@/types/app.types';
 import { rentPaymentSchema, type RentPaymentFormValues } from '@/utils/validators';
 
@@ -184,12 +184,14 @@ export function RentPaymentForm({
         </View>
 
         <View style={styles.periodField}>
+          <Text style={[styles.periodLabel, { color: theme.colors.onSurface }]}>
+            {t('rent.periodYear')}
+          </Text>
           <Controller
             control={control}
             name="period_year"
             render={({ field: { value, onChange, onBlur }, fieldState }) => (
               <AppTextInput
-                label={t('rent.periodYear')}
                 value={String(value)}
                 onChangeText={(text) => {
                   const parsed = Number.parseInt(text, 10);
@@ -197,6 +199,8 @@ export function RentPaymentForm({
                 }}
                 onBlur={onBlur}
                 keyboardType="number-pad"
+                placeholder={String(new Date().getFullYear())}
+                style={styles.periodInput}
                 error={translateError(fieldState.error?.message)}
               />
             )}
@@ -265,6 +269,13 @@ const styles = StyleSheet.create({
   },
   periodField: {
     flex: 1,
+  },
+  periodLabel: {
+    ...Typography.labelLarge,
+    marginBottom: Spacing.xs,
+  },
+  periodInput: {
+    height: 56,
   },
   submit: {
     marginTop: Spacing.sm,

@@ -217,7 +217,12 @@
     "notFound": "Property not found",
     "statsIncome": "Total income",
     "statsExpenses": "Total expenses",
-    "statsNet": "Net"
+    "statsNet": "Net",
+    "thisMonthExpenses": "This month's expenses",
+    "viewAllExpenses": "View all expenses",
+    "noExpensesThisMonth": "No expenses this month",
+    "expensePeriodAll": "All",
+    "expensePeriodThisMonth": "This month"
   },
   "propertyTypes": {
     "apartment": "Apartment",
@@ -307,6 +312,13 @@
     "filterPaid": "Paid",
     "filterRecurring": "Recurring",
     "filterOneTime": "One-time",
+    "filterRegular": "Regular",
+    "filterIrregular": "Irregular",
+    "expenseType": "Expense type",
+    "typeRegular": "Regular",
+    "typeIrregular": "Irregular",
+    "typeRegularHint": "Monthly bills like electricity, water, and communal fees",
+    "typeIrregularHint": "One-off costs like repairs, new windows, or improvements",
     "filterByProperty": "Filter by property",
     "filterByCategory": "Filter by category",
     "searchPlaceholder": "Search expenses…",

@@ -1,3 +1,5 @@
+import type { LucideIcon } from 'lucide-react-native';
+import { Plus, X } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import {
   Platform,
@@ -7,11 +9,11 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { FAB, Icon, Text, useTheme } from 'react-native-paper';
+import { FAB, Text, useTheme } from 'react-native-paper';
 import { Spacing, Typography } from '@/constants/theme';
 
 export type AppFabAction = {
-  icon: string;
+  icon: LucideIcon;
   label: string;
   onPress: () => void;
 };
@@ -21,6 +23,12 @@ type AppFabGroupProps = {
   style?: StyleProp<ViewStyle>;
   fabStyle?: StyleProp<ViewStyle>;
 };
+
+function renderLucideIcon(Icon: LucideIcon) {
+  return ({ size, color }: { size: number; color: string }) => (
+    <Icon size={size} color={color} strokeWidth={2} />
+  );
+}
 
 function WebFabGroup({ actions, style, fabStyle }: AppFabGroupProps) {
   const theme = useTheme();
@@ -49,39 +57,42 @@ function WebFabGroup({ actions, style, fabStyle }: AppFabGroupProps) {
 
       {open ? (
         <View pointerEvents="box-none" style={styles.actions}>
-          {actions.map((action) => (
-            <Pressable
-              key={action.label}
-              accessibilityRole="button"
-              accessibilityLabel={action.label}
-              onPress={() => handleActionPress(action.onPress)}
-              style={({ pressed }) => [styles.actionRow, pressed && styles.actionRowPressed]}
-            >
-              <View
-                style={[
-                  styles.labelCard,
-                  { backgroundColor: theme.colors.elevation.level2 },
-                ]}
+          {actions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Pressable
+                key={action.label}
+                accessibilityRole="button"
+                accessibilityLabel={action.label}
+                onPress={() => handleActionPress(action.onPress)}
+                style={({ pressed }) => [styles.actionRow, pressed && styles.actionRowPressed]}
               >
-                <Text style={[styles.label, { color: theme.colors.onSurface }]}>
-                  {action.label}
-                </Text>
-              </View>
-              <View
-                style={[
-                  styles.actionFab,
-                  { backgroundColor: theme.colors.secondaryContainer },
-                ]}
-              >
-                <Icon source={action.icon} size={24} color={theme.colors.onSecondaryContainer} />
-              </View>
-            </Pressable>
-          ))}
+                <View
+                  style={[
+                    styles.labelCard,
+                    { backgroundColor: theme.colors.elevation.level2 },
+                  ]}
+                >
+                  <Text style={[styles.label, { color: theme.colors.onSurface }]}>
+                    {action.label}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.actionFab,
+                    { backgroundColor: theme.colors.secondaryContainer },
+                  ]}
+                >
+                  <Icon size={24} color={theme.colors.onSecondaryContainer} strokeWidth={2} />
+                </View>
+              </Pressable>
+            );
+          })}
         </View>
       ) : null}
 
       <FAB
-        icon={open ? 'close' : 'plus'}
+        icon={renderLucideIcon(open ? X : Plus)}
         accessibilityState={{ expanded: open }}
         onPress={() => setOpen((value) => !value)}
         style={[styles.fab, fabStyle]}
@@ -97,8 +108,12 @@ function NativeFabGroup({ actions, style, fabStyle }: AppFabGroupProps) {
     <FAB.Group
       open={open}
       visible
-      icon={open ? 'close' : 'plus'}
-      actions={actions}
+      icon={renderLucideIcon(open ? X : Plus)}
+      actions={actions.map((action) => ({
+        icon: renderLucideIcon(action.icon),
+        label: action.label,
+        onPress: action.onPress,
+      }))}
       onStateChange={({ open: nextOpen }) => setOpen(nextOpen)}
       style={style}
       fabStyle={fabStyle}

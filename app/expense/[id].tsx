@@ -164,6 +164,16 @@ export default function ExpenseDetailScreen() {
             color={category.color}
           />
         ) : null}
+          {category?.type ? (
+            <AppBadge
+              label={
+                category.type === 'regular'
+                  ? t('expenses.typeRegular')
+                  : t('expenses.typeIrregular')
+              }
+              variant={category.type === 'regular' ? 'success' : 'warning'}
+            />
+          ) : null}
           <AppBadge
             label={expense.is_recurring ? t('expenses.recurring') : t('expenses.oneTime')}
             variant="info"

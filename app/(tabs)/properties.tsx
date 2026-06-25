@@ -8,14 +8,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { FAB, useTheme } from 'react-native-paper';
+import { useTheme } from 'react-native-paper';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Building2 } from 'lucide-react-native';
 import { PropertyCard } from '@/components/property/PropertyCard';
-import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
-import { AppTextInput } from '@/components/ui/AppTextInput';
+import { PropertyFilters } from '@/components/property/PropertyFilters';
+import { AppFab } from '@/components/ui/AppFab';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
@@ -155,6 +155,20 @@ export default function PropertiesScreen() {
     [handleArchive, handleDelete, t],
   );
 
+  const renderListHeader = useCallback(
+    () => (
+      <PropertyFilters
+        search={search}
+        onSearchChange={setSearch}
+        typeFilter={typeFilter}
+        onTypeFilterChange={setTypeFilter}
+        usageFilter={usageFilter}
+        onUsageFilterChange={setUsageFilter}
+      />
+    ),
+    [search, typeFilter, usageFilter],
+  );
+
   if (isLoading && properties.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -182,36 +196,7 @@ export default function PropertiesScreen() {
           { paddingBottom: insets.bottom + 88 },
         ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListHeaderComponent={
-          <View style={styles.filters}>
-            <AppTextInput
-              placeholder={t('properties.searchPlaceholder')}
-              value={search}
-              onChangeText={setSearch}
-            />
-            <AppSegmentedControl
-              segments={[
-                { label: t('properties.allTypes'), value: 'all' },
-                { label: t('propertyTypes.apartment'), value: 'apartment' },
-                { label: t('propertyTypes.house'), value: 'house' },
-                { label: t('propertyTypes.garage'), value: 'garage' },
-              ]}
-              value={typeFilter}
-              onValueChange={(value) => setTypeFilter(value as TypeFilter)}
-              style={styles.segment}
-            />
-            <AppSegmentedControl
-              segments={[
-                { label: t('properties.allUsage'), value: 'all' },
-                { label: t('usageStatus.rented'), value: 'rented' },
-                { label: t('usageStatus.personal_use'), value: 'personal_use' },
-                { label: t('usageStatus.vacant'), value: 'vacant' },
-              ]}
-              value={usageFilter}
-              onValueChange={(value) => setUsageFilter(value as UsageFilter)}
-            />
-          </View>
-        }
+        ListHeaderComponent={renderListHeader}
         renderItem={({ item }) => (
           <Swipeable renderRightActions={() => renderRightActions(item.id)}>
             <PropertyCard
@@ -220,6 +205,7 @@ export default function PropertiesScreen() {
               overdueCount={overdueByProperty.get(item.id) ?? 0}
               currency={currency}
               language={language}
+              onPress={() => router.push(`/property/${item.id}`)}
             />
           </Swipeable>
         )}
@@ -238,8 +224,7 @@ export default function PropertiesScreen() {
         }
       />
 
-      <FAB
-        icon="plus"
+      <AppFab
         style={[styles.fab, { bottom: insets.bottom + 16 }]}
         onPress={() => router.push('/property/new')}
       />
@@ -260,14 +245,6 @@ const styles = StyleSheet.create({
   },
   listEmpty: {
     flexGrow: 1,
-  },
-  filters: {
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
-    paddingTop: Spacing.md,
-  },
-  segment: {
-    marginBottom: Spacing.xs,
   },
   swipeActions: {
     flexDirection: 'row',

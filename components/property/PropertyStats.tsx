@@ -10,6 +10,7 @@ export interface PropertyStatsProps {
   totalExpenses: number;
   currency?: string;
   language?: Language;
+  periodLabel?: string;
 }
 
 export function PropertyStats({
@@ -17,6 +18,7 @@ export function PropertyStats({
   totalExpenses,
   currency = 'EUR',
   language = 'hr',
+  periodLabel,
 }: PropertyStatsProps) {
   const theme = useTheme();
   const { t, i18n } = useTranslation();
@@ -45,39 +47,52 @@ export function PropertyStats({
   ] as const;
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-          borderColor: theme.colors.outline,
-        },
-      ]}
-    >
-      {stats.map((stat, index) => (
-        <View
-          key={stat.key}
-          style={[
-            styles.stat,
-            index < stats.length - 1 && [
-              styles.statDivider,
-              { borderRightColor: theme.colors.outline },
-            ],
-          ]}
-        >
-          <Text style={[styles.label, { color: theme.colors.onSurfaceVariant }]}>
-            {stat.label}
-          </Text>
-          <Text style={[styles.value, { color: stat.color }]} numberOfLines={1}>
-            {stat.value}
-          </Text>
-        </View>
-      ))}
+    <View style={styles.wrapper}>
+      {periodLabel ? (
+        <Text style={[styles.periodLabel, { color: theme.colors.onSurfaceVariant }]}>
+          {periodLabel}
+        </Text>
+      ) : null}
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
+            borderColor: theme.colors.outline,
+          },
+        ]}
+      >
+        {stats.map((stat, index) => (
+          <View
+            key={stat.key}
+            style={[
+              styles.stat,
+              index < stats.length - 1 && [
+                styles.statDivider,
+                { borderRightColor: theme.colors.outline },
+              ],
+            ]}
+          >
+            <Text style={[styles.label, { color: theme.colors.onSurfaceVariant }]}>
+              {stat.label}
+            </Text>
+            <Text style={[styles.value, { color: stat.color }]} numberOfLines={1}>
+              {stat.value}
+            </Text>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    gap: Spacing.xs,
+  },
+  periodLabel: {
+    ...Typography.bodySmall,
+  },
   container: {
     flexDirection: 'row',
     borderRadius: 12,

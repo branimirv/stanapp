@@ -149,7 +149,7 @@ export async function exportAllDataCSV(t: TFunction): Promise<ExportAllDataResul
   const rentPayments = rentRes.data ?? [];
   const categories = categoriesRes.data ?? [];
 
-  const categoryMap = new Map(categories.map((c) => [c.id, c.key]));
+  const categoryMap = new Map(categories.map((c) => [c.id, c]));
   const propertyMap = new Map(properties.map((p) => [p.id, p.name]));
 
   const sections = [
@@ -205,23 +205,28 @@ export async function exportAllDataCSV(t: TFunction): Promise<ExportAllDataResul
         'property_id',
         'property_name',
         'category',
+        'expense_type',
         'amount',
         'is_recurring',
         'billing_date',
         'due_date',
         'paid_at',
       ],
-      expenses.map((expense) => [
+      expenses.map((expense) => {
+        const category = categoryMap.get(expense.category_id);
+        return [
         expense.id,
         expense.property_id,
         propertyMap.get(expense.property_id) ?? '',
-        categoryMap.get(expense.category_id) ?? expense.category_id,
+        category ? category.key : expense.category_id,
+        category?.type ?? '',
         String(expense.amount),
         String(expense.is_recurring),
         expense.billing_date,
         expense.due_date ?? '',
         expense.paid_at ?? '',
-      ]),
+      ];
+      }),
     ),
     '',
     buildCsvSection(

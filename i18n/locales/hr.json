@@ -217,7 +217,12 @@
     "notFound": "Nekretnina nije pronađena",
     "statsIncome": "Ukupni prihod",
     "statsExpenses": "Ukupni troškovi",
-    "statsNet": "Neto"
+    "statsNet": "Neto",
+    "thisMonthExpenses": "Troškovi ovog mjeseca",
+    "viewAllExpenses": "Pogledaj sve troškove",
+    "noExpensesThisMonth": "Nema troškova ovog mjeseca",
+    "expensePeriodAll": "Sve",
+    "expensePeriodThisMonth": "Ovaj mjesec"
   },
   "propertyTypes": {
     "apartment": "Stan",
@@ -307,6 +312,13 @@
     "filterPaid": "Plaćeno",
     "filterRecurring": "Ponavljajući",
     "filterOneTime": "Jednokratni",
+    "filterRegular": "Redovni",
+    "filterIrregular": "Vanredni",
+    "expenseType": "Vrsta troška",
+    "typeRegular": "Redovni",
+    "typeIrregular": "Vanredni",
+    "typeRegularHint": "Mjesečni računi poput struje, vode i komunalije",
+    "typeIrregularHint": "Jednokratni troškovi poput popravaka, novih prozora ili unapređenja",
     "filterByProperty": "Filtriraj po nekretnini",
     "filterByCategory": "Filtriraj po kategoriji",
     "searchPlaceholder": "Pretraži troškove…",

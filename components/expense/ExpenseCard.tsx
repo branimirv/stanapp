@@ -90,6 +90,11 @@ export function ExpenseCard({
               />
             ) : null}
             <View style={styles.badges}>
+              {category?.type === 'irregular' ? (
+                <AppBadge label={t('expenses.typeIrregular')} variant="warning" />
+              ) : category?.type === 'regular' ? (
+                <AppBadge label={t('expenses.typeRegular')} variant="success" />
+              ) : null}
               {expense.is_recurring ? (
                 <AppBadge label={t('expenses.recurring')} variant="info" />
               ) : (

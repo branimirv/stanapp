@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Banknote, TrendingDown, TrendingUp } from 'lucide-react-native';
+import { Banknote, Building2, Receipt, TrendingDown, TrendingUp, Wallet } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
@@ -112,17 +112,17 @@ export default function DashboardScreen() {
       <AppFabGroup
         actions={[
           {
-            icon: 'receipt',
+            icon: Receipt,
             label: t('dashboard.addExpense'),
             onPress: () => router.push('/expense/new'),
           },
           {
-            icon: 'cash',
+            icon: Wallet,
             label: t('dashboard.addPayment'),
             onPress: () => router.push('/rent/new'),
           },
           {
-            icon: 'home-plus',
+            icon: Building2,
             label: t('dashboard.addProperty'),
             onPress: () => router.push('/property/new'),
           },

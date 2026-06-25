@@ -181,18 +181,21 @@ export type Database = {
           key: string;
           icon: string;
           color: string;
+          type: 'regular' | 'irregular';
         };
         Insert: {
           id?: string;
           key: string;
           icon: string;
           color: string;
+          type?: 'regular' | 'irregular';
         };
         Update: {
           id?: string;
           key?: string;
           icon?: string;
           color?: string;
+          type?: 'regular' | 'irregular';
         };
         Relationships: [];
       };
