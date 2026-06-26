@@ -43,6 +43,7 @@
     "plugins": [
       "expo-router",
       "expo-notifications",
+      "./plugins/withLocalNotificationsOnly.js",
       "expo-localization",
       "expo-image",
       "expo-secure-store",

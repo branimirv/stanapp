@@ -3,9 +3,9 @@ import { format } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { resolveCurrency } from '@/utils/currency';
-import type { DashboardStats, RecentActivityItem } from '@/types/app.types';
+import type { DashboardPeriod, DashboardStats, RecentActivityItem } from '@/types/app.types';
 
-export function useDashboardStats() {
+export function useDashboardStats(period: DashboardPeriod) {
   const { user } = useAuthStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,11 +22,32 @@ export function useDashboardStats() {
     setError(null);
 
     const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
-    const monthStart = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
-    const monthEnd = format(new Date(year, month, 0), 'yyyy-MM-dd');
+    const displayMonth = period.mode === 'month' ? period.month : now.getMonth() + 1;
+    const displayYear = period.mode === 'month' ? period.year : now.getFullYear();
     const today = format(now, 'yyyy-MM-dd');
+
+    let monthStart: string | undefined;
+    let monthEnd: string | undefined;
+
+    if (period.mode === 'month') {
+      monthStart = format(new Date(period.year, period.month - 1, 1), 'yyyy-MM-dd');
+      monthEnd = format(new Date(period.year, period.month, 0), 'yyyy-MM-dd');
+    }
+
+    const rentQuery = supabase
+      .from('rent_payments')
+      .select('amount, currency')
+      .eq('status', 'paid');
+
+    if (period.mode === 'month') {
+      rentQuery.eq('period_month', period.month).eq('period_year', period.year);
+    }
+
+    const expensesQuery = supabase.from('expenses').select('amount, currency');
+
+    if (period.mode === 'month' && monthStart && monthEnd) {
+      expensesQuery.gte('billing_date', monthStart).lte('billing_date', monthEnd);
+    }
 
     const [
       profileResult,
@@ -39,17 +60,8 @@ export function useDashboardStats() {
       recentPaymentsResult,
     ] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase
-        .from('rent_payments')
-        .select('amount, currency')
-        .eq('status', 'paid')
-        .eq('period_month', month)
-        .eq('period_year', year),
-      supabase
-        .from('expenses')
-        .select('amount, currency')
-        .gte('billing_date', monthStart)
-        .lte('billing_date', monthEnd),
+      rentQuery,
+      expensesQuery,
       supabase.from('properties').select('id').eq('is_archived', false),
       supabase
         .from('tenants')
@@ -132,12 +144,13 @@ export function useDashboardStats() {
       overdueExpensesCount: overdueResult.count ?? 0,
       recentActivity,
       currency: defaultCurrency,
-      month,
-      year,
+      month: displayMonth,
+      year: displayYear,
+      periodMode: period.mode,
     });
 
     setIsLoading(false);
-  }, [user]);
+  }, [user, period]);
 
   useEffect(() => {
     refetch();

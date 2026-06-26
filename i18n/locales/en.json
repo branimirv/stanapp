@@ -16,6 +16,7 @@
     "apply": "Apply",
     "close": "Close",
     "back": "Back",
+    "previous": "Previous",
     "goHome": "Go to home screen",
     "next": "Next",
     "done": "Done",
@@ -162,7 +163,11 @@
     "rentCollected": "Rent collected",
     "expensesPaid": "Expenses paid",
     "upcomingDue": "Upcoming due dates",
-    "contractExpiringSoon": "Contracts expiring soon"
+    "contractExpiringSoon": "Contracts expiring soon",
+    "allTime": "All time",
+    "selectPeriod": "Select period",
+    "recentProperties": "Recent properties",
+    "viewAllProperties": "View all"
   },
   "properties": {
     "title": "Properties",

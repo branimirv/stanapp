@@ -16,6 +16,7 @@
     "apply": "Primijeni",
     "close": "Zatvori",
     "back": "Natrag",
+    "previous": "Prethodno",
     "goHome": "Idi na početni zaslon",
     "next": "Dalje",
     "done": "Gotovo",
@@ -162,7 +163,11 @@
     "rentCollected": "Prikupljena najamnina",
     "expensesPaid": "Plaćeni troškovi",
     "upcomingDue": "Nadolazeći rokovi",
-    "contractExpiringSoon": "Ugovori koji uskoro istječu"
+    "contractExpiringSoon": "Ugovori koji uskoro istječu",
+    "allTime": "Od početka",
+    "selectPeriod": "Odaberite razdoblje",
+    "recentProperties": "Nedavne nekretnine",
+    "viewAllProperties": "Prikaži sve"
   },
   "properties": {
     "title": "Nekretnine",

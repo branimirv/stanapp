@@ -43,6 +43,10 @@ export interface RecentActivityItem {
   created_at: string;
 }
 
+export type DashboardPeriod =
+  | { mode: 'month'; month: number; year: number }
+  | { mode: 'all' };
+
 export interface DashboardStats {
   totalRentIncome: number;
   totalExpenses: number;
@@ -54,6 +58,7 @@ export interface DashboardStats {
   currency: string;
   month: number;
   year: number;
+  periodMode: 'month' | 'all';
 }
 
 export type ReportPeriodPreset =
