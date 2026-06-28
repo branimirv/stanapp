@@ -64,3 +64,6 @@ coverage/
 tmp/
 temp/
 *.tmp
+
+# AI prompts (local only)
+prompts/
