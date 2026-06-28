@@ -4,7 +4,7 @@ import { Keyboard } from 'react-native';
 import type { AppExpandableSearchHandle } from '@/components/ui/AppExpandableSearch';
 import { useSearchableTabHeader } from '@/hooks/useSearchableTabHeader';
 
-export function useExpandableSearch() {
+export function useExpandableSearchState() {
   const searchRef = useRef<AppExpandableSearchHandle>(null);
   const [search, setSearch] = useState('');
   const [searchHasText, setSearchHasText] = useState(false);
@@ -39,12 +39,6 @@ export function useExpandableSearch() {
     }
   }, []);
 
-  useSearchableTabHeader({
-    searchActive: searchHasText,
-    searchExpanded,
-    onSearchPress: handleSearchPress,
-  });
-
   const searchBarControlProps = useMemo(
     () => ({
       ref: searchRef,
@@ -68,8 +62,22 @@ export function useExpandableSearch() {
   return {
     search,
     searchExpanded,
+    searchHasText,
+    handleSearchPress,
     dismissSearchIfEmpty,
     searchBarControlProps,
     listKeyboardProps,
   };
+}
+
+export function useExpandableSearch() {
+  const searchState = useExpandableSearchState();
+
+  useSearchableTabHeader({
+    searchActive: searchState.searchHasText,
+    searchExpanded: searchState.searchExpanded,
+    onSearchPress: searchState.handleSearchPress,
+  });
+
+  return searchState;
 }

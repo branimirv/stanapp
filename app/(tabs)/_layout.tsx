@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { BarChart3, Building2, LayoutDashboard, Receipt } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'react-native-paper';
+import { GlassTabBar } from '@/components/ui/GlassTabBar';
 import { SettingsHeaderButton } from '@/components/ui/SettingsHeaderButton';
 import { Colors } from '@/constants/theme';
 
@@ -11,6 +12,7 @@ export default function TabLayout() {
 
   return (
     <Tabs
+      tabBar={(props) => <GlassTabBar {...props} />}
       screenOptions={{
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
@@ -20,8 +22,10 @@ export default function TabLayout() {
         headerTintColor: theme.colors.onSurface,
         headerTitleAlign: 'left',
         tabBarStyle: {
-          backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-          borderTopColor: theme.dark ? Colors.borderDark : Colors.border,
+          position: 'absolute',
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          elevation: 0,
         },
         headerRight: () => <SettingsHeaderButton />,
       }}

@@ -1,23 +1,9 @@
-import { Building2, Car, Home, MapPin } from 'lucide-react-native';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { PROPERTY_TYPE_COLORS, PROPERTY_TYPE_ICONS } from '@/constants/propertyType';
+import { Spacing, Typography } from '@/constants/theme';
 import type { PropertyType } from '@/types/app.types';
-
-const TYPE_ICONS = {
-  apartment: Building2,
-  house: Home,
-  garage: Car,
-  other: MapPin,
-} as const;
-
-const TYPE_COLORS: Record<PropertyType, string> = {
-  apartment: Colors.typeApartment,
-  house: Colors.typeHouse,
-  garage: Colors.typeGarage,
-  other: Colors.typeOther,
-};
 
 export interface PropertyTypeBadgeProps {
   type: PropertyType;
@@ -27,8 +13,8 @@ export interface PropertyTypeBadgeProps {
 
 export function PropertyTypeBadge({ type, compact = false, style }: PropertyTypeBadgeProps) {
   const { t } = useTranslation();
-  const Icon = TYPE_ICONS[type];
-  const color = TYPE_COLORS[type];
+  const Icon = PROPERTY_TYPE_ICONS[type];
+  const color = PROPERTY_TYPE_COLORS[type];
 
   return (
     <View

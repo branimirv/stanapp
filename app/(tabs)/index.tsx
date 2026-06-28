@@ -1,11 +1,11 @@
 import { router } from 'expo-router';
-import { Banknote, Building2, Receipt, TrendingDown, TrendingUp, Wallet } from 'lucide-react-native';
+import { Banknote, TrendingDown, TrendingUp } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
-import { AppFabGroup } from '@/components/ui/AppFabGroup';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useGlassTabBarInset } from '@/hooks/useGlassTabBarInset';
+import { useDefaultTabHeader } from '@/hooks/useDefaultTabHeader';
 import { DashboardPeriodFilter } from '@/components/dashboard/DashboardPeriodFilter';
 import { OverdueAlert } from '@/components/dashboard/OverdueAlert';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
@@ -29,7 +29,8 @@ function getInitialPeriod(): DashboardPeriod {
 export default function DashboardScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
+  const { scrollPadding } = useGlassTabBarInset();
+  useDefaultTabHeader();
   const [period, setPeriod] = useState<DashboardPeriod>(getInitialPeriod);
   const { stats, isLoading, error, refetch } = useDashboardStats(period);
   const { properties } = useProperties();
@@ -74,7 +75,7 @@ export default function DashboardScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 88 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: scrollPadding }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <DashboardPeriodFilter value={period} onChange={setPeriod} language={language} />
@@ -126,28 +127,6 @@ export default function DashboardScreen() {
           onViewAll={() => router.push('/(tabs)/properties')}
         />
       </ScrollView>
-
-      <AppFabGroup
-        actions={[
-          {
-            icon: Receipt,
-            label: t('dashboard.addExpense'),
-            onPress: () => router.push('/expense/new'),
-          },
-          {
-            icon: Wallet,
-            label: t('dashboard.addPayment'),
-            onPress: () => router.push('/rent/new'),
-          },
-          {
-            icon: Building2,
-            label: t('dashboard.addProperty'),
-            onPress: () => router.push('/property/new'),
-          },
-        ]}
-        style={[styles.fab, { bottom: insets.bottom + 16 }]}
-        fabStyle={{ backgroundColor: theme.colors.primary }}
-      />
     </View>
   );
 }
@@ -174,9 +153,5 @@ const styles = StyleSheet.create({
   },
   count: {
     ...Typography.bodySmall,
-  },
-  fab: {
-    position: 'absolute',
-    right: 0,
   },
 });

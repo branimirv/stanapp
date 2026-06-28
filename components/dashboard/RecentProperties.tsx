@@ -1,7 +1,10 @@
-import { Building2 } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
+import {
+  PROPERTY_TYPE_COLORS,
+  PROPERTY_TYPE_ICONS,
+} from '@/constants/propertyType';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { formatCurrency } from '@/utils/formatters';
 import type { Language, Property } from '@/types/app.types';
@@ -44,6 +47,8 @@ export function RecentProperties({
       </View>
 
       {properties.map((property) => {
+        const Icon = PROPERTY_TYPE_ICONS[property.type] ?? PROPERTY_TYPE_ICONS.other;
+        const iconColor = PROPERTY_TYPE_COLORS[property.type] ?? PROPERTY_TYPE_COLORS.other;
         const isRented = property.usage_status === 'rented';
         const rightLabel = isRented
           ? formatCurrency(
@@ -63,8 +68,8 @@ export function RecentProperties({
               },
             ]}
           >
-            <View style={[styles.iconWrap, { backgroundColor: `${Colors.primary}22` }]}>
-              <Building2 size={18} color={Colors.primary} strokeWidth={2} />
+            <View style={[styles.iconWrap, { backgroundColor: `${iconColor}22` }]}>
+              <Icon size={18} color={iconColor} strokeWidth={2} />
             </View>
 
             <View style={styles.rowContent}>

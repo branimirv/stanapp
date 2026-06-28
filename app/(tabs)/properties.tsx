@@ -11,12 +11,11 @@ import {
 import { useTheme } from 'react-native-paper';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useGlassTabBarInset } from '@/hooks/useGlassTabBarInset';
 import { Building2 } from 'lucide-react-native';
 import { PropertyCard } from '@/components/property/PropertyCard';
 import { PropertyFilters } from '@/components/property/PropertyFilters';
 import { AppExpandableSearch } from '@/components/ui/AppExpandableSearch';
-import { AppFab } from '@/components/ui/AppFab';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
@@ -24,7 +23,8 @@ import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
-import { useExpandableSearch } from '@/hooks/useExpandableSearch';
+import { useExpandableSearchState } from '@/hooks/useExpandableSearch';
+import { useSearchableTabHeader } from '@/hooks/useSearchableTabHeader';
 import { useRefetchOnFocus } from '@/hooks/useRefetchOnFocus';
 import { useTenants } from '@/hooks/useTenants';
 import { useUiStore } from '@/stores/uiStore';
@@ -36,7 +36,7 @@ type UsageFilter = 'all' | UsageStatus;
 export default function PropertiesScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
+  const { scrollPadding } = useGlassTabBarInset();
   const showConfirmDialog = useUiStore((state) => state.showConfirmDialog);
   const showToast = useUiStore((state) => state.showToast);
 
@@ -47,12 +47,27 @@ export default function PropertiesScreen() {
   useRefetchOnFocus(refetchTenants);
   const { profile } = useProfile();
 
+  const handleCreatePress = useCallback(() => {
+    router.push('/property/new');
+  }, []);
+
   const {
     search,
+    searchHasText,
+    searchExpanded,
+    handleSearchPress,
     dismissSearchIfEmpty,
     searchBarControlProps,
     listKeyboardProps,
-  } = useExpandableSearch();
+  } = useExpandableSearchState();
+
+  useSearchableTabHeader({
+    showCreate: true,
+    onCreatePress: handleCreatePress,
+    searchActive: searchHasText,
+    searchExpanded,
+    onSearchPress: handleSearchPress,
+  });
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [usageFilter, setUsageFilter] = useState<UsageFilter>('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -206,7 +221,7 @@ export default function PropertiesScreen() {
         contentContainerStyle={[
           styles.listContent,
           filteredProperties.length === 0 && styles.listEmpty,
-          { paddingBottom: insets.bottom + 88 },
+          { paddingBottom: scrollPadding },
         ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         renderItem={({ item }) => (
@@ -237,11 +252,6 @@ export default function PropertiesScreen() {
             onCtaPress={() => router.push('/property/new')}
           />
         }
-      />
-
-      <AppFab
-        style={[styles.fab, { bottom: insets.bottom + 16 }]}
-        onPress={() => router.push('/property/new')}
       />
     </View>
   );
@@ -291,9 +301,5 @@ const styles = StyleSheet.create({
     ...Typography.labelMedium,
     color: '#FFFFFF',
     textAlign: 'center',
-  },
-  fab: {
-    position: 'absolute',
-    right: 16,
   },
 });

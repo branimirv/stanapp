@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useGlassTabBarInset } from '@/hooks/useGlassTabBarInset';
+import { useDefaultTabHeader } from '@/hooks/useDefaultTabHeader';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { ExpenseBreakdown } from '@/components/reports/ExpenseBreakdown';
@@ -30,7 +31,8 @@ import type { Language, ReportPeriod } from '@/types/app.types';
 export default function ReportsScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
+  const { scrollPadding } = useGlassTabBarInset();
+  useDefaultTabHeader();
   const showToast = useUiStore((state) => state.showToast);
   const { profile } = useProfile();
 
@@ -162,7 +164,7 @@ export default function ReportsScreen() {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xl }]}
+      contentContainerStyle={[styles.content, { paddingBottom: scrollPadding }]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <PeriodFilter value={period} onChange={setPeriod} />

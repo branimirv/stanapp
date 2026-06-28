@@ -1,9 +1,12 @@
 import { StyleSheet, View } from 'react-native';
 
+import { CreateHeaderButton } from '@/components/ui/CreateHeaderButton';
 import { SearchHeaderButton } from '@/components/ui/SearchHeaderButton';
 import { SettingsHeaderButton } from '@/components/ui/SettingsHeaderButton';
 
 interface TabHeaderActionsProps {
+  showCreate?: boolean;
+  onCreatePress?: () => void;
   showSearch?: boolean;
   searchActive?: boolean;
   searchExpanded?: boolean;
@@ -11,6 +14,8 @@ interface TabHeaderActionsProps {
 }
 
 export function TabHeaderActions({
+  showCreate,
+  onCreatePress,
   showSearch,
   searchActive,
   searchExpanded,
@@ -18,6 +23,9 @@ export function TabHeaderActions({
 }: TabHeaderActionsProps) {
   return (
     <View style={styles.container}>
+      {showCreate && onCreatePress ? (
+        <CreateHeaderButton onPress={onCreatePress} />
+      ) : null}
       {showSearch && onSearchPress ? (
         <SearchHeaderButton
           active={searchActive}

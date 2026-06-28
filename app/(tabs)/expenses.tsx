@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useGlassTabBarInset } from '@/hooks/useGlassTabBarInset';
 import { ExpenseCard } from '@/components/expense/ExpenseCard';
 import {
   ExpenseFilters,
@@ -19,7 +19,6 @@ import {
 } from '@/components/expense/ExpenseFilters';
 import type { RecurringFilter, TypeFilter } from '@/components/expense/ExpenseMoreFiltersSheet';
 import { AppExpandableSearch } from '@/components/ui/AppExpandableSearch';
-import { AppFab } from '@/components/ui/AppFab';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -45,7 +44,7 @@ interface ExpenseSection {
 export default function ExpensesScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
+  const { scrollPadding } = useGlassTabBarInset();
   const params = useLocalSearchParams<{ filter?: string }>();
   const showConfirmDialog = useUiStore((state) => state.showConfirmDialog);
   const showToast = useUiStore((state) => state.showToast);
@@ -284,7 +283,7 @@ export default function ExpensesScreen() {
         {...listKeyboardProps}
         contentContainerStyle={[
           sections.length === 0 && styles.listEmpty,
-          { paddingBottom: insets.bottom + 88 },
+          { paddingBottom: scrollPadding },
         ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         renderSectionHeader={({ section }) => (
@@ -326,11 +325,6 @@ export default function ExpensesScreen() {
           />
         }
       />
-
-      <AppFab
-        style={[styles.fab, { bottom: insets.bottom + 16 }]}
-        onPress={() => router.push('/expense/new')}
-      />
     </View>
   );
 }
@@ -368,9 +362,5 @@ const styles = StyleSheet.create({
   },
   itemWrap: {
     paddingHorizontal: Spacing.md,
-  },
-  fab: {
-    position: 'absolute',
-    right: 16,
   },
 });
