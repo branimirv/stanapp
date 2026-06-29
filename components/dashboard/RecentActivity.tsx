@@ -1,16 +1,22 @@
-import { ArrowDownLeft, ArrowUpRight } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Colors, Spacing, Typography } from '@/constants/theme';
-import { formatCurrency, formatDateTime } from '@/utils/formatters';
+import { formatCurrency, formatDate } from '@/utils/formatters';
 import type { Language, RecentActivityItem } from '@/types/app.types';
 
 export interface RecentActivityProps {
   items: RecentActivityItem[];
   language?: Language;
   onItemPress?: (item: RecentActivityItem) => void;
+}
+
+function getItemDetail(item: RecentActivityItem, t: (key: string, options?: { defaultValue?: string }) => string) {
+  if (item.type === 'expense') {
+    return t(`categories.${item.title}`, { defaultValue: item.title });
+  }
+  return item.title;
 }
 
 export function RecentActivity({ items, language = 'hr', onItemPress }: RecentActivityProps) {
@@ -36,9 +42,9 @@ export function RecentActivity({ items, language = 'hr', onItemPress }: RecentAc
 
       {items.map((item) => {
         const isIncome = item.type === 'rent_payment';
-        const Icon = isIncome ? ArrowDownLeft : ArrowUpRight;
         const accentColor = isIncome ? Colors.accent : Colors.danger;
-        const prefix = isIncome ? '+' : '-';
+        const typeLabel = isIncome ? t('dashboard.activityRent') : t('dashboard.activityExpense');
+        const detail = getItemDetail(item, t);
 
         const content = (
           <View
@@ -50,23 +56,19 @@ export function RecentActivity({ items, language = 'hr', onItemPress }: RecentAc
               },
             ]}
           >
-            <View style={[styles.iconWrap, { backgroundColor: `${accentColor}22` }]}>
-              <Icon size={18} color={accentColor} strokeWidth={2} />
-            </View>
-
             <View style={styles.rowContent}>
-              <Text style={[styles.title, { color: theme.colors.onSurface }]} numberOfLines={1}>
-                {item.type === 'expense'
-                  ? t(`categories.${item.title}`, { defaultValue: item.title })
-                  : item.title}
+              <Text style={styles.titleLine} numberOfLines={1}>
+                <Text style={{ color: accentColor }}>{typeLabel}</Text>
+                <Text style={{ color: theme.colors.onSurfaceVariant }}> · </Text>
+                <Text style={{ color: theme.colors.onSurface }}>{detail}</Text>
               </Text>
               <Text style={[styles.date, { color: theme.colors.onSurfaceVariant }]}>
-                {formatDateTime(item.created_at, resolvedLanguage)}
+                {formatDate(item.created_at, resolvedLanguage)}
               </Text>
             </View>
 
             <Text style={[styles.amount, { color: accentColor }]}>
-              {prefix}
+              {isIncome ? '+' : '-'}
               {formatCurrency(item.amount, item.currency ?? 'EUR', resolvedLanguage)}
             </Text>
           </View>
@@ -101,29 +103,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    padding: Spacing.md,
-    marginBottom: Spacing.sm,
-  },
-  iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
+    marginBottom: Spacing.xs,
   },
   rowContent: {
     flex: 1,
-    gap: 2,
+    gap: 1,
   },
-  title: {
+  titleLine: {
     ...Typography.bodyLarge,
   },
   date: {
     ...Typography.bodySmall,
   },
   amount: {
-    ...Typography.titleMedium,
+    ...Typography.bodyLarge,
+    fontWeight: '600',
   },
 });

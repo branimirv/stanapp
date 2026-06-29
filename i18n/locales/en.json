@@ -153,6 +153,8 @@
     "tenantsCount": "{{count}} tenant",
     "tenantsCount_plural": "{{count}} tenants",
     "recentActivity": "Recent activity",
+    "activityRent": "Rent",
+    "activityExpense": "Expense",
     "noRecentActivity": "No recent activity",
     "quickActions": "Quick actions",
     "addExpense": "Add expense",

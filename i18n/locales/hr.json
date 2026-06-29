@@ -153,6 +153,8 @@
     "tenantsCount": "{{count}} stanar",
     "tenantsCount_plural": "{{count}} stanara",
     "recentActivity": "Nedavna aktivnost",
+    "activityRent": "Najam",
+    "activityExpense": "Trošak",
     "noRecentActivity": "Nema nedavne aktivnosti",
     "quickActions": "Brze radnje",
     "addExpense": "Dodaj trošak",
