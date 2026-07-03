@@ -2,16 +2,14 @@ import { ChevronDown } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import {
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
-  useWindowDimensions,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { Divider, HelperText, Menu, Text, useTheme } from 'react-native-paper';
+import { Divider, HelperText, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { AppButton } from '@/components/ui/AppButton';
@@ -44,8 +42,6 @@ export function AppPicker<T extends string = string>({
 }: AppPickerProps<T>) {
   const theme = useTheme();
   const { t } = useTranslation();
-  const { width } = useWindowDimensions();
-  const [menuVisible, setMenuVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
   const displayPlaceholder = placeholder ?? t('ui.selectOption');
@@ -54,21 +50,14 @@ export function AppPicker<T extends string = string>({
     [options, value],
   );
 
-  const useModal = Platform.OS === 'web' || width < 400;
-
   const openPicker = useCallback(() => {
-    if (disabled) return;
-    if (useModal) {
-      setModalVisible(true);
-    } else {
-      setMenuVisible(true);
-    }
-  }, [disabled, useModal]);
+    if (disabled || options.length === 0) return;
+    setModalVisible(true);
+  }, [disabled, options.length]);
 
   const handleSelect = useCallback(
     (nextValue: T) => {
       onValueChange(nextValue);
-      setMenuVisible(false);
       setModalVisible(false);
     },
     [onValueChange],
@@ -116,34 +105,7 @@ export function AppPicker<T extends string = string>({
         </Text>
       ) : null}
 
-      {useModal ? (
-        trigger
-      ) : (
-        <Menu
-          visible={menuVisible}
-          onDismiss={() => setMenuVisible(false)}
-          anchor={trigger}
-          contentStyle={[
-            styles.menuContent,
-            { backgroundColor: theme.colors.surface },
-          ]}
-        >
-          <ScrollView style={styles.menuScroll} nestedScrollEnabled>
-            {options.map((option) => (
-              <Menu.Item
-                key={option.value}
-                title={option.label}
-                onPress={() => handleSelect(option.value)}
-                titleStyle={
-                  option.value === value
-                    ? { color: theme.colors.primary, fontWeight: '600' }
-                    : undefined
-                }
-              />
-            ))}
-          </ScrollView>
-        </Menu>
-      )}
+      {trigger}
 
       {error ? (
         <HelperText type="error" visible>
@@ -157,12 +119,13 @@ export function AppPicker<T extends string = string>({
         animationType="slide"
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View
+        <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
+          <Pressable
             style={[
               styles.modalContent,
               { backgroundColor: theme.colors.surface },
             ]}
+            onPress={(event) => event.stopPropagation()}
           >
             <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>
               {label ?? t('common.select')}
@@ -204,8 +167,8 @@ export function AppPicker<T extends string = string>({
             <AppButton mode="text" onPress={() => setModalVisible(false)}>
               {t('common.cancel')}
             </AppButton>
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </View>
   );
@@ -232,13 +195,6 @@ const styles = StyleSheet.create({
   value: {
     ...Typography.bodyLarge,
     flex: 1,
-  },
-  menuContent: {
-    maxHeight: 280,
-    borderRadius: 12,
-  },
-  menuScroll: {
-    maxHeight: 280,
   },
   modalOverlay: {
     flex: 1,

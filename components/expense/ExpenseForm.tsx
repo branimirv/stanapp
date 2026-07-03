@@ -9,7 +9,7 @@ import { AppDatePicker } from '@/components/ui/AppDatePicker';
 import { AppPicker } from '@/components/ui/AppPicker';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { AppTextInput } from '@/components/ui/AppTextInput';
-import { CategoryBadge } from '@/components/expense/CategoryBadge';
+import { CategoryChipPicker } from '@/components/expense/CategoryChipPicker';
 import { Spacing, Typography } from '@/constants/theme';
 import type { ExpenseCategory, ExpenseType, Property } from '@/types/app.types';
 import { defaultRecurringForType, filterCategoriesByType } from '@/utils/expense';
@@ -81,7 +81,6 @@ export function ExpenseForm({
   const [expenseType, setExpenseType] = useState<ExpenseType>(initialType);
 
   const selectedCategoryId = watch('category_id');
-  const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
 
   const filteredCategories = useMemo(
     () => filterCategoriesByType(categories, expenseType),
@@ -110,11 +109,6 @@ export function ExpenseForm({
   const propertyOptions = properties.map((property) => ({
     label: property.name,
     value: property.id,
-  }));
-
-  const categoryOptions = filteredCategories.map((category) => ({
-    label: t(`categories.${category.key}`),
-    value: category.id,
   }));
 
   const translateError = (message?: string) => (message ? t(message) : undefined);
@@ -164,24 +158,13 @@ export function ExpenseForm({
         control={control}
         name="category_id"
         render={({ field: { value, onChange }, fieldState }) => (
-          <View style={styles.categoryField}>
-            <AppPicker
-              label={t('expenses.category')}
-              placeholder={t('expenses.selectCategory')}
-              options={categoryOptions}
-              value={value || null}
-              onValueChange={onChange}
-              error={translateError(fieldState.error?.message)}
-            />
-            {selectedCategory ? (
-              <CategoryBadge
-                categoryKey={selectedCategory.key}
-                icon={selectedCategory.icon}
-                color={selectedCategory.color}
-                style={styles.categoryPreview}
-              />
-            ) : null}
-          </View>
+          <CategoryChipPicker
+            label={t('expenses.category')}
+            categories={filteredCategories}
+            value={value || null}
+            onValueChange={onChange}
+            error={translateError(fieldState.error?.message)}
+          />
         )}
       />
 
@@ -284,12 +267,6 @@ const styles = StyleSheet.create({
   },
   typeHint: {
     ...Typography.bodySmall,
-  },
-  categoryField: {
-    gap: Spacing.sm,
-  },
-  categoryPreview: {
-    alignSelf: 'flex-start',
   },
   switchRow: {
     flexDirection: 'row',

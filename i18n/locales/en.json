@@ -263,7 +263,7 @@
   },
   "usageStatus": {
     "rented": "Rented",
-    "personal_use": "Personal use",
+    "personal_use": "Personal",
     "vacant": "Vacant",
     "in_renovation": "In renovation"
   },
@@ -319,6 +319,7 @@
     "expenseDetails": "Expense details",
     "category": "Category",
     "selectCategory": "Select category",
+    "noCategories": "No categories available. Check your database connection.",
     "property": "Property",
     "selectProperty": "Select property",
     "amount": "Amount",

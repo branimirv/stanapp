@@ -8,7 +8,8 @@ export function filterCategoriesByType(
   categories: ExpenseCategory[],
   type: ExpenseType,
 ): ExpenseCategory[] {
-  return categories.filter((category) => category.type === type);
+  const matched = categories.filter((category) => category.type === type);
+  return matched.length > 0 ? matched : categories;
 }
 
 export function defaultRecurringForType(type: ExpenseType): boolean {

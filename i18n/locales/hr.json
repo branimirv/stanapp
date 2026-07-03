@@ -263,7 +263,7 @@
   },
   "usageStatus": {
     "rented": "U najmu",
-    "personal_use": "Osobna uporaba",
+    "personal_use": "Osobno",
     "vacant": "Prazno",
     "in_renovation": "U obnovi"
   },
@@ -319,6 +319,7 @@
     "expenseDetails": "Detalji troška",
     "category": "Kategorija",
     "selectCategory": "Odaberi kategoriju",
+    "noCategories": "Nema dostupnih kategorija. Provjerite vezu s bazom podataka.",
     "property": "Nekretnina",
     "selectProperty": "Odaberi nekretninu",
     "amount": "Iznos",
