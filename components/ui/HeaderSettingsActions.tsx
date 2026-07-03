@@ -2,15 +2,10 @@ import { HeaderActionsPill } from '@/components/ui/HeaderActionsPill';
 import { HeaderRightInset } from '@/components/ui/HeaderEdgeInset';
 import { SettingsHeaderButton } from '@/components/ui/SettingsHeaderButton';
 
-interface StackHeaderActionsProps {
-  children?: React.ReactNode;
-}
-
-export function StackHeaderActions({ children }: StackHeaderActionsProps) {
+export function HeaderSettingsActions() {
   return (
     <HeaderRightInset>
       <HeaderActionsPill>
-        {children}
         <SettingsHeaderButton />
       </HeaderActionsPill>
     </HeaderRightInset>

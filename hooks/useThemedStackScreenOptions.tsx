@@ -1,7 +1,8 @@
 import { useTheme } from 'react-native-paper';
 
-import { SettingsHeaderButton } from '@/components/ui/SettingsHeaderButton';
+import { HeaderSettingsActions } from '@/components/ui/HeaderSettingsActions';
 import { Colors } from '@/constants/theme';
+import { headerBarStyle, headerRightContainerStyle } from '@/constants/header';
 
 interface ThemedStackScreenOptions {
   showSettings?: boolean;
@@ -15,14 +16,17 @@ export function useThemedStackScreenOptions({
   return {
     headerStyle: {
       backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
+      ...headerBarStyle,
     },
     headerTintColor: theme.colors.onSurface,
+    headerBackTitleVisible: false,
+    headerRightContainerStyle,
     headerShadowVisible: false,
     contentStyle: {
       backgroundColor: theme.colors.background,
     },
     ...(showSettings && {
-      headerRight: () => <SettingsHeaderButton />,
+      headerRight: () => <HeaderSettingsActions />,
     }),
   };
 }

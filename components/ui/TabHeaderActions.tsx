@@ -1,6 +1,6 @@
-import { StyleSheet, View } from 'react-native';
-
 import { CreateHeaderButton } from '@/components/ui/CreateHeaderButton';
+import { HeaderActionsPill } from '@/components/ui/HeaderActionsPill';
+import { HeaderRightInset } from '@/components/ui/HeaderEdgeInset';
 import { SearchHeaderButton } from '@/components/ui/SearchHeaderButton';
 import { SettingsHeaderButton } from '@/components/ui/SettingsHeaderButton';
 
@@ -22,29 +22,20 @@ export function TabHeaderActions({
   onSearchPress,
 }: TabHeaderActionsProps) {
   return (
-    <View style={styles.container}>
-      {showCreate && onCreatePress ? (
-        <CreateHeaderButton onPress={onCreatePress} />
-      ) : null}
-      {showSearch && onSearchPress ? (
-        <SearchHeaderButton
-          active={searchActive}
-          expanded={searchExpanded}
-          onPress={onSearchPress}
-        />
-      ) : null}
-      <SettingsHeaderButton style={styles.settings} />
-    </View>
+    <HeaderRightInset>
+      <HeaderActionsPill>
+        {showCreate && onCreatePress ? (
+          <CreateHeaderButton onPress={onCreatePress} />
+        ) : null}
+        {showSearch && onSearchPress ? (
+          <SearchHeaderButton
+            active={searchActive}
+            expanded={searchExpanded}
+            onPress={onSearchPress}
+          />
+        ) : null}
+        <SettingsHeaderButton />
+      </HeaderActionsPill>
+    </HeaderRightInset>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  settings: {
-    marginRight: 8,
-  },
-});

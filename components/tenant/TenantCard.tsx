@@ -1,12 +1,13 @@
 import { differenceInDays, parseISO } from 'date-fns';
-import { Calendar, Mail, Phone } from 'lucide-react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Calendar, Mail, MessageSquare, Phone } from 'lucide-react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { Card, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppBadge } from '@/components/ui/AppBadge';
 import { CONTRACT_EXPIRING_DAYS } from '@/constants/config';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { formatCurrency, formatDate } from '@/utils/formatters';
+import { getAvatarColor, getInitials } from '@/utils/avatar';
 import type { Language, Tenant } from '@/types/app.types';
 
 type ContractStatus = 'active' | 'expiring_soon' | 'expired';
@@ -40,6 +41,10 @@ export interface TenantCardProps {
   onPress?: () => void;
 }
 
+function openUrl(url: string) {
+  Linking.openURL(url).catch(() => undefined);
+}
+
 export function TenantCard({
   tenant,
   currency = 'EUR',
@@ -51,6 +56,8 @@ export function TenantCard({
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
   const contractStatus = getContractStatus(tenant);
   const fullName = `${tenant.first_name} ${tenant.last_name}`;
+  const avatarColor = getAvatarColor(fullName);
+  const initials = getInitials(tenant.first_name, tenant.last_name);
 
   return (
     <Pressable onPress={onPress} disabled={!onPress}>
@@ -63,13 +70,50 @@ export function TenantCard({
       >
         <Card.Content style={styles.content}>
           <View style={styles.header}>
-            <Text style={[styles.name, { color: theme.colors.onSurface }]} numberOfLines={1}>
-              {fullName}
-            </Text>
-            <AppBadge
-              label={t(CONTRACT_LABELS[contractStatus])}
-              variant={CONTRACT_VARIANTS[contractStatus]}
-            />
+            <View style={[styles.avatar, { backgroundColor: `${avatarColor}22` }]}>
+              <Text style={[styles.initials, { color: avatarColor }]}>{initials}</Text>
+            </View>
+            <View style={styles.headerText}>
+              <Text style={[styles.name, { color: theme.colors.onSurface }]} numberOfLines={1}>
+                {fullName}
+              </Text>
+              <AppBadge
+                label={t(CONTRACT_LABELS[contractStatus])}
+                variant={CONTRACT_VARIANTS[contractStatus]}
+              />
+            </View>
+            <View style={styles.contactActions}>
+              {tenant.phone ? (
+                <Pressable
+                  onPress={() => openUrl(`tel:${tenant.phone}`)}
+                  style={[styles.contactButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('tenants.callTenant')}
+                >
+                  <Phone size={16} color={theme.colors.primary} strokeWidth={2} />
+                </Pressable>
+              ) : null}
+              {tenant.email ? (
+                <Pressable
+                  onPress={() => openUrl(`mailto:${tenant.email}`)}
+                  style={[styles.contactButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('tenants.emailTenant')}
+                >
+                  <Mail size={16} color={theme.colors.primary} strokeWidth={2} />
+                </Pressable>
+              ) : null}
+              {tenant.phone ? (
+                <Pressable
+                  onPress={() => openUrl(`sms:${tenant.phone}`)}
+                  style={[styles.contactButton, { backgroundColor: theme.colors.surfaceVariant }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('tenants.messageTenant')}
+                >
+                  <MessageSquare size={16} color={theme.colors.primary} strokeWidth={2} />
+                </Pressable>
+              ) : null}
+            </View>
           </View>
 
           <View style={styles.metaRow}>
@@ -127,12 +171,36 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     gap: Spacing.sm,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initials: {
+    ...Typography.titleMedium,
+    fontWeight: '700',
+  },
+  headerText: {
+    flex: 1,
+    gap: Spacing.xs,
   },
   name: {
     ...Typography.titleMedium,
-    flex: 1,
+  },
+  contactActions: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
+  contactButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   metaRow: {
     flexDirection: 'row',

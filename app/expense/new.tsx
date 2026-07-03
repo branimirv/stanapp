@@ -14,7 +14,13 @@ import type { ExpenseFormValues } from '@/utils/validators';
 import { parseISO } from 'date-fns';
 
 export default function NewExpenseScreen() {
-  const { propertyId } = useLocalSearchParams<{ propertyId?: string }>();
+  const { propertyId, categoryId, amount, notes, billingDate } = useLocalSearchParams<{
+    propertyId?: string;
+    categoryId?: string;
+    amount?: string;
+    notes?: string;
+    billingDate?: string;
+  }>();
   const { t } = useTranslation();
   const { properties, isLoading: propertiesLoading } = useProperties();
   const { categories, isLoading: categoriesLoading } = useExpenseCategories();
@@ -76,7 +82,10 @@ export default function NewExpenseScreen() {
           categories={categories}
           defaultValues={{
             property_id: propertyId ?? '',
-            billing_date: new Date().toISOString().slice(0, 10),
+            category_id: categoryId ?? '',
+            amount: amount ? Number.parseFloat(amount) : 0,
+            billing_date: billingDate ?? new Date().toISOString().slice(0, 10),
+            notes: notes ?? null,
           }}
           onSubmit={handleSubmit}
           isSubmitting={isSaving}

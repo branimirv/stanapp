@@ -65,6 +65,8 @@ export default function ExpensesScreen() {
   useEffect(() => {
     if (params.filter === 'overdue') {
       setStatusFilter('overdue');
+    } else if (params.filter === 'unpaid') {
+      setStatusFilter('unpaid');
     }
   }, [params.filter]);
 

@@ -25,7 +25,7 @@ export type ExpenseCategory = Database['public']['Tables']['expense_categories']
 export type ExpenseType = 'regular' | 'irregular';
 
 export type PropertyType = 'apartment' | 'house' | 'garage' | 'other';
-export type UsageStatus = 'rented' | 'personal_use' | 'vacant';
+export type UsageStatus = 'rented' | 'personal_use' | 'vacant' | 'in_renovation';
 export type PaymentStatus = 'pending' | 'paid' | 'late' | 'partial';
 export type Language = 'en' | 'hr';
 export type Theme = 'light' | 'dark' | 'system';
@@ -43,22 +43,33 @@ export interface RecentActivityItem {
   created_at: string;
 }
 
-export type DashboardPeriod =
-  | { mode: 'month'; month: number; year: number }
-  | { mode: 'all' };
+export interface DashboardPeriod {
+  month: number;
+  year: number;
+}
 
 export interface DashboardStats {
   totalRentIncome: number;
   totalExpenses: number;
   netIncome: number;
+  incomeDeltaPct: number | null;
+  expensesDeltaPct: number | null;
+  netDeltaPct: number | null;
   activePropertiesCount: number;
   activeTenantsCount: number;
+  rentedCount: number;
+  vacantCount: number;
+  totalPropertiesCount: number;
+  expectedRent: number;
+  collectedRent: number;
+  unpaidRentCount: number;
   overdueExpensesCount: number;
+  upcomingDueCount: number;
+  contractsExpiringCount: number;
   recentActivity: RecentActivityItem[];
   currency: string;
   month: number;
   year: number;
-  periodMode: 'month' | 'all';
 }
 
 export type ReportPeriodPreset =

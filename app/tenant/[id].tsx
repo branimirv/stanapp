@@ -1,10 +1,12 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Mail, MessageSquare, Pencil, Phone } from 'lucide-react-native';
 import { Divider, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppBadge } from '@/components/ui/AppBadge';
 import { AppButton } from '@/components/ui/AppButton';
+import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -160,9 +162,11 @@ export default function TenantDetailScreen() {
           title: fullName,
           headerRight: () => (
             <StackHeaderActions>
-              <AppButton mode="text" onPress={() => router.push(`/tenant/edit/${tenant.id}`)}>
-                {t('common.edit')}
-              </AppButton>
+              <HeaderIconButton
+                icon={Pencil}
+                onPress={() => router.push(`/tenant/edit/${tenant.id}`)}
+                accessibilityLabel={t('common.edit')}
+              />
             </StackHeaderActions>
           ),
         }}
@@ -189,14 +193,43 @@ export default function TenantDetailScreen() {
           {t('tenants.contactInfo')}
         </Text>
         {tenant.email ? (
-          <Text style={[styles.row, { color: theme.colors.onSurfaceVariant }]}>
-            {t('tenants.email')}: {tenant.email}
-          </Text>
+          <Pressable
+            style={styles.contactRow}
+            onPress={() => Linking.openURL(`mailto:${tenant.email}`)}
+            accessibilityRole="button"
+            accessibilityLabel={t('tenants.emailTenant')}
+          >
+            <Mail size={16} color={theme.colors.primary} strokeWidth={2} />
+            <Text style={[styles.row, { color: theme.colors.primary }]}>
+              {tenant.email}
+            </Text>
+          </Pressable>
         ) : null}
         {tenant.phone ? (
-          <Text style={[styles.row, { color: theme.colors.onSurfaceVariant }]}>
-            {t('tenants.phone')}: {tenant.phone}
-          </Text>
+          <>
+            <Pressable
+              style={styles.contactRow}
+              onPress={() => Linking.openURL(`tel:${tenant.phone}`)}
+              accessibilityRole="button"
+              accessibilityLabel={t('tenants.callTenant')}
+            >
+              <Phone size={16} color={theme.colors.primary} strokeWidth={2} />
+              <Text style={[styles.row, { color: theme.colors.primary }]}>
+                {tenant.phone}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={styles.contactRow}
+              onPress={() => Linking.openURL(`sms:${tenant.phone}`)}
+              accessibilityRole="button"
+              accessibilityLabel={t('tenants.messageTenant')}
+            >
+              <MessageSquare size={16} color={theme.colors.primary} strokeWidth={2} />
+              <Text style={[styles.row, { color: theme.colors.primary }]}>
+                {t('tenants.sendMessage')}
+              </Text>
+            </Pressable>
+          </>
         ) : null}
 
         <Text style={[styles.section, { color: theme.colors.onSurface }]}>
@@ -298,6 +331,12 @@ const styles = StyleSheet.create({
   },
   row: {
     ...Typography.bodyMedium,
+  },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
   },
   actions: {
     marginTop: Spacing.lg,

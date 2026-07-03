@@ -41,6 +41,7 @@ export function PropertyFilters({
       { label: t('usageStatus.rented'), value: 'rented' as const },
       { label: t('usageStatus.personal_use'), value: 'personal_use' as const },
       { label: t('usageStatus.vacant'), value: 'vacant' as const },
+      { label: t('usageStatus.in_renovation'), value: 'in_renovation' as const },
     ],
     [t],
   );

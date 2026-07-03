@@ -3,7 +3,8 @@ import { BarChart3, Building2, LayoutDashboard, Receipt } from 'lucide-react-nat
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'react-native-paper';
 import { GlassTabBar } from '@/components/ui/GlassTabBar';
-import { SettingsHeaderButton } from '@/components/ui/SettingsHeaderButton';
+import { HeaderSettingsActions } from '@/components/ui/HeaderSettingsActions';
+import { headerBarStyle, headerRightContainerStyle } from '@/constants/header';
 import { Colors } from '@/constants/theme';
 
 export default function TabLayout() {
@@ -18,16 +19,18 @@ export default function TabLayout() {
         tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
         headerStyle: {
           backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
+          ...headerBarStyle,
         },
         headerTintColor: theme.colors.onSurface,
         headerTitleAlign: 'left',
+        headerRightContainerStyle,
         tabBarStyle: {
           position: 'absolute',
           backgroundColor: 'transparent',
           borderTopWidth: 0,
           elevation: 0,
         },
-        headerRight: () => <SettingsHeaderButton />,
+        headerRight: () => <HeaderSettingsActions />,
       }}
     >
       <Tabs.Screen

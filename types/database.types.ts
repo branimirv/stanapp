@@ -53,7 +53,7 @@ export type Database = {
           user_id: string;
           parent_property_id: string | null;
           type: 'apartment' | 'house' | 'garage' | 'other';
-          usage_status: 'rented' | 'personal_use' | 'vacant';
+          usage_status: 'rented' | 'personal_use' | 'vacant' | 'in_renovation';
           name: string;
           address: string;
           floor: number | null;
@@ -71,7 +71,7 @@ export type Database = {
           user_id: string;
           parent_property_id?: string | null;
           type?: 'apartment' | 'house' | 'garage' | 'other';
-          usage_status?: 'rented' | 'personal_use' | 'vacant';
+          usage_status?: 'rented' | 'personal_use' | 'vacant' | 'in_renovation';
           name: string;
           address: string;
           floor?: number | null;
@@ -89,7 +89,7 @@ export type Database = {
           user_id?: string;
           parent_property_id?: string | null;
           type?: 'apartment' | 'house' | 'garage' | 'other';
-          usage_status?: 'rented' | 'personal_use' | 'vacant';
+          usage_status?: 'rented' | 'personal_use' | 'vacant' | 'in_renovation';
           name?: string;
           address?: string;
           floor?: number | null;

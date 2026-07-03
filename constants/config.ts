@@ -3,7 +3,7 @@ export type SupportedCurrency = (typeof SUPPORTED_CURRENCIES)[number];
 
 export const PROPERTY_TYPES = ['apartment', 'house', 'garage', 'other'] as const;
 
-export const USAGE_STATUSES = ['rented', 'personal_use', 'vacant'] as const;
+export const USAGE_STATUSES = ['rented', 'personal_use', 'vacant', 'in_renovation'] as const;
 
 export const LANGUAGES = ['en', 'hr'] as const;
 

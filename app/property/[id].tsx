@@ -7,18 +7,21 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { Pencil } from 'lucide-react-native';
-import { IconButton, Text, useTheme } from 'react-native-paper';
+import { Pencil, FileText, LayoutGrid, Users, Receipt, Banknote } from 'lucide-react-native';
+import type { LucideIcon } from 'lucide-react-native';
+import { Text, useTheme } from 'react-native-paper';
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { TabBar, TabView, type Route } from 'react-native-tab-view';
+import { TabView, type Route } from 'react-native-tab-view';
 import { useTranslation } from 'react-i18next';
 import { AppFab } from '@/components/ui/AppFab';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
+import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { PropertyTabBar } from '@/components/property/PropertyTabBar';
 import { PropertyStats } from '@/components/property/PropertyStats';
 import { PropertyTypeBadge } from '@/components/property/PropertyTypeBadge';
 import { SubPropertyList } from '@/components/property/SubPropertyList';
@@ -26,6 +29,9 @@ import { UsageStatusBadge } from '@/components/property/UsageStatusBadge';
 import { TenantCard } from '@/components/tenant/TenantCard';
 import { ExpenseCard } from '@/components/expense/ExpenseCard';
 import { MonthlyGrid } from '@/components/rent/MonthlyGrid';
+import { QuickAddExpenseSheet } from '@/components/expense/QuickAddExpenseSheet';
+import { StatementSheet } from '@/components/property/StatementSheet';
+import { RentMonthActionSheet } from '@/components/rent/RentMonthActionSheet';
 import { RentPaymentCard } from '@/components/rent/RentPaymentCard';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useExpenses } from '@/hooks/useExpenses';
@@ -37,13 +43,29 @@ import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { supabase } from '@/lib/supabase';
 import { usePropertyStore } from '@/stores/propertyStore';
 import { useUiStore } from '@/stores/uiStore';
-import type { Property } from '@/types/app.types';
+import type { Property, RentPayment } from '@/types/app.types';
 import { resolveCurrency } from '@/utils/currency';
 import { getCurrentMonthRange, isDateInRange } from '@/utils/dateRange';
 import { formatCurrency, formatDate, formatPeriod } from '@/utils/formatters';
 
 type TabKey = 'overview' | 'tenants' | 'expenses' | 'rent';
 type ExpensePeriodFilter = 'current_month' | 'all';
+
+type PropertyRoute = Route & { key: TabKey };
+
+const TAB_ICONS: Record<TabKey, LucideIcon> = {
+  overview: LayoutGrid,
+  tenants: Users,
+  expenses: Receipt,
+  rent: Banknote,
+};
+
+function formatDateOnly(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 export default function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -61,6 +83,15 @@ export default function PropertyDetailScreen() {
   const [index, setIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [expensePeriodFilter, setExpensePeriodFilter] = useState<ExpensePeriodFilter>('all');
+  const [quickAddVisible, setQuickAddVisible] = useState(false);
+  const [statementVisible, setStatementVisible] = useState(false);
+  const [isSavingExpense, setIsSavingExpense] = useState(false);
+  const [rentSheet, setRentSheet] = useState<{
+    visible: boolean;
+    month: number;
+    year: number;
+    payment?: RentPayment;
+  }>({ visible: false, month: new Date().getMonth() + 1, year: new Date().getFullYear() });
 
   const { profile } = useProfile();
   const language = profile?.language ?? (i18n.language as 'en' | 'hr');
@@ -76,11 +107,14 @@ export default function PropertyDetailScreen() {
     isLoading: expensesLoading,
     refetch: refetchExpenses,
     markAsPaid,
+    create: createExpense,
   } = useExpenses({ propertyId: id });
   const {
     rentPayments,
     isLoading: rentLoading,
     refetch: refetchRent,
+    create: createRentPayment,
+    markAsPaid: markRentAsPaid,
   } = useRentPayments({ propertyId: id });
   const { categories } = useExpenseCategories();
 
@@ -170,13 +204,18 @@ export default function PropertyDetailScreen() {
 
   useRefetchOnFocus(refetchTabData);
 
-  const routes = useMemo<Route[]>(() => {
-    const base: Route[] = [{ key: 'overview', title: t('properties.overview') }];
+  const routes = useMemo<PropertyRoute[]>(() => {
+    const base: PropertyRoute[] = [{ key: 'overview', title: t('properties.overview') }];
     if (isRented) base.push({ key: 'tenants', title: t('properties.tenantsTab') });
     base.push({ key: 'expenses', title: t('properties.expensesTab') });
     if (isRented) base.push({ key: 'rent', title: t('properties.rentTab') });
     return base;
   }, [isRented, t]);
+
+  const activeTenant = useMemo(
+    () => tenants.find((tenant) => tenant.is_active),
+    [tenants],
+  );
 
   const expensesTabIndex = useMemo(
     () => routes.findIndex((route) => route.key === 'expenses'),
@@ -214,6 +253,117 @@ export default function PropertyDetailScreen() {
         };
       });
   }, [expenses, language]);
+
+  const handleQuickAddExpense = useCallback(
+    async (values: {
+      property_id: string;
+      category_id: string;
+      amount: number;
+      is_recurring: boolean;
+      billing_date: string;
+      notes: string | null;
+    }) => {
+      setIsSavingExpense(true);
+      try {
+        await createExpense(values);
+        showToast({ message: t('expenses.saveSuccess'), type: 'success' });
+        await refetchExpenses();
+      } catch (err) {
+        showToast({
+          message: err instanceof Error ? err.message : t('expenses.saveFailed'),
+          type: 'error',
+        });
+      } finally {
+        setIsSavingExpense(false);
+      }
+    },
+    [createExpense, refetchExpenses, showToast, t],
+  );
+
+  const openRentSheet = useCallback((month: number, year: number, payment?: RentPayment) => {
+    setRentSheet({ visible: true, month, year, payment });
+  }, []);
+
+  const handleRentMarkPaid = useCallback(async () => {
+    const { month, year, payment } = rentSheet;
+    if (!property) return;
+
+    try {
+      if (payment) {
+        if (payment.status !== 'paid') {
+          await markRentAsPaid(payment.id);
+        }
+      } else if (!activeTenant) {
+        router.push({
+          pathname: '/rent/new',
+          params: {
+            propertyId: id!,
+            periodMonth: String(month),
+            periodYear: String(year),
+          },
+        });
+        return;
+      } else {
+        await createRentPayment({
+          property_id: id!,
+          tenant_id: activeTenant.id,
+          amount: property.rent_amount,
+          period_month: month,
+          period_year: year,
+          status: 'paid',
+          payment_date: formatDateOnly(new Date()),
+          notes: null,
+        });
+      }
+      showToast({ message: t('rent.markedPaid'), type: 'success' });
+      await refetchRent();
+    } catch (err) {
+      showToast({
+        message: err instanceof Error ? err.message : t('rent.markPaidFailed'),
+        type: 'error',
+      });
+    }
+  }, [
+    activeTenant,
+    createRentPayment,
+    id,
+    markRentAsPaid,
+    property,
+    refetchRent,
+    rentSheet,
+    showToast,
+    t,
+  ]);
+
+  const handleRentPartialPayment = useCallback(() => {
+    const { month, year } = rentSheet;
+    router.push({
+      pathname: '/rent/new',
+      params: {
+        propertyId: id!,
+        ...(activeTenant ? { tenantId: activeTenant.id } : {}),
+        periodMonth: String(month),
+        periodYear: String(year),
+      },
+    });
+  }, [activeTenant, id, rentSheet]);
+
+  const handleRentAddDetails = useCallback(() => {
+    const { month, year, payment } = rentSheet;
+    if (payment) {
+      router.push(`/rent/${payment.id}`);
+      return;
+    }
+    router.push({
+      pathname: '/rent/new',
+      params: {
+        propertyId: id!,
+        ...(activeTenant ? { tenantId: activeTenant.id } : {}),
+        periodMonth: String(month),
+        periodYear: String(year),
+      },
+    });
+  }, [activeTenant, id, rentSheet]);
 
   const handleMarkPaid = useCallback(
     async (expenseId: string) => {
@@ -472,14 +622,7 @@ export default function PropertyDetailScreen() {
           year={currentYear}
           language={language}
           onMonthPress={(month, payment) => {
-            if (payment) {
-              router.push(`/rent/${payment.id}`);
-            } else {
-              router.push({
-                pathname: '/rent/new',
-                params: { propertyId: id!, periodMonth: String(month), periodYear: String(currentYear) },
-              });
-            }
+            openRentSheet(month, currentYear, payment);
           }}
         />
 
@@ -553,8 +696,13 @@ export default function PropertyDetailScreen() {
           title: property.name,
           headerRight: () => (
             <StackHeaderActions>
-              <IconButton
-                icon={({ size, color }) => <Pencil size={size} color={color} strokeWidth={2} />}
+              <HeaderIconButton
+                icon={FileText}
+                onPress={() => setStatementVisible(true)}
+                accessibilityLabel={t('statement.action')}
+              />
+              <HeaderIconButton
+                icon={Pencil}
                 onPress={() => router.push(`/property/edit/${property.id}`)}
                 accessibilityLabel={t('common.edit')}
               />
@@ -584,16 +732,45 @@ export default function PropertyDetailScreen() {
         renderScene={renderScene}
         onIndexChange={setIndex}
         initialLayout={{ width: layout.width }}
-        renderTabBar={(props) => (
-          <TabBar
-            {...props}
-            scrollEnabled
-            style={{ backgroundColor: theme.colors.surface }}
-            indicatorStyle={{ backgroundColor: theme.colors.primary }}
-            activeColor={theme.colors.primary}
-            inactiveColor={theme.colors.onSurfaceVariant}
-          />
-        )}
+        renderTabBar={(props) => <PropertyTabBar {...props} icons={TAB_ICONS} />}
+      />
+
+      <QuickAddExpenseSheet
+        visible={quickAddVisible}
+        onDismiss={() => setQuickAddVisible(false)}
+        propertyId={property.id}
+        categories={categories}
+        onSubmit={handleQuickAddExpense}
+        isSubmitting={isSavingExpense}
+      />
+
+      <StatementSheet
+        visible={statementVisible}
+        onDismiss={() => setStatementVisible(false)}
+        property={property}
+        tenants={tenants}
+        expenses={expenses}
+        rentPayments={rentPayments}
+        categories={categories}
+        landlordName={profile?.full_name ?? t('statement.landlord')}
+        currency={currency}
+        language={language}
+        onExportSuccess={() => showToast({ message: t('statement.exportSuccess'), type: 'success' })}
+        onExportError={(message) => showToast({ message, type: 'error' })}
+      />
+
+      <RentMonthActionSheet
+        visible={rentSheet.visible}
+        onDismiss={() => setRentSheet((prev) => ({ ...prev, visible: false }))}
+        month={rentSheet.month}
+        year={rentSheet.year}
+        payment={rentSheet.payment}
+        rentAmount={property.rent_amount}
+        currency={currency}
+        language={language}
+        onMarkPaid={handleRentMarkPaid}
+        onPartialPayment={handleRentPartialPayment}
+        onAddDetails={handleRentAddDetails}
       />
 
       <AppFab
@@ -606,7 +783,7 @@ export default function PropertyDetailScreen() {
           } else if (currentRoute === 'rent') {
             router.push({ pathname: '/rent/new', params: { propertyId: id! } });
           } else {
-            router.push({ pathname: '/expense/new', params: { propertyId: id! } });
+            setQuickAddVisible(true);
           }
         }}
       />

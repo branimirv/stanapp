@@ -54,12 +54,8 @@ export function DashboardPeriodFilter({
   const [showPicker, setShowPicker] = useState(false);
 
   const current = getCurrentMonthYear();
-  const draftMonth = value.mode === 'month' ? value.month : current.month;
-  const draftYear = value.mode === 'month' ? value.year : current.year;
-
-  const [pickerMode, setPickerMode] = useState<'month' | 'all'>(value.mode);
-  const [pickerMonth, setPickerMonth] = useState(draftMonth);
-  const [pickerYear, setPickerYear] = useState(draftYear);
+  const [pickerMonth, setPickerMonth] = useState(value.month);
+  const [pickerYear, setPickerYear] = useState(value.year);
 
   const locale = dateLocales[language];
 
@@ -71,49 +67,38 @@ export function DashboardPeriodFilter({
     [locale],
   );
 
-  const displayLabel =
-    value.mode === 'all'
-      ? t('dashboard.allTime')
-      : formatPeriod(value.month, value.year, language);
+  const displayLabel = formatPeriod(value.month, value.year, language);
 
   const canStepForward = useMemo(() => {
-    if (value.mode !== 'month') return false;
     const next = stepMonth(value.month, value.year, 1);
     return !isFutureMonth(next.month, next.year);
   }, [value]);
 
   const openPicker = useCallback(() => {
-    setPickerMode(value.mode);
-    setPickerMonth(draftMonth);
-    setPickerYear(draftYear);
+    setPickerMonth(value.month);
+    setPickerYear(value.year);
     setShowPicker(true);
-  }, [draftMonth, draftYear, value.mode]);
+  }, [value.month, value.year]);
 
   const closePicker = useCallback(() => {
     setShowPicker(false);
   }, []);
 
   const handlePrev = useCallback(() => {
-    if (value.mode !== 'month') return;
     const next = stepMonth(value.month, value.year, -1);
-    onChange({ mode: 'month', ...next });
+    onChange(next);
   }, [onChange, value]);
 
   const handleNext = useCallback(() => {
-    if (value.mode !== 'month') return;
     const next = stepMonth(value.month, value.year, 1);
     if (isFutureMonth(next.month, next.year)) return;
-    onChange({ mode: 'month', ...next });
+    onChange(next);
   }, [onChange, value]);
 
   const handleConfirm = useCallback(() => {
-    if (pickerMode === 'all') {
-      onChange({ mode: 'all' });
-    } else {
-      onChange({ mode: 'month', month: pickerMonth, year: pickerYear });
-    }
+    onChange({ month: pickerMonth, year: pickerYear });
     closePicker();
-  }, [closePicker, onChange, pickerMode, pickerMonth, pickerYear]);
+  }, [closePicker, onChange, pickerMonth, pickerYear]);
 
   const handleYearStep = useCallback((delta: number) => {
     setPickerYear((prev) => prev + delta);
@@ -122,28 +107,22 @@ export function DashboardPeriodFilter({
   const handleMonthSelect = useCallback((month: number) => {
     if (isFutureMonth(month, pickerYear)) return;
     setPickerMonth(month);
-    setPickerMode('month');
   }, [pickerYear]);
 
   const canStepYearForward = pickerYear < current.year;
-  const canConfirmMonth =
-    pickerMode === 'all' || !isFutureMonth(pickerMonth, pickerYear);
+  const canConfirmMonth = !isFutureMonth(pickerMonth, pickerYear);
 
   return (
     <View style={[styles.container, style]}>
       <View style={styles.row}>
-        {value.mode === 'month' ? (
-          <Pressable
-            onPress={handlePrev}
-            style={[styles.chevron, { backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface }]}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.previous')}
-          >
-            <ChevronLeft size={20} color={theme.colors.onSurface} strokeWidth={2} />
-          </Pressable>
-        ) : (
-          <View style={styles.chevronPlaceholder} />
-        )}
+        <Pressable
+          onPress={handlePrev}
+          style={[styles.chevron, { backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface }]}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.previous')}
+        >
+          <ChevronLeft size={20} color={theme.colors.onSurface} strokeWidth={2} />
+        </Pressable>
 
         <Pressable
           onPress={openPicker}
@@ -160,25 +139,21 @@ export function DashboardPeriodFilter({
           <Text style={[styles.pillText, { color: theme.colors.onSurface }]}>{displayLabel}</Text>
         </Pressable>
 
-        {value.mode === 'month' ? (
-          <Pressable
-            onPress={handleNext}
-            disabled={!canStepForward}
-            style={[
-              styles.chevron,
-              {
-                backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-                opacity: canStepForward ? 1 : 0.35,
-              },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.next')}
-          >
-            <ChevronRight size={20} color={theme.colors.onSurface} strokeWidth={2} />
-          </Pressable>
-        ) : (
-          <View style={styles.chevronPlaceholder} />
-        )}
+        <Pressable
+          onPress={handleNext}
+          disabled={!canStepForward}
+          style={[
+            styles.chevron,
+            {
+              backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
+              opacity: canStepForward ? 1 : 0.35,
+            },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.next')}
+        >
+          <ChevronRight size={20} color={theme.colors.onSurface} strokeWidth={2} />
+        </Pressable>
       </View>
 
       <Modal
@@ -197,33 +172,6 @@ export function DashboardPeriodFilter({
             <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>
               {t('dashboard.selectPeriod')}
             </Text>
-
-            <Pressable
-              onPress={() => setPickerMode('all')}
-              style={[
-                styles.allTimeRow,
-                {
-                  backgroundColor:
-                    pickerMode === 'all'
-                      ? `${Colors.primary}22`
-                      : theme.dark
-                        ? Colors.surfaceVariantDark
-                        : Colors.surfaceVariant,
-                  borderColor: pickerMode === 'all' ? Colors.primary : theme.colors.outline,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.allTimeText,
-                  {
-                    color: pickerMode === 'all' ? Colors.primary : theme.colors.onSurface,
-                  },
-                ]}
-              >
-                {t('dashboard.allTime')}
-              </Text>
-            </Pressable>
 
             <View style={styles.yearRow}>
               <Pressable
@@ -248,7 +196,7 @@ export function DashboardPeriodFilter({
 
             <View style={styles.monthGrid}>
               {MONTHS.map((month, index) => {
-                const isSelected = pickerMode === 'month' && pickerMonth === month;
+                const isSelected = pickerMonth === month;
                 const isDisabled = isFutureMonth(month, pickerYear);
 
                 return (
@@ -315,10 +263,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chevronPlaceholder: {
-    width: 36,
-    height: 36,
-  },
   pill: {
     flex: 1,
     maxWidth: 220,
@@ -347,17 +291,6 @@ const styles = StyleSheet.create({
     ...Typography.titleMedium,
     textAlign: 'center',
     marginBottom: Spacing.md,
-  },
-  allTimeRow: {
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.md,
-    alignItems: 'center',
-  },
-  allTimeText: {
-    ...Typography.titleMedium,
   },
   yearRow: {
     flexDirection: 'row',

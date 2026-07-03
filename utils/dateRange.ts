@@ -10,6 +10,10 @@ export interface MonthRange {
 export function getCurrentMonthRange(date = new Date()): MonthRange {
   const month = date.getMonth() + 1;
   const year = date.getFullYear();
+  return getMonthRange(month, year);
+}
+
+export function getMonthRange(month: number, year: number): MonthRange {
   const start = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
   const end = format(new Date(year, month, 0), 'yyyy-MM-dd');
 

@@ -1,11 +1,17 @@
 import { useTranslation } from 'react-i18next';
 import { AppBadge, type AppBadgeVariant } from '@/components/ui/AppBadge';
+import { Colors } from '@/constants/theme';
 import type { UsageStatus } from '@/types/app.types';
 
 const STATUS_VARIANTS: Record<UsageStatus, AppBadgeVariant> = {
   rented: 'success',
   personal_use: 'info',
   vacant: 'warning',
+  in_renovation: 'default',
+};
+
+const STATUS_COLORS: Partial<Record<UsageStatus, string>> = {
+  in_renovation: Colors.statusPartial,
 };
 
 export interface UsageStatusBadgeProps {
@@ -15,6 +21,10 @@ export interface UsageStatusBadgeProps {
 export function UsageStatusBadge({ status }: UsageStatusBadgeProps) {
   const { t } = useTranslation();
   return (
-    <AppBadge label={t(`usageStatus.${status}`)} variant={STATUS_VARIANTS[status]} />
+    <AppBadge
+      label={t(`usageStatus.${status}`)}
+      variant={STATUS_VARIANTS[status]}
+      color={STATUS_COLORS[status]}
+    />
   );
 }

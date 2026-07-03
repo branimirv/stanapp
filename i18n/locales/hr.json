@@ -169,7 +169,31 @@
     "allTime": "Od početka",
     "selectPeriod": "Odaberite razdoblje",
     "recentProperties": "Nedavne nekretnine",
-    "viewAllProperties": "Prikaži sve"
+    "viewAllProperties": "Prikaži sve",
+    "vsLastMonth": "u odnosu na prošli mjesec",
+    "noComparison": "Nema podataka za usporedbu",
+    "occupancy": "Popunjenost",
+    "occupancyRate": "{{percent}}% popunjeno",
+    "rented": "U najmu",
+    "vacant": "Prazno",
+    "total": "Ukupno",
+    "unpaidRent": "Neplaćena najamnina",
+    "unpaidRentCount": "{{count}} neplaćena najamnina",
+    "unpaidRentCount_plural": "{{count}} neplaćene najamnine",
+    "unpaidRentAlert": "Neki stanari još nisu platili najamninu ovog mjeseca",
+    "viewUnpaidRent": "Prikaži nekretnine",
+    "upcomingDueCount": "{{count}} uskoro dospijeva",
+    "upcomingDueCount_plural": "{{count}} uskoro dospijeva",
+    "upcomingDueAlert": "Troškovi koji dospijevaju u sljedećih 7 dana",
+    "viewUpcoming": "Prikaži nadolazeće",
+    "contractsExpiringCount": "{{count}} ugovor istječe",
+    "contractsExpiringCount_plural": "{{count}} ugovora istječu",
+    "contractsExpiringAlert": "Ugovori stanara koji istječu u sljedećih 30 dana",
+    "rentCollectionProgress": "{{percent}}% prikupljeno",
+    "expensesBilled": "Obračunati troškovi",
+    "greetingMorning": "Dobro jutro{{name}}",
+    "greetingAfternoon": "Dobar dan{{name}}",
+    "greetingEvening": "Dobra večer{{name}}"
   },
   "properties": {
     "title": "Nekretnine",
@@ -240,7 +264,8 @@
   "usageStatus": {
     "rented": "U najmu",
     "personal_use": "Osobna uporaba",
-    "vacant": "Prazno"
+    "vacant": "Prazno",
+    "in_renovation": "U obnovi"
   },
   "tenants": {
     "title": "Stanari",
@@ -279,7 +304,11 @@
     "loadFailed": "Nije moguće učitati stanare",
     "notFound": "Stanar nije pronađen",
     "onlyForRented": "Stanari se mogu dodati samo na iznajmljene nekretnine",
-    "contactInfo": "Kontakt podaci"
+    "contactInfo": "Kontakt podaci",
+    "callTenant": "Nazovi stanara",
+    "emailTenant": "Pošalji e-poštu stanaru",
+    "messageTenant": "Pošalji poruku stanaru",
+    "sendMessage": "Pošalji poruku"
   },
   "expenses": {
     "title": "Troškovi",
@@ -334,6 +363,8 @@
     "monthTotal": "Ukupno za {{period}}",
     "saveSuccess": "Trošak spremljen",
     "saveFailed": "Nije moguće spremiti trošak",
+    "quickAddTitle": "Brzo dodaj trošak",
+    "moreDetails": "Više detalja →",
     "deleteSuccess": "Trošak obrisan",
     "deleteFailed": "Nije moguće obrisati trošak",
     "loadFailed": "Nije moguće učitati troškove",
@@ -387,6 +418,8 @@
     "markPaid": "Označi kao plaćeno",
     "markedPaid": "Uplata označena kao plaćena",
     "markPaidFailed": "Nije moguće označiti uplatu kao plaćenu",
+    "partialPayment": "Djelomična uplata…",
+    "addDetails": "Dodaj detalje…",
     "totalCollected": "Ukupno prikupljeno",
     "totalPending": "Ukupno na čekanju",
     "saveSuccess": "Uplata spremljena",
@@ -544,6 +577,22 @@
     "properties": "Nekretnine",
     "expenses": "Troškovi",
     "reports": "Izvještaji"
+  },
+  "statement": {
+    "title": "Mjesečni obračun",
+    "action": "Generiraj obračun",
+    "billTo": "Primatelj",
+    "landlord": "Vlasnik",
+    "rent": "Najamnina",
+    "totalDue": "Ukupno za platiti",
+    "lineItems": "Stavke",
+    "generate": "Generiraj PDF",
+    "period": "Razdoblje",
+    "footerNote": "Ovaj obračun uključuje mjesečnu najamninu i redovite ponavljajuće troškove (režije, komunalija itd.).",
+    "generatedAt": "Generirano {{date}}",
+    "noRegularExpenses": "Nema redovitih troškova za ovaj mjesec",
+    "exportSuccess": "Obračun uspješno izvezen",
+    "exportFailed": "Nije moguće izvesti obračun"
   },
   "ui": {
     "selectDate": "Odaberite datum",

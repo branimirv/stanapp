@@ -169,7 +169,31 @@
     "allTime": "All time",
     "selectPeriod": "Select period",
     "recentProperties": "Recent properties",
-    "viewAllProperties": "View all"
+    "viewAllProperties": "View all",
+    "vsLastMonth": "vs last month",
+    "noComparison": "No prior data",
+    "occupancy": "Occupancy",
+    "occupancyRate": "{{percent}}% occupied",
+    "rented": "Rented",
+    "vacant": "Vacant",
+    "total": "Total",
+    "unpaidRent": "Unpaid rent",
+    "unpaidRentCount": "{{count}} unpaid rent",
+    "unpaidRentCount_plural": "{{count}} unpaid rents",
+    "unpaidRentAlert": "Some tenants haven't paid rent this month",
+    "viewUnpaidRent": "View properties",
+    "upcomingDueCount": "{{count}} due soon",
+    "upcomingDueCount_plural": "{{count}} due soon",
+    "upcomingDueAlert": "Expenses due in the next 7 days",
+    "viewUpcoming": "View upcoming",
+    "contractsExpiringCount": "{{count}} contract expiring",
+    "contractsExpiringCount_plural": "{{count}} contracts expiring",
+    "contractsExpiringAlert": "Tenant contracts expiring within 30 days",
+    "rentCollectionProgress": "{{percent}}% collected",
+    "expensesBilled": "Billed expenses",
+    "greetingMorning": "Good morning{{name}}",
+    "greetingAfternoon": "Good afternoon{{name}}",
+    "greetingEvening": "Good evening{{name}}"
   },
   "properties": {
     "title": "Properties",
@@ -240,7 +264,8 @@
   "usageStatus": {
     "rented": "Rented",
     "personal_use": "Personal use",
-    "vacant": "Vacant"
+    "vacant": "Vacant",
+    "in_renovation": "In renovation"
   },
   "tenants": {
     "title": "Tenants",
@@ -279,7 +304,11 @@
     "loadFailed": "Could not load tenants",
     "notFound": "Tenant not found",
     "onlyForRented": "Tenants can only be added to rented properties",
-    "contactInfo": "Contact information"
+    "contactInfo": "Contact information",
+    "callTenant": "Call tenant",
+    "emailTenant": "Email tenant",
+    "messageTenant": "Message tenant",
+    "sendMessage": "Send message"
   },
   "expenses": {
     "title": "Expenses",
@@ -334,6 +363,8 @@
     "monthTotal": "Total for {{period}}",
     "saveSuccess": "Expense saved",
     "saveFailed": "Could not save expense",
+    "quickAddTitle": "Quick add expense",
+    "moreDetails": "More details →",
     "deleteSuccess": "Expense deleted",
     "deleteFailed": "Could not delete expense",
     "loadFailed": "Could not load expenses",
@@ -387,6 +418,8 @@
     "markPaid": "Mark as paid",
     "markedPaid": "Payment marked as paid",
     "markPaidFailed": "Could not mark payment as paid",
+    "partialPayment": "Partial payment…",
+    "addDetails": "Add details…",
     "totalCollected": "Total collected",
     "totalPending": "Total pending",
     "saveSuccess": "Payment saved",
@@ -544,6 +577,22 @@
     "properties": "Properties",
     "expenses": "Expenses",
     "reports": "Reports"
+  },
+  "statement": {
+    "title": "Monthly statement",
+    "action": "Generate statement",
+    "billTo": "Bill to",
+    "landlord": "Landlord",
+    "rent": "Rent",
+    "totalDue": "Total due",
+    "lineItems": "Line items",
+    "generate": "Generate PDF",
+    "period": "Period",
+    "footerNote": "This statement includes monthly rent and regular recurring expenses (utilities, communal fees, etc.).",
+    "generatedAt": "Generated on {{date}}",
+    "noRegularExpenses": "No regular expenses for this month",
+    "exportSuccess": "Statement exported successfully",
+    "exportFailed": "Could not export statement"
   },
   "ui": {
     "selectDate": "Select date",

@@ -35,7 +35,7 @@ CREATE TABLE properties (
   type                TEXT NOT NULL DEFAULT 'apartment'
                         CHECK (type IN ('apartment', 'house', 'garage', 'other')),
   usage_status        TEXT NOT NULL DEFAULT 'personal_use'
-                        CHECK (usage_status IN ('rented', 'personal_use', 'vacant')),
+                        CHECK (usage_status IN ('rented', 'personal_use', 'vacant', 'in_renovation')),
   name                TEXT NOT NULL,
   address             TEXT NOT NULL,
   floor               INTEGER,
