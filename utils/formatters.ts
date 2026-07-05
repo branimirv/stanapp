@@ -32,7 +32,7 @@ export function formatDateTime(dateString: string, language: Language = 'hr'): s
 
 export function formatPeriod(month: number, year: number, language: Language = 'hr'): string {
   const date = new Date(year, month - 1);
-  return format(date, 'MMMM yyyy', { locale: dateLocales[language] });
+  return format(date, 'LLLL yyyy', { locale: dateLocales[language] });
 }
 
 export function formatPeriodShort(month: number, year: number, language: Language = 'hr'): string {

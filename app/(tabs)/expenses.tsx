@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { Receipt } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -300,7 +300,7 @@ export default function ExpensesScreen() {
             </Text>
             <Text style={[styles.sectionTotal, { color: theme.colors.onSurfaceVariant }]}>
               {t('expenses.monthTotal', {
-                period: format(new Date(section.year, section.month - 1), 'MMMM yyyy'),
+                period: formatPeriod(section.month, section.year, language),
               })}
               {' · '}
               {section.total.toFixed(2)} {currency}
