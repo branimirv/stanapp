@@ -200,6 +200,7 @@
     "property": "Nekretnina",
     "addNew": "Dodaj nekretninu",
     "editProperty": "Uredi nekretninu",
+    "editNamed": "Uredi {{name}}",
     "newProperty": "Nova nekretnina",
     "propertyDetails": "Detalji nekretnine",
     "vacant": "Prazno",

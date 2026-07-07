@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     minWidth: 100,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     padding: Spacing.md,
     gap: Spacing.sm,

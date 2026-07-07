@@ -1,5 +1,4 @@
 import { HeaderActionsPill } from '@/components/ui/HeaderActionsPill';
-import { HeaderRightInset } from '@/components/ui/HeaderEdgeInset';
 import { SettingsHeaderButton } from '@/components/ui/SettingsHeaderButton';
 
 interface StackHeaderActionsProps {
@@ -8,11 +7,9 @@ interface StackHeaderActionsProps {
 
 export function StackHeaderActions({ children }: StackHeaderActionsProps) {
   return (
-    <HeaderRightInset>
-      <HeaderActionsPill>
-        {children}
-        <SettingsHeaderButton />
-      </HeaderActionsPill>
-    </HeaderRightInset>
+    <HeaderActionsPill>
+      {children}
+      <SettingsHeaderButton />
+    </HeaderActionsPill>
   );
 }

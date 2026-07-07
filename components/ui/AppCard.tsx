@@ -39,7 +39,7 @@ export function AppCard({ children, style, onPress }: AppCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     padding: Spacing.md,
   },

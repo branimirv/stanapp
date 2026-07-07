@@ -3,10 +3,24 @@ import { Spacing } from '@/constants/theme';
 /** Extra vertical room in the header bar (content area below status bar). */
 export const HEADER_BAR_HEIGHT = 52;
 
-/** Horizontal inset from screen edge — mirrors native header left padding. */
+/** Horizontal inset from screen edge — single source for header side padding. */
 export const HEADER_EDGE_INSET = Spacing.md;
 
+/** Fixed touch slot for each header action icon. */
+export const HEADER_ACTION_SLOT = 40;
+
+/** Lucide icon size inside header actions. */
+export const HEADER_ICON_SIZE = 22;
+
+/** Inner padding of the header actions pill. */
+export const HEADER_PILL_PADDING = 4;
+
+export const headerLeftContainerStyle = {
+  paddingLeft: HEADER_EDGE_INSET,
+};
+
 export const headerRightContainerStyle = {
+  paddingRight: HEADER_EDGE_INSET,
   justifyContent: 'flex-end' as const,
   alignItems: 'center' as const,
 };

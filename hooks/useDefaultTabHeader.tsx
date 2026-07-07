@@ -1,14 +1,14 @@
 import { useFocusEffect, useNavigation } from 'expo-router';
 import { useCallback, useLayoutEffect } from 'react';
 
-import { SettingsHeaderButton } from '@/components/ui/SettingsHeaderButton';
+import { HeaderSettingsActions } from '@/components/ui/HeaderSettingsActions';
 
 export function useDefaultTabHeader() {
   const navigation = useNavigation();
 
   const updateHeader = useCallback(() => {
     navigation.setOptions({
-      headerRight: () => <SettingsHeaderButton />,
+      headerRight: () => <HeaderSettingsActions />,
     });
   }, [navigation]);
 

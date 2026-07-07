@@ -17,7 +17,7 @@ export function PropertyTabBar({ navigationState, jumpTo, icons }: PropertyTabBa
       style={[
         styles.container,
         {
-          backgroundColor: theme.colors.surface,
+          backgroundColor: theme.colors.background,
           borderBottomColor: theme.colors.outline,
         },
       ]}

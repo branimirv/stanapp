@@ -107,7 +107,9 @@ export default function EditPropertyScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t('properties.editProperty') }} />
+      <Stack.Screen
+        options={{ title: t('properties.editNamed', { name: property.name }) }}
+      />
       <View style={[screenStyles.container, styles.container]}>
         <PropertyForm
           defaultValues={{

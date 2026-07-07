@@ -4,8 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Divider, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
+import { Pencil } from 'lucide-react-native';
 import { AppBadge } from '@/components/ui/AppBadge';
 import { AppButton } from '@/components/ui/AppButton';
+import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
@@ -150,9 +152,11 @@ export default function ExpenseDetailScreen() {
           title: t('expenses.expenseDetails'),
           headerRight: () => (
             <StackHeaderActions>
-              <AppButton mode="text" onPress={() => router.push(`/expense/edit/${expense.id}`)}>
-                {t('common.edit')}
-              </AppButton>
+              <HeaderIconButton
+                icon={Pencil}
+                onPress={() => router.push(`/expense/edit/${expense.id}`)}
+                accessibilityLabel={t('common.edit')}
+              />
             </StackHeaderActions>
           ),
         }}

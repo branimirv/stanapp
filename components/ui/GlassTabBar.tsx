@@ -28,9 +28,9 @@ export function GlassTabBar({ state, descriptors, navigation }: GlassTabBarProps
   const theme = useTheme();
   const isDark = theme.dark;
 
-  const overlayColor = isDark ? 'rgba(30, 41, 59, 0.72)' : 'rgba(255, 255, 255, 0.72)';
-  const borderColor = isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.65)';
-  const activeIndicatorColor = isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(15, 23, 42, 0.08)';
+  const overlayColor = isDark ? 'rgba(22, 22, 24, 0.8)' : 'rgba(255, 255, 255, 0.72)';
+  const borderColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.65)';
+  const activeIndicatorColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(15, 23, 42, 0.08)';
 
   const barContent = (
     <View style={[styles.overlay, { backgroundColor: overlayColor, borderColor }]}>

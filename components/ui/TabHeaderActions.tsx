@@ -1,6 +1,5 @@
 import { CreateHeaderButton } from '@/components/ui/CreateHeaderButton';
 import { HeaderActionsPill } from '@/components/ui/HeaderActionsPill';
-import { HeaderRightInset } from '@/components/ui/HeaderEdgeInset';
 import { SearchHeaderButton } from '@/components/ui/SearchHeaderButton';
 import { SettingsHeaderButton } from '@/components/ui/SettingsHeaderButton';
 
@@ -22,20 +21,18 @@ export function TabHeaderActions({
   onSearchPress,
 }: TabHeaderActionsProps) {
   return (
-    <HeaderRightInset>
-      <HeaderActionsPill>
-        {showCreate && onCreatePress ? (
-          <CreateHeaderButton onPress={onCreatePress} />
-        ) : null}
-        {showSearch && onSearchPress ? (
-          <SearchHeaderButton
-            active={searchActive}
-            expanded={searchExpanded}
-            onPress={onSearchPress}
-          />
-        ) : null}
-        <SettingsHeaderButton />
-      </HeaderActionsPill>
-    </HeaderRightInset>
+    <HeaderActionsPill>
+      {showCreate && onCreatePress ? (
+        <CreateHeaderButton onPress={onCreatePress} />
+      ) : null}
+      {showSearch && onSearchPress ? (
+        <SearchHeaderButton
+          active={searchActive}
+          expanded={searchExpanded}
+          onPress={onSearchPress}
+        />
+      ) : null}
+      <SettingsHeaderButton />
+    </HeaderActionsPill>
   );
 }

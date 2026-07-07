@@ -200,6 +200,7 @@
     "property": "Property",
     "addNew": "Add property",
     "editProperty": "Edit property",
+    "editNamed": "Edit {{name}}",
     "newProperty": "New property",
     "propertyDetails": "Property details",
     "vacant": "Vacant",

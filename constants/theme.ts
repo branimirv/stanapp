@@ -14,11 +14,11 @@ export const Colors = {
   surfaceVariant: '#F1F5F9',
   border: '#E2E8F0',
 
-  // Surfaces (Dark mode)
-  backgroundDark: '#0F172A',
-  surfaceDark: '#1E293B',
-  surfaceVariantDark: '#334155',
-  borderDark: '#475569',
+  // Surfaces (Dark mode) — true black / Revolut-inspired
+  backgroundDark: '#000000',
+  surfaceDark: '#121212',
+  surfaceVariantDark: '#1C1C1E',
+  borderDark: '#2A2A2C',
 
   // Text
   textPrimary: '#0F172A',
@@ -101,7 +101,7 @@ export const darkTheme = {
     onSecondary: Colors.textInverse,
     onBackground: Colors.textInverse,
     onSurface: Colors.textInverse,
-    onSurfaceVariant: '#94A3B8',
+    onSurfaceVariant: '#9CA3AF',
     outline: Colors.borderDark,
   },
   roundness: 12,

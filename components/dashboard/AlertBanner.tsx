@@ -21,24 +21,24 @@ const variantStyles: Record<
 > = {
   danger: {
     bgLight: '#FEF2F2',
-    bgDark: '#7F1D1D',
+    bgDark: '#1A0A0C',
     border: Colors.danger,
     text: Colors.danger,
-    textDark: '#FECACA',
+    textDark: '#FCA5A5',
   },
   warning: {
     bgLight: '#FFFBEB',
-    bgDark: '#78350F',
+    bgDark: '#1A1408',
     border: Colors.warning,
     text: '#B45309',
-    textDark: '#FDE68A',
+    textDark: '#FCD34D',
   },
   info: {
     bgLight: '#EFF6FF',
-    bgDark: '#1E3A8A',
+    bgDark: '#0A1628',
     border: Colors.primary,
     text: Colors.primary,
-    textDark: '#BFDBFE',
+    textDark: '#93C5FD',
   },
 };
 

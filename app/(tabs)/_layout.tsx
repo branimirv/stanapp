@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from 'react-native-paper';
 import { GlassTabBar } from '@/components/ui/GlassTabBar';
 import { HeaderSettingsActions } from '@/components/ui/HeaderSettingsActions';
-import { headerBarStyle, headerRightContainerStyle } from '@/constants/header';
+import { headerBarStyle, headerLeftContainerStyle, headerRightContainerStyle } from '@/constants/header';
 import { Colors } from '@/constants/theme';
 
 export default function TabLayout() {
@@ -18,11 +18,12 @@ export default function TabLayout() {
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
         headerStyle: {
-          backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
+          backgroundColor: theme.dark ? Colors.backgroundDark : Colors.surface,
           ...headerBarStyle,
         },
         headerTintColor: theme.colors.onSurface,
         headerTitleAlign: 'left',
+        headerLeftContainerStyle,
         headerRightContainerStyle,
         tabBarStyle: {
           position: 'absolute',
