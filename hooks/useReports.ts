@@ -213,6 +213,7 @@ export function useReports(options: UseReportsOptions = {}) {
         return {
           categoryId,
           categoryKey: category?.key ?? 'other',
+          categoryName: category?.name ?? null,
           icon: category?.icon ?? 'MoreHorizontal',
           color: category?.color ?? '#6B7280',
           amount,

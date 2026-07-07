@@ -96,6 +96,7 @@ export interface MonthlyIncomeExpense {
 export interface CategoryBreakdown {
   categoryId: string;
   categoryKey: string;
+  categoryName: string | null;
   icon: string;
   color: string;
   amount: number;

@@ -8,6 +8,7 @@ import { Spacing, Typography } from '@/constants/theme';
 import type { Expense, ExpenseCategory, Language, Property, RentPayment, Tenant } from '@/types/app.types';
 import { getMonthRange, isDateInRange } from '@/utils/dateRange';
 import { exportPropertyStatementPDF } from '@/utils/statement';
+import { getCategoryEffectiveType, getCategoryLabel } from '@/utils/expense';
 import { formatCurrency, formatPeriod } from '@/utils/formatters';
 
 export interface StatementSheetProps {
@@ -67,14 +68,14 @@ export function StatementSheet({
       .filter((expense) => {
         const category = categoryMap.get(expense.category_id);
         return (
-          category?.type === 'regular' &&
+          getCategoryEffectiveType(category) === 'regular' &&
           isDateInRange(expense.billing_date, monthRange.start, monthRange.end)
         );
       })
       .map((expense) => {
         const category = categoryMap.get(expense.category_id)!;
         return {
-          label: t(`categories.${category.key}`),
+          label: getCategoryLabel(category, t),
           amount: expense.amount,
         };
       });

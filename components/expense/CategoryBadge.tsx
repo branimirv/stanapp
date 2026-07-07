@@ -2,10 +2,12 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { getLucideIcon } from '@/utils/lucideIcons';
+import { getCategoryLabel } from '@/utils/expense';
 import { Spacing, Typography } from '@/constants/theme';
 
 export interface CategoryBadgeProps {
   categoryKey: string;
+  categoryName?: string | null;
   icon: string;
   color: string;
   showLabel?: boolean;
@@ -14,6 +16,7 @@ export interface CategoryBadgeProps {
 
 export function CategoryBadge({
   categoryKey,
+  categoryName,
   icon,
   color,
   showLabel = true,
@@ -21,7 +24,7 @@ export function CategoryBadge({
 }: CategoryBadgeProps) {
   const { t } = useTranslation();
   const Icon = getLucideIcon(icon);
-  const label = t(`categories.${categoryKey}`, { defaultValue: categoryKey });
+  const label = getCategoryLabel({ key: categoryKey, name: categoryName ?? null }, t);
 
   return (
     <View style={[styles.badge, { backgroundColor: `${color}22` }, style]}>

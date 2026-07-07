@@ -163,6 +163,7 @@ export default function ExpenseDetailScreen() {
           {category ? (
           <CategoryBadge
             categoryKey={category.key}
+            categoryName={category.name}
             icon={category.icon}
             color={category.color}
           />

@@ -178,26 +178,40 @@ export type Database = {
       expense_categories: {
         Row: {
           id: string;
+          user_id: string | null;
           key: string;
+          name: string | null;
           icon: string;
           color: string;
           type: 'regular' | 'irregular';
         };
         Insert: {
           id?: string;
+          user_id?: string | null;
           key: string;
+          name?: string | null;
           icon: string;
           color: string;
           type?: 'regular' | 'irregular';
         };
         Update: {
           id?: string;
+          user_id?: string | null;
           key?: string;
+          name?: string | null;
           icon?: string;
           color?: string;
           type?: 'regular' | 'irregular';
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'expense_categories_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       expenses: {
         Row: {

@@ -16,6 +16,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useUiStore } from '@/stores/uiStore';
 import type { Expense } from '@/types/app.types';
+import { getCategoryLabel } from '@/utils/expense';
 import type { ExpenseFormValues } from '@/utils/validators';
 import { parseISO } from 'date-fns';
 
@@ -23,7 +24,7 @@ export default function EditExpenseScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const { properties } = useProperties();
-  const { categories } = useExpenseCategories();
+  const { categories, createCustomCategory } = useExpenseCategories();
   const { update } = useExpenses();
   const showToast = useUiStore((s) => s.showToast);
 
@@ -77,7 +78,7 @@ export default function EditExpenseScreen() {
           updated.id,
           parseISO(updated.due_date),
           t('expenses.dueSoon'),
-          `${category ? t(`categories.${category.key}`) : t('expenses.expense')} — ${updated.amount}`,
+          `${category ? getCategoryLabel(category, t) : t('expenses.expense')} — ${updated.amount}`,
         );
       }
 
@@ -128,6 +129,7 @@ export default function EditExpenseScreen() {
             notes: expense.notes,
           }}
           onSubmit={handleSubmit}
+          onCreateCustomCategory={createCustomCategory}
           isSubmitting={isSaving}
           submitLabel={t('common.update')}
         />

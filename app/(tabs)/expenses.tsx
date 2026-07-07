@@ -26,10 +26,12 @@ import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { Spacing, Typography } from '@/constants/theme';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useExpenses } from '@/hooks/useExpenses';
-import { useExpandableSearch } from '@/hooks/useExpandableSearch';
+import { useExpandableSearchState } from '@/hooks/useExpandableSearch';
+import { useSearchableTabHeader } from '@/hooks/useSearchableTabHeader';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
 import { useUiStore } from '@/stores/uiStore';
+import { getCategoryEffectiveType, getCategoryLabel } from '@/utils/expense';
 import { formatPeriod } from '@/utils/formatters';
 import type { Expense, Language } from '@/types/app.types';
 
@@ -54,12 +56,28 @@ export default function ExpensesScreen() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [propertyFilter, setPropertyFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const handleCreatePress = useCallback(() => {
+    router.push('/expense/new');
+  }, []);
+
   const {
     search,
+    searchHasText,
+    searchExpanded,
+    handleSearchPress,
     dismissSearchIfEmpty,
     searchBarControlProps,
     listKeyboardProps,
-  } = useExpandableSearch();
+  } = useExpandableSearchState();
+
+  useSearchableTabHeader({
+    showCreate: true,
+    onCreatePress: handleCreatePress,
+    searchActive: searchHasText,
+    searchExpanded,
+    onSearchPress: handleSearchPress,
+  });
+
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -106,7 +124,7 @@ export default function ExpensesScreen() {
     () => [
       { label: t('common.all'), value: 'all' },
       ...categories.map((category) => ({
-        label: t(`categories.${category.key}`),
+        label: getCategoryLabel(category, t),
         value: category.id,
       })),
     ],
@@ -119,15 +137,15 @@ export default function ExpensesScreen() {
       if (recurringFilter === 'recurring' && !expense.is_recurring) return false;
       if (recurringFilter === 'one_time' && expense.is_recurring) return false;
       if (typeFilter !== 'all') {
-        const categoryType = categoryMap.get(expense.category_id)?.type;
-        if (categoryType !== typeFilter) return false;
+        const categoryType = categoryMap.get(expense.category_id);
+        if (categoryType && getCategoryEffectiveType(categoryType) !== typeFilter) return false;
       }
       if (categoryFilter !== 'all' && expense.category_id !== categoryFilter) return false;
       if (!query) return true;
 
       const category = categoryMap.get(expense.category_id);
       const property = propertyMap.get(expense.property_id);
-      const categoryLabel = category ? t(`categories.${category.key}`) : '';
+      const categoryLabel = getCategoryLabel(category, t);
       return (
         categoryLabel.toLowerCase().includes(query) ||
         property?.name.toLowerCase().includes(query) ||
@@ -176,7 +194,7 @@ export default function ExpensesScreen() {
       showConfirmDialog({
         title: t('confirm.markPaidTitle'),
         message: t('confirm.markPaidMessage'),
-        confirmLabel: 'expenses.markPaid',
+        confirmLabel: t('expenses.markPaid'),
         onConfirm: async () => {
           try {
             await markAsPaid(id);
@@ -198,7 +216,7 @@ export default function ExpensesScreen() {
       showConfirmDialog({
         title: t('confirm.deleteExpenseTitle'),
         message: t('confirm.deleteExpenseMessage'),
-        confirmLabel: 'common.delete',
+        confirmLabel: t('common.delete'),
         destructive: true,
         onConfirm: async () => {
           try {

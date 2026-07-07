@@ -90,6 +90,7 @@ export function ExpenseBreakdown({
           >
             <CategoryBadge
               categoryKey={item.categoryKey}
+              categoryName={item.categoryName}
               icon={item.icon}
               color={item.color}
             />

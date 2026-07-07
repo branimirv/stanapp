@@ -15,7 +15,11 @@ import { AppTextInput } from '@/components/ui/AppTextInput';
 import { CategoryBadge } from '@/components/expense/CategoryBadge';
 import { Spacing, Typography } from '@/constants/theme';
 import type { ExpenseCategory } from '@/types/app.types';
-import { defaultRecurringForType, filterCategoriesByType } from '@/utils/expense';
+import {
+  defaultRecurringForType,
+  filterCategoriesByType,
+  getCategoryEffectiveType,
+} from '@/utils/expense';
 
 export interface QuickAddExpenseValues {
   property_id: string;
@@ -83,7 +87,7 @@ export function QuickAddExpenseSheet({
       property_id: propertyId,
       category_id: categoryId,
       amount: parsedAmount,
-      is_recurring: category ? defaultRecurringForType(category.type) : true,
+      is_recurring: category ? defaultRecurringForType(getCategoryEffectiveType(category)) : true,
       billing_date: formatDateValue(billingDate),
       notes: notes.trim() || null,
     });
@@ -149,6 +153,7 @@ export function QuickAddExpenseSheet({
                 >
                   <CategoryBadge
                     categoryKey={category.key}
+                    categoryName={category.name}
                     icon={category.icon}
                     color={category.color}
                   />

@@ -9,6 +9,7 @@ export interface CategoryChipPickerProps {
   categories: ExpenseCategory[];
   value: string | null;
   onValueChange: (categoryId: string) => void;
+  onAddCustom?: () => void;
   label?: string;
   error?: string;
 }
@@ -17,6 +18,7 @@ export function CategoryChipPicker({
   categories,
   value,
   onValueChange,
+  onAddCustom,
   label,
   error,
 }: CategoryChipPickerProps) {
@@ -29,7 +31,7 @@ export function CategoryChipPicker({
         <Text style={[styles.label, { color: theme.colors.onSurface }]}>{label}</Text>
       ) : null}
 
-      {categories.length === 0 ? (
+      {categories.length === 0 && !onAddCustom ? (
         <Text style={[styles.emptyHint, { color: theme.colors.onSurfaceVariant }]}>
           {t('expenses.noCategories')}
         </Text>
@@ -58,12 +60,28 @@ export function CategoryChipPicker({
               >
                 <CategoryBadge
                   categoryKey={category.key}
+                  categoryName={category.name}
                   icon={category.icon}
                   color={category.color}
                 />
               </Pressable>
             );
           })}
+          {onAddCustom ? (
+            <Pressable
+              onPress={onAddCustom}
+              style={[
+                styles.addCustomChip,
+                { borderColor: theme.colors.primary },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={t('expenses.addCustomCategory')}
+            >
+              <Text style={[styles.addCustomLabel, { color: theme.colors.primary }]}>
+                + {t('expenses.addCustomCategory')}
+              </Text>
+            </Pressable>
+          ) : null}
         </ScrollView>
       )}
 
@@ -94,5 +112,17 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderRadius: 999,
+  },
+  addCustomChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.sm + 2,
+    paddingVertical: Spacing.xs,
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  addCustomLabel: {
+    ...Typography.labelMedium,
+    fontWeight: '600',
   },
 });

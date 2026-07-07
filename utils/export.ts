@@ -5,6 +5,7 @@ import * as Sharing from 'expo-sharing';
 import type { TFunction } from 'i18next';
 import { supabase } from '@/lib/supabase';
 import type { ReportData } from '@/types/app.types';
+import { getCategoryLabel } from '@/utils/expense';
 import { formatCurrency } from '@/utils/formatters';
 
 function escapeCsv(value: string | number | boolean | null | undefined): string {
@@ -32,7 +33,7 @@ function generateReportHTML(data: ReportData, t: TFunction, language: 'en' | 'hr
   const categoryRows = data.categoryBreakdown
     .map(
       (row) =>
-        `<tr><td>${t(`categories.${row.categoryKey}`)}</td><td>${formatCurrency(row.amount, data.currency, language)}</td><td>${row.percentage.toFixed(1)}%</td></tr>`,
+        `<tr><td>${getCategoryLabel({ key: row.categoryKey, name: row.categoryName }, t)}</td><td>${formatCurrency(row.amount, data.currency, language)}</td><td>${row.percentage.toFixed(1)}%</td></tr>`,
     )
     .join('');
 
@@ -218,7 +219,7 @@ export async function exportAllDataCSV(t: TFunction): Promise<ExportAllDataResul
         expense.id,
         expense.property_id,
         propertyMap.get(expense.property_id) ?? '',
-        category ? category.key : expense.category_id,
+        category ? getCategoryLabel(category, t) : expense.category_id,
         category?.type ?? '',
         String(expense.amount),
         String(expense.is_recurring),

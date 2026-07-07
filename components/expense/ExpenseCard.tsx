@@ -85,6 +85,7 @@ export function ExpenseCard({
             {category ? (
               <CategoryBadge
                 categoryKey={category.key}
+                categoryName={category.name}
                 icon={category.icon}
                 color={category.color}
               />

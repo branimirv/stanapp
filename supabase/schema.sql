@@ -72,13 +72,21 @@ CREATE TABLE tenants (
 );
 
 CREATE TABLE expense_categories (
-  id      UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  key     TEXT NOT NULL UNIQUE,
-  icon    TEXT NOT NULL,
-  color   TEXT NOT NULL,
-  type    TEXT NOT NULL DEFAULT 'regular'
-            CHECK (type IN ('regular', 'irregular'))
+  id       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id  UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  key      TEXT NOT NULL,
+  name     TEXT,
+  icon     TEXT NOT NULL,
+  color    TEXT NOT NULL,
+  type     TEXT NOT NULL DEFAULT 'regular'
+             CHECK (type IN ('regular', 'irregular'))
 );
+
+CREATE UNIQUE INDEX expense_categories_global_key_unique
+  ON expense_categories (key)
+  WHERE user_id IS NULL;
+CREATE UNIQUE INDEX expense_categories_user_key_unique
+  ON expense_categories (user_id, key);
 
 INSERT INTO expense_categories (key, icon, color, type) VALUES
   ('electricity',   'Zap',            '#F59E0B', 'regular'),
@@ -145,7 +153,9 @@ ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rent_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expense_categories ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Authenticated users can view expense categories" ON expense_categories FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Authenticated users can view expense categories" ON expense_categories FOR SELECT TO authenticated USING (user_id IS NULL OR user_id = auth.uid());
+CREATE POLICY "Users can insert own expense categories" ON expense_categories FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Users can delete own expense categories" ON expense_categories FOR DELETE TO authenticated USING (user_id = auth.uid());
 
 CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);

@@ -10,6 +10,7 @@ import { useExpenses } from '@/hooks/useExpenses';
 import { useProperties } from '@/hooks/useProperties';
 import { scheduleExpenseDueReminder } from '@/lib/notifications';
 import { useUiStore } from '@/stores/uiStore';
+import { getCategoryLabel } from '@/utils/expense';
 import type { ExpenseFormValues } from '@/utils/validators';
 import { parseISO } from 'date-fns';
 
@@ -23,7 +24,7 @@ export default function NewExpenseScreen() {
   }>();
   const { t } = useTranslation();
   const { properties, isLoading: propertiesLoading } = useProperties();
-  const { categories, isLoading: categoriesLoading } = useExpenseCategories();
+  const { categories, isLoading: categoriesLoading, createCustomCategory } = useExpenseCategories();
   const { create } = useExpenses();
   const showToast = useUiStore((s) => s.showToast);
   const [isSaving, setIsSaving] = useState(false);
@@ -48,7 +49,7 @@ export default function NewExpenseScreen() {
           expense.id,
           parseISO(expense.due_date),
           t('expenses.dueSoon'),
-          `${category ? t(`categories.${category.key}`) : t('expenses.expense')} — ${expense.amount}`,
+          `${category ? getCategoryLabel(category, t) : t('expenses.expense')} — ${expense.amount}`,
         );
       }
 
@@ -88,6 +89,7 @@ export default function NewExpenseScreen() {
             notes: notes ?? null,
           }}
           onSubmit={handleSubmit}
+          onCreateCustomCategory={createCustomCategory}
           isSubmitting={isSaving}
           submitLabel={t('common.create')}
         />
