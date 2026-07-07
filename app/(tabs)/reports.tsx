@@ -14,19 +14,27 @@ import { useDefaultTabHeader } from '@/hooks/useDefaultTabHeader';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { ExpenseBreakdown } from '@/components/reports/ExpenseBreakdown';
-import { IncomeExpenseChart } from '@/components/reports/IncomeExpenseChart';
+import { IncomeExpenseTrendChart } from '@/components/reports/IncomeExpenseTrendChart';
+import { NetCashFlowChart } from '@/components/reports/NetCashFlowChart';
 import { PeriodFilter } from '@/components/reports/PeriodFilter';
+import { PropertyIncomeShareChart } from '@/components/reports/PropertyIncomeShareChart';
+import { PropertyNetChart } from '@/components/reports/PropertyNetChart';
+import { ReportFilters } from '@/components/reports/ReportFilters';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
+import type { PickerOption } from '@/components/ui/AppPicker';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { Colors, Spacing, Typography } from '@/constants/theme';
+import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { buildReportPeriod, useReports } from '@/hooks/useReports';
 import { useProfile } from '@/hooks/useProfile';
+import { useProperties } from '@/hooks/useProperties';
 import { useUiStore } from '@/stores/uiStore';
+import { getCategoryLabel } from '@/utils/expense';
 import { formatCurrency } from '@/utils/formatters';
-import type { Language, ReportPeriod } from '@/types/app.types';
+import type { Language, ReportCategoryTypeFilter, ReportPeriod } from '@/types/app.types';
 
 export default function ReportsScreen() {
   const { t, i18n } = useTranslation();
@@ -35,13 +43,42 @@ export default function ReportsScreen() {
   useDefaultTabHeader();
   const showToast = useUiStore((state) => state.showToast);
   const { profile } = useProfile();
+  const { properties } = useProperties();
+  const { categories } = useExpenseCategories();
 
-  const [period, setPeriod] = useState<ReportPeriod>(() => buildReportPeriod('current_month'));
+  const [period, setPeriod] = useState<ReportPeriod>(() => buildReportPeriod('all_time'));
+  const [propertyFilter, setPropertyFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [categoryTypeFilter, setCategoryTypeFilter] = useState<ReportCategoryTypeFilter>('all');
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  const { report, isLoading, error, refetch } = useReports({ period });
+  const { report, isLoading, error, refetch } = useReports({
+    period,
+    propertyId: propertyFilter,
+    categoryId: categoryFilter,
+    categoryType: categoryTypeFilter,
+  });
   const language = (profile?.language ?? i18n.language ?? 'hr') as Language;
+
+  const propertyOptions: PickerOption[] = useMemo(
+    () => [
+      { label: t('reports.allProperties'), value: 'all' },
+      ...properties.map((property) => ({ label: property.name, value: property.id })),
+    ],
+    [properties, t],
+  );
+
+  const categoryOptions: PickerOption[] = useMemo(
+    () => [
+      { label: t('reports.allCategories'), value: 'all' },
+      ...categories.map((category) => ({
+        label: getCategoryLabel(category, t),
+        value: category.id,
+      })),
+    ],
+    [categories, t],
+  );
 
   const hasData = useMemo(() => {
     if (!report) return false;
@@ -91,7 +128,7 @@ export default function ReportsScreen() {
           <body>
             <h1>${t('reports.title')}</h1>
             <p>${t('reports.generatedAt', { date: generatedAt })}</p>
-            <p>${period.startDate} – ${period.endDate}</p>
+            <p>${report.period.startDate} – ${report.period.endDate}</p>
             <div class="summary">
               <div class="card"><strong>${t('reports.totalIncome')}</strong><br/>${formatCurrency(report.totalIncome, report.currency, language)}</div>
               <div class="card"><strong>${t('reports.totalExpenses')}</strong><br/>${formatCurrency(report.totalExpenses, report.currency, language)}</div>
@@ -152,6 +189,16 @@ export default function ReportsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <PeriodFilter value={period} onChange={setPeriod} />
+        <ReportFilters
+          propertyFilter={propertyFilter}
+          onPropertyFilterChange={setPropertyFilter}
+          categoryFilter={categoryFilter}
+          onCategoryFilterChange={setCategoryFilter}
+          categoryTypeFilter={categoryTypeFilter}
+          onCategoryTypeFilterChange={setCategoryTypeFilter}
+          propertyOptions={propertyOptions}
+          categoryOptions={categoryOptions}
+        />
         <EmptyState
           icon={BarChart3}
           title={t('empty.noReports')}
@@ -168,12 +215,31 @@ export default function ReportsScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <PeriodFilter value={period} onChange={setPeriod} />
+      <ReportFilters
+        propertyFilter={propertyFilter}
+        onPropertyFilterChange={setPropertyFilter}
+        categoryFilter={categoryFilter}
+        onCategoryFilterChange={setCategoryFilter}
+        categoryTypeFilter={categoryTypeFilter}
+        onCategoryTypeFilterChange={setCategoryTypeFilter}
+        propertyOptions={propertyOptions}
+        categoryOptions={categoryOptions}
+      />
 
       {report.hasMixedCurrencies ? (
         <View style={styles.warningBanner}>
           <Text style={styles.warningText}>{t('reports.mixedCurrencyWarning')}</Text>
         </View>
       ) : null}
+
+      <View style={styles.section}>
+        <NetCashFlowChart
+          data={report.monthlyIncomeExpense}
+          netTotal={report.netIncome}
+          currency={report.currency}
+          language={language}
+        />
+      </View>
 
       <View style={styles.totalsRow}>
         <AppCard style={styles.totalCard}>
@@ -203,12 +269,28 @@ export default function ReportsScreen() {
       </View>
 
       <View style={styles.section}>
-        <IncomeExpenseChart data={report.monthlyIncomeExpense} />
+        <IncomeExpenseTrendChart
+          data={report.monthlyIncomeExpense}
+          currency={report.currency}
+          language={language}
+        />
       </View>
 
       <View style={styles.section}>
         <ExpenseBreakdown
           data={report.categoryBreakdown}
+          currency={report.currency}
+          language={language}
+        />
+      </View>
+
+      <View style={styles.section}>
+        <PropertyNetChart data={report.propertySummaries} language={language} />
+      </View>
+
+      <View style={styles.section}>
+        <PropertyIncomeShareChart
+          data={report.propertySummaries}
           currency={report.currency}
           language={language}
         />
@@ -299,13 +381,17 @@ const styles = StyleSheet.create({
   totalCard: {
     flex: 1,
     padding: Spacing.sm,
+    borderRadius: 16,
   },
   totalLabel: {
     ...Typography.labelSmall,
     marginBottom: Spacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   totalValue: {
     ...Typography.titleMedium,
+    fontWeight: '700',
   },
   sectionTitle: {
     ...Typography.titleMedium,
@@ -313,6 +399,7 @@ const styles = StyleSheet.create({
   },
   propertyCard: {
     marginBottom: Spacing.sm,
+    borderRadius: 16,
   },
   propertyName: {
     ...Typography.titleMedium,
@@ -331,6 +418,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     ...Typography.bodyMedium,
+    fontWeight: '600',
   },
   exportButton: {
     marginTop: Spacing.md,

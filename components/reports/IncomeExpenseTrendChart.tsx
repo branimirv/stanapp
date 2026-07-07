@@ -1,0 +1,202 @@
+import { useMemo } from 'react';
+import { ScrollView, StyleSheet, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
+import { LineChart } from 'react-native-gifted-charts';
+import { Text, useTheme } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
+import { ChartCard } from '@/components/reports/ChartCard';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Colors, Spacing, Typography } from '@/constants/theme';
+import { formatCurrency } from '@/utils/formatters';
+import type { Language, MonthlyIncomeExpense } from '@/types/app.types';
+
+export interface IncomeExpenseTrendChartProps {
+  data: MonthlyIncomeExpense[];
+  currency?: string;
+  language?: Language;
+  style?: StyleProp<ViewStyle>;
+}
+
+export function IncomeExpenseTrendChart({
+  data,
+  currency = 'EUR',
+  language = 'hr',
+  style,
+}: IncomeExpenseTrendChartProps) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+  const { width } = useWindowDimensions();
+
+  const incomeData = useMemo(
+    () =>
+      data.map((item) => ({
+        value: item.income,
+        label: item.label,
+      })),
+    [data],
+  );
+
+  const expenseData = useMemo(
+    () =>
+      data.map((item) => ({
+        value: item.expenses,
+      })),
+    [data],
+  );
+
+  const maxValue = useMemo(() => {
+    const peak = Math.max(...data.flatMap((item) => [item.income, item.expenses]), 1);
+    return peak * 1.15;
+  }, [data]);
+
+  if (data.length === 0) {
+    return (
+      <EmptyState
+        title={t('reports.noData')}
+        subtitle={t('reports.noDataHint')}
+        style={styles.empty}
+      />
+    );
+  }
+
+  const chartWidth = Math.max(width - Spacing.md * 4, data.length * 64);
+
+  return (
+    <ChartCard style={style}>
+      <Text style={[styles.title, { color: theme.colors.onSurface }]}>
+        {t('reports.incomeExpenseTrend')}
+      </Text>
+
+      <View style={styles.legend}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: Colors.accent }]} />
+          <Text style={[styles.legendLabel, { color: theme.colors.onSurfaceVariant }]}>
+            {t('reports.chartIncome')}
+          </Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: Colors.danger }]} />
+          <Text style={[styles.legendLabel, { color: theme.colors.onSurfaceVariant }]}>
+            {t('reports.chartExpenses')}
+          </Text>
+        </View>
+      </View>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <LineChart
+          areaChart
+          curved
+          data={incomeData}
+          data2={expenseData}
+          color1={Colors.accent}
+          color2={Colors.danger}
+          startFillColor1={Colors.accent}
+          endFillColor1={Colors.accent}
+          startFillColor2={Colors.danger}
+          endFillColor2={Colors.danger}
+          startOpacity1={0.2}
+          endOpacity1={0.02}
+          startOpacity2={0.15}
+          endOpacity2={0.02}
+          thickness1={2.5}
+          thickness2={2.5}
+          hideDataPoints1
+          hideDataPoints2
+          hideRules
+          xAxisThickness={0}
+          yAxisThickness={0}
+          yAxisTextStyle={{ color: theme.colors.onSurfaceVariant, fontSize: 10 }}
+          xAxisLabelTextStyle={{ color: theme.colors.onSurfaceVariant, fontSize: 10 }}
+          noOfSections={4}
+          maxValue={maxValue}
+          width={chartWidth}
+          height={200}
+          initialSpacing={16}
+          endSpacing={16}
+          spacing={Math.max(40, chartWidth / Math.max(data.length, 1) - 20)}
+          isAnimated
+          pointerConfig={{
+            activatePointersOnLongPress: false,
+            activatePointersInstantlyOnTouch: true,
+            pointerStripColor: theme.colors.outline,
+            pointerStripWidth: 1,
+            pointerColor: theme.colors.primary,
+            radius: 5,
+            pointerLabelWidth: 140,
+            pointerLabelHeight: 72,
+            autoAdjustPointerLabelPosition: true,
+            pointerLabelComponent: (items: Array<{ label?: string; value?: number }>) => {
+              const income = items[0];
+              const expenses = items[1];
+              if (!income) return null;
+              return (
+                <View
+                  style={[
+                    styles.tooltip,
+                    {
+                      backgroundColor: theme.dark ? Colors.surfaceVariantDark : Colors.textPrimary,
+                    },
+                  ]}
+                >
+                  <Text style={styles.tooltipLabel}>{income.label}</Text>
+                  <Text style={[styles.tooltipIncome, { color: Colors.accent }]}>
+                    {t('reports.chartIncome')}: {formatCurrency(Number(income.value), currency, language)}
+                  </Text>
+                  {expenses ? (
+                    <Text style={[styles.tooltipExpense, { color: Colors.danger }]}>
+                      {t('reports.chartExpenses')}: {formatCurrency(Number(expenses.value), currency, language)}
+                    </Text>
+                  ) : null}
+                </View>
+              );
+            },
+          }}
+        />
+      </ScrollView>
+    </ChartCard>
+  );
+}
+
+const styles = StyleSheet.create({
+  title: {
+    ...Typography.titleMedium,
+  },
+  legend: {
+    flexDirection: 'row',
+    gap: Spacing.lg,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  legendLabel: {
+    ...Typography.bodySmall,
+  },
+  tooltip: {
+    borderRadius: 8,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    gap: 2,
+  },
+  tooltipLabel: {
+    ...Typography.labelSmall,
+    color: Colors.textDisabled,
+    marginBottom: 2,
+  },
+  tooltipIncome: {
+    ...Typography.labelSmall,
+    fontWeight: '600',
+  },
+  tooltipExpense: {
+    ...Typography.labelSmall,
+    fontWeight: '600',
+  },
+  empty: {
+    paddingVertical: Spacing.lg,
+  },
+});

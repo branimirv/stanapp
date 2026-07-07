@@ -9,12 +9,14 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { resolveCurrency } from '@/utils/currency';
+import { getCategoryEffectiveType } from '@/utils/expense';
 import type {
   CategoryBreakdown,
   ExpenseCategory,
   MonthlyIncomeExpense,
   Property,
   PropertyReportSummary,
+  ReportCategoryTypeFilter,
   ReportData,
   ReportPeriod,
   ReportPeriodPreset,
@@ -22,13 +24,18 @@ import type {
 
 interface UseReportsOptions {
   period?: ReportPeriod;
+  propertyId?: string;
+  categoryId?: string;
+  categoryType?: ReportCategoryTypeFilter;
 }
+
+const ALL_TIME_START = '1970-01-01';
 
 function buildDefaultPeriod(): ReportPeriod {
   const now = new Date();
   return {
-    preset: 'current_month',
-    startDate: format(startOfMonth(now), 'yyyy-MM-dd'),
+    preset: 'all_time',
+    startDate: ALL_TIME_START,
     endDate: format(endOfMonth(now), 'yyyy-MM-dd'),
   };
 }
@@ -41,6 +48,12 @@ export function buildReportPeriod(
   const now = new Date();
 
   switch (preset) {
+    case 'all_time':
+      return {
+        preset,
+        startDate: ALL_TIME_START,
+        endDate: format(endOfMonth(now), 'yyyy-MM-dd'),
+      };
     case 'current_month':
       return {
         preset,
@@ -94,9 +107,17 @@ function collectCurrencies(
   return [...currencies];
 }
 
+function resolveFilterId(value?: string): string | undefined {
+  if (!value || value === 'all') return undefined;
+  return value;
+}
+
 export function useReports(options: UseReportsOptions = {}) {
   const { user } = useAuthStore();
   const period = useMemo(() => options.period ?? buildDefaultPeriod(), [options.period]);
+  const propertyId = resolveFilterId(options.propertyId);
+  const categoryId = resolveFilterId(options.categoryId);
+  const categoryType = options.categoryType ?? 'all';
   const [report, setReport] = useState<ReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +134,7 @@ export function useReports(options: UseReportsOptions = {}) {
 
     const startDate = period.startDate;
     const endDate = period.endDate;
-    const start = new Date(startDate);
+    let start = new Date(startDate);
     const end = new Date(endDate);
 
     const [
@@ -153,7 +174,6 @@ export function useReports(options: UseReportsOptions = {}) {
     }
 
     const profile = profileResult.data;
-    const properties = propertiesResult.data ?? [];
     const categories = categoriesResult.data ?? [];
     const categoryMap = new Map<string, ExpenseCategory>(
       categories.map((category) => [category.id, category]),
@@ -161,12 +181,36 @@ export function useReports(options: UseReportsOptions = {}) {
 
     const defaultCurrency = profile?.default_currency ?? 'EUR';
 
-    const rentInPeriod = (rentResult.data ?? []).filter((payment) => {
+    let properties = propertiesResult.data ?? [];
+    if (propertyId) {
+      properties = properties.filter((property) => property.id === propertyId);
+    }
+
+    let rentInPeriod = (rentResult.data ?? []).filter((payment) => {
       const paymentDate = new Date(payment.period_year, payment.period_month - 1, 1);
       return paymentDate >= startOfMonth(start) && paymentDate <= endOfMonth(end);
     });
 
-    const expensesInPeriod = expensesResult.data ?? [];
+    if (propertyId) {
+      rentInPeriod = rentInPeriod.filter((payment) => payment.property_id === propertyId);
+    }
+
+    let expensesInPeriod = expensesResult.data ?? [];
+
+    if (propertyId) {
+      expensesInPeriod = expensesInPeriod.filter((expense) => expense.property_id === propertyId);
+    }
+
+    if (categoryId) {
+      expensesInPeriod = expensesInPeriod.filter((expense) => expense.category_id === categoryId);
+    }
+
+    if (categoryType !== 'all') {
+      expensesInPeriod = expensesInPeriod.filter((expense) => {
+        const category = categoryMap.get(expense.category_id);
+        return category ? getCategoryEffectiveType(category) === categoryType : false;
+      });
+    }
 
     const allCurrencyRows = [
       ...rentInPeriod.map((row) => ({ currency: row.currency })),
@@ -175,6 +219,24 @@ export function useReports(options: UseReportsOptions = {}) {
     const currenciesFound = collectCurrencies(allCurrencyRows, properties, defaultCurrency);
     const hasMixedCurrencies = currenciesFound.length > 1;
 
+    // For "all time", derive the effective start from the earliest record so the
+    // monthly series doesn't iterate over hundreds of empty months.
+    if (period.preset === 'all_time') {
+      const earliestTimestamps: number[] = [];
+      for (const expense of expensesInPeriod) {
+        earliestTimestamps.push(new Date(expense.billing_date).getTime());
+      }
+      for (const payment of rentInPeriod) {
+        earliestTimestamps.push(
+          new Date(payment.period_year, payment.period_month - 1, 1).getTime(),
+        );
+      }
+      start = earliestTimestamps.length
+        ? startOfMonth(new Date(Math.min(...earliestTimestamps)))
+        : startOfMonth(end);
+    }
+
+    const effectiveStartDate = format(start, 'yyyy-MM-dd');
     const months = eachMonthOfInterval({ start, end });
     const monthlyIncomeExpense: MonthlyIncomeExpense[] = months.map((monthDate) => {
       const month = monthDate.getMonth() + 1;
@@ -197,6 +259,7 @@ export function useReports(options: UseReportsOptions = {}) {
         label: format(monthDate, 'MMM yyyy'),
         income,
         expenses,
+        net: income - expenses,
       };
     });
 
@@ -208,10 +271,10 @@ export function useReports(options: UseReportsOptions = {}) {
 
     const totalExpenses = expensesInPeriod.reduce((sum, expense) => sum + Number(expense.amount), 0);
     const categoryBreakdown: CategoryBreakdown[] = [...categoryTotals.entries()]
-      .map(([categoryId, amount]) => {
-        const category = categoryMap.get(categoryId);
+      .map(([categoryIdKey, amount]) => {
+        const category = categoryMap.get(categoryIdKey);
         return {
-          categoryId,
+          categoryId: categoryIdKey,
           categoryKey: category?.key ?? 'other',
           categoryName: category?.name ?? null,
           icon: category?.icon ?? 'MoreHorizontal',
@@ -245,7 +308,7 @@ export function useReports(options: UseReportsOptions = {}) {
     const totalIncome = rentInPeriod.reduce((sum, payment) => sum + Number(payment.amount), 0);
 
     setReport({
-      period,
+      period: { ...period, startDate: effectiveStartDate },
       currency: defaultCurrency,
       hasMixedCurrencies,
       currenciesFound,
@@ -258,7 +321,7 @@ export function useReports(options: UseReportsOptions = {}) {
     });
 
     setIsLoading(false);
-  }, [user, period]);
+  }, [user, period, propertyId, categoryId, categoryType]);
 
   useEffect(() => {
     refetch();

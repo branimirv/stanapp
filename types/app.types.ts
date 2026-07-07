@@ -73,6 +73,7 @@ export interface DashboardStats {
 }
 
 export type ReportPeriodPreset =
+  | 'all_time'
   | 'current_month'
   | 'last_3_months'
   | 'last_6_months'
@@ -85,12 +86,15 @@ export interface ReportPeriod {
   endDate: string;
 }
 
+export type ReportCategoryTypeFilter = 'all' | ExpenseType;
+
 export interface MonthlyIncomeExpense {
   month: number;
   year: number;
   label: string;
   income: number;
   expenses: number;
+  net: number;
 }
 
 export interface CategoryBreakdown {

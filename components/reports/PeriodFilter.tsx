@@ -1,14 +1,21 @@
 import { useMemo, useState } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppDatePicker } from '@/components/ui/AppDatePicker';
-import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { buildReportPeriod } from '@/hooks/useReports';
-import { Spacing, Typography } from '@/constants/theme';
+import { Colors, Spacing, Typography } from '@/constants/theme';
 import type { ReportPeriod, ReportPeriodPreset } from '@/types/app.types';
 
 const PRESET_OPTIONS: ReportPeriodPreset[] = [
+  'all_time',
   'current_month',
   'last_3_months',
   'last_6_months',
@@ -17,11 +24,12 @@ const PRESET_OPTIONS: ReportPeriodPreset[] = [
 ];
 
 const PRESET_LABELS: Record<ReportPeriodPreset, string> = {
-  current_month: 'reports.currentMonth',
-  last_3_months: 'reports.last3Months',
-  last_6_months: 'reports.last6Months',
-  last_12_months: 'reports.last12Months',
-  custom: 'reports.customRange',
+  all_time: 'reports.periodAllTime',
+  current_month: 'reports.periodThisMonth',
+  last_3_months: 'reports.period3M',
+  last_6_months: 'reports.period6M',
+  last_12_months: 'reports.period12M',
+  custom: 'reports.periodCustom',
 };
 
 export interface PeriodFilterProps {
@@ -49,7 +57,7 @@ export function PeriodFilter({ value, onChange, style }: PeriodFilterProps) {
   const [customStart, setCustomStart] = useState(value.startDate);
   const [customEnd, setCustomEnd] = useState(value.endDate);
 
-  const segments = useMemo(
+  const pills = useMemo(
     () =>
       PRESET_OPTIONS.map((preset) => ({
         value: preset,
@@ -60,12 +68,9 @@ export function PeriodFilter({ value, onChange, style }: PeriodFilterProps) {
 
   const handlePresetChange = (preset: ReportPeriodPreset) => {
     if (preset === 'custom') {
-      onChange(
-        buildReportPeriod('custom', customStart, customEnd),
-      );
+      onChange(buildReportPeriod('custom', customStart, customEnd));
       return;
     }
-
     onChange(buildReportPeriod(preset));
   };
 
@@ -83,23 +88,47 @@ export function PeriodFilter({ value, onChange, style }: PeriodFilterProps) {
 
   return (
     <View style={[styles.container, style]}>
-      <Text style={[styles.title, { color: theme.colors.onSurface }]}>
-        {t('reports.periodFilter')}
-      </Text>
-
-      <AppSegmentedControl
-        segments={segments.slice(0, 3)}
-        value={value.preset}
-        onValueChange={(next) => handlePresetChange(next as ReportPeriodPreset)}
-        style={styles.segmentRow}
-      />
-
-      <AppSegmentedControl
-        segments={segments.slice(3)}
-        value={value.preset}
-        onValueChange={(next) => handlePresetChange(next as ReportPeriodPreset)}
-        style={styles.segmentRow}
-      />
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.pillRow}
+      >
+        {pills.map((pill) => {
+          const isSelected = value.preset === pill.value;
+          return (
+            <Pressable
+              key={pill.value}
+              onPress={() => handlePresetChange(pill.value)}
+              style={({ pressed }) => [
+                styles.pill,
+                {
+                  backgroundColor: isSelected
+                    ? theme.colors.primary
+                    : theme.dark
+                      ? Colors.surfaceVariantDark
+                      : Colors.surfaceVariant,
+                  opacity: pressed ? 0.85 : 1,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected }}
+            >
+              <Text
+                style={[
+                  styles.pillLabel,
+                  {
+                    color: isSelected ? theme.colors.onPrimary : theme.colors.onSurfaceVariant,
+                    fontWeight: isSelected ? '700' : '500',
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {pill.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
       {value.preset === 'custom' ? (
         <View style={styles.customRange}>
@@ -126,16 +155,26 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     marginBottom: Spacing.md,
   },
-  title: {
-    ...Typography.titleMedium,
+  pillRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.xs / 2,
   },
-  segmentRow: {
-    marginBottom: Spacing.xs,
+  pill: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: 999,
+    minHeight: 38,
+    justifyContent: 'center',
+  },
+  pillLabel: {
+    ...Typography.labelLarge,
+    textAlign: 'center',
   },
   customRange: {
     flexDirection: 'row',
     gap: Spacing.md,
-    marginTop: Spacing.sm,
+    marginTop: Spacing.xs,
   },
   dateField: {
     flex: 1,
