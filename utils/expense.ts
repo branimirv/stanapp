@@ -18,11 +18,6 @@ export function getCategoryEffectiveType(category: ExpenseCategory): ExpenseType
   return 'regular';
 }
 
-export function getExpenseType(category?: ExpenseCategory | null): ExpenseType | undefined {
-  if (!category) return undefined;
-  return getCategoryEffectiveType(category);
-}
-
 export function filterCategoriesByType(
   categories: ExpenseCategory[],
   type: ExpenseType,

@@ -1,104 +1,103 @@
-import { useState, useEffect, useCallback } from 'react';
-import { format } from 'date-fns';
-import { supabase } from '@/lib/supabase';
+import { useCallback } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryKeys, type ExpenseListFilters } from '@/lib/queryKeys';
+import {
+  createExpense,
+  deleteExpense,
+  fetchExpense,
+  fetchExpenses,
+  updateExpense,
+} from '@/services/expenses';
 import { useAuthStore } from '@/stores/authStore';
-import type {
-  Expense,
-  ExpenseInsert,
-  ExpenseStatusFilter,
-  ExpenseUpdate,
-} from '@/types/app.types';
+import type { Expense, ExpenseInsert, ExpenseUpdate } from '@/types/app.types';
 
-interface UseExpensesOptions {
-  propertyId?: string;
-  status?: ExpenseStatusFilter;
+function useInvalidateExpenses() {
+  const queryClient = useQueryClient();
+  return useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.reports.all });
+  }, [queryClient]);
 }
 
-export function useExpenses(options: UseExpensesOptions = {}) {
-  const { propertyId, status } = options;
-  const { user } = useAuthStore();
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+/** Create/update/delete expenses without subscribing to a list query. */
+export function useExpenseMutations() {
+  const invalidate = useInvalidateExpenses();
 
-  const refetch = useCallback(async () => {
-    if (!user) {
-      setExpenses([]);
-      setIsLoading(false);
-      return;
-    }
+  const createMutation = useMutation({
+    mutationFn: (values: ExpenseInsert) => createExpense(values),
+    onSuccess: invalidate,
+  });
 
-    setIsLoading(true);
-    setError(null);
+  const updateMutation = useMutation({
+    mutationFn: ({ id, values }: { id: string; values: ExpenseUpdate }) => updateExpense(id, values),
+    onSuccess: invalidate,
+  });
 
-    let query = supabase.from('expenses').select('*').order('billing_date', { ascending: false });
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => deleteExpense(id),
+    onSuccess: invalidate,
+  });
 
-    if (propertyId) {
-      query = query.eq('property_id', propertyId);
-    }
+  const create = useCallback((values: ExpenseInsert) => createMutation.mutateAsync(values), [createMutation]);
 
-    if (status === 'paid') {
-      query = query.not('paid_at', 'is', null);
-    } else if (status === 'unpaid') {
-      query = query.is('paid_at', null);
-    } else if (status === 'overdue') {
-      query = query.is('paid_at', null).lt('due_date', format(new Date(), 'yyyy-MM-dd'));
-    }
+  const update = useCallback(
+    (id: string, values: ExpenseUpdate) => updateMutation.mutateAsync({ id, values }),
+    [updateMutation],
+  );
 
-    const { data, error: err } = await query;
-
-    if (err) {
-      setError(err.message);
-    } else {
-      setExpenses(data ?? []);
-    }
-
-    setIsLoading(false);
-  }, [user, propertyId, status]);
-
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
-
-  const create = useCallback(async (values: ExpenseInsert) => {
-    const { data, error: err } = await supabase
-      .from('expenses')
-      .insert(values)
-      .select()
-      .single();
-
-    if (err) throw err;
-
-    setExpenses((prev) => [data, ...prev]);
-    return data;
-  }, []);
-
-  const update = useCallback(async (id: string, values: ExpenseUpdate) => {
-    const { data, error: err } = await supabase
-      .from('expenses')
-      .update(values)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (err) throw err;
-
-    setExpenses((prev) => prev.map((e) => (e.id === id ? data : e)));
-    return data;
-  }, []);
-
-  const remove = useCallback(async (id: string) => {
-    const { error: err } = await supabase.from('expenses').delete().eq('id', id);
-
-    if (err) throw err;
-
-    setExpenses((prev) => prev.filter((e) => e.id !== id));
-  }, []);
+  const remove = useCallback((id: string) => removeMutation.mutateAsync(id), [removeMutation]);
 
   const markAsPaid = useCallback(
-    async (id: string) => update(id, { paid_at: new Date().toISOString() }),
+    (id: string) => update(id, { paid_at: new Date().toISOString() }),
     [update],
   );
 
-  return { expenses, isLoading, error, refetch, create, update, remove, markAsPaid };
+  return { create, update, remove, markAsPaid };
+}
+
+export function useExpenses(filters: ExpenseListFilters = {}) {
+  const { user } = useAuthStore();
+  const mutations = useExpenseMutations();
+
+  const query = useQuery({
+    queryKey: queryKeys.expenses.list(filters),
+    queryFn: () => fetchExpenses(filters),
+    enabled: Boolean(user),
+  });
+
+  return {
+    expenses: query.data ?? [],
+    isLoading: query.isLoading,
+    error: query.error ? (query.error as Error).message : null,
+    refetch: query.refetch,
+    ...mutations,
+  };
+}
+
+export function useExpense(id: string | undefined) {
+  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: id ? queryKeys.expenses.detail(id) : queryKeys.expenses.detail('none'),
+    queryFn: () => fetchExpense(id as string),
+    enabled: Boolean(user && id),
+    initialData: () => {
+      if (!id) return undefined;
+      const lists = queryClient.getQueriesData<Expense[]>({ queryKey: queryKeys.expenses.all });
+      for (const [, data] of lists) {
+        const found = data?.find((e) => e.id === id);
+        if (found) return found;
+      }
+      return undefined;
+    },
+  });
+
+  return {
+    expense: query.data ?? null,
+    isLoading: query.isLoading,
+    error: query.error ? (query.error as Error).message : null,
+    refetch: query.refetch,
+  };
 }

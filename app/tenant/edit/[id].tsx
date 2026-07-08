@@ -1,50 +1,24 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { TenantForm } from '@/components/tenant/TenantForm';
 import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
-import { useTenants } from '@/hooks/useTenants';
-import { supabase } from '@/lib/supabase';
+import { useTenant, useTenantMutations } from '@/hooks/useTenants';
 import { useUiStore } from '@/stores/uiStore';
-import type { Tenant } from '@/types/app.types';
 import type { TenantFormValues } from '@/utils/validators';
 
 export default function EditTenantScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
-  const { update } = useTenants();
+  const { update } = useTenantMutations();
+  const { tenant, isLoading, error, refetch: loadTenant } = useTenant(id);
   const showToast = useUiStore((s) => s.showToast);
 
-  const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const screenStyles = useThemedScreenStyles();
-
-  const loadTenant = useCallback(async () => {
-    if (!id) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    const { data, error: err } = await supabase.from('tenants').select('*').eq('id', id).single();
-
-    if (err) {
-      setError(err.message);
-      setTenant(null);
-    } else {
-      setTenant(data);
-    }
-
-    setIsLoading(false);
-  }, [id]);
-
-  useEffect(() => {
-    loadTenant();
-  }, [loadTenant]);
 
   const handleSubmit = async (values: TenantFormValues) => {
     if (!id) return;

@@ -6,7 +6,7 @@ import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { ExpenseForm } from '@/components/expense/ExpenseForm';
 import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
-import { useExpenses } from '@/hooks/useExpenses';
+import { useExpenseMutations } from '@/hooks/useExpenses';
 import { useProperties } from '@/hooks/useProperties';
 import { scheduleExpenseDueReminder } from '@/lib/notifications';
 import { useUiStore } from '@/stores/uiStore';
@@ -25,7 +25,7 @@ export default function NewExpenseScreen() {
   const { t } = useTranslation();
   const { properties, isLoading: propertiesLoading } = useProperties();
   const { categories, isLoading: categoriesLoading, createCustomCategory } = useExpenseCategories();
-  const { create } = useExpenses();
+  const { create } = useExpenseMutations();
   const showToast = useUiStore((s) => s.showToast);
   const [isSaving, setIsSaving] = useState(false);
   const screenStyles = useThemedScreenStyles();

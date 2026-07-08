@@ -1,56 +1,35 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { TenantForm } from '@/components/tenant/TenantForm';
 import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
-import { useTenants } from '@/hooks/useTenants';
-import { supabase } from '@/lib/supabase';
+import { useProperty } from '@/hooks/useProperties';
+import { useTenantMutations } from '@/hooks/useTenants';
 import { useUiStore } from '@/stores/uiStore';
-import type { Property } from '@/types/app.types';
 import type { TenantFormValues } from '@/utils/validators';
 
 export default function NewTenantScreen() {
   const { propertyId } = useLocalSearchParams<{ propertyId?: string }>();
   const { t } = useTranslation();
-  const { create } = useTenants();
+  const { create } = useTenantMutations();
   const showToast = useUiStore((s) => s.showToast);
 
-  const [property, setProperty] = useState<Property | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    property,
+    isLoading,
+    error: loadError,
+    refetch: loadProperty,
+  } = useProperty(propertyId);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const screenStyles = useThemedScreenStyles();
 
-  const loadProperty = useCallback(async () => {
-    if (!propertyId) {
-      setError(t('validation.selectProperty'));
-      setIsLoading(false);
-      return;
-    }
-
-    const { data, error: err } = await supabase
-      .from('properties')
-      .select('*')
-      .eq('id', propertyId)
-      .single();
-
-    if (err) {
-      setError(err.message);
-    } else if (data.usage_status !== 'rented') {
-      setError(t('tenants.onlyForRented'));
-    } else {
-      setProperty(data);
-    }
-
-    setIsLoading(false);
-  }, [propertyId, t]);
-
-  useEffect(() => {
-    loadProperty();
-  }, [loadProperty]);
+  const error = !propertyId
+    ? t('validation.selectProperty')
+    : loadError ?? (property && property.usage_status !== 'rented' ? t('tenants.onlyForRented') : null);
+  const canAddTenant = Boolean(property && property.usage_status === 'rented');
 
   const handleSubmit = async (values: TenantFormValues) => {
     if (!propertyId) return;
@@ -91,7 +70,7 @@ export default function NewTenantScreen() {
     );
   }
 
-  if (error || !property) {
+  if (error || !canAddTenant) {
     return (
       <>
         <Stack.Screen options={{ title: t('tenants.newTenant') }} />

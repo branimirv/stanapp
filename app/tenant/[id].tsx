@@ -1,5 +1,4 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Mail, MessageSquare, Pencil, Phone } from 'lucide-react-native';
 import { Divider, Text, useTheme } from 'react-native-paper';
@@ -14,12 +13,13 @@ import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { RentPaymentCard } from '@/components/rent/RentPaymentCard';
 import { Spacing, Typography } from '@/constants/theme';
 import { CONTRACT_EXPIRING_DAYS } from '@/constants/config';
+import { useLocale } from '@/hooks/useLocale';
 import { useProfile } from '@/hooks/useProfile';
+import { useProperty } from '@/hooks/useProperties';
 import { useRentPayments } from '@/hooks/useRentPayments';
-import { useTenants } from '@/hooks/useTenants';
-import { supabase } from '@/lib/supabase';
+import { useTenant, useTenantMutations } from '@/hooks/useTenants';
 import { useUiStore } from '@/stores/uiStore';
-import type { Property, Tenant } from '@/types/app.types';
+import type { Tenant } from '@/types/app.types';
 import { resolveCurrency } from '@/utils/currency';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { differenceInDays, parseISO } from 'date-fns';
@@ -38,55 +38,22 @@ function getContractBadge(tenant: Tenant, t: (key: string, opts?: Record<string,
 
 export default function TenantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const theme = useTheme();
   const showToast = useUiStore((s) => s.showToast);
   const showConfirmDialog = useUiStore((s) => s.showConfirmDialog);
 
-  const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [property, setProperty] = useState<Property | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { tenant, isLoading, error, refetch: loadTenant } = useTenant(id);
+  const { property } = useProperty(tenant?.property_id ?? undefined);
 
   const { profile } = useProfile();
-  const language = profile?.language ?? (i18n.language as 'en' | 'hr');
+  const { language } = useLocale();
   const currency = resolveCurrency(profile, property);
 
-  const { update, remove } = useTenants();
+  const { update, remove } = useTenantMutations();
   const { rentPayments, isLoading: paymentsLoading } = useRentPayments({
     tenantId: id,
   });
-
-  const loadTenant = useCallback(async () => {
-    if (!id) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    const { data, error: err } = await supabase.from('tenants').select('*').eq('id', id).single();
-
-    if (err) {
-      setError(err.message);
-      setTenant(null);
-      setIsLoading(false);
-      return;
-    }
-
-    setTenant(data);
-
-    const { data: propertyData } = await supabase
-      .from('properties')
-      .select('*')
-      .eq('id', data.property_id)
-      .single();
-
-    setProperty(propertyData ?? null);
-    setIsLoading(false);
-  }, [id]);
-
-  useEffect(() => {
-    loadTenant();
-  }, [loadTenant]);
 
   const handleDeactivate = () => {
     if (!tenant) return;

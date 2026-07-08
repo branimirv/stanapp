@@ -1,109 +1,110 @@
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useCallback } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryKeys, type RentPaymentListFilters } from '@/lib/queryKeys';
+import {
+  createRentPayment,
+  deleteRentPayment,
+  fetchRentPayment,
+  fetchRentPayments,
+  updateRentPayment,
+} from '@/services/rentPayments';
 import { useAuthStore } from '@/stores/authStore';
 import type { RentPayment, RentPaymentInsert, RentPaymentUpdate } from '@/types/app.types';
+import { formatDateOnly } from '@/utils/formatters';
 
-interface UseRentPaymentsOptions {
-  propertyId?: string;
-  tenantId?: string;
+function useInvalidateRentPayments() {
+  const queryClient = useQueryClient();
+  return useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.rentPayments.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.reports.all });
+  }, [queryClient]);
 }
 
-export function useRentPayments(options: UseRentPaymentsOptions = {}) {
-  const { propertyId, tenantId } = options;
-  const { user } = useAuthStore();
-  const [rentPayments, setRentPayments] = useState<RentPayment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+/** Create/update/delete rent payments without subscribing to a list query. */
+export function useRentPaymentMutations() {
+  const invalidate = useInvalidateRentPayments();
 
-  const refetch = useCallback(async () => {
-    if (!user) {
-      setRentPayments([]);
-      setIsLoading(false);
-      return;
-    }
+  const createMutation = useMutation({
+    mutationFn: (values: RentPaymentInsert) => createRentPayment(values),
+    onSuccess: invalidate,
+  });
 
-    setIsLoading(true);
-    setError(null);
+  const updateMutation = useMutation({
+    mutationFn: ({ id, values }: { id: string; values: RentPaymentUpdate }) =>
+      updateRentPayment(id, values),
+    onSuccess: invalidate,
+  });
 
-    let query = supabase
-      .from('rent_payments')
-      .select('*')
-      .order('period_year', { ascending: false })
-      .order('period_month', { ascending: false });
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => deleteRentPayment(id),
+    onSuccess: invalidate,
+  });
 
-    if (propertyId) {
-      query = query.eq('property_id', propertyId);
-    }
+  const create = useCallback(
+    (values: RentPaymentInsert) => createMutation.mutateAsync(values),
+    [createMutation],
+  );
 
-    if (tenantId) {
-      query = query.eq('tenant_id', tenantId);
-    }
+  const update = useCallback(
+    (id: string, values: RentPaymentUpdate) => updateMutation.mutateAsync({ id, values }),
+    [updateMutation],
+  );
 
-    const { data, error: err } = await query;
-
-    if (err) {
-      setError(err.message);
-    } else {
-      setRentPayments(data ?? []);
-    }
-
-    setIsLoading(false);
-  }, [user, propertyId, tenantId]);
-
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
-
-  const create = useCallback(async (values: RentPaymentInsert) => {
-    const { data, error: err } = await supabase
-      .from('rent_payments')
-      .insert(values)
-      .select()
-      .single();
-
-    if (err) throw err;
-
-    setRentPayments((prev) => [data, ...prev]);
-    return data;
-  }, []);
-
-  const update = useCallback(async (id: string, values: RentPaymentUpdate) => {
-    const { data, error: err } = await supabase
-      .from('rent_payments')
-      .update(values)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (err) throw err;
-
-    setRentPayments((prev) => prev.map((p) => (p.id === id ? data : p)));
-    return data;
-  }, []);
-
-  const remove = useCallback(async (id: string) => {
-    const { error: err } = await supabase.from('rent_payments').delete().eq('id', id);
-
-    if (err) throw err;
-
-    setRentPayments((prev) => prev.filter((p) => p.id !== id));
-  }, []);
+  const remove = useCallback((id: string) => removeMutation.mutateAsync(id), [removeMutation]);
 
   const markAsPaid = useCallback(
-    async (id: string) =>
-      update(id, {
-        status: 'paid',
-        payment_date: formatDateOnly(new Date()),
-      }),
+    (id: string) => update(id, { status: 'paid', payment_date: formatDateOnly(new Date()) }),
     [update],
   );
 
-  return { rentPayments, isLoading, error, refetch, create, update, remove, markAsPaid };
+  return { create, update, remove, markAsPaid };
 }
 
-function formatDateOnly(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+export function useRentPayments(filters: RentPaymentListFilters = {}) {
+  const { user } = useAuthStore();
+  const mutations = useRentPaymentMutations();
+
+  const query = useQuery({
+    queryKey: queryKeys.rentPayments.list(filters),
+    queryFn: () => fetchRentPayments(filters),
+    enabled: Boolean(user),
+  });
+
+  return {
+    rentPayments: query.data ?? [],
+    isLoading: query.isLoading,
+    error: query.error ? (query.error as Error).message : null,
+    refetch: query.refetch,
+    ...mutations,
+  };
+}
+
+export function useRentPayment(id: string | undefined) {
+  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: id ? queryKeys.rentPayments.detail(id) : queryKeys.rentPayments.detail('none'),
+    queryFn: () => fetchRentPayment(id as string),
+    enabled: Boolean(user && id),
+    initialData: () => {
+      if (!id) return undefined;
+      const lists = queryClient.getQueriesData<RentPayment[]>({
+        queryKey: queryKeys.rentPayments.all,
+      });
+      for (const [, data] of lists) {
+        const found = data?.find((payment) => payment.id === id);
+        if (found) return found;
+      }
+      return undefined;
+    },
+  });
+
+  return {
+    rentPayment: query.data ?? null,
+    isLoading: query.isLoading,
+    error: query.error ? (query.error as Error).message : null,
+    refetch: query.refetch,
+  };
 }

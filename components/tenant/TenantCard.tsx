@@ -1,5 +1,6 @@
 import { differenceInDays, parseISO } from 'date-fns';
 import { Calendar, Mail, MessageSquare, Phone } from 'lucide-react-native';
+import { memo } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { Card, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
@@ -45,7 +46,7 @@ function openUrl(url: string) {
   Linking.openURL(url).catch(() => undefined);
 }
 
-export function TenantCard({
+function TenantCardComponent({
   tenant,
   currency = 'EUR',
   language = 'hr',
@@ -159,6 +160,8 @@ export function TenantCard({
     </Pressable>
   );
 }
+
+export const TenantCard = memo(TenantCardComponent);
 
 const styles = StyleSheet.create({
   card: {

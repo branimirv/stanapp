@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Divider, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
@@ -14,68 +14,35 @@ import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { CategoryBadge } from '@/components/expense/CategoryBadge';
 import { Spacing, Typography } from '@/constants/theme';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
-import { useExpenses } from '@/hooks/useExpenses';
+import { useExpense, useExpenseMutations } from '@/hooks/useExpenses';
+import { useLocale } from '@/hooks/useLocale';
 import { useProfile } from '@/hooks/useProfile';
+import { useProperty } from '@/hooks/useProperties';
 import { cancelExpenseReminders } from '@/lib/notifications';
-import { supabase } from '@/lib/supabase';
 import { useUiStore } from '@/stores/uiStore';
-import type { Expense, Property } from '@/types/app.types';
 import { resolveCurrency } from '@/utils/currency';
 import { formatCurrency, formatDate, isOverdue } from '@/utils/formatters';
 
 export default function ExpenseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const theme = useTheme();
   const showToast = useUiStore((s) => s.showToast);
   const showConfirmDialog = useUiStore((s) => s.showConfirmDialog);
 
-  const [expense, setExpense] = useState<Expense | null>(null);
-  const [property, setProperty] = useState<Property | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { expense, isLoading, error, refetch: loadExpense } = useExpense(id);
+  const { property } = useProperty(expense?.property_id ?? undefined);
 
   const { profile } = useProfile();
+  const { language } = useLocale();
   const { categories } = useExpenseCategories();
-  const { markAsPaid, remove } = useExpenses();
+  const { markAsPaid, remove } = useExpenseMutations();
 
-  const language = profile?.language ?? (i18n.language as 'en' | 'hr');
   const currency = resolveCurrency(profile, property, expense?.currency);
   const category = useMemo(
     () => categories.find((c) => c.id === expense?.category_id),
     [categories, expense?.category_id],
   );
-
-  const loadExpense = useCallback(async () => {
-    if (!id) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    const { data, error: err } = await supabase.from('expenses').select('*').eq('id', id).single();
-
-    if (err) {
-      setError(err.message);
-      setExpense(null);
-      setIsLoading(false);
-      return;
-    }
-
-    setExpense(data);
-
-    const { data: propertyData } = await supabase
-      .from('properties')
-      .select('*')
-      .eq('id', data.property_id)
-      .single();
-
-    setProperty(propertyData ?? null);
-    setIsLoading(false);
-  }, [id]);
-
-  useEffect(() => {
-    loadExpense();
-  }, [loadExpense]);
 
   const handleMarkPaid = () => {
     if (!expense) return;

@@ -1,5 +1,5 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -7,15 +7,13 @@ import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { ExpenseForm } from '@/components/expense/ExpenseForm';
 import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
-import { useExpenses } from '@/hooks/useExpenses';
+import { useExpense, useExpenseMutations } from '@/hooks/useExpenses';
 import { useProperties } from '@/hooks/useProperties';
 import {
   cancelExpenseReminders,
   scheduleExpenseDueReminder,
 } from '@/lib/notifications';
-import { supabase } from '@/lib/supabase';
 import { useUiStore } from '@/stores/uiStore';
-import type { Expense } from '@/types/app.types';
 import { getCategoryLabel } from '@/utils/expense';
 import type { ExpenseFormValues } from '@/utils/validators';
 import { parseISO } from 'date-fns';
@@ -25,36 +23,12 @@ export default function EditExpenseScreen() {
   const { t } = useTranslation();
   const { properties } = useProperties();
   const { categories, createCustomCategory } = useExpenseCategories();
-  const { update } = useExpenses();
+  const { update } = useExpenseMutations();
+  const { expense, isLoading, error, refetch } = useExpense(id);
   const showToast = useUiStore((s) => s.showToast);
 
-  const [expense, setExpense] = useState<Expense | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const screenStyles = useThemedScreenStyles();
-
-  const loadExpense = useCallback(async () => {
-    if (!id) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    const { data, error: err } = await supabase.from('expenses').select('*').eq('id', id).single();
-
-    if (err) {
-      setError(err.message);
-      setExpense(null);
-    } else {
-      setExpense(data);
-    }
-
-    setIsLoading(false);
-  }, [id]);
-
-  useEffect(() => {
-    loadExpense();
-  }, [loadExpense]);
 
   const handleSubmit = async (values: ExpenseFormValues) => {
     if (!id) return;
@@ -107,7 +81,7 @@ export default function EditExpenseScreen() {
     return (
       <>
         <Stack.Screen options={{ title: t('expenses.editExpense') }} />
-        <ErrorState message={error ?? t('expenses.notFound')} onRetry={loadExpense} />
+        <ErrorState message={error ?? t('expenses.notFound')} onRetry={refetch} />
       </>
     );
   }

@@ -1,82 +1,52 @@
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useCallback } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/queryKeys';
+import { fetchProfile, updateProfile as updateProfileService } from '@/services/profile';
 import { useAuthStore } from '@/stores/authStore';
-import type { Language, Profile, ProfileUpdate, Theme } from '@/types/app.types';
+import type { Language, ProfileUpdate, Theme } from '@/types/app.types';
 
 export function useProfile() {
   const { user } = useAuthStore();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const userId = user?.id;
 
-  const refetch = useCallback(async () => {
-    if (!user) {
-      setProfile(null);
-      setIsLoading(false);
-      return;
-    }
+  const query = useQuery({
+    queryKey: userId ? queryKeys.profile(userId) : ['profile', 'anonymous'],
+    queryFn: () => fetchProfile(userId as string),
+    enabled: Boolean(userId),
+  });
 
-    setIsLoading(true);
-    setError(null);
-
-    const { data, error: err } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    if (err) {
-      setError(err.message);
-    } else {
-      setProfile(data);
-    }
-
-    setIsLoading(false);
-  }, [user]);
-
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
-
-  const updateProfile = useCallback(
-    async (values: ProfileUpdate) => {
-      if (!user) throw new Error('Not authenticated');
-
-      const { data, error: err } = await supabase
-        .from('profiles')
-        .update(values)
-        .eq('id', user.id)
-        .select()
-        .single();
-
-      if (err) throw err;
-
-      setProfile(data);
-      return data;
+  const mutation = useMutation({
+    mutationFn: (values: ProfileUpdate) => {
+      if (!userId) throw new Error('Not authenticated');
+      return updateProfileService(userId, values);
     },
-    [user],
-  );
+    onSuccess: (data) => {
+      if (userId) {
+        queryClient.setQueryData(queryKeys.profile(userId), data);
+      }
+    },
+  });
+
+  const updateProfile = useCallback((values: ProfileUpdate) => mutation.mutateAsync(values), [mutation]);
 
   const updateLanguage = useCallback(
-    async (language: Language) => updateProfile({ language }),
-    [updateProfile],
+    (language: Language) => mutation.mutateAsync({ language }),
+    [mutation],
   );
 
   const updateCurrency = useCallback(
-    async (default_currency: string) => updateProfile({ default_currency }),
-    [updateProfile],
+    (default_currency: string) => mutation.mutateAsync({ default_currency }),
+    [mutation],
   );
 
-  const updateTheme = useCallback(
-    async (theme: Theme) => updateProfile({ theme }),
-    [updateProfile],
-  );
+  const updateTheme = useCallback((theme: Theme) => mutation.mutateAsync({ theme }), [mutation]);
 
   return {
-    profile,
-    isLoading,
-    error,
-    refetch,
+    profile: query.data ?? null,
+    isLoading: query.isLoading,
+    error: query.error ? (query.error as Error).message : null,
+    refetch: query.refetch,
     updateProfile,
     updateLanguage,
     updateCurrency,

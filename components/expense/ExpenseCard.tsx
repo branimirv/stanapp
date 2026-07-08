@@ -1,5 +1,5 @@
 import { Calendar, CheckCircle, Trash2 } from 'lucide-react-native';
-import { useRef } from 'react';
+import { memo, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Card, Text, useTheme } from 'react-native-paper';
@@ -21,7 +21,7 @@ export interface ExpenseCardProps {
   onDelete?: () => void;
 }
 
-export function ExpenseCard({
+function ExpenseCardComponent({
   expense,
   category,
   propertyName,
@@ -153,6 +153,8 @@ export function ExpenseCard({
     </Swipeable>
   );
 }
+
+export const ExpenseCard = memo(ExpenseCardComponent);
 
 const styles = StyleSheet.create({
   card: {

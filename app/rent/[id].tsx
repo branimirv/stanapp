@@ -1,5 +1,4 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Divider, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
@@ -8,67 +7,31 @@ import { AppButton } from '@/components/ui/AppButton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { Spacing, Typography } from '@/constants/theme';
+import { useLocale } from '@/hooks/useLocale';
 import { useProfile } from '@/hooks/useProfile';
-import { useRentPayments } from '@/hooks/useRentPayments';
-import { supabase } from '@/lib/supabase';
+import { useProperty } from '@/hooks/useProperties';
+import { useRentPayment, useRentPaymentMutations } from '@/hooks/useRentPayments';
+import { useTenant } from '@/hooks/useTenants';
 import { useUiStore } from '@/stores/uiStore';
-import type { Property, RentPayment, Tenant } from '@/types/app.types';
 import { resolveCurrency } from '@/utils/currency';
 import { formatCurrency, formatDate, formatPeriod } from '@/utils/formatters';
 
 export default function RentPaymentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const theme = useTheme();
   const showToast = useUiStore((s) => s.showToast);
   const showConfirmDialog = useUiStore((s) => s.showConfirmDialog);
 
-  const [payment, setPayment] = useState<RentPayment | null>(null);
-  const [property, setProperty] = useState<Property | null>(null);
-  const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { rentPayment: payment, isLoading, error, refetch: loadPayment } = useRentPayment(id);
+  const { property } = useProperty(payment?.property_id ?? undefined);
+  const { tenant } = useTenant(payment?.tenant_id ?? undefined);
 
   const { profile } = useProfile();
-  const { markAsPaid, remove } = useRentPayments();
+  const { markAsPaid, remove } = useRentPaymentMutations();
 
-  const language = profile?.language ?? (i18n.language as 'en' | 'hr');
+  const { language } = useLocale();
   const currency = resolveCurrency(profile, property, payment?.currency);
-
-  const loadPayment = useCallback(async () => {
-    if (!id) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    const { data, error: err } = await supabase
-      .from('rent_payments')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (err) {
-      setError(err.message);
-      setPayment(null);
-      setIsLoading(false);
-      return;
-    }
-
-    setPayment(data);
-
-    const [{ data: propertyData }, { data: tenantData }] = await Promise.all([
-      supabase.from('properties').select('*').eq('id', data.property_id).single(),
-      supabase.from('tenants').select('*').eq('id', data.tenant_id).single(),
-    ]);
-
-    setProperty(propertyData ?? null);
-    setTenant(tenantData ?? null);
-    setIsLoading(false);
-  }, [id]);
-
-  useEffect(() => {
-    loadPayment();
-  }, [loadPayment]);
 
   const handleMarkPaid = () => {
     if (!payment) return;

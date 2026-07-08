@@ -1,5 +1,5 @@
 import { Calendar, CheckCircle, Trash2 } from 'lucide-react-native';
-import { useRef } from 'react';
+import { memo, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Card, Text, useTheme } from 'react-native-paper';
@@ -27,7 +27,7 @@ export interface RentPaymentCardProps {
   onDelete?: () => void;
 }
 
-export function RentPaymentCard({
+function RentPaymentCardComponent({
   payment,
   tenantName,
   propertyName,
@@ -135,6 +135,8 @@ export function RentPaymentCard({
     </Swipeable>
   );
 }
+
+export const RentPaymentCard = memo(RentPaymentCardComponent);
 
 const styles = StyleSheet.create({
   card: {

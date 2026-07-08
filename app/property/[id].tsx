@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -35,18 +35,18 @@ import { RentMonthActionSheet } from '@/components/rent/RentMonthActionSheet';
 import { RentPaymentCard } from '@/components/rent/RentPaymentCard';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useExpenses } from '@/hooks/useExpenses';
+import { useLocale } from '@/hooks/useLocale';
 import { useProfile } from '@/hooks/useProfile';
+import { useProperty, useChildProperties } from '@/hooks/useProperties';
 import { useRefetchOnFocus } from '@/hooks/useRefetchOnFocus';
 import { useRentPayments } from '@/hooks/useRentPayments';
 import { useTenants } from '@/hooks/useTenants';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
-import { supabase } from '@/lib/supabase';
-import { usePropertyStore } from '@/stores/propertyStore';
 import { useUiStore } from '@/stores/uiStore';
-import type { Property, RentPayment } from '@/types/app.types';
+import type { RentPayment } from '@/types/app.types';
 import { resolveCurrency } from '@/utils/currency';
 import { getCurrentMonthRange, isDateInRange } from '@/utils/dateRange';
-import { formatCurrency, formatDate, formatPeriod } from '@/utils/formatters';
+import { formatCurrency, formatDateOnly, formatPeriod } from '@/utils/formatters';
 
 type TabKey = 'overview' | 'tenants' | 'expenses' | 'rent';
 type ExpensePeriodFilter = 'current_month' | 'all';
@@ -60,26 +60,21 @@ const TAB_ICONS: Record<TabKey, LucideIcon> = {
   rent: Banknote,
 };
 
-function formatDateOnly(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
 export default function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const theme = useTheme();
   const layout = useWindowDimensions();
   const showToast = useUiStore((s) => s.showToast);
-  const getChildProperties = usePropertyStore((s) => s.getChildProperties);
-  const getPropertyById = usePropertyStore((s) => s.getPropertyById);
 
-  const [property, setProperty] = useState<Property | null>(null);
-  const [parentProperty, setParentProperty] = useState<Property | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    property,
+    isLoading,
+    error,
+    refetch: refetchProperty,
+  } = useProperty(id);
+  const { property: parentProperty } = useProperty(property?.parent_property_id ?? undefined);
+  const childProperties = useChildProperties(id);
   const [index, setIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [expensePeriodFilter, setExpensePeriodFilter] = useState<ExpensePeriodFilter>('all');
@@ -94,7 +89,7 @@ export default function PropertyDetailScreen() {
   }>({ visible: false, month: new Date().getMonth() + 1, year: new Date().getFullYear() });
 
   const { profile } = useProfile();
-  const language = profile?.language ?? (i18n.language as 'en' | 'hr');
+  const { language } = useLocale();
   const currency = resolveCurrency(profile, property);
 
   const isRented = property?.usage_status === 'rented';
@@ -157,47 +152,6 @@ export default function PropertyDetailScreen() {
     language,
   );
 
-  const loadProperty = useCallback(async () => {
-    if (!id) return;
-
-    setError(null);
-    const cached = getPropertyById(id);
-    if (cached) setProperty(cached);
-
-    const { data, error: err } = await supabase
-      .from('properties')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (err) {
-      setError(err.message);
-      setProperty(null);
-    } else {
-      setProperty(data);
-      if (data.parent_property_id) {
-        const parent =
-          getPropertyById(data.parent_property_id) ??
-          (
-            await supabase
-              .from('properties')
-              .select('*')
-              .eq('id', data.parent_property_id)
-              .single()
-          ).data;
-        setParentProperty(parent ?? null);
-      } else {
-        setParentProperty(null);
-      }
-    }
-
-    setIsLoading(false);
-  }, [getPropertyById, id]);
-
-  useEffect(() => {
-    loadProperty();
-  }, [loadProperty]);
-
   const refetchTabData = useCallback(async () => {
     await Promise.all([refetchTenants(), refetchExpenses(), refetchRent()]);
   }, [refetchExpenses, refetchRent, refetchTenants]);
@@ -230,9 +184,9 @@ export default function PropertyDetailScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([loadProperty(), refetchTenants(), refetchExpenses(), refetchRent()]);
+    await Promise.all([refetchProperty(), refetchTenants(), refetchExpenses(), refetchRent()]);
     setRefreshing(false);
-  }, [loadProperty, refetchExpenses, refetchRent, refetchTenants]);
+  }, [refetchProperty, refetchExpenses, refetchRent, refetchTenants]);
 
   const expensesByMonth = useMemo(() => {
     const groups = new Map<string, typeof expenses>();
@@ -476,7 +430,7 @@ export default function PropertyDetailScreen() {
       <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
         {t('properties.subProperties')}
       </Text>
-      <SubPropertyList properties={getChildProperties(property!.id)} />
+      <SubPropertyList properties={childProperties} />
     </ScrollView>
   );
 
@@ -683,7 +637,7 @@ export default function PropertyDetailScreen() {
         <Stack.Screen options={{ title: t('properties.propertyDetails') }} />
         <ErrorState
           message={error ?? t('properties.notFound')}
-          onRetry={loadProperty}
+          onRetry={refetchProperty}
         />
       </>
     );

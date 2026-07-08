@@ -68,6 +68,7 @@ export function StatementSheet({
       .filter((expense) => {
         const category = categoryMap.get(expense.category_id);
         return (
+          category !== undefined &&
           getCategoryEffectiveType(category) === 'regular' &&
           isDateInRange(expense.billing_date, monthRange.start, monthRange.end)
         );

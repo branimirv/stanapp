@@ -1,84 +1,98 @@
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useCallback } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/queryKeys';
+import {
+  createTenant,
+  deleteTenant,
+  fetchTenant,
+  fetchTenants,
+  updateTenant,
+} from '@/services/tenants';
 import { useAuthStore } from '@/stores/authStore';
 import type { Tenant, TenantInsert, TenantUpdate } from '@/types/app.types';
 
-interface UseTenantsOptions {
-  propertyId?: string;
+function useInvalidateTenants() {
+  const queryClient = useQueryClient();
+  return useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.tenants.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+  }, [queryClient]);
 }
 
-export function useTenants(options: UseTenantsOptions = {}) {
+/** Create/update/delete tenants without subscribing to a list query. */
+export function useTenantMutations() {
+  const invalidate = useInvalidateTenants();
+
+  const createMutation = useMutation({
+    mutationFn: (values: TenantInsert) => createTenant(values),
+    onSuccess: invalidate,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, values }: { id: string; values: TenantUpdate }) => updateTenant(id, values),
+    onSuccess: invalidate,
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => deleteTenant(id),
+    onSuccess: invalidate,
+  });
+
+  const create = useCallback((values: TenantInsert) => createMutation.mutateAsync(values), [createMutation]);
+
+  const update = useCallback(
+    (id: string, values: TenantUpdate) => updateMutation.mutateAsync({ id, values }),
+    [updateMutation],
+  );
+
+  const remove = useCallback((id: string) => removeMutation.mutateAsync(id), [removeMutation]);
+
+  return { create, update, remove };
+}
+
+export function useTenants(options: { propertyId?: string } = {}) {
   const { propertyId } = options;
   const { user } = useAuthStore();
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const mutations = useTenantMutations();
 
-  const refetch = useCallback(async () => {
-    if (!user) {
-      setTenants([]);
-      setIsLoading(false);
-      return;
-    }
+  const query = useQuery({
+    queryKey: queryKeys.tenants.list(propertyId),
+    queryFn: () => fetchTenants(propertyId),
+    enabled: Boolean(user),
+  });
 
-    setIsLoading(true);
-    setError(null);
+  return {
+    tenants: query.data ?? [],
+    isLoading: query.isLoading,
+    error: query.error ? (query.error as Error).message : null,
+    refetch: query.refetch,
+    ...mutations,
+  };
+}
 
-    let query = supabase.from('tenants').select('*').order('created_at', { ascending: false });
+export function useTenant(id: string | undefined) {
+  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
 
-    if (propertyId) {
-      query = query.eq('property_id', propertyId);
-    }
+  const query = useQuery({
+    queryKey: id ? queryKeys.tenants.detail(id) : queryKeys.tenants.detail('none'),
+    queryFn: () => fetchTenant(id as string),
+    enabled: Boolean(user && id),
+    initialData: () => {
+      if (!id) return undefined;
+      const lists = queryClient.getQueriesData<Tenant[]>({ queryKey: queryKeys.tenants.all });
+      for (const [, data] of lists) {
+        const found = data?.find((tenant) => tenant.id === id);
+        if (found) return found;
+      }
+      return undefined;
+    },
+  });
 
-    const { data, error: err } = await query;
-
-    if (err) {
-      setError(err.message);
-    } else {
-      setTenants(data ?? []);
-    }
-
-    setIsLoading(false);
-  }, [user, propertyId]);
-
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
-
-  const create = useCallback(async (values: TenantInsert) => {
-    const { data, error: err } = await supabase
-      .from('tenants')
-      .insert(values)
-      .select()
-      .single();
-
-    if (err) throw err;
-
-    setTenants((prev) => [data, ...prev]);
-    return data;
-  }, []);
-
-  const update = useCallback(async (id: string, values: TenantUpdate) => {
-    const { data, error: err } = await supabase
-      .from('tenants')
-      .update(values)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (err) throw err;
-
-    setTenants((prev) => prev.map((t) => (t.id === id ? data : t)));
-    return data;
-  }, []);
-
-  const remove = useCallback(async (id: string) => {
-    const { error: err } = await supabase.from('tenants').delete().eq('id', id);
-
-    if (err) throw err;
-
-    setTenants((prev) => prev.filter((t) => t.id !== id));
-  }, []);
-
-  return { tenants, isLoading, error, refetch, create, update, remove };
+  return {
+    tenant: query.data ?? null,
+    isLoading: query.isLoading,
+    error: query.error ? (query.error as Error).message : null,
+    refetch: query.refetch,
+  };
 }

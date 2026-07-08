@@ -1,109 +1,113 @@
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useCallback, useMemo } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/queryKeys';
+import {
+  createProperty,
+  deleteProperty,
+  fetchProperties,
+  fetchProperty,
+  updateProperty,
+} from '@/services/properties';
 import { useAuthStore } from '@/stores/authStore';
-import { usePropertyStore } from '@/stores/propertyStore';
 import type { Property, PropertyInsert, PropertyUpdate } from '@/types/app.types';
+
+function useInvalidateProperties() {
+  const queryClient = useQueryClient();
+  return useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.properties.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+    queryClient.invalidateQueries({ queryKey: queryKeys.reports.all });
+  }, [queryClient]);
+}
 
 export function useProperties() {
   const { user } = useAuthStore();
-  const { setProperties, addProperty, updateProperty, removeProperty } = usePropertyStore();
-  const [properties, setLocalProperties] = useState<Property[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const invalidate = useInvalidateProperties();
 
-  const refetch = useCallback(async () => {
-    if (!user) {
-      setLocalProperties([]);
-      setIsLoading(false);
-      return;
-    }
+  const query = useQuery({
+    queryKey: queryKeys.properties.lists(),
+    queryFn: fetchProperties,
+    enabled: Boolean(user),
+  });
 
-    setIsLoading(true);
-    setError(null);
+  const createMutation = useMutation({
+    mutationFn: (values: PropertyInsert) =>
+      createProperty({ ...values, user_id: values.user_id ?? user?.id }),
+    onSuccess: invalidate,
+  });
 
-    const { data, error: err } = await supabase
-      .from('properties')
-      .select('*')
-      .eq('is_archived', false)
-      .order('created_at', { ascending: false });
+  const updateMutation = useMutation({
+    mutationFn: ({ id, values }: { id: string; values: PropertyUpdate }) =>
+      updateProperty(id, values),
+    onSuccess: invalidate,
+  });
 
-    if (err) {
-      setError(err.message);
-    } else {
-      const next = data ?? [];
-      setLocalProperties(next);
-      setProperties(next);
-    }
-
-    setIsLoading(false);
-  }, [user, setProperties]);
-
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => deleteProperty(id),
+    onSuccess: invalidate,
+  });
 
   const create = useCallback(
-    async (values: PropertyInsert) => {
+    (values: PropertyInsert) => {
       if (!user) throw new Error('Not authenticated');
-
-      const payload: PropertyInsert = {
-        ...values,
-        user_id: values.user_id ?? user.id,
-      };
-
-      const { data, error: err } = await supabase
-        .from('properties')
-        .insert(payload)
-        .select()
-        .single();
-
-      if (err) throw err;
-
-      if (!data.is_archived) {
-        setLocalProperties((prev) => [data, ...prev]);
-        addProperty(data);
-      }
-
-      return data;
+      return createMutation.mutateAsync(values);
     },
-    [user, addProperty],
+    [createMutation, user],
   );
 
   const update = useCallback(
-    async (id: string, values: PropertyUpdate) => {
-      const { data, error: err } = await supabase
-        .from('properties')
-        .update(values)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (err) throw err;
-
-      if (data.is_archived) {
-        setLocalProperties((prev) => prev.filter((p) => p.id !== id));
-        removeProperty(id);
-      } else {
-        setLocalProperties((prev) => prev.map((p) => (p.id === id ? data : p)));
-        updateProperty(id, data);
-      }
-
-      return data;
-    },
-    [updateProperty, removeProperty],
+    (id: string, values: PropertyUpdate) => updateMutation.mutateAsync({ id, values }),
+    [updateMutation],
   );
 
-  const remove = useCallback(
-    async (id: string) => {
-      const { error: err } = await supabase.from('properties').delete().eq('id', id);
+  const remove = useCallback((id: string) => removeMutation.mutateAsync(id), [removeMutation]);
 
-      if (err) throw err;
+  return {
+    properties: query.data ?? [],
+    isLoading: query.isLoading,
+    error: query.error ? (query.error as Error).message : null,
+    refetch: query.refetch,
+    create,
+    update,
+    remove,
+  };
+}
 
-      setLocalProperties((prev) => prev.filter((p) => p.id !== id));
-      removeProperty(id);
+/**
+ * Single property by id. Seeds from the list cache when present so detail
+ * screens read the same canonical record the list populated.
+ */
+export function useProperty(id: string | undefined) {
+  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: id ? queryKeys.properties.detail(id) : queryKeys.properties.detail('none'),
+    queryFn: () => fetchProperty(id as string),
+    enabled: Boolean(user && id),
+    initialData: () => {
+      if (!id) return undefined;
+      const list = queryClient.getQueryData<Property[]>(queryKeys.properties.lists());
+      return list?.find((p) => p.id === id);
     },
-    [removeProperty],
-  );
+  });
 
-  return { properties, isLoading, error, refetch, create, update, remove };
+  return {
+    property: query.data ?? null,
+    isLoading: query.isLoading,
+    error: query.error ? (query.error as Error).message : null,
+    refetch: query.refetch,
+  };
+}
+
+/** Active child properties for a given parent, derived from the list cache. */
+export function useChildProperties(parentId: string | undefined) {
+  const { properties } = useProperties();
+  return useMemo(
+    () =>
+      parentId
+        ? properties.filter((p) => p.parent_property_id === parentId && !p.is_archived)
+        : [],
+    [properties, parentId],
+  );
 }

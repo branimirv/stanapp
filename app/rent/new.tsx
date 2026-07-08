@@ -6,7 +6,7 @@ import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { RentPaymentForm } from '@/components/rent/RentPaymentForm';
 import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
 import { useProperties } from '@/hooks/useProperties';
-import { useRentPayments } from '@/hooks/useRentPayments';
+import { useRentPaymentMutations } from '@/hooks/useRentPayments';
 import { useTenants } from '@/hooks/useTenants';
 import { useUiStore } from '@/stores/uiStore';
 import type { RentPaymentFormValues } from '@/utils/validators';
@@ -21,7 +21,7 @@ export default function NewRentPaymentScreen() {
   const { t } = useTranslation();
   const { properties, isLoading: propertiesLoading } = useProperties();
   const { tenants, isLoading: tenantsLoading } = useTenants();
-  const { create } = useRentPayments();
+  const { create } = useRentPaymentMutations();
   const showToast = useUiStore((s) => s.showToast);
   const [isSaving, setIsSaving] = useState(false);
   const screenStyles = useThemedScreenStyles();

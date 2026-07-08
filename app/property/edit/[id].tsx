@@ -1,54 +1,25 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { PropertyForm } from '@/components/property/PropertyForm';
 import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
-import { useProperties } from '@/hooks/useProperties';
-import { supabase } from '@/lib/supabase';
+import { useProperties, useProperty } from '@/hooks/useProperties';
 import { useUiStore } from '@/stores/uiStore';
-import type { Property, UsageStatus } from '@/types/app.types';
+import type { UsageStatus } from '@/types/app.types';
 import type { PropertyFormValues } from '@/utils/validators';
 
 export default function EditPropertyScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const { properties, update } = useProperties();
+  const { property, isLoading, error, refetch: loadProperty } = useProperty(id);
   const showToast = useUiStore((s) => s.showToast);
 
-  const [property, setProperty] = useState<Property | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const screenStyles = useThemedScreenStyles();
-
-  const loadProperty = useCallback(async () => {
-    if (!id) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    const { data, error: err } = await supabase
-      .from('properties')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (err) {
-      setError(err.message);
-      setProperty(null);
-    } else {
-      setProperty(data);
-    }
-
-    setIsLoading(false);
-  }, [id]);
-
-  useEffect(() => {
-    loadProperty();
-  }, [loadProperty]);
 
   const handleUsageStatusChange = (_from: UsageStatus, _to: UsageStatus) =>
     new Promise<boolean>((resolve) => {

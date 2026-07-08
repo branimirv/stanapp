@@ -1,16 +1,13 @@
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from 'react-native-paper';
 
-import { useThemedStackScreenOptions } from '@/hooks/useThemedStackScreenOptions';
+import { EntityStack } from '@/components/navigation/EntityStack';
 
 export default function TenantLayout() {
   const { t } = useTranslation();
-  const theme = useTheme();
-  const screenOptions = useThemedStackScreenOptions({ showSettings: true });
 
   return (
-    <Stack key={theme.dark ? 'dark' : 'light'} screenOptions={screenOptions}>
+    <EntityStack>
       <Stack.Screen name="[id]" options={{ title: t('tenants.tenantDetails') }} />
       <Stack.Screen name="new" options={{ title: t('tenants.newTenant') }} />
       <Stack.Screen
@@ -20,6 +17,6 @@ export default function TenantLayout() {
           headerRight: () => null,
         }}
       />
-    </Stack>
+    </EntityStack>
   );
 }

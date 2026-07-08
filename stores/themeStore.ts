@@ -36,7 +36,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
 
 export function resolveIsDark(
   preference: Theme,
-  systemScheme: 'light' | 'dark' | null | undefined,
+  systemScheme: 'light' | 'dark' | 'unspecified' | null | undefined,
 ): boolean {
   if (preference === 'dark') return true;
   if (preference === 'light') return false;
