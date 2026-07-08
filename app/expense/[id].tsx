@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Divider, Text, useTheme } from 'react-native-paper';
@@ -9,8 +9,7 @@ import { AppBadge } from '@/components/ui/AppBadge';
 import { AppButton } from '@/components/ui/AppButton';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
-import { ErrorState } from '@/components/ui/ErrorState';
-import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
 import { CategoryBadge } from '@/components/expense/CategoryBadge';
 import { Spacing, Typography } from '@/constants/theme';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
@@ -91,21 +90,18 @@ export default function ExpenseDetailScreen() {
     });
   };
 
-  if (isLoading) {
+  if (isLoading || error || !expense) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('expenses.expenseDetails') }} />
-        <SkeletonLoader count={5} style={styles.loader} />
-      </>
-    );
-  }
-
-  if (error || !expense) {
-    return (
-      <>
-        <Stack.Screen options={{ title: t('expenses.expenseDetails') }} />
-        <ErrorState message={error ?? t('expenses.notFound')} onRetry={loadExpense} />
-      </>
+      <DetailScreenScaffold
+        title={t('expenses.expenseDetails')}
+        isLoading={isLoading}
+        isReady={Boolean(expense)}
+        error={error}
+        notFoundMessage={t('expenses.notFound')}
+        onRetry={loadExpense}
+      >
+        {null}
+      </DetailScreenScaffold>
     );
   }
 
@@ -113,22 +109,23 @@ export default function ExpenseDetailScreen() {
   const overdue = isOverdue(expense.due_date, expense.paid_at);
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: t('expenses.expenseDetails'),
-          headerRight: () => (
-            <StackHeaderActions>
-              <HeaderIconButton
-                icon={Pencil}
-                onPress={() => router.push(`/expense/edit/${expense.id}`)}
-                accessibilityLabel={t('common.edit')}
-              />
-            </StackHeaderActions>
-          ),
-        }}
-      />
-
+    <DetailScreenScaffold
+      title={t('expenses.expenseDetails')}
+      isLoading={false}
+      isReady
+      error={null}
+      notFoundMessage={t('expenses.notFound')}
+      onRetry={loadExpense}
+      headerRight={() => (
+        <StackHeaderActions>
+          <HeaderIconButton
+            icon={Pencil}
+            onPress={() => router.push(`/expense/edit/${expense.id}`)}
+            accessibilityLabel={t('common.edit')}
+          />
+        </StackHeaderActions>
+      )}
+    >
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           {category ? (
@@ -221,7 +218,7 @@ export default function ExpenseDetailScreen() {
           </AppButton>
         </View>
       </ScrollView>
-    </>
+    </DetailScreenScaffold>
   );
 }
 

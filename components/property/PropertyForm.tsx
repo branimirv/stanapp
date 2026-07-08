@@ -1,16 +1,17 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import { AppButton } from '@/components/ui/AppButton';
+import { AppFormScroll, AppFormSection, AppFormSubmit } from '@/components/ui/AppFormScroll';
 import { AppPicker } from '@/components/ui/AppPicker';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { AppTextInput } from '@/components/ui/AppTextInput';
 import { PROPERTY_TYPES, USAGE_STATUSES } from '@/constants/config';
 import { Spacing, Typography } from '@/constants/theme';
 import type { Property, PropertyType, UsageStatus } from '@/types/app.types';
+import { translateFieldError } from '@/utils/formHelpers';
 import { propertySchema, type PropertyFormValues } from '@/utils/validators';
 
 const TYPE_SEGMENTS = PROPERTY_TYPES.map((type) => ({
@@ -127,19 +128,11 @@ export function PropertyForm({
     setValue('usage_status', nextStatus, { shouldValidate: true });
   };
 
-  const translateError = (message?: string) => (message ? t(message) : undefined);
+  const fieldError = (message?: string) => translateFieldError(t, message);
 
   return (
-    <ScrollView
-      style={{ backgroundColor: theme.colors.background }}
-      contentContainerStyle={styles.scrollContent}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.section}>
-        <Text style={[styles.label, { color: theme.colors.onSurface }]}>
-          {t('properties.type')}
-        </Text>
+    <AppFormScroll>
+      <AppFormSection label={t('properties.type')}>
         <Controller
           control={control}
           name="type"
@@ -151,12 +144,9 @@ export function PropertyForm({
             />
           )}
         />
-      </View>
+      </AppFormSection>
 
-      <View style={styles.section}>
-        <Text style={[styles.label, { color: theme.colors.onSurface }]}>
-          {t('properties.usageStatus')}
-        </Text>
+      <AppFormSection label={t('properties.usageStatus')}>
         <Controller
           control={control}
           name="usage_status"
@@ -168,14 +158,14 @@ export function PropertyForm({
             />
           )}
         />
-      </View>
+      </AppFormSection>
 
       <AppTextInput
         control={control}
         name="name"
         label={t('properties.name')}
         placeholder={t('properties.namePlaceholder')}
-        error={translateError(errors.name?.message)}
+        error={fieldError(errors.name?.message)}
       />
 
       <AppTextInput
@@ -183,7 +173,7 @@ export function PropertyForm({
         name="address"
         label={t('properties.address')}
         placeholder={t('properties.addressPlaceholder')}
-        error={translateError(errors.address?.message)}
+        error={fieldError(errors.address?.message)}
       />
 
       {selectedType === 'apartment' ? (
@@ -201,7 +191,7 @@ export function PropertyForm({
               }}
               onBlur={onBlur}
               keyboardType="number-pad"
-              error={translateError(fieldState.error?.message)}
+              error={fieldError(fieldState.error?.message)}
             />
           )}
         />
@@ -221,7 +211,7 @@ export function PropertyForm({
             }}
             onBlur={onBlur}
             keyboardType="decimal-pad"
-            error={translateError(fieldState.error?.message)}
+            error={fieldError(fieldState.error?.message)}
           />
         )}
       />
@@ -241,7 +231,7 @@ export function PropertyForm({
               }}
               onBlur={onBlur}
               keyboardType="decimal-pad"
-              error={translateError(fieldState.error?.message)}
+              error={fieldError(fieldState.error?.message)}
             />
           )}
         />
@@ -258,7 +248,7 @@ export function PropertyForm({
               options={parentOptions}
               value={value ?? null}
               onValueChange={onChange}
-              error={translateError(fieldState.error?.message)}
+              error={fieldError(fieldState.error?.message)}
             />
           )}
         />
@@ -277,38 +267,21 @@ export function PropertyForm({
         placeholder={t('properties.notesPlaceholder')}
         multiline
         numberOfLines={4}
-        error={translateError(errors.notes?.message)}
+        error={fieldError(errors.notes?.message)}
       />
 
-      <AppButton
-        mode="contained"
+      <AppFormSubmit
+        label={submitLabel ?? t('common.save')}
         loading={submitting}
         onPress={handleSubmit(onSubmit)}
-        style={styles.submit}
-      >
-        {submitLabel ?? t('common.save')}
-      </AppButton>
-    </ScrollView>
+      />
+    </AppFormScroll>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    padding: Spacing.md,
-    gap: Spacing.md,
-    paddingBottom: Spacing.xxl,
-  },
-  section: {
-    gap: Spacing.sm,
-  },
-  label: {
-    ...Typography.labelLarge,
-  },
   hint: {
     ...Typography.bodySmall,
     marginTop: -Spacing.sm,
-  },
-  submit: {
-    marginTop: Spacing.sm,
   },
 });

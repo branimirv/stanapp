@@ -1,10 +1,11 @@
-import { SlidersHorizontal, X } from 'lucide-react-native';
+import { SlidersHorizontal } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { ReportFiltersSheet } from '@/components/reports/ReportFiltersSheet';
 import type { PickerOption } from '@/components/ui/AppPicker';
+import { FilterChipRow, type FilterChip } from '@/components/ui/FilterChipRow';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import type { ReportCategoryTypeFilter } from '@/types/app.types';
 
@@ -19,12 +20,6 @@ export interface ReportFiltersProps {
   categoryOptions: PickerOption[];
 }
 
-interface ActiveFilterChip {
-  key: string;
-  label: string;
-  onClear: () => void;
-}
-
 function countActiveFilters(
   propertyFilter: string,
   categoryFilter: string,
@@ -35,47 +30,6 @@ function countActiveFilters(
   if (categoryFilter !== 'all') count += 1;
   if (categoryTypeFilter !== 'all') count += 1;
   return count;
-}
-
-function ActiveFilterChipRow({ chips }: { chips: ActiveFilterChip[] }) {
-  const theme = useTheme();
-  const { t } = useTranslation();
-
-  if (chips.length === 0) return null;
-
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.chipRow}
-      keyboardShouldPersistTaps="handled"
-    >
-      {chips.map((chip) => (
-        <View
-          key={chip.key}
-          style={[
-            styles.chip,
-            {
-              backgroundColor: theme.dark ? Colors.surfaceVariantDark : Colors.primaryLight,
-              borderColor: theme.colors.primary,
-            },
-          ]}
-        >
-          <Text style={[styles.chipLabel, { color: theme.colors.primary }]} numberOfLines={1}>
-            {chip.label}
-          </Text>
-          <Pressable
-            onPress={chip.onClear}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={t('expenses.removeFilter', { filter: chip.label })}
-          >
-            <X size={14} color={theme.colors.primary} strokeWidth={2.5} />
-          </Pressable>
-        </View>
-      ))}
-    </ScrollView>
-  );
 }
 
 export function ReportFilters({
@@ -104,7 +58,7 @@ export function ReportFilters({
   };
 
   const activeFilterChips = useMemo(() => {
-    const chips: ActiveFilterChip[] = [];
+    const chips: FilterChip[] = [];
 
     if (propertyFilter !== 'all') {
       const label = propertyOptions.find((option) => option.value === propertyFilter)?.label;
@@ -188,7 +142,7 @@ export function ReportFilters({
         ) : null}
       </Pressable>
 
-      <ActiveFilterChipRow chips={activeFilterChips} />
+      <FilterChipRow chips={activeFilterChips} />
 
       <ReportFiltersSheet
         visible={sheetVisible}
@@ -238,25 +192,5 @@ const styles = StyleSheet.create({
     ...Typography.labelSmall,
     fontWeight: '700',
     fontSize: 11,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.xs,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.xs,
-    paddingLeft: Spacing.sm,
-    paddingRight: Spacing.xs,
-    borderRadius: 16,
-    borderWidth: 1,
-    maxWidth: 200,
-  },
-  chipLabel: {
-    ...Typography.labelMedium,
-    flexShrink: 1,
   },
 });

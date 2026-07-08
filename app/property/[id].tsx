@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
+  FlatList,
   RefreshControl,
   ScrollView,
   SectionList,
@@ -11,15 +12,15 @@ import { Pencil, FileText, LayoutGrid, Users, Receipt, Banknote } from 'lucide-r
 import type { LucideIcon } from 'lucide-react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { Image } from 'expo-image';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { TabView, type Route } from 'react-native-tab-view';
 import { useTranslation } from 'react-i18next';
 import { AppFab } from '@/components/ui/AppFab';
+import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { PropertyTabBar } from '@/components/property/PropertyTabBar';
 import { PropertyStats } from '@/components/property/PropertyStats';
@@ -116,6 +117,11 @@ export default function PropertyDetailScreen() {
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
     [categories],
+  );
+
+  const tenantMap = useMemo(
+    () => new Map(tenants.map((tenant) => [tenant.id, tenant])),
+    [tenants],
   );
 
   const currentMonthRange = useMemo(() => getCurrentMonthRange(), []);
@@ -448,20 +454,20 @@ export default function PropertyDetailScreen() {
     }
 
     return (
-      <ScrollView
+      <FlatList
+        data={tenants}
+        keyExtractor={(tenant) => tenant.id}
         contentContainerStyle={styles.tabContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
-        {tenants.map((tenant) => (
+        renderItem={({ item: tenant }) => (
           <TenantCard
-            key={tenant.id}
             tenant={tenant}
             currency={currency}
             language={language}
             onPress={() => router.push(`/tenant/${tenant.id}`)}
           />
-        ))}
-      </ScrollView>
+        )}
+      />
     );
   };
 
@@ -496,37 +502,38 @@ export default function PropertyDetailScreen() {
 
     if (expensePeriodFilter === 'current_month') {
       return (
-        <ScrollView
+        <FlatList
+          data={currentMonthExpenses}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={styles.tabContent}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        >
-          {periodFilter}
-          {currentMonthExpenses.length === 0 ? (
-            <EmptyState title={t('properties.noExpensesThisMonth')} />
-          ) : (
+          ListHeaderComponent={
             <>
-              <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-                  {currentMonthPeriodLabel}
-                </Text>
-                <Text style={{ color: theme.colors.primary }}>
-                  {formatCurrency(currentMonthExpenseTotal, currency, language)}
-                </Text>
-              </View>
-              {currentMonthExpenses.map((item) => (
-                <ExpenseCard
-                  key={item.id}
-                  expense={item}
-                  category={categoryMap.get(item.category_id)}
-                  currency={currency}
-                  language={language}
-                  onPress={() => router.push(`/expense/${item.id}`)}
-                  onMarkPaid={!item.paid_at ? () => handleMarkPaid(item.id) : undefined}
-                />
-              ))}
+              {periodFilter}
+              {currentMonthExpenses.length > 0 ? (
+                <View style={styles.sectionHeader}>
+                  <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+                    {currentMonthPeriodLabel}
+                  </Text>
+                  <Text style={{ color: theme.colors.primary }}>
+                    {formatCurrency(currentMonthExpenseTotal, currency, language)}
+                  </Text>
+                </View>
+              ) : null}
             </>
+          }
+          ListEmptyComponent={<EmptyState title={t('properties.noExpensesThisMonth')} />}
+          renderItem={({ item }) => (
+            <ExpenseCard
+              expense={item}
+              category={categoryMap.get(item.category_id)}
+              currency={currency}
+              language={language}
+              onPress={() => router.push(`/expense/${item.id}`)}
+              onMarkPaid={!item.paid_at ? () => handleMarkPaid(item.id) : undefined}
+            />
           )}
-        </ScrollView>
+        />
       );
     }
 
@@ -567,43 +574,41 @@ export default function PropertyDetailScreen() {
     const currentYear = new Date().getFullYear();
 
     return (
-      <ScrollView
+      <FlatList
+        data={rentPayments}
+        keyExtractor={(payment) => payment.id}
         contentContainerStyle={styles.tabContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
-        <MonthlyGrid
-          payments={rentPayments}
-          year={currentYear}
-          language={language}
-          onMonthPress={(month, payment) => {
-            openRentSheet(month, currentYear, payment);
-          }}
-        />
-
-        {rentPayments.length === 0 ? (
+        ListHeaderComponent={
+          <MonthlyGrid
+            payments={rentPayments}
+            year={currentYear}
+            language={language}
+            onMonthPress={(month, payment) => {
+              openRentSheet(month, currentYear, payment);
+            }}
+          />
+        }
+        ListEmptyComponent={
           <EmptyState
             title={t('empty.noRentPayments')}
             subtitle={t('empty.noRentPaymentsHint')}
             ctaLabel={t('rent.addPayment')}
             onCtaPress={() => router.push({ pathname: '/rent/new', params: { propertyId: id! } })}
           />
-        ) : (
-          rentPayments.map((payment) => {
-            const tenant = tenants.find((item) => item.id === payment.tenant_id);
-            return (
-              <RentPaymentCard
-                key={payment.id}
-                payment={payment}
-                tenantName={
-                  tenant ? `${tenant.first_name} ${tenant.last_name}` : undefined
-                }
-                currency={currency}
-                language={language}
-              />
-            );
-          })
-        )}
-      </ScrollView>
+        }
+        renderItem={({ item: payment }) => {
+          const tenant = tenantMap.get(payment.tenant_id);
+          return (
+            <RentPaymentCard
+              payment={payment}
+              tenantName={tenant ? `${tenant.first_name} ${tenant.last_name}` : undefined}
+              currency={currency}
+              language={language}
+            />
+          );
+        }}
+      />
     );
   };
 
@@ -622,49 +627,45 @@ export default function PropertyDetailScreen() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || error || !property) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('common.loading') }} />
-        <SkeletonLoader count={6} style={styles.loader} />
-      </>
-    );
-  }
-
-  if (error || !property) {
-    return (
-      <>
-        <Stack.Screen options={{ title: t('properties.propertyDetails') }} />
-        <ErrorState
-          message={error ?? t('properties.notFound')}
-          onRetry={refetchProperty}
-        />
-      </>
+      <DetailScreenScaffold
+        title={t('properties.propertyDetails')}
+        isLoading={isLoading}
+        isReady={Boolean(property)}
+        error={error}
+        notFoundMessage={t('properties.notFound')}
+        onRetry={refetchProperty}
+        loaderCount={6}
+      >
+        {null}
+      </DetailScreenScaffold>
     );
   }
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: property.name,
-          headerRight: () => (
-            <StackHeaderActions>
-              <HeaderIconButton
-                icon={FileText}
-                onPress={() => setStatementVisible(true)}
-                accessibilityLabel={t('statement.action')}
-              />
-              <HeaderIconButton
-                icon={Pencil}
-                onPress={() => router.push(`/property/edit/${property.id}`)}
-                accessibilityLabel={t('common.edit')}
-              />
-            </StackHeaderActions>
-          ),
-        }}
-      />
-
+    <DetailScreenScaffold
+      title={property.name}
+      isLoading={false}
+      isReady
+      error={null}
+      notFoundMessage={t('properties.notFound')}
+      onRetry={refetchProperty}
+      headerRight={() => (
+        <StackHeaderActions>
+          <HeaderIconButton
+            icon={FileText}
+            onPress={() => setStatementVisible(true)}
+            accessibilityLabel={t('statement.action')}
+          />
+          <HeaderIconButton
+            icon={Pencil}
+            onPress={() => router.push(`/property/edit/${property.id}`)}
+            accessibilityLabel={t('common.edit')}
+          />
+        </StackHeaderActions>
+      )}
+    >
       {parentProperty ? (
         <View
           style={[
@@ -741,14 +742,11 @@ export default function PropertyDetailScreen() {
           }
         }}
       />
-    </>
+    </DetailScreenScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  loader: {
-    padding: Spacing.md,
-  },
   parentBanner: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,

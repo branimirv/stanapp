@@ -1,11 +1,10 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Divider, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppBadge } from '@/components/ui/AppBadge';
 import { AppButton } from '@/components/ui/AppButton';
-import { ErrorState } from '@/components/ui/ErrorState';
-import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
 import { Spacing, Typography } from '@/constants/theme';
 import { useLocale } from '@/hooks/useLocale';
 import { useProfile } from '@/hooks/useProfile';
@@ -78,28 +77,30 @@ export default function RentPaymentDetailScreen() {
     });
   };
 
-  if (isLoading) {
+  if (isLoading || error || !payment) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('rent.paymentDetails') }} />
-        <SkeletonLoader count={5} style={styles.loader} />
-      </>
-    );
-  }
-
-  if (error || !payment) {
-    return (
-      <>
-        <Stack.Screen options={{ title: t('rent.paymentDetails') }} />
-        <ErrorState message={error ?? t('rent.notFound')} onRetry={loadPayment} />
-      </>
+      <DetailScreenScaffold
+        title={t('rent.paymentDetails')}
+        isLoading={isLoading}
+        isReady={Boolean(payment)}
+        error={error}
+        notFoundMessage={t('rent.notFound')}
+        onRetry={loadPayment}
+      >
+        {null}
+      </DetailScreenScaffold>
     );
   }
 
   return (
-    <>
-      <Stack.Screen options={{ title: t('rent.paymentDetails') }} />
-
+    <DetailScreenScaffold
+      title={t('rent.paymentDetails')}
+      isLoading={false}
+      isReady
+      error={null}
+      notFoundMessage={t('rent.notFound')}
+      onRetry={loadPayment}
+    >
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Text style={[styles.period, { color: theme.colors.onSurface }]}>
@@ -158,14 +159,11 @@ export default function RentPaymentDetailScreen() {
           </AppButton>
         </View>
       </ScrollView>
-    </>
+    </DetailScreenScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  loader: {
-    padding: Spacing.md,
-  },
   content: {
     padding: Spacing.md,
     paddingBottom: Spacing.xxl,

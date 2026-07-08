@@ -1,6 +1,6 @@
-import { SlidersHorizontal, X } from 'lucide-react-native';
+import { SlidersHorizontal } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import {
@@ -10,7 +10,8 @@ import {
 } from '@/components/expense/ExpenseMoreFiltersSheet';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { FilterChipRow, type FilterChip } from '@/components/ui/FilterChipRow';
+import { Spacing, Typography } from '@/constants/theme';
 import type { ExpenseStatusFilter } from '@/types/app.types';
 
 export type StatusFilter = 'all' | ExpenseStatusFilter;
@@ -31,12 +32,6 @@ export interface ExpenseFiltersProps {
   onInteraction?: () => void;
 }
 
-interface ActiveFilterChip {
-  key: string;
-  label: string;
-  onClear: () => void;
-}
-
 function countSecondaryFilters(
   recurringFilter: RecurringFilter,
   typeFilter: TypeFilter,
@@ -49,50 +44,6 @@ function countSecondaryFilters(
   if (propertyFilter !== 'all') count += 1;
   if (categoryFilter !== 'all') count += 1;
   return count;
-}
-
-function ActiveFilterChipRow({ chips }: { chips: ActiveFilterChip[] }) {
-  const theme = useTheme();
-  const { t } = useTranslation();
-
-  if (chips.length === 0) return null;
-
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.chipRow}
-      keyboardShouldPersistTaps="handled"
-    >
-      {chips.map((chip) => (
-        <View
-          key={chip.key}
-          style={[
-            styles.chip,
-            {
-              backgroundColor: theme.dark ? Colors.surfaceVariantDark : Colors.primaryLight,
-              borderColor: theme.colors.primary,
-            },
-          ]}
-        >
-          <Text
-            style={[styles.chipLabel, { color: theme.colors.primary }]}
-            numberOfLines={1}
-          >
-            {chip.label}
-          </Text>
-          <Pressable
-            onPress={chip.onClear}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={t('expenses.removeFilter', { filter: chip.label })}
-          >
-            <X size={14} color={theme.colors.primary} strokeWidth={2.5} />
-          </Pressable>
-        </View>
-      ))}
-    </ScrollView>
-  );
 }
 
 export function ExpenseFilters({
@@ -128,7 +79,7 @@ export function ExpenseFilters({
   };
 
   const activeFilterChips = useMemo(() => {
-    const chips: ActiveFilterChip[] = [];
+    const chips: FilterChip[] = [];
 
     if (propertyFilter !== 'all') {
       const label = propertyOptions.find((option) => option.value === propertyFilter)?.label;
@@ -216,7 +167,7 @@ export function ExpenseFilters({
         }}
       />
 
-      <ActiveFilterChipRow chips={activeFilterChips} />
+      <FilterChipRow chips={activeFilterChips} />
 
       <Pressable
         onPress={() => {
@@ -267,26 +218,6 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     padding: Spacing.md,
     paddingBottom: Spacing.sm,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.xs,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.xs,
-    paddingLeft: Spacing.sm,
-    paddingRight: Spacing.xs,
-    borderRadius: 16,
-    borderWidth: 1,
-    maxWidth: 200,
-  },
-  chipLabel: {
-    ...Typography.labelMedium,
-    flexShrink: 1,
   },
   moreFiltersTrigger: {
     flexDirection: 'row',

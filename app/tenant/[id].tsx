@@ -1,14 +1,14 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Mail, MessageSquare, Pencil, Phone } from 'lucide-react-native';
 import { Divider, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppBadge } from '@/components/ui/AppBadge';
 import { AppButton } from '@/components/ui/AppButton';
+import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { RentPaymentCard } from '@/components/rent/RentPaymentCard';
 import { Spacing, Typography } from '@/constants/theme';
@@ -101,21 +101,18 @@ export default function TenantDetailScreen() {
     });
   };
 
-  if (isLoading) {
+  if (isLoading || error || !tenant) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('tenants.tenantDetails') }} />
-        <SkeletonLoader count={5} style={styles.loader} />
-      </>
-    );
-  }
-
-  if (error || !tenant) {
-    return (
-      <>
-        <Stack.Screen options={{ title: t('tenants.tenantDetails') }} />
-        <ErrorState message={error ?? t('tenants.notFound')} onRetry={loadTenant} />
-      </>
+      <DetailScreenScaffold
+        title={t('tenants.tenantDetails')}
+        isLoading={isLoading}
+        isReady={Boolean(tenant)}
+        error={error}
+        notFoundMessage={t('tenants.notFound')}
+        onRetry={loadTenant}
+      >
+        {null}
+      </DetailScreenScaffold>
     );
   }
 
@@ -123,22 +120,23 @@ export default function TenantDetailScreen() {
   const fullName = `${tenant.first_name} ${tenant.last_name}`;
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          title: fullName,
-          headerRight: () => (
-            <StackHeaderActions>
-              <HeaderIconButton
-                icon={Pencil}
-                onPress={() => router.push(`/tenant/edit/${tenant.id}`)}
-                accessibilityLabel={t('common.edit')}
-              />
-            </StackHeaderActions>
-          ),
-        }}
-      />
-
+    <DetailScreenScaffold
+      title={fullName}
+      isLoading={false}
+      isReady
+      error={null}
+      notFoundMessage={t('tenants.notFound')}
+      onRetry={loadTenant}
+      headerRight={() => (
+        <StackHeaderActions>
+          <HeaderIconButton
+            icon={Pencil}
+            onPress={() => router.push(`/tenant/edit/${tenant.id}`)}
+            accessibilityLabel={t('common.edit')}
+          />
+        </StackHeaderActions>
+      )}
+    >
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Text style={[styles.name, { color: theme.colors.onSurface }]}>{fullName}</Text>
@@ -263,14 +261,11 @@ export default function TenantDetailScreen() {
           </AppButton>
         </View>
       </ScrollView>
-    </>
+    </DetailScreenScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  loader: {
-    padding: Spacing.md,
-  },
   content: {
     padding: Spacing.md,
     paddingBottom: Spacing.xxl,

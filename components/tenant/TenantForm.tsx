@@ -1,12 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
-import { ScrollView, StyleSheet } from 'react-native';
-import { useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import { AppButton } from '@/components/ui/AppButton';
 import { AppDatePicker } from '@/components/ui/AppDatePicker';
+import { AppFormScroll, AppFormSubmit } from '@/components/ui/AppFormScroll';
 import { AppTextInput } from '@/components/ui/AppTextInput';
-import { Spacing } from '@/constants/theme';
+import { parseDateString, toDateString, translateFieldError } from '@/utils/formHelpers';
 import { tenantSchema, type TenantFormValues } from '@/utils/validators';
 
 export interface TenantFormProps {
@@ -27,27 +25,12 @@ const defaultFormValues: TenantFormValues = {
   notes: null,
 };
 
-function parseDateValue(value: string | null | undefined): Date | null {
-  if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function formatDateValue(date: Date | null): string {
-  if (!date) return '';
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
 export function TenantForm({
   defaultValues,
   isSubmitting = false,
   submitLabel,
   onSubmit,
 }: TenantFormProps) {
-  const theme = useTheme();
   const { t } = useTranslation();
 
   const {
@@ -59,21 +42,16 @@ export function TenantForm({
     defaultValues: { ...defaultFormValues, ...defaultValues },
   });
 
-  const translateError = (message?: string) => (message ? t(message) : undefined);
+  const fieldError = (message?: string) => translateFieldError(t, message);
 
   return (
-    <ScrollView
-      style={{ backgroundColor: theme.colors.background }}
-      contentContainerStyle={styles.scrollContent}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-    >
+    <AppFormScroll>
       <AppTextInput
         control={control}
         name="first_name"
         label={t('tenants.firstName')}
         autoCapitalize="words"
-        error={translateError(errors.first_name?.message)}
+        error={fieldError(errors.first_name?.message)}
       />
 
       <AppTextInput
@@ -81,7 +59,7 @@ export function TenantForm({
         name="last_name"
         label={t('tenants.lastName')}
         autoCapitalize="words"
-        error={translateError(errors.last_name?.message)}
+        error={fieldError(errors.last_name?.message)}
       />
 
       <AppTextInput
@@ -90,7 +68,7 @@ export function TenantForm({
         label={t('tenants.email')}
         keyboardType="email-address"
         autoCapitalize="none"
-        error={translateError(errors.email?.message)}
+        error={fieldError(errors.email?.message)}
       />
 
       <AppTextInput
@@ -98,7 +76,7 @@ export function TenantForm({
         name="phone"
         label={t('tenants.phone')}
         keyboardType="phone-pad"
-        error={translateError(errors.phone?.message)}
+        error={fieldError(errors.phone?.message)}
       />
 
       <Controller
@@ -107,9 +85,9 @@ export function TenantForm({
         render={({ field: { value, onChange }, fieldState }) => (
           <AppDatePicker
             label={t('tenants.contractStart')}
-            value={parseDateValue(value)}
-            onChange={(date) => onChange(formatDateValue(date))}
-            error={translateError(fieldState.error?.message)}
+            value={parseDateString(value)}
+            onChange={(date) => onChange(toDateString(date))}
+            error={fieldError(fieldState.error?.message)}
           />
         )}
       />
@@ -120,9 +98,9 @@ export function TenantForm({
         render={({ field: { value, onChange }, fieldState }) => (
           <AppDatePicker
             label={t('tenants.contractEnd')}
-            value={parseDateValue(value)}
-            onChange={(date) => onChange(date ? formatDateValue(date) : null)}
-            error={translateError(fieldState.error?.message)}
+            value={parseDateString(value)}
+            onChange={(date) => onChange(date ? toDateString(date) : null)}
+            error={fieldError(fieldState.error?.message)}
           />
         )}
       />
@@ -140,7 +118,7 @@ export function TenantForm({
             }}
             onBlur={onBlur}
             keyboardType="decimal-pad"
-            error={translateError(fieldState.error?.message)}
+            error={fieldError(fieldState.error?.message)}
           />
         )}
       />
@@ -152,28 +130,14 @@ export function TenantForm({
         placeholder={t('tenants.notesPlaceholder')}
         multiline
         numberOfLines={4}
-        error={translateError(errors.notes?.message)}
+        error={fieldError(errors.notes?.message)}
       />
 
-      <AppButton
-        mode="contained"
+      <AppFormSubmit
+        label={submitLabel ?? t('common.save')}
         loading={isSubmitting}
         onPress={handleSubmit(onSubmit)}
-        style={styles.submit}
-      >
-        {submitLabel ?? t('common.save')}
-      </AppButton>
-    </ScrollView>
+      />
+    </AppFormScroll>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollContent: {
-    padding: Spacing.md,
-    gap: Spacing.md,
-    paddingBottom: Spacing.xxl,
-  },
-  submit: {
-    marginTop: Spacing.sm,
-  },
-});

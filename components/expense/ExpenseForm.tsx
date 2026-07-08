@@ -1,11 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Switch, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppDatePicker } from '@/components/ui/AppDatePicker';
+import { AppFormScroll, AppFormSubmit } from '@/components/ui/AppFormScroll';
 import { AppPicker } from '@/components/ui/AppPicker';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { AppTextInput } from '@/components/ui/AppTextInput';
@@ -17,6 +18,7 @@ import {
   filterCategoriesByType,
   getCategoryEffectiveType,
 } from '@/utils/expense';
+import { parseDateString, toDateString, translateFieldError } from '@/utils/formHelpers';
 import { expenseSchema, type ExpenseFormValues } from '@/utils/validators';
 
 export interface ExpenseFormProps {
@@ -38,20 +40,6 @@ const defaultFormValues: ExpenseFormValues = {
   due_date: null,
   notes: null,
 };
-
-function parseDateValue(value: string | null | undefined): Date | null {
-  if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function formatDateValue(date: Date | null): string {
-  if (!date) return '';
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
 
 export function ExpenseForm({
   defaultValues,
@@ -121,7 +109,7 @@ export function ExpenseForm({
     value: property.id,
   }));
 
-  const translateError = (message?: string) => (message ? t(message) : undefined);
+  const translateError = (message?: string) => translateFieldError(t, message);
 
   const handleAddCustomCategory = async () => {
     if (!onCreateCustomCategory || isCreatingCategory) return;
@@ -159,12 +147,8 @@ export function ExpenseForm({
   };
 
   return (
-    <ScrollView
-      style={{ backgroundColor: theme.colors.background }}
-      contentContainerStyle={styles.scrollContent}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
-    >
+    <>
+      <AppFormScroll>
       <View style={styles.typeField}>
         <Text style={[styles.typeLabel, { color: theme.colors.onSurface }]}>
           {t('expenses.expenseType')}
@@ -265,8 +249,8 @@ export function ExpenseForm({
         render={({ field: { value, onChange }, fieldState }) => (
           <AppDatePicker
             label={t('expenses.billingDate')}
-            value={parseDateValue(value)}
-            onChange={(date) => onChange(formatDateValue(date))}
+            value={parseDateString(value)}
+            onChange={(date) => onChange(toDateString(date))}
             error={translateError(fieldState.error?.message)}
           />
         )}
@@ -278,8 +262,8 @@ export function ExpenseForm({
         render={({ field: { value, onChange }, fieldState }) => (
           <AppDatePicker
             label={t('expenses.dueDate')}
-            value={parseDateValue(value)}
-            onChange={(date) => onChange(date ? formatDateValue(date) : null)}
+            value={parseDateString(value)}
+            onChange={(date) => onChange(date ? toDateString(date) : null)}
             error={translateError(fieldState.error?.message)}
           />
         )}
@@ -295,14 +279,12 @@ export function ExpenseForm({
         error={translateError(errors.notes?.message)}
       />
 
-      <AppButton
-        mode="contained"
+      <AppFormSubmit
+        label={submitLabel ?? t('common.save')}
         loading={isSubmitting}
         onPress={handleSubmit(onSubmit)}
-        style={styles.submit}
-      >
-        {submitLabel ?? t('common.save')}
-      </AppButton>
+      />
+      </AppFormScroll>
 
       <Modal
         visible={customCategoryVisible}
@@ -344,16 +326,11 @@ export function ExpenseForm({
           </Pressable>
         </Pressable>
       </Modal>
-    </ScrollView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    padding: Spacing.md,
-    gap: Spacing.md,
-    paddingBottom: Spacing.xxl,
-  },
   typeField: {
     gap: Spacing.sm,
   },
@@ -378,9 +355,6 @@ const styles = StyleSheet.create({
   },
   switchHint: {
     ...Typography.bodySmall,
-  },
-  submit: {
-    marginTop: Spacing.sm,
   },
   modalOverlay: {
     flex: 1,

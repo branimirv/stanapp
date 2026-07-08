@@ -1,8 +1,4 @@
-import { Search } from 'lucide-react-native';
-import { useTranslation } from 'react-i18next';
-import { useTheme } from 'react-native-paper';
-
-import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import { HeaderAction } from '@/components/ui/HeaderAction';
 
 interface SearchHeaderButtonProps {
   active?: boolean;
@@ -11,17 +7,5 @@ interface SearchHeaderButtonProps {
 }
 
 export function SearchHeaderButton({ active, expanded, onPress }: SearchHeaderButtonProps) {
-  const { t } = useTranslation();
-  const theme = useTheme();
-
-  const color = active || expanded ? theme.colors.primary : theme.colors.onSurface;
-
-  return (
-    <HeaderIconButton
-      icon={Search}
-      onPress={onPress}
-      accessibilityLabel={t('common.search')}
-      color={color}
-    />
-  );
+  return <HeaderAction preset="search" active={active} expanded={expanded} onPress={onPress} />;
 }
