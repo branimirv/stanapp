@@ -12,9 +12,6 @@ export const HEADER_ACTION_SLOT = 40;
 /** Lucide icon size inside header actions. */
 export const HEADER_ICON_SIZE = 22;
 
-/** Inner padding of the header actions pill. */
-export const HEADER_PILL_PADDING = 4;
-
 export const headerLeftContainerStyle = {
   paddingLeft: HEADER_EDGE_INSET,
 };

@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { Mail, MessageSquare, Pencil, Phone } from 'lucide-react-native';
 import { Divider, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
@@ -137,130 +137,130 @@ export default function TenantDetailScreen() {
         </StackHeaderActions>
       )}
     >
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <Text style={[styles.name, { color: theme.colors.onSurface }]}>{fullName}</Text>
-          <AppBadge label={badge.label} variant={badge.variant} />
-        </View>
-
-        {property ? (
-          <Text
-            style={[styles.propertyLink, { color: theme.colors.primary }]}
-            onPress={() => router.push(`/property/${property.id}`)}
-          >
-            {property.name}
-          </Text>
-        ) : null}
-
-        <Divider style={styles.divider} />
-
-        <Text style={[styles.section, { color: theme.colors.onSurface }]}>
-          {t('tenants.contactInfo')}
-        </Text>
-        {tenant.email ? (
-          <Pressable
-            style={styles.contactRow}
-            onPress={() => Linking.openURL(`mailto:${tenant.email}`)}
-            accessibilityRole="button"
-            accessibilityLabel={t('tenants.emailTenant')}
-          >
-            <Mail size={16} color={theme.colors.primary} strokeWidth={2} />
-            <Text style={[styles.row, { color: theme.colors.primary }]}>
-              {tenant.email}
-            </Text>
-          </Pressable>
-        ) : null}
-        {tenant.phone ? (
-          <>
-            <Pressable
-              style={styles.contactRow}
-              onPress={() => Linking.openURL(`tel:${tenant.phone}`)}
-              accessibilityRole="button"
-              accessibilityLabel={t('tenants.callTenant')}
-            >
-              <Phone size={16} color={theme.colors.primary} strokeWidth={2} />
-              <Text style={[styles.row, { color: theme.colors.primary }]}>
-                {tenant.phone}
-              </Text>
-            </Pressable>
-            <Pressable
-              style={styles.contactRow}
-              onPress={() => Linking.openURL(`sms:${tenant.phone}`)}
-              accessibilityRole="button"
-              accessibilityLabel={t('tenants.messageTenant')}
-            >
-              <MessageSquare size={16} color={theme.colors.primary} strokeWidth={2} />
-              <Text style={[styles.row, { color: theme.colors.primary }]}>
-                {t('tenants.sendMessage')}
-              </Text>
-            </Pressable>
-          </>
-        ) : null}
-
-        <Text style={[styles.section, { color: theme.colors.onSurface }]}>
-          {t('tenants.contractPeriod')}
-        </Text>
-        <Text style={[styles.row, { color: theme.colors.onSurfaceVariant }]}>
-          {formatDate(tenant.contract_start, language)}
-          {' — '}
-          {tenant.contract_end
-            ? formatDate(tenant.contract_end, language)
-            : t('tenants.noContractEnd')}
-        </Text>
-
-        <Text style={[styles.row, { color: theme.colors.onSurfaceVariant }]}>
-          {t('tenants.deposit')}: {formatCurrency(tenant.deposit_amount, currency, language)}
-        </Text>
-
-        {tenant.notes ? (
-          <>
-            <Text style={[styles.section, { color: theme.colors.onSurface }]}>
-              {t('common.notes')}
-            </Text>
-            <Text style={{ color: theme.colors.onSurfaceVariant }}>{tenant.notes}</Text>
-          </>
-        ) : null}
-
-        <Text style={[styles.section, { color: theme.colors.onSurface }]}>
-          {t('tenants.rentPayments')}
-        </Text>
-
-        {paymentsLoading ? (
-          <SkeletonLoader count={2} />
-        ) : rentPayments.length === 0 ? (
-          <EmptyState
-            title={t('tenants.noRentPayments')}
-            ctaLabel={t('rent.addPayment')}
-            onCtaPress={() =>
-              router.push({
-                pathname: '/rent/new',
-                params: { propertyId: tenant.property_id, tenantId: tenant.id },
-              })
-            }
+      <FlatList
+        data={paymentsLoading ? [] : rentPayments}
+        keyExtractor={(payment) => payment.id}
+        renderItem={({ item: payment }) => (
+          <RentPaymentCard
+            payment={payment}
+            propertyName={property?.name}
+            currency={currency}
+            language={language}
           />
-        ) : (
-          rentPayments.map((payment) => (
-            <RentPaymentCard
-              key={payment.id}
-              payment={payment}
-              propertyName={property?.name}
-              currency={currency}
-              language={language}
-            />
-          ))
         )}
+        ListHeaderComponent={
+          <View style={styles.headerContent}>
+            <View style={styles.header}>
+              <Text style={[styles.name, { color: theme.colors.onSurface }]}>{fullName}</Text>
+              <AppBadge label={badge.label} variant={badge.variant} />
+            </View>
 
-        <View style={styles.actions}>
-          {tenant.is_active ? (
-            <AppButton mode="outlined" onPress={handleDeactivate}>
-              {t('tenants.deactivate')}
+            {property ? (
+              <Text
+                style={[styles.propertyLink, { color: theme.colors.primary }]}
+                onPress={() => router.push(`/property/${property.id}`)}
+              >
+                {property.name}
+              </Text>
+            ) : null}
+
+            <Divider style={styles.divider} />
+
+            <Text style={[styles.section, { color: theme.colors.onSurface }]}>
+              {t('tenants.contactInfo')}
+            </Text>
+            {tenant.email ? (
+              <Pressable
+                style={styles.contactRow}
+                onPress={() => Linking.openURL(`mailto:${tenant.email}`)}
+                accessibilityRole="button"
+                accessibilityLabel={t('tenants.emailTenant')}
+              >
+                <Mail size={16} color={theme.colors.primary} strokeWidth={2} />
+                <Text style={[styles.row, { color: theme.colors.primary }]}>{tenant.email}</Text>
+              </Pressable>
+            ) : null}
+
+            {tenant.phone ? (
+              <>
+                <Pressable
+                  style={styles.contactRow}
+                  onPress={() => Linking.openURL(`tel:${tenant.phone}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('tenants.callTenant')}
+                >
+                  <Phone size={16} color={theme.colors.primary} strokeWidth={2} />
+                  <Text style={[styles.row, { color: theme.colors.primary }]}>{tenant.phone}</Text>
+                </Pressable>
+                <Pressable
+                  style={styles.contactRow}
+                  onPress={() => Linking.openURL(`sms:${tenant.phone}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('tenants.messageTenant')}
+                >
+                  <MessageSquare size={16} color={theme.colors.primary} strokeWidth={2} />
+                  <Text style={[styles.row, { color: theme.colors.primary }]}>{t('tenants.sendMessage')}</Text>
+                </Pressable>
+              </>
+            ) : null}
+
+            <Text style={[styles.section, { color: theme.colors.onSurface }]}>
+              {t('tenants.contractPeriod')}
+            </Text>
+            <Text style={[styles.row, { color: theme.colors.onSurfaceVariant }]}>
+              {formatDate(tenant.contract_start, language)}
+              {' — '}
+              {tenant.contract_end
+                ? formatDate(tenant.contract_end, language)
+                : t('tenants.noContractEnd')}
+            </Text>
+
+            <Text style={[styles.row, { color: theme.colors.onSurfaceVariant }]}>
+              {t('tenants.deposit')}: {formatCurrency(tenant.deposit_amount, currency, language)}
+            </Text>
+
+            {tenant.notes ? (
+              <>
+                <Text style={[styles.section, { color: theme.colors.onSurface }]}>{t('common.notes')}</Text>
+                <Text style={{ color: theme.colors.onSurfaceVariant }}>{tenant.notes}</Text>
+              </>
+            ) : null}
+
+            <Text style={[styles.section, { color: theme.colors.onSurface }]}>
+              {t('tenants.rentPayments')}
+            </Text>
+
+            {paymentsLoading ? <SkeletonLoader count={2} /> : null}
+          </View>
+        }
+        ListEmptyComponent={
+          paymentsLoading ? null : (
+            <EmptyState
+              title={t('tenants.noRentPayments')}
+              ctaLabel={t('rent.addPayment')}
+              onCtaPress={() =>
+                router.push({
+                  pathname: '/rent/new',
+                  params: { propertyId: tenant.property_id, tenantId: tenant.id },
+                })
+              }
+            />
+          )
+        }
+        ListFooterComponent={
+          <View style={styles.actions}>
+            {tenant.is_active ? (
+              <AppButton mode="outlined" onPress={handleDeactivate}>
+                {t('tenants.deactivate')}
+              </AppButton>
+            ) : null}
+            <AppButton mode="outlined" textColor={theme.colors.error} onPress={handleDelete}>
+              {t('common.delete')}
             </AppButton>
-          ) : null}
-          <AppButton mode="outlined" textColor={theme.colors.error} onPress={handleDelete}>
-            {t('common.delete')}
-          </AppButton>
-        </View>
-      </ScrollView>
+          </View>
+        }
+        contentContainerStyle={styles.content}
+      />
     </DetailScreenScaffold>
   );
 }
@@ -269,6 +269,9 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.md,
     paddingBottom: Spacing.xxl,
+    gap: Spacing.sm,
+  },
+  headerContent: {
     gap: Spacing.sm,
   },
   header: {

@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 import { BarChart3 } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import {
+  FlatList,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -209,99 +210,14 @@ export default function ReportsScreen() {
   }
 
   return (
-    <ScrollView
+    <FlatList
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       contentContainerStyle={[styles.content, { paddingBottom: scrollPadding }]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      <PeriodFilter value={period} onChange={setPeriod} />
-      <ReportFilters
-        propertyFilter={propertyFilter}
-        onPropertyFilterChange={setPropertyFilter}
-        categoryFilter={categoryFilter}
-        onCategoryFilterChange={setCategoryFilter}
-        categoryTypeFilter={categoryTypeFilter}
-        onCategoryTypeFilterChange={setCategoryTypeFilter}
-        propertyOptions={propertyOptions}
-        categoryOptions={categoryOptions}
-      />
-
-      {report.hasMixedCurrencies ? (
-        <View style={styles.warningBanner}>
-          <Text style={styles.warningText}>{t('reports.mixedCurrencyWarning')}</Text>
-        </View>
-      ) : null}
-
-      <View style={styles.section}>
-        <NetCashFlowChart
-          data={report.monthlyIncomeExpense}
-          netTotal={report.netIncome}
-          currency={report.currency}
-          language={language}
-        />
-      </View>
-
-      <View style={styles.totalsRow}>
-        <AppCard style={styles.totalCard}>
-          <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
-            {t('reports.totalIncome')}
-          </Text>
-          <Text style={[styles.totalValue, { color: Colors.accent }]}>
-            {formatCurrency(report.totalIncome, report.currency, language)}
-          </Text>
-        </AppCard>
-        <AppCard style={styles.totalCard}>
-          <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
-            {t('reports.totalExpenses')}
-          </Text>
-          <Text style={[styles.totalValue, { color: Colors.danger }]}>
-            {formatCurrency(report.totalExpenses, report.currency, language)}
-          </Text>
-        </AppCard>
-        <AppCard style={styles.totalCard}>
-          <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
-            {t('reports.netTotal')}
-          </Text>
-          <Text style={[styles.totalValue, { color: theme.colors.primary }]}>
-            {formatCurrency(report.netIncome, report.currency, language)}
-          </Text>
-        </AppCard>
-      </View>
-
-      <View style={styles.section}>
-        <IncomeExpenseTrendChart
-          data={report.monthlyIncomeExpense}
-          currency={report.currency}
-          language={language}
-        />
-      </View>
-
-      <View style={styles.section}>
-        <ExpenseBreakdown
-          data={report.categoryBreakdown}
-          currency={report.currency}
-          language={language}
-        />
-      </View>
-
-      <View style={styles.section}>
-        <PropertyNetChart data={report.propertySummaries} language={language} />
-      </View>
-
-      <View style={styles.section}>
-        <PropertyIncomeShareChart
-          data={report.propertySummaries}
-          currency={report.currency}
-          language={language}
-        />
-      </View>
-
-      <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-        {t('reports.perProperty')}
-      </Text>
-
-      {report.propertySummaries.map((summary) => (
-        <AppCard key={summary.propertyId} style={styles.propertyCard}>
+      data={report.propertySummaries}
+      keyExtractor={(summary) => summary.propertyId}
+      renderItem={({ item: summary }) => (
+        <AppCard style={styles.propertyCard}>
           <Text style={[styles.propertyName, { color: theme.colors.onSurface }]}>
             {summary.propertyName}
           </Text>
@@ -326,24 +242,121 @@ export default function ReportsScreen() {
               <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>
                 {t('reports.net')}
               </Text>
-              <Text style={[styles.statValue, { color: theme.colors.primary }]}>
+              <Text style={[styles.statValue, { color: Colors.primary }]}>
                 {formatCurrency(summary.net, summary.currency, language)}
               </Text>
             </View>
           </View>
         </AppCard>
-      ))}
+      )}
+      ListHeaderComponent={
+        <View>
+          <PeriodFilter value={period} onChange={setPeriod} />
+          <ReportFilters
+            propertyFilter={propertyFilter}
+            onPropertyFilterChange={setPropertyFilter}
+            categoryFilter={categoryFilter}
+            onCategoryFilterChange={setCategoryFilter}
+            categoryTypeFilter={categoryTypeFilter}
+            onCategoryTypeFilterChange={setCategoryTypeFilter}
+            propertyOptions={propertyOptions}
+            categoryOptions={categoryOptions}
+          />
 
-      <AppButton
-        mode="contained"
-        icon="export"
-        loading={exporting}
-        onPress={handleExport}
-        style={styles.exportButton}
-      >
-        {t('reports.export')}
-      </AppButton>
-    </ScrollView>
+          {report.hasMixedCurrencies ? (
+            <View style={styles.warningBanner}>
+              <Text style={styles.warningText}>{t('reports.mixedCurrencyWarning')}</Text>
+            </View>
+          ) : null}
+
+          <View style={styles.section}>
+            <NetCashFlowChart
+              data={report.monthlyIncomeExpense}
+              netTotal={report.netIncome}
+              currency={report.currency}
+              language={language}
+            />
+          </View>
+
+          <View style={styles.totalsRow}>
+            <AppCard style={styles.totalCard}>
+              <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
+                {t('reports.totalIncome')}
+              </Text>
+              <Text style={[styles.totalValue, { color: Colors.accent }]}>
+                {formatCurrency(report.totalIncome, report.currency, language)}
+              </Text>
+            </AppCard>
+            <AppCard style={styles.totalCard}>
+              <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
+                {t('reports.totalExpenses')}
+              </Text>
+              <Text style={[styles.totalValue, { color: Colors.danger }]}>
+                {formatCurrency(report.totalExpenses, report.currency, language)}
+              </Text>
+            </AppCard>
+            <AppCard style={styles.totalCard}>
+              <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
+                {t('reports.netTotal')}
+              </Text>
+              <Text style={[styles.totalValue, { color: Colors.primary }]}>
+                {formatCurrency(report.netIncome, report.currency, language)}
+              </Text>
+            </AppCard>
+          </View>
+
+          <View style={styles.section}>
+            <IncomeExpenseTrendChart
+              data={report.monthlyIncomeExpense}
+              currency={report.currency}
+              language={language}
+            />
+          </View>
+
+          <View style={styles.section}>
+            <ExpenseBreakdown
+              data={report.categoryBreakdown}
+              currency={report.currency}
+              language={language}
+            />
+          </View>
+
+          <View style={styles.section}>
+            <PropertyNetChart data={report.propertySummaries} language={language} />
+          </View>
+
+          <View style={styles.section}>
+            <PropertyIncomeShareChart
+              data={report.propertySummaries}
+              currency={report.currency}
+              language={language}
+            />
+          </View>
+
+          <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+            {t('reports.perProperty')}
+          </Text>
+        </View>
+      }
+      ListEmptyComponent={
+        <EmptyState
+          icon={BarChart3}
+          title={t('empty.noReports')}
+          subtitle={t('empty.noReportsHint')}
+        />
+      }
+      ListFooterComponent={
+        <AppButton
+          mode="contained"
+          icon="export"
+          loading={exporting}
+          onPress={handleExport}
+          style={styles.exportButton}
+        >
+          {t('reports.export')}
+        </AppButton>
+      }
+    />
   );
 }
 
