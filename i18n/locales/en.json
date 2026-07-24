@@ -256,6 +256,39 @@
     "expensePeriodAll": "All",
     "expensePeriodThisMonth": "This month"
   },
+  "members": {
+    "title": "Members",
+    "membersSection": "People with access",
+    "pendingInvites": "Pending invites",
+    "noMembers": "No members yet",
+    "noPending": "No pending invites",
+    "invitePeople": "Invite people",
+    "sendInvite": "Send invite",
+    "role": "Role",
+    "selectProperties": "Select properties",
+    "inviteSent": "Invite email sent",
+    "invitePendingExisting": "Invite created. They will get access when they sign in.",
+    "inviteFailed": "Could not send invite",
+    "inviteRevoked": "Invite revoked",
+    "inviteRevokeFailed": "Could not revoke invite",
+    "memberRemoved": "Member removed",
+    "memberRemoveFailed": "Could not remove member",
+    "ownersOnly": "Only property owners can manage members",
+    "loadFailed": "Could not load members",
+    "unknownUser": "Unknown user",
+    "you": "You",
+    "accepting": "Accepting your invites…",
+    "signInToAccept": "Sign in to accept your property invite",
+    "acceptSuccess": "Invites accepted",
+    "acceptSuccessCount": "{{count}} property access granted",
+    "acceptFailed": "Could not accept invites",
+    "viewProperties": "View properties",
+    "roles": {
+      "owner": "Owner",
+      "manager": "Manager",
+      "tenant": "Tenant"
+    }
+  },
   "propertyTypes": {
     "apartment": "Apartment",
     "house": "House",
@@ -659,6 +692,10 @@
     "unsavedChangesTitle": "Unsaved changes",
     "unsavedChangesMessage": "You have unsaved changes. Discard them?",
     "discard": "Discard",
-    "keepEditing": "Keep editing"
+    "keepEditing": "Keep editing",
+    "revokeMemberTitle": "Remove member?",
+    "revokeMemberMessage": "Remove {{name}} from this property?",
+    "revokeInviteTitle": "Revoke invite?",
+    "revokeInviteMessage": "Revoke the pending invite for {{email}}?"
   }
 }

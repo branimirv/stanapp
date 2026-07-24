@@ -256,6 +256,39 @@
     "expensePeriodAll": "Sve",
     "expensePeriodThisMonth": "Ovaj mjesec"
   },
+  "members": {
+    "title": "Članovi",
+    "membersSection": "Osobe s pristupom",
+    "pendingInvites": "Pozivnice na čekanju",
+    "noMembers": "Još nema članova",
+    "noPending": "Nema pozivnica na čekanju",
+    "invitePeople": "Pozovi ljude",
+    "sendInvite": "Pošalji pozivnicu",
+    "role": "Uloga",
+    "selectProperties": "Odaberi nekretnine",
+    "inviteSent": "Pozivnica poslana e-mailom",
+    "invitePendingExisting": "Pozivnica kreirana. Pristup će dobiti pri prijavi.",
+    "inviteFailed": "Nije moguće poslati pozivnicu",
+    "inviteRevoked": "Pozivnica povučena",
+    "inviteRevokeFailed": "Nije moguće povući pozivnicu",
+    "memberRemoved": "Član uklonjen",
+    "memberRemoveFailed": "Nije moguće ukloniti člana",
+    "ownersOnly": "Samo vlasnici mogu upravljati članovima",
+    "loadFailed": "Nije moguće učitati članove",
+    "unknownUser": "Nepoznat korisnik",
+    "you": "Vi",
+    "accepting": "Prihvaćanje pozivnica…",
+    "signInToAccept": "Prijavite se za prihvat pozivnice",
+    "acceptSuccess": "Pozivnice prihvaćene",
+    "acceptSuccessCount": "Dodijeljen pristup za {{count}} nekretnina",
+    "acceptFailed": "Nije moguće prihvatiti pozivnice",
+    "viewProperties": "Prikaži nekretnine",
+    "roles": {
+      "owner": "Vlasnik",
+      "manager": "Upravitelj",
+      "tenant": "Stanar"
+    }
+  },
   "propertyTypes": {
     "apartment": "Stan",
     "house": "Kuća",
@@ -659,6 +692,10 @@
     "unsavedChangesTitle": "Nespremljene promjene",
     "unsavedChangesMessage": "Imate nespremljene promjene. Odbaciti ih?",
     "discard": "Odbaci",
-    "keepEditing": "Nastavi uređivati"
+    "keepEditing": "Nastavi uređivati",
+    "revokeMemberTitle": "Ukloniti člana?",
+    "revokeMemberMessage": "Ukloniti {{name}} s ove nekretnine?",
+    "revokeInviteTitle": "Povući pozivnicu?",
+    "revokeInviteMessage": "Povući pozivnicu za {{email}}?"
   }
 }

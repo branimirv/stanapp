@@ -8,7 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { Pencil, FileText, LayoutGrid, Users, Receipt, Banknote } from 'lucide-react-native';
+import { Pencil, FileText, LayoutGrid, Users, Receipt, Banknote, UserPlus } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { Image } from 'expo-image';
@@ -37,6 +37,7 @@ import { RentPaymentCard } from '@/components/rent/RentPaymentCard';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useLocale } from '@/hooks/useLocale';
+import { useMyMembership } from '@/hooks/useMembers';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperty, useChildProperties } from '@/hooks/useProperties';
 import { useRefetchOnFocus } from '@/hooks/useRefetchOnFocus';
@@ -76,6 +77,7 @@ export default function PropertyDetailScreen() {
   } = useProperty(id);
   const { property: parentProperty } = useProperty(property?.parent_property_id ?? undefined);
   const childProperties = useChildProperties(id);
+  const { isOwner, canManage } = useMyMembership(id);
   const [index, setIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [expensePeriodFilter, setExpensePeriodFilter] = useState<ExpensePeriodFilter>('all');
@@ -405,9 +407,11 @@ export default function PropertyDetailScreen() {
       {currentMonthExpenses.length === 0 ? (
         <EmptyState
           title={t('properties.noExpensesThisMonth')}
-          ctaLabel={t('expenses.addNew')}
-          onCtaPress={() =>
-            router.push({ pathname: '/expense/new', params: { propertyId: id! } })
+          ctaLabel={canManage ? t('expenses.addNew') : undefined}
+          onCtaPress={
+            canManage
+              ? () => router.push({ pathname: '/expense/new', params: { propertyId: id! } })
+              : undefined
           }
         />
       ) : (
@@ -419,7 +423,9 @@ export default function PropertyDetailScreen() {
             currency={currency}
             language={language}
             onPress={() => router.push(`/expense/${expense.id}`)}
-            onMarkPaid={!expense.paid_at ? () => handleMarkPaid(expense.id) : undefined}
+            onMarkPaid={
+              canManage && !expense.paid_at ? () => handleMarkPaid(expense.id) : undefined
+            }
           />
         ))
       )}
@@ -447,8 +453,12 @@ export default function PropertyDetailScreen() {
         <EmptyState
           title={t('empty.noTenants')}
           subtitle={t('empty.noTenantsHint')}
-          ctaLabel={t('tenants.addNew')}
-          onCtaPress={() => router.push({ pathname: '/tenant/new', params: { propertyId: id! } })}
+          ctaLabel={canManage ? t('tenants.addNew') : undefined}
+          onCtaPress={
+            canManage
+              ? () => router.push({ pathname: '/tenant/new', params: { propertyId: id! } })
+              : undefined
+          }
         />
       );
     }
@@ -479,9 +489,11 @@ export default function PropertyDetailScreen() {
         <EmptyState
           title={t('empty.noExpenses')}
           subtitle={t('empty.noExpensesHint')}
-          ctaLabel={t('expenses.addNew')}
-          onCtaPress={() =>
-            router.push({ pathname: '/expense/new', params: { propertyId: id! } })
+          ctaLabel={canManage ? t('expenses.addNew') : undefined}
+          onCtaPress={
+            canManage
+              ? () => router.push({ pathname: '/expense/new', params: { propertyId: id! } })
+              : undefined
           }
         />
       );
@@ -530,7 +542,9 @@ export default function PropertyDetailScreen() {
               currency={currency}
               language={language}
               onPress={() => router.push(`/expense/${item.id}`)}
-              onMarkPaid={!item.paid_at ? () => handleMarkPaid(item.id) : undefined}
+              onMarkPaid={
+                canManage && !item.paid_at ? () => handleMarkPaid(item.id) : undefined
+              }
             />
           )}
         />
@@ -561,7 +575,9 @@ export default function PropertyDetailScreen() {
             currency={currency}
             language={language}
             onPress={() => router.push(`/expense/${item.id}`)}
-            onMarkPaid={!item.paid_at ? () => handleMarkPaid(item.id) : undefined}
+            onMarkPaid={
+              canManage && !item.paid_at ? () => handleMarkPaid(item.id) : undefined
+            }
           />
         )}
       />
@@ -585,6 +601,7 @@ export default function PropertyDetailScreen() {
             year={currentYear}
             language={language}
             onMonthPress={(month, payment) => {
+              if (!canManage) return;
               openRentSheet(month, currentYear, payment);
             }}
           />
@@ -593,8 +610,12 @@ export default function PropertyDetailScreen() {
           <EmptyState
             title={t('empty.noRentPayments')}
             subtitle={t('empty.noRentPaymentsHint')}
-            ctaLabel={t('rent.addPayment')}
-            onCtaPress={() => router.push({ pathname: '/rent/new', params: { propertyId: id! } })}
+            ctaLabel={canManage ? t('rent.addPayment') : undefined}
+            onCtaPress={
+              canManage
+                ? () => router.push({ pathname: '/rent/new', params: { propertyId: id! } })
+                : undefined
+            }
           />
         }
         renderItem={({ item: payment }) => {
@@ -653,16 +674,27 @@ export default function PropertyDetailScreen() {
       onRetry={refetchProperty}
       headerRight={() => (
         <StackHeaderActions>
-          <HeaderIconButton
-            icon={FileText}
-            onPress={() => setStatementVisible(true)}
-            accessibilityLabel={t('statement.action')}
-          />
-          <HeaderIconButton
-            icon={Pencil}
-            onPress={() => router.push(`/property/edit/${property.id}`)}
-            accessibilityLabel={t('common.edit')}
-          />
+          {isOwner ? (
+            <HeaderIconButton
+              icon={UserPlus}
+              onPress={() => router.push(`/property/members/${property.id}`)}
+              accessibilityLabel={t('members.title')}
+            />
+          ) : null}
+          {canManage ? (
+            <HeaderIconButton
+              icon={FileText}
+              onPress={() => setStatementVisible(true)}
+              accessibilityLabel={t('statement.action')}
+            />
+          ) : null}
+          {canManage ? (
+            <HeaderIconButton
+              icon={Pencil}
+              onPress={() => router.push(`/property/edit/${property.id}`)}
+              accessibilityLabel={t('common.edit')}
+            />
+          ) : null}
         </StackHeaderActions>
       )}
     >
@@ -728,20 +760,22 @@ export default function PropertyDetailScreen() {
         onAddDetails={handleRentAddDetails}
       />
 
-      <AppFab
-        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
-        color={Colors.textInverse}
-        onPress={() => {
-          const currentRoute = routes[index]?.key as TabKey;
-          if (currentRoute === 'tenants') {
-            router.push({ pathname: '/tenant/new', params: { propertyId: id! } });
-          } else if (currentRoute === 'rent') {
-            router.push({ pathname: '/rent/new', params: { propertyId: id! } });
-          } else {
-            setQuickAddVisible(true);
-          }
-        }}
-      />
+      {canManage ? (
+        <AppFab
+          style={[styles.fab, { backgroundColor: theme.colors.primary }]}
+          color={Colors.textInverse}
+          onPress={() => {
+            const currentRoute = routes[index]?.key as TabKey;
+            if (currentRoute === 'tenants') {
+              router.push({ pathname: '/tenant/new', params: { propertyId: id! } });
+            } else if (currentRoute === 'rent') {
+              router.push({ pathname: '/rent/new', params: { propertyId: id! } });
+            } else {
+              setQuickAddVisible(true);
+            }
+          }}
+        />
+      ) : null}
     </DetailScreenScaffold>
   );
 }

@@ -336,12 +336,127 @@ export type Database = {
           },
         ];
       };
+      property_members: {
+        Row: {
+          id: string;
+          property_id: string;
+          user_id: string;
+          role: 'owner' | 'manager' | 'tenant';
+          status: 'active' | 'revoked';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          property_id: string;
+          user_id: string;
+          role: 'owner' | 'manager' | 'tenant';
+          status?: 'active' | 'revoked';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          property_id?: string;
+          user_id?: string;
+          role?: 'owner' | 'manager' | 'tenant';
+          status?: 'active' | 'revoked';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'property_members_property_id_fkey';
+            columns: ['property_id'];
+            isOneToOne: false;
+            referencedRelation: 'properties';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'property_members_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      property_invites: {
+        Row: {
+          id: string;
+          batch_id: string;
+          property_id: string;
+          email: string;
+          role: 'owner' | 'manager' | 'tenant';
+          invited_by: string;
+          token: string;
+          status: 'pending' | 'accepted' | 'revoked' | 'expired';
+          expires_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          batch_id?: string;
+          property_id: string;
+          email: string;
+          role: 'owner' | 'manager' | 'tenant';
+          invited_by: string;
+          token?: string;
+          status?: 'pending' | 'accepted' | 'revoked' | 'expired';
+          expires_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          batch_id?: string;
+          property_id?: string;
+          email?: string;
+          role?: 'owner' | 'manager' | 'tenant';
+          invited_by?: string;
+          token?: string;
+          status?: 'pending' | 'accepted' | 'revoked' | 'expired';
+          expires_at?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'property_invites_property_id_fkey';
+            columns: ['property_id'];
+            isOneToOne: false;
+            referencedRelation: 'properties';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'property_invites_invited_by_fkey';
+            columns: ['invited_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      is_property_member: {
+        Args: {
+          p_property_id: string;
+          p_roles?: string[] | null;
+        };
+        Returns: boolean;
+      };
+      is_property_owner: {
+        Args: {
+          p_property_id: string;
+        };
+        Returns: boolean;
+      };
+      accept_pending_invites_for_user: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
     };
     Enums: {
       [_ in never]: never;

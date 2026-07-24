@@ -21,12 +21,14 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useExpenses } from '@/hooks/useExpenses';
+import { useMyMemberships } from '@/hooks/useMembers';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
 import { useExpandableSearchState } from '@/hooks/useExpandableSearch';
 import { useSearchableTabHeader } from '@/hooks/useSearchableTabHeader';
 import { useRefetchOnFocus } from '@/hooks/useRefetchOnFocus';
 import { useTenants } from '@/hooks/useTenants';
+import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import type { Language, PropertyType, UsageStatus } from '@/types/app.types';
 
@@ -41,11 +43,21 @@ export default function PropertiesScreen() {
   const showToast = useUiStore((state) => state.showToast);
 
   const { properties, isLoading, error, refetch, update, remove } = useProperties();
+  const { memberships } = useMyMemberships();
+  const user = useAuthStore((state) => state.user);
   const { tenants, refetch: refetchTenants } = useTenants();
   const { expenses: overdueExpenses } = useExpenses({ status: 'overdue' });
 
   useRefetchOnFocus(refetchTenants);
   const { profile } = useProfile();
+
+  const membershipByProperty = useMemo(() => {
+    const map = new Map<string, (typeof memberships)[number]>();
+    for (const membership of memberships) {
+      map.set(membership.property_id, membership);
+    }
+    return map;
+  }, [memberships]);
 
   const handleCreatePress = useCallback(() => {
     router.push('/property/new');
@@ -158,22 +170,29 @@ export default function PropertiesScreen() {
   );
 
   const renderRightActions = useCallback(
-    (id: string) => (
-      <View style={styles.swipeActions}>
-        <TouchableOpacity
-          style={[styles.swipeButton, styles.swipeArchive]}
-          onPress={() => handleArchive(id)}
-        >
-          <Text style={styles.swipeLabel}>{t('common.archive')}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.swipeButton, styles.swipeDelete]}
-          onPress={() => handleDelete(id)}
-        >
-          <Text style={styles.swipeLabel}>{t('common.delete')}</Text>
-        </TouchableOpacity>
-      </View>
-    ),
+    (id: string, canArchive: boolean, canDelete: boolean) => {
+      if (!canArchive && !canDelete) return null;
+      return (
+        <View style={styles.swipeActions}>
+          {canArchive ? (
+            <TouchableOpacity
+              style={[styles.swipeButton, styles.swipeArchive]}
+              onPress={() => handleArchive(id)}
+            >
+              <Text style={styles.swipeLabel}>{t('common.archive')}</Text>
+            </TouchableOpacity>
+          ) : null}
+          {canDelete ? (
+            <TouchableOpacity
+              style={[styles.swipeButton, styles.swipeDelete]}
+              onPress={() => handleDelete(id)}
+            >
+              <Text style={styles.swipeLabel}>{t('common.delete')}</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      );
+    },
     [handleArchive, handleDelete, t],
   );
 
@@ -224,21 +243,30 @@ export default function PropertiesScreen() {
           { paddingBottom: scrollPadding },
         ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        renderItem={({ item }) => (
-          <Swipeable renderRightActions={() => renderRightActions(item.id)}>
-            <PropertyCard
-              property={item}
-              tenantName={tenantByProperty.get(item.id)}
-              overdueCount={overdueByProperty.get(item.id) ?? 0}
-              currency={currency}
-              language={language}
-              onPress={() => {
-                dismissSearchIfEmpty();
-                router.push(`/property/${item.id}`);
-              }}
-            />
-          </Swipeable>
-        )}
+        renderItem={({ item }) => {
+          const membership = membershipByProperty.get(item.id);
+          const canArchive =
+            membership?.role === 'owner' || membership?.role === 'manager';
+          const canDelete = item.user_id === user?.id;
+          return (
+            <Swipeable
+              enabled={canArchive || canDelete}
+              renderRightActions={() => renderRightActions(item.id, canArchive, canDelete)}
+            >
+              <PropertyCard
+                property={item}
+                tenantName={tenantByProperty.get(item.id)}
+                overdueCount={overdueByProperty.get(item.id) ?? 0}
+                currency={currency}
+                language={language}
+                onPress={() => {
+                  dismissSearchIfEmpty();
+                  router.push(`/property/${item.id}`);
+                }}
+              />
+            </Swipeable>
+          );
+        }}
         ListEmptyComponent={
           <EmptyState
             icon={Building2}

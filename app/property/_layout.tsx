@@ -17,6 +17,7 @@ export default function PropertyLayout() {
           headerRight: () => null,
         }}
       />
+      <Stack.Screen name="members/[id]" options={{ title: t('members.title') }} />
     </EntityStack>
   );
 }

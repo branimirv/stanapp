@@ -22,13 +22,26 @@ export type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 
 export type ExpenseCategory = Database['public']['Tables']['expense_categories']['Row'];
 
+export type PropertyMember = Database['public']['Tables']['property_members']['Row'];
+export type PropertyMemberInsert = Database['public']['Tables']['property_members']['Insert'];
+export type PropertyMemberUpdate = Database['public']['Tables']['property_members']['Update'];
+
+export type PropertyInvite = Database['public']['Tables']['property_invites']['Row'];
+export type PropertyInviteInsert = Database['public']['Tables']['property_invites']['Insert'];
+export type PropertyInviteUpdate = Database['public']['Tables']['property_invites']['Update'];
+
 export type ExpenseType = 'regular' | 'irregular';
 
 export type PropertyType = 'apartment' | 'house' | 'garage' | 'other';
 export type UsageStatus = 'rented' | 'personal_use' | 'vacant' | 'in_renovation';
 export type PaymentStatus = 'pending' | 'paid' | 'late' | 'partial';
+export type MembershipRole = 'owner' | 'manager' | 'tenant';
 export type Language = 'en' | 'hr';
 export type Theme = 'light' | 'dark' | 'system';
+
+export interface PropertyMemberWithProfile extends PropertyMember {
+  profile: Pick<Profile, 'id' | 'full_name'> | null;
+}
 
 export type ExpenseStatusFilter = 'paid' | 'unpaid' | 'overdue';
 

@@ -5,6 +5,8 @@ export const PROPERTY_TYPES = ['apartment', 'house', 'garage', 'other'] as const
 
 export const USAGE_STATUSES = ['rented', 'personal_use', 'vacant', 'in_renovation'] as const;
 
+export const MEMBERSHIP_ROLES = ['owner', 'manager', 'tenant'] as const;
+
 export const LANGUAGES = ['en', 'hr'] as const;
 
 export const PAYMENT_STATUSES = ['pending', 'paid', 'late', 'partial'] as const;

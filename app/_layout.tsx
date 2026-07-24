@@ -105,6 +105,7 @@ function RootStack() {
       <Stack.Screen name="expense" />
       <Stack.Screen name="rent" />
       <Stack.Screen name="settings" />
+      <Stack.Screen name="invite" />
       <Stack.Screen name="+not-found" />
     </Stack>
   );

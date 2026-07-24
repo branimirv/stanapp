@@ -75,4 +75,17 @@ export const queryKeys = {
         filters.categoryType ?? 'all',
       ] as const,
   },
+
+  members: {
+    all: ['members'] as const,
+    mine: () => [...queryKeys.members.all, 'mine'] as const,
+    list: (propertyId: string) => [...queryKeys.members.all, 'list', propertyId] as const,
+    forProperty: (propertyId: string) =>
+      [...queryKeys.members.all, 'forProperty', propertyId] as const,
+  },
+
+  invites: {
+    all: ['invites'] as const,
+    list: (propertyId: string) => [...queryKeys.invites.all, 'list', propertyId] as const,
+  },
 } as const;

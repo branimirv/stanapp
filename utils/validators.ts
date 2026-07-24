@@ -54,6 +54,14 @@ export const rentPaymentSchema = z.object({
   notes: z.string().max(1000).optional().nullable(),
 });
 
+export const inviteSchema = z.object({
+  email: z.string().email('validation.invalidEmail'),
+  role: z.enum(['owner', 'manager', 'tenant']),
+  propertyIds: z.array(z.string().uuid()).min(1, 'validation.required'),
+});
+
+export type InviteFormValues = z.infer<typeof inviteSchema>;
+
 export const profileSchema = z.object({
   full_name: z.string().min(1, 'validation.required').max(100),
   default_currency: z.enum(SUPPORTED_CURRENCIES),
