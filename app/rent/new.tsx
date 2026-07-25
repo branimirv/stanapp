@@ -69,10 +69,10 @@ export default function NewRentPaymentScreen() {
           properties={properties}
           tenants={tenants}
           defaultValues={{
-            property_id: propertyId,
-            tenant_id: tenantId,
-            period_month: periodMonth ? Number(periodMonth) : undefined,
-            period_year: periodYear ? Number(periodYear) : undefined,
+            ...(propertyId ? { property_id: propertyId } : {}),
+            ...(tenantId ? { tenant_id: tenantId } : {}),
+            ...(periodMonth ? { period_month: Number(periodMonth) } : {}),
+            ...(periodYear ? { period_year: Number(periodYear) } : {}),
           }}
           onSubmit={handleSubmit}
           isSubmitting={isSaving}

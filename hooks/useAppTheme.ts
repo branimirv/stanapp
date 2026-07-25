@@ -18,17 +18,24 @@ export function useAppTheme() {
     void hydrate();
   }, [hydrate]);
 
+  // Apply profile theme only when there is no local preference yet (fresh install /
+  // new device). Never overwrite a stored or just-selected theme — that caused
+  // light mode to snap back on the first change while the profile query resolved.
   useEffect(() => {
+    if (!isHydrated) return;
+
     if (!profile?.id) {
       syncedProfileId.current = null;
       return;
     }
 
     if (syncedProfileId.current === profile.id) return;
-
     syncedProfileId.current = profile.id;
+
+    if (useThemeStore.getState().hasStoredPreference) return;
+
     void setPreference(profile.theme);
-  }, [profile?.id, profile?.theme, setPreference]);
+  }, [isHydrated, profile?.id, profile?.theme, setPreference]);
 
   const isDark = useMemo(
     () => resolveIsDark(preference, systemScheme),

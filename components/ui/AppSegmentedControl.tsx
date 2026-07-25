@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useEffect } from 'react';
 import { LayoutChangeEvent, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -21,6 +21,8 @@ export interface AppSegmentedControlProps<T extends string = string> {
   disabled?: boolean;
 }
 
+const INDICATOR_INSET = Spacing.xs / 2;
+
 export function AppSegmentedControl<T extends string = string>({
   segments,
   value,
@@ -29,40 +31,44 @@ export function AppSegmentedControl<T extends string = string>({
   disabled = false,
 }: AppSegmentedControlProps<T>) {
   const theme = useTheme();
-  const indicatorX = useSharedValue(0);
-  const indicatorWidth = useSharedValue(0);
+  const segmentCount = Math.max(segments.length, 1);
+  const selectedIndex = Math.max(
+    0,
+    segments.findIndex((segment) => segment.value === value),
+  );
+
+  // Position is always derived from (index * segmentWidth) so it cannot drift
+  // from the selected value the way an independently set translateX could.
+  const indexProgress = useSharedValue(selectedIndex);
   const segmentWidth = useSharedValue(0);
 
-  const selectedIndex = segments.findIndex((segment) => segment.value === value);
+  useEffect(() => {
+    // Snap on first layout (width still 0); animate once we have measurements.
+    if (segmentWidth.value <= 0) {
+      indexProgress.value = selectedIndex;
+      return;
+    }
+    indexProgress.value = withTiming(selectedIndex, { duration: 200 });
+  }, [indexProgress, segmentWidth, selectedIndex]);
 
-  const handleLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      const totalWidth = event.nativeEvent.layout.width;
-      const width = totalWidth / Math.max(segments.length, 1);
-      segmentWidth.value = width;
-      indicatorWidth.value = width - Spacing.xs;
-      indicatorX.value = withTiming(selectedIndex * width + Spacing.xs / 2, {
-        duration: 200,
-      });
-    },
-    [indicatorWidth, indicatorX, segmentWidth, segments.length, selectedIndex],
-  );
+  const handleLayout = (event: LayoutChangeEvent) => {
+    const trackWidth = event.nativeEvent.layout.width;
+    const nextWidth = trackWidth / segmentCount;
+    const wasUnmeasured = segmentWidth.value <= 0;
+    segmentWidth.value = nextWidth;
+    // After first measurement, snap to the current selection (covers remounts).
+    if (wasUnmeasured) {
+      indexProgress.value = selectedIndex;
+    }
+  };
 
-  const handleSelect = useCallback(
-    (index: number, nextValue: T) => {
-      if (disabled) return;
-      onValueChange(nextValue);
-      indicatorX.value = withTiming(index * segmentWidth.value + Spacing.xs / 2, {
-        duration: 200,
-      });
-    },
-    [disabled, indicatorX, onValueChange, segmentWidth],
-  );
-
-  const indicatorStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: indicatorX.value }],
-    width: indicatorWidth.value,
-  }));
+  const indicatorStyle = useAnimatedStyle(() => {
+    const width = segmentWidth.value;
+    return {
+      width: Math.max(width - INDICATOR_INSET * 2, 0),
+      transform: [{ translateX: indexProgress.value * width + INDICATOR_INSET }],
+    };
+  });
 
   const trackColor = theme.colors.surfaceVariant;
   const indicatorColor = theme.colors.surface;
@@ -91,7 +97,10 @@ export function AppSegmentedControl<T extends string = string>({
           <Pressable
             key={segment.value}
             style={styles.segment}
-            onPress={() => handleSelect(index, segment.value)}
+            onPress={() => {
+              if (disabled) return;
+              onValueChange(segment.value);
+            }}
             disabled={disabled}
             accessibilityRole="button"
             accessibilityState={{ selected: isSelected, disabled }}
@@ -121,14 +130,14 @@ const styles = StyleSheet.create({
   track: {
     flexDirection: 'row',
     borderRadius: 12,
-    padding: Spacing.xs / 2,
+    padding: INDICATOR_INSET,
     position: 'relative',
     minHeight: 44,
   },
   indicator: {
     position: 'absolute',
-    top: Spacing.xs / 2,
-    bottom: Spacing.xs / 2,
+    top: INDICATOR_INSET,
+    bottom: INDICATOR_INSET,
     borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },

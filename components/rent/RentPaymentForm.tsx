@@ -174,7 +174,7 @@ export function RentPaymentForm({
             name="period_year"
             render={({ field: { value, onChange, onBlur }, fieldState }) => (
               <AppTextInput
-                value={String(value)}
+                value={value != null ? String(value) : String(new Date().getFullYear())}
                 onChangeText={(text) => {
                   const parsed = Number.parseInt(text, 10);
                   onChange(Number.isNaN(parsed) ? new Date().getFullYear() : parsed);

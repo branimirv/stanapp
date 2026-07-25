@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Trash2 } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -198,8 +199,13 @@ export default function PropertyMembersScreen() {
                     </Text>
                   </View>
                   {!isSelf ? (
-                    <Pressable onPress={() => handleRevokeMember(member.id, name)}>
-                      <Text style={{ color: theme.colors.error }}>{t('common.remove')}</Text>
+                    <Pressable
+                      onPress={() => handleRevokeMember(member.id, name)}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('common.remove')}
+                    >
+                      <Trash2 size={20} color={theme.colors.error} strokeWidth={2} />
                     </Pressable>
                   ) : null}
                 </View>
@@ -225,8 +231,13 @@ export default function PropertyMembersScreen() {
                     {t(`members.roles.${inviteItem.role}`)}
                   </Text>
                 </View>
-                <Pressable onPress={() => handleRevokeInvite(inviteItem.id, inviteItem.email)}>
-                  <Text style={{ color: theme.colors.error }}>{t('common.remove')}</Text>
+                <Pressable
+                  onPress={() => handleRevokeInvite(inviteItem.id, inviteItem.email)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.remove')}
+                >
+                  <Trash2 size={20} color={theme.colors.error} strokeWidth={2} />
                 </Pressable>
               </View>
             ))
