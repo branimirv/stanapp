@@ -26,6 +26,8 @@ export type PropertyMember = Database['public']['Tables']['property_members']['R
 export type PropertyMemberInsert = Database['public']['Tables']['property_members']['Insert'];
 export type PropertyMemberUpdate = Database['public']['Tables']['property_members']['Update'];
 
+export type PropertyStatusHistory = Database['public']['Tables']['property_status_history']['Row'];
+
 export type PropertyInvite = Database['public']['Tables']['property_invites']['Row'];
 export type PropertyInviteInsert = Database['public']['Tables']['property_invites']['Insert'];
 export type PropertyInviteUpdate = Database['public']['Tables']['property_invites']['Update'];

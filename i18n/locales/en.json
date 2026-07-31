@@ -254,7 +254,11 @@
     "viewAllExpenses": "View all expenses",
     "noExpensesThisMonth": "No expenses this month",
     "expensePeriodAll": "All",
-    "expensePeriodThisMonth": "This month"
+    "expensePeriodThisMonth": "This month",
+    "usageHistory": "Usage history",
+    "usageHistoryEmpty": "No usage history yet",
+    "usageSince": "Since {{date}}",
+    "currentRentStatus": "Rent for {{period}}:"
   },
   "members": {
     "title": "Members",
@@ -299,7 +303,7 @@
     "rented": "Rented",
     "personal_use": "Personal",
     "vacant": "Vacant",
-    "in_renovation": "In renovation"
+    "in_renovation": "Renovation"
   },
   "tenants": {
     "title": "Tenants",

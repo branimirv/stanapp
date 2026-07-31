@@ -435,6 +435,51 @@ export type Database = {
           },
         ];
       };
+      property_status_history: {
+        Row: {
+          id: string;
+          property_id: string;
+          status: 'rented' | 'personal_use' | 'vacant' | 'in_renovation';
+          started_at: string;
+          ended_at: string | null;
+          changed_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          property_id: string;
+          status: 'rented' | 'personal_use' | 'vacant' | 'in_renovation';
+          started_at?: string;
+          ended_at?: string | null;
+          changed_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          property_id?: string;
+          status?: 'rented' | 'personal_use' | 'vacant' | 'in_renovation';
+          started_at?: string;
+          ended_at?: string | null;
+          changed_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'property_status_history_property_id_fkey';
+            columns: ['property_id'];
+            isOneToOne: false;
+            referencedRelation: 'properties';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'property_status_history_changed_by_fkey';
+            columns: ['changed_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;

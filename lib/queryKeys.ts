@@ -28,6 +28,7 @@ export const queryKeys = {
     all: ['properties'] as const,
     lists: () => [...queryKeys.properties.all, 'list'] as const,
     detail: (id: string) => [...queryKeys.properties.all, 'detail', id] as const,
+    statusHistory: (id: string) => [...queryKeys.properties.all, 'statusHistory', id] as const,
   },
 
   tenants: {

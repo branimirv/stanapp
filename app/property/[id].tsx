@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
+  Pressable,
   RefreshControl,
   ScrollView,
   SectionList,
@@ -26,7 +27,9 @@ import { PropertyTabBar } from '@/components/property/PropertyTabBar';
 import { PropertyStats } from '@/components/property/PropertyStats';
 import { PropertyTypeBadge } from '@/components/property/PropertyTypeBadge';
 import { SubPropertyList } from '@/components/property/SubPropertyList';
+import { UsageHistorySheet } from '@/components/property/UsageHistorySheet';
 import { UsageStatusBadge } from '@/components/property/UsageStatusBadge';
+import { AppBadge } from '@/components/ui/AppBadge';
 import { TenantCard } from '@/components/tenant/TenantCard';
 import { ExpenseCard } from '@/components/expense/ExpenseCard';
 import { MonthlyGrid } from '@/components/rent/MonthlyGrid';
@@ -82,6 +85,7 @@ export default function PropertyDetailScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [expensePeriodFilter, setExpensePeriodFilter] = useState<ExpensePeriodFilter>('all');
   const [quickAddVisible, setQuickAddVisible] = useState(false);
+  const [historyVisible, setHistoryVisible] = useState(false);
   const [statementVisible, setStatementVisible] = useState(false);
   const [isSavingExpense, setIsSavingExpense] = useState(false);
   const [rentSheet, setRentSheet] = useState<{
@@ -189,6 +193,27 @@ export default function PropertyDetailScreen() {
       setIndex(expensesTabIndex);
     }
   }, [expensesTabIndex]);
+
+  const rentTabIndex = useMemo(
+    () => routes.findIndex((route) => route.key === 'rent'),
+    [routes],
+  );
+
+  const goToRentTab = useCallback(() => {
+    if (rentTabIndex >= 0) {
+      setIndex(rentTabIndex);
+    }
+  }, [rentTabIndex]);
+
+  const currentMonthRentPayment = useMemo(
+    () =>
+      rentPayments.find(
+        (payment) =>
+          payment.period_month === currentMonthRange.month &&
+          payment.period_year === currentMonthRange.year,
+      ),
+    [currentMonthRange.month, currentMonthRange.year, rentPayments],
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -353,7 +378,10 @@ export default function PropertyDetailScreen() {
 
       <View style={styles.badgeRow}>
         <PropertyTypeBadge type={property!.type} />
-        <UsageStatusBadge status={property!.usage_status} />
+        <UsageStatusBadge
+          status={property!.usage_status}
+          onPress={() => setHistoryVisible(true)}
+        />
       </View>
 
       <Text style={[styles.propertyName, { color: theme.colors.onSurface }]}>
@@ -379,6 +407,22 @@ export default function PropertyDetailScreen() {
         <Text style={[styles.rentAmount, { color: theme.colors.primary }]}>
           {t('properties.monthlyRent')}: {formatCurrency(property!.rent_amount, currency, language)}
         </Text>
+      ) : null}
+
+      {isRented ? (
+        <Pressable style={styles.rentStatusRow} onPress={goToRentTab} accessibilityRole="button">
+          <Text style={[styles.rentStatusLabel, { color: theme.colors.onSurfaceVariant }]}>
+            {t('properties.currentRentStatus', { period: currentMonthPeriodLabel })}
+          </Text>
+          {currentMonthRentPayment ? (
+            <AppBadge
+              label={t(`rent.${currentMonthRentPayment.status}`)}
+              variant={currentMonthRentPayment.status}
+            />
+          ) : (
+            <AppBadge label={t('rent.monthEmpty')} variant="pending" />
+          )}
+        </Pressable>
       ) : null}
 
       {property!.notes ? (
@@ -722,6 +766,13 @@ export default function PropertyDetailScreen() {
         renderTabBar={(props) => <PropertyTabBar {...props} icons={TAB_ICONS} />}
       />
 
+      <UsageHistorySheet
+        visible={historyVisible}
+        onDismiss={() => setHistoryVisible(false)}
+        propertyId={property.id}
+        language={language}
+      />
+
       <QuickAddExpenseSheet
         visible={quickAddVisible}
         onDismiss={() => setQuickAddVisible(false)}
@@ -817,6 +868,15 @@ const styles = StyleSheet.create({
   rentAmount: {
     ...Typography.titleMedium,
     marginBottom: Spacing.sm,
+  },
+  rentStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  rentStatusLabel: {
+    ...Typography.bodySmall,
   },
   notes: {
     ...Typography.bodyMedium,

@@ -51,8 +51,7 @@ export function CategoryChipPicker({
                 style={[
                   styles.chip,
                   {
-                    borderColor: selected ? theme.colors.primary : theme.colors.outline,
-                    borderWidth: selected ? 2 : 1,
+                    borderColor: selected ? category.color : 'transparent',
                   },
                 ]}
                 accessibilityRole="button"
@@ -112,6 +111,7 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderRadius: 999,
+    borderWidth: 2,
   },
   addCustomChip: {
     borderRadius: 999,

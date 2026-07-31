@@ -254,7 +254,11 @@
     "viewAllExpenses": "Pogledaj sve troškove",
     "noExpensesThisMonth": "Nema troškova ovog mjeseca",
     "expensePeriodAll": "Sve",
-    "expensePeriodThisMonth": "Ovaj mjesec"
+    "expensePeriodThisMonth": "Ovaj mjesec",
+    "usageHistory": "Povijest korištenja",
+    "usageHistoryEmpty": "Još nema povijesti korištenja",
+    "usageSince": "Od {{date}}",
+    "currentRentStatus": "Najamnina za {{period}}:"
   },
   "members": {
     "title": "Članovi",
@@ -299,7 +303,7 @@
     "rented": "U najmu",
     "personal_use": "Osobno",
     "vacant": "Prazno",
-    "in_renovation": "U obnovi"
+    "in_renovation": "Obnova"
   },
   "tenants": {
     "title": "Stanari",
