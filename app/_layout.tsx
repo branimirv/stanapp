@@ -106,6 +106,7 @@ function RootStack() {
       <Stack.Screen name="rent" />
       <Stack.Screen name="settings" />
       <Stack.Screen name="invite" />
+      {__DEV__ ? <Stack.Screen name="dev" /> : null}
       <Stack.Screen name="+not-found" />
     </Stack>
   );

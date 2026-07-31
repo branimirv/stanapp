@@ -41,7 +41,7 @@ export function PropertyTabBar({ navigationState, jumpTo, icons }: PropertyTabBa
             accessibilityRole="tab"
             accessibilityState={{ selected: isFocused }}
           >
-            {Icon ? <Icon size={18} color={color} strokeWidth={2} /> : null}
+            {Icon ? <Icon size={20} color={color} strokeWidth={2} /> : null}
             <Text
               style={[styles.label, { color }, isFocused && styles.labelActive]}
               numberOfLines={1}

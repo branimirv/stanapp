@@ -2,12 +2,12 @@ import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'react-native-paper';
 
-import { useThemedStackScreenOptions } from '@/hooks/useThemedStackScreenOptions';
+import { useAppHeaderOptions } from '@/hooks/useAppHeaderOptions';
 
 export default function AuthLayout() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const themedScreenOptions = useThemedStackScreenOptions();
+  const themedScreenOptions = useAppHeaderOptions();
 
   return (
     <Stack

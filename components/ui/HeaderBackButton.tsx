@@ -3,7 +3,9 @@ import { StyleSheet, View } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
+import { GlassSurface } from '@/components/ui/GlassSurface';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import { HEADER_ACTION_SLOT } from '@/constants/header';
 
 /**
  * Back button for screens that sit at the root of a nested stack (details, `new`,
@@ -16,25 +18,32 @@ export function HeaderBackButton() {
 
   const canGoBack = router.canGoBack();
 
-  // Keep the header left "slot" width stable even when there's no back action.
-  // This prevents the navigation title from shifting horizontally between screens.
   if (!canGoBack) {
-    // We intentionally render *no* icon so the header left slot doesn't
-    // add extra width; it only needs to exist to keep title layout stable.
     return <View style={styles.hiddenSlot} pointerEvents="none" />;
   }
 
   return (
-    <HeaderIconButton
-      icon={ChevronLeft}
-      onPress={() => router.back()}
-      accessibilityLabel={t('common.back')}
-    />
+    <GlassSurface shape="circle" style={styles.circle} contentStyle={styles.circleOverlay}>
+      <HeaderIconButton
+        icon={ChevronLeft}
+        onPress={() => router.back()}
+        accessibilityLabel={t('common.back')}
+      />
+    </GlassSurface>
   );
 }
 
 const styles = StyleSheet.create({
   hiddenSlot: {
     width: 0,
+  },
+  circle: {
+    width: HEADER_ACTION_SLOT,
+    height: HEADER_ACTION_SLOT,
+  },
+  circleOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -1,11 +1,11 @@
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-import { useThemedStackScreenOptions } from '@/hooks/useThemedStackScreenOptions';
+import { useAppHeaderOptions } from '@/hooks/useAppHeaderOptions';
 
 export default function SettingsLayout() {
   const { t } = useTranslation();
-  const screenOptions = useThemedStackScreenOptions();
+  const screenOptions = useAppHeaderOptions();
 
   // Don't remount on theme change — remounting reset the theme switcher's
   // segmented indicator to index 0 (Light) while preference stayed Dark.
