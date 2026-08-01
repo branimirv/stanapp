@@ -173,7 +173,6 @@ Supabase Auth with email/password. A profile row is auto-created on signup via a
 - **Package manager:** pnpm (`packageManager` field in `package.json`)
 - **Path aliases:** `@/*` maps to project root (see `tsconfig.json`)
 - **Reanimated:** `babel.config.js` must keep `react-native-reanimated/plugin` as the last Babel plugin
-- **Full spec:** See [`prompts/stanapp-firstprompt.md`](prompts/stanapp-firstprompt.md) for detailed screen specs, UX patterns, and build order
 
 ---
 
