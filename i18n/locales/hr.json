@@ -655,7 +655,8 @@
     "dashboard": "Početna",
     "properties": "Nekretnine",
     "expenses": "Troškovi",
-    "reports": "Izvještaji"
+    "reports": "Izvještaji",
+    "me": "Ja"
   },
   "statement": {
     "title": "Mjesečni obračun",

@@ -11,7 +11,7 @@ import { useAppHeaderOptions } from '@/hooks/useAppHeaderOptions';
  */
 export function EntityStack({ children }: { children: ReactNode }) {
   const theme = useTheme();
-  const screenOptions = useAppHeaderOptions({ variant: 'stack', showDefaultSettings: true });
+  const screenOptions = useAppHeaderOptions({ variant: 'stack' });
 
   return (
     <Stack key={theme.dark ? 'dark' : 'light'} screenOptions={screenOptions}>

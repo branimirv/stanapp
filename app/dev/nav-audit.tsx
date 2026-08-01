@@ -10,7 +10,7 @@ const TAB_LINKS: { title: string; href: string }[] = [
   { title: 'Properties (tab)', href: '/(tabs)/properties' },
   { title: 'Expenses (tab)', href: '/(tabs)/expenses' },
   { title: 'Reports (tab)', href: '/(tabs)/reports' },
-  { title: 'Settings', href: '/settings' },
+  { title: 'Me (tab)', href: '/(tabs)/me' },
 ];
 
 export default function NavAuditScreen() {

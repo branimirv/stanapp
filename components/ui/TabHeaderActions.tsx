@@ -1,7 +1,6 @@
 import { CreateHeaderButton } from '@/components/ui/CreateHeaderButton';
 import { HeaderActionsPill } from '@/components/ui/HeaderActionsPill';
 import { SearchHeaderButton } from '@/components/ui/SearchHeaderButton';
-import { SettingsHeaderButton } from '@/components/ui/SettingsHeaderButton';
 
 interface TabHeaderActionsProps {
   showCreate?: boolean;
@@ -20,19 +19,20 @@ export function TabHeaderActions({
   searchExpanded,
   onSearchPress,
 }: TabHeaderActionsProps) {
+  const hasCreate = Boolean(showCreate && onCreatePress);
+  const hasSearch = Boolean(showSearch && onSearchPress);
+  if (!hasCreate && !hasSearch) return null;
+
   return (
     <HeaderActionsPill>
-      {showCreate && onCreatePress ? (
-        <CreateHeaderButton onPress={onCreatePress} />
-      ) : null}
-      {showSearch && onSearchPress ? (
+      {hasCreate ? <CreateHeaderButton onPress={onCreatePress!} /> : null}
+      {hasSearch ? (
         <SearchHeaderButton
           active={searchActive}
           expanded={searchExpanded}
-          onPress={onSearchPress}
+          onPress={onSearchPress!}
         />
       ) : null}
-      <SettingsHeaderButton />
     </HeaderActionsPill>
   );
 }

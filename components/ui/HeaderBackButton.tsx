@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -16,10 +16,8 @@ import { HEADER_ACTION_SLOT } from '@/constants/header';
 export function HeaderBackButton() {
   const { t } = useTranslation();
 
-  const canGoBack = router.canGoBack();
-
-  if (!canGoBack) {
-    return <View style={styles.hiddenSlot} pointerEvents="none" />;
+  if (!router.canGoBack()) {
+    return null;
   }
 
   return (
@@ -34,9 +32,6 @@ export function HeaderBackButton() {
 }
 
 const styles = StyleSheet.create({
-  hiddenSlot: {
-    width: 0,
-  },
   circle: {
     width: HEADER_ACTION_SLOT,
     height: HEADER_ACTION_SLOT,

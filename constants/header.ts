@@ -25,3 +25,17 @@ export const headerRightContainerStyle = {
 export const headerBarStyle = {
   minHeight: HEADER_BAR_HEIGHT,
 };
+
+/**
+ * Tab root screens: keep `title` for a11y / screen name, hide the visual
+ * header label (tab bar already orients the user). Header bar stays for actions.
+ *
+ * Use `headerTitle: ''` — not `() => null`. On iOS native-stack, a null custom
+ * title falls back to the string `title` and stays visible (Android hides it).
+ */
+export function tabRootScreenOptions(title: string) {
+  return {
+    title,
+    headerTitle: '',
+  };
+}

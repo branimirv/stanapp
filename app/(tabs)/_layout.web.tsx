@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { BarChart3, Building2, Home, Receipt } from 'lucide-react-native';
+import { BarChart3, Building2, Home, Receipt, User } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'react-native-paper';
 
@@ -61,6 +61,15 @@ export default function WebTabLayout() {
           title: t('tabs.reports'),
           tabBarIcon: ({ color, size }) => (
             <BarChart3 color={color} size={size ?? 24} strokeWidth={2} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="me"
+        options={{
+          title: t('tabs.me'),
+          tabBarIcon: ({ color, size }) => (
+            <User color={color} size={size ?? 24} strokeWidth={2} />
           ),
         }}
       />

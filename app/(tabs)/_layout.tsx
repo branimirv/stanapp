@@ -93,6 +93,15 @@ export default function TabLayout() {
           md="bar_chart"
         />
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="me" disableTransparentOnScrollEdge>
+        <NativeTabs.Trigger.Label hidden={!showLabels}>
+          {t('tabs.me')}
+        </NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }}
+          md="person"
+        />
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }

@@ -1,15 +1,14 @@
+import { Children, type ReactNode } from 'react';
+
 import { HeaderActionsPill } from '@/components/ui/HeaderActionsPill';
-import { SettingsHeaderButton } from '@/components/ui/SettingsHeaderButton';
 
 interface StackHeaderActionsProps {
-  children?: React.ReactNode;
+  children?: ReactNode;
 }
 
 export function StackHeaderActions({ children }: StackHeaderActionsProps) {
-  return (
-    <HeaderActionsPill>
-      {children}
-      <SettingsHeaderButton />
-    </HeaderActionsPill>
-  );
+  const actions = Children.toArray(children).filter(Boolean);
+  if (actions.length === 0) return null;
+
+  return <HeaderActionsPill>{actions}</HeaderActionsPill>;
 }

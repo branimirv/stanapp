@@ -655,7 +655,8 @@
     "dashboard": "Dashboard",
     "properties": "Properties",
     "expenses": "Expenses",
-    "reports": "Reports"
+    "reports": "Reports",
+    "me": "Me"
   },
   "statement": {
     "title": "Monthly statement",

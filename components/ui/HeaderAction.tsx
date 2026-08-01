@@ -1,11 +1,10 @@
-import { router } from 'expo-router';
-import { Plus, Search, Settings, type LucideIcon } from 'lucide-react-native';
+import { Plus, Search, type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'react-native-paper';
 
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 
-type HeaderActionPreset = 'create' | 'search' | 'settings';
+type HeaderActionPreset = 'create' | 'search';
 
 interface HeaderActionProps {
   preset?: HeaderActionPreset;
@@ -50,17 +49,6 @@ export function HeaderAction({
         onPress={onPress!}
         accessibilityLabel={accessibilityLabel ?? t('common.search')}
         color={searchColor}
-      />
-    );
-  }
-
-  if (preset === 'settings') {
-    return (
-      <HeaderIconButton
-        icon={Settings}
-        onPress={onPress ?? (() => router.push('/settings'))}
-        accessibilityLabel={accessibilityLabel ?? t('settings.title')}
-        color={color}
       />
     );
   }

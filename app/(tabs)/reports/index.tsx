@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import { useDefaultTabHeader } from '@/hooks/useDefaultTabHeader';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { ExpenseBreakdown } from '@/components/reports/ExpenseBreakdown';
@@ -40,7 +39,6 @@ import type { Language, ReportCategoryTypeFilter, ReportPeriod } from '@/types/a
 export default function ReportsScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
-  useDefaultTabHeader();
   const showToast = useUiStore((state) => state.showToast);
   const { profile } = useProfile();
   const { properties } = useProperties();

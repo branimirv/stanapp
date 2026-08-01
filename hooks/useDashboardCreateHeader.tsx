@@ -1,21 +1,26 @@
 import { useFocusEffect, useNavigation } from 'expo-router';
 import { useCallback, useLayoutEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
+import { CreateHeaderButton } from '@/components/ui/CreateHeaderButton';
 import { HeaderActionsPill } from '@/components/ui/HeaderActionsPill';
-import { SettingsHeaderButton } from '@/components/ui/SettingsHeaderButton';
 
-export function useDefaultTabHeader() {
+export function useDashboardCreateHeader(onCreatePress: () => void) {
   const navigation = useNavigation();
+  const { t } = useTranslation();
 
   const updateHeader = useCallback(() => {
     navigation.setOptions({
       headerRight: () => (
         <HeaderActionsPill>
-          <SettingsHeaderButton />
+          <CreateHeaderButton
+            onPress={onCreatePress}
+            accessibilityLabel={t('dashboard.quickActions')}
+          />
         </HeaderActionsPill>
       ),
     });
-  }, [navigation]);
+  }, [navigation, onCreatePress, t]);
 
   useLayoutEffect(() => {
     updateHeader();
