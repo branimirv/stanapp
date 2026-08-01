@@ -1,8 +1,22 @@
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
+import {
+  CircleAlert,
+  CircleCheck,
+  CircleDashed,
+  Clock3,
+  type LucideIcon,
+} from 'lucide-react-native';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import type { PaymentStatus } from '@/types/app.types';
 import { getStatusColor } from '@/utils/formatters';
+
+const PAYMENT_STATUS_ICONS: Record<PaymentStatus, LucideIcon> = {
+  paid: CircleCheck,
+  pending: Clock3,
+  late: CircleAlert,
+  partial: CircleDashed,
+};
 
 export type AppBadgeVariant =
   | PaymentStatus
@@ -66,9 +80,11 @@ export function AppBadge({
 
   const resolvedBackground =
     variant === 'default' && theme.dark ? Colors.surfaceVariantDark : background;
+  const StatusIcon = PAYMENT_STATUS_ICONS[variant as PaymentStatus];
 
   return (
     <View style={[styles.badge, { backgroundColor: resolvedBackground }, style]}>
+      {StatusIcon ? <StatusIcon size={14} color={text} strokeWidth={2} /> : null}
       <Text style={[styles.label, { color: text }]} numberOfLines={1}>
         {label}
       </Text>
@@ -78,7 +94,10 @@ export function AppBadge({
 
 const styles = StyleSheet.create({
   badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
+    gap: Spacing.xs,
     borderRadius: 999,
     paddingHorizontal: Spacing.sm + 2,
     paddingVertical: Spacing.xs,

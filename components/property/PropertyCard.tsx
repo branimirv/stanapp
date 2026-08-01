@@ -8,7 +8,7 @@ import { AppBadge } from '@/components/ui/AppBadge';
 import { PropertyTypeBadge } from '@/components/property/PropertyTypeBadge';
 import { UsageStatusBadge } from '@/components/property/UsageStatusBadge';
 import { Colors, Spacing, Typography } from '@/constants/theme';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrencyShort } from '@/utils/formatters';
 import type { Language, Property } from '@/types/app.types';
 
 export interface PropertyCardProps {
@@ -106,15 +106,15 @@ function PropertyCardComponent({
                 <Text style={[styles.metaLabel, { color: theme.colors.onSurfaceVariant }]}>
                   {tenantName ?? t('properties.noTenant')}
                 </Text>
-                <Text style={[styles.rent, { color: theme.colors.primary }]}>
-                  {formatCurrency(
+                <Text style={[styles.rent, { color: theme.colors.onSurface }]}>
+                  {formatCurrencyShort(
                     Number(property.rent_amount),
                     property.currency ?? currency,
                     resolvedLanguage,
                   )}
                   <Text style={[styles.rentSuffix, { color: theme.colors.onSurfaceVariant }]}>
                     {' '}
-                    / {t('properties.monthlyRent').toLowerCase()}
+                    {t('properties.perMonthSuffix')}
                   </Text>
                 </Text>
               </View>

@@ -22,6 +22,21 @@ export function formatCurrency(
   }).format(amount);
 }
 
+/** Same as formatCurrency but hides the decimals on whole amounts. */
+export function formatCurrencyShort(
+  amount: number,
+  currency = 'EUR',
+  language: Language = 'hr',
+): string {
+  const fractionDigits = Number.isInteger(amount) ? 0 : 2;
+  return new Intl.NumberFormat(getIntlLocale(language), {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(amount);
+}
+
 export function formatDate(dateString: string, language: Language = 'hr'): string {
   return format(parseISO(dateString), 'dd.MM.yyyy', { locale: dateLocales[language] });
 }
@@ -36,6 +51,22 @@ export function formatDateOnly(date: Date): string {
 export function formatPeriod(month: number, year: number, language: Language = 'hr'): string {
   const date = new Date(year, month - 1);
   return format(date, 'LLLL yyyy', { locale: dateLocales[language] });
+}
+
+/** Month name without the year, for labels where the year is already implied. */
+export function formatMonthName(month: number, year: number, language: Language = 'hr'): string {
+  const date = new Date(year, month - 1);
+  return format(date, 'LLLL', { locale: dateLocales[language] });
+}
+
+/** Abbreviated month name, for tight spots like badges. */
+export function formatMonthNameShort(
+  month: number,
+  year: number,
+  language: Language = 'hr',
+): string {
+  const date = new Date(year, month - 1);
+  return format(date, 'LLL', { locale: dateLocales[language] });
 }
 
 export function formatPeriodShort(month: number, year: number, language: Language = 'hr'): string {
