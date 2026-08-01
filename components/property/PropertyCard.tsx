@@ -17,9 +17,9 @@ export interface PropertyCardProps {
   overdueCount?: number;
   currency?: string;
   language?: Language;
-  onPress?: () => void;
-  onArchive?: () => void;
-  onDelete?: () => void;
+  onPress?: (propertyId: string) => void;
+  onArchive?: (propertyId: string) => void;
+  onDelete?: (propertyId: string) => void;
 }
 
 function PropertyCardComponent({
@@ -37,6 +37,7 @@ function PropertyCardComponent({
   const swipeableRef = useRef<Swipeable>(null);
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
   const isRented = property.usage_status === 'rented';
+  const handlePress = onPress ? () => onPress(property.id) : undefined;
 
   const renderRightActions = () => (
     <View style={styles.actions}>
@@ -45,7 +46,7 @@ function PropertyCardComponent({
           style={[styles.action, styles.archiveAction]}
           onPress={() => {
             swipeableRef.current?.close();
-            onArchive();
+            onArchive(property.id);
           }}
           accessibilityRole="button"
           accessibilityLabel={t('common.archive')}
@@ -59,7 +60,7 @@ function PropertyCardComponent({
           style={[styles.action, styles.deleteAction]}
           onPress={() => {
             swipeableRef.current?.close();
-            onDelete();
+            onDelete(property.id);
           }}
           accessibilityRole="button"
           accessibilityLabel={t('common.delete')}
@@ -72,7 +73,7 @@ function PropertyCardComponent({
   );
 
   const card = (
-    <Pressable onPress={onPress} disabled={!onPress}>
+    <Pressable onPress={handlePress} disabled={!handlePress}>
       <Card
         mode="elevated"
         style={[

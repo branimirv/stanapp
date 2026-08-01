@@ -23,6 +23,7 @@ import type { PickerOption } from '@/components/ui/AppPicker';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { listPerformanceProps } from '@/constants/list';
 import { Spacing, Typography } from '@/constants/theme';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useExpenses } from '@/hooks/useExpenses';
@@ -234,6 +235,14 @@ export default function ExpensesScreen() {
     [remove, showConfirmDialog, showToast, t],
   );
 
+  const handleExpensePress = useCallback(
+    (expenseId: string) => {
+      dismissSearchIfEmpty();
+      router.push(`/expense/${expenseId}`);
+    },
+    [dismissSearchIfEmpty],
+  );
+
   const renderExpenseItem = useCallback(
     ({ item }: { item: Expense }) => (
       <View style={styles.itemWrap}>
@@ -243,16 +252,31 @@ export default function ExpensesScreen() {
           propertyName={propertyMap.get(item.property_id)?.name}
           currency={currency}
           language={language}
-          onPress={() => {
-            dismissSearchIfEmpty();
-            router.push(`/expense/${item.id}`);
-          }}
-          onMarkPaid={!item.paid_at ? () => handleMarkPaid(item.id) : undefined}
-          onDelete={() => handleDelete(item.id)}
+          onPress={handleExpensePress}
+          onMarkPaid={item.paid_at ? undefined : handleMarkPaid}
+          onDelete={handleDelete}
         />
       </View>
     ),
-    [categoryMap, currency, dismissSearchIfEmpty, handleDelete, handleMarkPaid, language, propertyMap],
+    [categoryMap, currency, handleDelete, handleExpensePress, handleMarkPaid, language, propertyMap],
+  );
+
+  const renderSectionHeader = useCallback(
+    ({ section }: { section: ExpenseSection }) => (
+      <View style={[styles.sectionHeader, { backgroundColor: theme.colors.background }]}>
+        <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+          {section.title}
+        </Text>
+        <Text style={[styles.sectionTotal, { color: theme.colors.onSurfaceVariant }]}>
+          {t('expenses.monthTotal', {
+            period: formatPeriod(section.month, section.year, language),
+          })}
+          {' · '}
+          {section.total.toFixed(2)} {currency}
+        </Text>
+      </View>
+    ),
+    [currency, language, t, theme.colors.background, theme.colors.onSurface, theme.colors.onSurfaceVariant],
   );
 
   if (isLoading && expenses.length === 0) {
@@ -301,30 +325,13 @@ export default function ExpensesScreen() {
         keyExtractor={(item) => item.id}
         stickySectionHeadersEnabled
         {...listKeyboardProps}
+        {...listPerformanceProps}
         contentContainerStyle={[
           sections.length === 0 && styles.listEmpty,
           { paddingBottom: scrollPadding },
         ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        renderSectionHeader={({ section }) => (
-          <View
-            style={[
-              styles.sectionHeader,
-              { backgroundColor: theme.colors.background },
-            ]}
-          >
-            <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-              {section.title}
-            </Text>
-            <Text style={[styles.sectionTotal, { color: theme.colors.onSurfaceVariant }]}>
-              {t('expenses.monthTotal', {
-                period: formatPeriod(section.month, section.year, language),
-              })}
-              {' · '}
-              {section.total.toFixed(2)} {currency}
-            </Text>
-          </View>
-        )}
+        renderSectionHeader={renderSectionHeader}
         renderItem={renderExpenseItem}
         ListEmptyComponent={
           <EmptyState
@@ -341,7 +348,7 @@ export default function ExpensesScreen() {
                 : t('empty.noExpensesHint')
             }
             ctaLabel={t('expenses.addNew')}
-            onCtaPress={() => router.push('/expense/new')}
+            onCtaPress={handleCreatePress}
           />
         }
       />

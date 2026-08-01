@@ -1,18 +1,16 @@
 import { useCallback, useMemo, useState } from 'react';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import {
-  FlatList,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  SectionList,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-} from 'react-native';
-import { Pencil, FileText, LayoutGrid, Users, Receipt, Banknote, UserPlus } from 'lucide-react-native';
+  Pencil,
+  FileText,
+  LayoutGrid,
+  Users,
+  Receipt,
+  Banknote,
+  UserPlus,
+} from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { Text, useTheme } from 'react-native-paper';
-import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { TabView, type Route } from 'react-native-tab-view';
 import { useTranslation } from 'react-i18next';
@@ -20,24 +18,16 @@ import { AppFab } from '@/components/ui/AppFab';
 import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
-import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { PropertyExpensesTab } from '@/components/property/PropertyExpensesTab';
+import { PropertyOverviewTab } from '@/components/property/PropertyOverviewTab';
+import { PropertyRentTab } from '@/components/property/PropertyRentTab';
 import { PropertyTabBar } from '@/components/property/PropertyTabBar';
-import { PropertyStats } from '@/components/property/PropertyStats';
-import { PropertyTypeBadge } from '@/components/property/PropertyTypeBadge';
-import { SubPropertyList } from '@/components/property/SubPropertyList';
+import { PropertyTenantsTab } from '@/components/property/PropertyTenantsTab';
 import { UsageHistorySheet } from '@/components/property/UsageHistorySheet';
-import { UsageStatusBadge } from '@/components/property/UsageStatusBadge';
-import { AppBadge } from '@/components/ui/AppBadge';
-import { TenantCard } from '@/components/tenant/TenantCard';
-import { ExpenseCard } from '@/components/expense/ExpenseCard';
-import { MonthlyGrid } from '@/components/rent/MonthlyGrid';
 import { QuickAddExpenseSheet } from '@/components/expense/QuickAddExpenseSheet';
 import { StatementSheet } from '@/components/property/StatementSheet';
 import { RentMonthActionSheet } from '@/components/rent/RentMonthActionSheet';
-import { RentPaymentCard } from '@/components/rent/RentPaymentCard';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useLocale } from '@/hooks/useLocale';
 import { useMyMembership } from '@/hooks/useMembers';
@@ -51,10 +41,10 @@ import { useUiStore } from '@/stores/uiStore';
 import type { RentPayment } from '@/types/app.types';
 import { resolveCurrency } from '@/utils/currency';
 import { getCurrentMonthRange, isDateInRange } from '@/utils/dateRange';
-import { formatCurrency, formatDateOnly, formatPeriod } from '@/utils/formatters';
+import { openAddressInMaps } from '@/utils/maps';
+import { formatDateOnly } from '@/utils/formatters';
 
 type TabKey = 'overview' | 'tenants' | 'expenses' | 'rent';
-type ExpensePeriodFilter = 'current_month' | 'all';
 
 type PropertyRoute = Route & { key: TabKey };
 
@@ -83,7 +73,6 @@ export default function PropertyDetailScreen() {
   const { isOwner, canManage } = useMyMembership(id);
   const [index, setIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const [expensePeriodFilter, setExpensePeriodFilter] = useState<ExpensePeriodFilter>('all');
   const [quickAddVisible, setQuickAddVisible] = useState(false);
   const [historyVisible, setHistoryVisible] = useState(false);
   const [statementVisible, setStatementVisible] = useState(false);
@@ -131,6 +120,7 @@ export default function PropertyDetailScreen() {
   );
 
   const currentMonthRange = useMemo(() => getCurrentMonthRange(), []);
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
 
   const currentMonthExpenses = useMemo(
     () =>
@@ -158,11 +148,13 @@ export default function PropertyDetailScreen() {
     [currentMonthExpenses],
   );
 
-  const currentMonthPeriodLabel = formatPeriod(
-    currentMonthRange.month,
-    currentMonthRange.year,
-    language,
-  );
+  const handleOpenAddress = useCallback(async () => {
+    if (!property?.address) return;
+    const opened = await openAddressInMaps(property.address);
+    if (!opened) {
+      showToast({ message: t('properties.openInMapsFailed'), type: 'error' });
+    }
+  }, [property?.address, showToast, t]);
 
   const refetchTabData = useCallback(async () => {
     await Promise.all([refetchTenants(), refetchExpenses(), refetchRent()]);
@@ -221,26 +213,6 @@ export default function PropertyDetailScreen() {
     setRefreshing(false);
   }, [refetchProperty, refetchExpenses, refetchRent, refetchTenants]);
 
-  const expensesByMonth = useMemo(() => {
-    const groups = new Map<string, typeof expenses>();
-    for (const expense of expenses) {
-      const key = expense.billing_date.slice(0, 7);
-      const list = groups.get(key) ?? [];
-      list.push(expense);
-      groups.set(key, list);
-    }
-    return Array.from(groups.entries())
-      .sort(([a], [b]) => b.localeCompare(a))
-      .map(([key, items]) => {
-        const [year, month] = key.split('-').map(Number);
-        return {
-          title: formatPeriod(month ?? 1, year ?? 2000, language),
-          data: items,
-          total: items.reduce((sum, e) => sum + e.amount, 0),
-        };
-      });
-  }, [expenses, language]);
-
   const handleQuickAddExpense = useCallback(
     async (values: {
       property_id: string;
@@ -271,56 +243,67 @@ export default function PropertyDetailScreen() {
     setRentSheet({ visible: true, month, year, payment });
   }, []);
 
-  const handleRentMarkPaid = useCallback(async () => {
-    const { month, year, payment } = rentSheet;
-    if (!property) return;
+  const markMonthPaid = useCallback(
+    async (month: number, year: number, payment?: RentPayment) => {
+      if (!property) return;
 
-    try {
-      if (payment) {
-        if (payment.status !== 'paid') {
-          await markRentAsPaid(payment.id);
+      try {
+        if (payment) {
+          if (payment.status !== 'paid') {
+            await markRentAsPaid(payment.id);
+          }
+        } else if (!activeTenant) {
+          router.push({
+            pathname: '/rent/new',
+            params: {
+              propertyId: id!,
+              periodMonth: String(month),
+              periodYear: String(year),
+            },
+          });
+          return;
+        } else {
+          await createRentPayment({
+            property_id: id!,
+            tenant_id: activeTenant.id,
+            amount: property.rent_amount,
+            period_month: month,
+            period_year: year,
+            status: 'paid',
+            payment_date: formatDateOnly(new Date()),
+            notes: null,
+          });
         }
-      } else if (!activeTenant) {
-        router.push({
-          pathname: '/rent/new',
-          params: {
-            propertyId: id!,
-            periodMonth: String(month),
-            periodYear: String(year),
-          },
-        });
-        return;
-      } else {
-        await createRentPayment({
-          property_id: id!,
-          tenant_id: activeTenant.id,
-          amount: property.rent_amount,
-          period_month: month,
-          period_year: year,
-          status: 'paid',
-          payment_date: formatDateOnly(new Date()),
-          notes: null,
+        showToast({ message: t('rent.markedPaid'), type: 'success' });
+        await refetchRent();
+      } catch (err) {
+        showToast({
+          message: err instanceof Error ? err.message : t('rent.markPaidFailed'),
+          type: 'error',
         });
       }
-      showToast({ message: t('rent.markedPaid'), type: 'success' });
-      await refetchRent();
-    } catch (err) {
-      showToast({
-        message: err instanceof Error ? err.message : t('rent.markPaidFailed'),
-        type: 'error',
-      });
-    }
-  }, [
-    activeTenant,
-    createRentPayment,
-    id,
-    markRentAsPaid,
-    property,
-    refetchRent,
-    rentSheet,
-    showToast,
-    t,
-  ]);
+    },
+    [
+      activeTenant,
+      createRentPayment,
+      id,
+      markRentAsPaid,
+      property,
+      refetchRent,
+      showToast,
+      t,
+    ],
+  );
+
+  const handleRentMarkPaid = useCallback(
+    () => markMonthPaid(rentSheet.month, rentSheet.year, rentSheet.payment),
+    [markMonthPaid, rentSheet],
+  );
+
+  const handleCurrentMonthMarkPaid = useCallback(
+    () => markMonthPaid(currentMonthRange.month, currentMonthRange.year, currentMonthRentPayment),
+    [currentMonthRange.month, currentMonthRange.year, currentMonthRentPayment, markMonthPaid],
+  );
 
   const handleRentPartialPayment = useCallback(() => {
     const { month, year } = rentSheet;
@@ -352,7 +335,15 @@ export default function PropertyDetailScreen() {
     });
   }, [activeTenant, id, rentSheet]);
 
-  const handleMarkPaid = useCallback(
+  const handleRentMonthPress = useCallback(
+    (month: number, payment?: RentPayment) => {
+      if (!canManage) return;
+      openRentSheet(month, currentYear, payment);
+    },
+    [canManage, currentYear, openRentSheet],
+  );
+
+  const handleMarkExpensePaid = useCallback(
     async (expenseId: string) => {
       try {
         await markAsPaid(expenseId);
@@ -367,326 +358,124 @@ export default function PropertyDetailScreen() {
     [markAsPaid, showToast, t],
   );
 
-  const renderOverview = () => (
-    <ScrollView
-      contentContainerStyle={styles.tabContent}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      {property?.photo_url ? (
-        <Image source={{ uri: property.photo_url }} style={styles.photo} contentFit="cover" />
-      ) : null}
+  const handleSelectExpense = useCallback((expenseId: string) => {
+    router.push(`/expense/${expenseId}`);
+  }, []);
 
-      <View style={styles.badgeRow}>
-        <PropertyTypeBadge type={property!.type} />
-        <UsageStatusBadge
-          status={property!.usage_status}
-          onPress={() => setHistoryVisible(true)}
-        />
-      </View>
+  const handleSelectTenant = useCallback((tenantId: string) => {
+    router.push(`/tenant/${tenantId}`);
+  }, []);
 
-      <Text style={[styles.propertyName, { color: theme.colors.onSurface }]}>
-        {property!.name}
-      </Text>
-      <Text style={[styles.address, { color: theme.colors.onSurfaceVariant }]}>
-        {property!.address}
-      </Text>
+  const handleAddExpense = useCallback(() => {
+    router.push({ pathname: '/expense/new', params: { propertyId: id! } });
+  }, [id]);
 
-      {property!.floor != null ? (
-        <Text style={[styles.meta, { color: theme.colors.onSurfaceVariant }]}>
-          {t('properties.floor')}: {property!.floor}
-        </Text>
-      ) : null}
+  const handleAddTenant = useCallback(() => {
+    router.push({ pathname: '/tenant/new', params: { propertyId: id! } });
+  }, [id]);
 
-      {property!.area_sqm != null ? (
-        <Text style={[styles.meta, { color: theme.colors.onSurfaceVariant }]}>
-          {t('properties.area')}: {property!.area_sqm} m²
-        </Text>
-      ) : null}
+  const handleAddRentPayment = useCallback(() => {
+    router.push({ pathname: '/rent/new', params: { propertyId: id! } });
+  }, [id]);
 
-      {isRented ? (
-        <Text style={[styles.rentAmount, { color: theme.colors.primary }]}>
-          {t('properties.monthlyRent')}: {formatCurrency(property!.rent_amount, currency, language)}
-        </Text>
-      ) : null}
+  const handleShowUsageHistory = useCallback(() => {
+    setHistoryVisible(true);
+  }, []);
 
-      {isRented ? (
-        <Pressable style={styles.rentStatusRow} onPress={goToRentTab} accessibilityRole="button">
-          <Text style={[styles.rentStatusLabel, { color: theme.colors.onSurfaceVariant }]}>
-            {t('properties.currentRentStatus', { period: currentMonthPeriodLabel })}
-          </Text>
-          {currentMonthRentPayment ? (
-            <AppBadge
-              label={t(`rent.${currentMonthRentPayment.status}`)}
-              variant={currentMonthRentPayment.status}
-            />
-          ) : (
-            <AppBadge label={t('rent.monthEmpty')} variant="pending" />
-          )}
-        </Pressable>
-      ) : null}
-
-      {property!.notes ? (
-        <Text style={[styles.notes, { color: theme.colors.onSurfaceVariant }]}>
-          {property!.notes}
-        </Text>
-      ) : null}
-
-      <PropertyStats
-        totalIncome={currentMonthIncome}
-        totalExpenses={currentMonthExpenseTotal}
-        currency={currency}
-        language={language}
-        periodLabel={currentMonthPeriodLabel}
-      />
-
-      <View style={styles.expensesSectionHeader}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-          {t('properties.thisMonthExpenses')}
-        </Text>
-        <Text style={{ color: theme.colors.primary }}>
-          {formatCurrency(currentMonthExpenseTotal, currency, language)}
-        </Text>
-      </View>
-
-      {currentMonthExpenses.length === 0 ? (
-        <EmptyState
-          title={t('properties.noExpensesThisMonth')}
-          ctaLabel={canManage ? t('expenses.addNew') : undefined}
-          onCtaPress={
-            canManage
-              ? () => router.push({ pathname: '/expense/new', params: { propertyId: id! } })
-              : undefined
-          }
-        />
-      ) : (
-        currentMonthExpenses.map((expense) => (
-          <ExpenseCard
-            key={expense.id}
-            expense={expense}
-            category={categoryMap.get(expense.category_id)}
-            currency={currency}
-            language={language}
-            onPress={() => router.push(`/expense/${expense.id}`)}
-            onMarkPaid={
-              canManage && !expense.paid_at ? () => handleMarkPaid(expense.id) : undefined
-            }
-          />
-        ))
-      )}
-
-      {expenses.length > 0 ? (
-        <Text
-          style={[styles.viewAllLink, { color: theme.colors.primary }]}
-          onPress={goToExpensesTab}
-        >
-          {t('properties.viewAllExpenses')}
-        </Text>
-      ) : null}
-
-      <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-        {t('properties.subProperties')}
-      </Text>
-      <SubPropertyList properties={childProperties} />
-    </ScrollView>
-  );
-
-  const renderTenants = () => {
-    if (tenantsLoading) return <SkeletonLoader count={3} style={styles.tabContent} />;
-    if (tenants.length === 0) {
-      return (
-        <EmptyState
-          title={t('empty.noTenants')}
-          subtitle={t('empty.noTenantsHint')}
-          ctaLabel={canManage ? t('tenants.addNew') : undefined}
-          onCtaPress={
-            canManage
-              ? () => router.push({ pathname: '/tenant/new', params: { propertyId: id! } })
-              : undefined
-          }
-        />
-      );
+  const handleFabPress = useCallback(() => {
+    const currentRoute = routes[index]?.key;
+    if (currentRoute === 'tenants') {
+      handleAddTenant();
+    } else if (currentRoute === 'rent') {
+      handleAddRentPayment();
+    } else {
+      setQuickAddVisible(true);
     }
-
-    return (
-      <FlatList
-        data={tenants}
-        keyExtractor={(tenant) => tenant.id}
-        contentContainerStyle={styles.tabContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        renderItem={({ item: tenant }) => (
-          <TenantCard
-            tenant={tenant}
-            currency={currency}
-            language={language}
-            onPress={() => router.push(`/tenant/${tenant.id}`)}
-          />
-        )}
-      />
-    );
-  };
-
-  const renderExpenses = () => {
-    if (expensesLoading) return <SkeletonLoader count={4} style={styles.tabContent} />;
-
-    if (expenses.length === 0) {
-      return (
-        <EmptyState
-          title={t('empty.noExpenses')}
-          subtitle={t('empty.noExpensesHint')}
-          ctaLabel={canManage ? t('expenses.addNew') : undefined}
-          onCtaPress={
-            canManage
-              ? () => router.push({ pathname: '/expense/new', params: { propertyId: id! } })
-              : undefined
-          }
-        />
-      );
-    }
-
-    const periodFilter = (
-      <View style={styles.expenseFilter}>
-        <AppSegmentedControl
-          segments={[
-            { label: t('properties.expensePeriodThisMonth'), value: 'current_month' },
-            { label: t('properties.expensePeriodAll'), value: 'all' },
-          ]}
-          value={expensePeriodFilter}
-          onValueChange={(value) => setExpensePeriodFilter(value as ExpensePeriodFilter)}
-        />
-      </View>
-    );
-
-    if (expensePeriodFilter === 'current_month') {
-      return (
-        <FlatList
-          data={currentMonthExpenses}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.tabContent}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          ListHeaderComponent={
-            <>
-              {periodFilter}
-              {currentMonthExpenses.length > 0 ? (
-                <View style={styles.sectionHeader}>
-                  <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-                    {currentMonthPeriodLabel}
-                  </Text>
-                  <Text style={{ color: theme.colors.primary }}>
-                    {formatCurrency(currentMonthExpenseTotal, currency, language)}
-                  </Text>
-                </View>
-              ) : null}
-            </>
-          }
-          ListEmptyComponent={<EmptyState title={t('properties.noExpensesThisMonth')} />}
-          renderItem={({ item }) => (
-            <ExpenseCard
-              expense={item}
-              category={categoryMap.get(item.category_id)}
-              currency={currency}
-              language={language}
-              onPress={() => router.push(`/expense/${item.id}`)}
-              onMarkPaid={
-                canManage && !item.paid_at ? () => handleMarkPaid(item.id) : undefined
-              }
-            />
-          )}
-        />
-      );
-    }
-
-    return (
-      <SectionList
-        sections={expensesByMonth}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.tabContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListHeaderComponent={periodFilter}
-        renderSectionHeader={({ section }) => (
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-              {section.title}
-            </Text>
-            <Text style={{ color: theme.colors.primary }}>
-              {formatCurrency(section.total, currency, language)}
-            </Text>
-          </View>
-        )}
-        renderItem={({ item }) => (
-          <ExpenseCard
-            expense={item}
-            category={categoryMap.get(item.category_id)}
-            currency={currency}
-            language={language}
-            onPress={() => router.push(`/expense/${item.id}`)}
-            onMarkPaid={
-              canManage && !item.paid_at ? () => handleMarkPaid(item.id) : undefined
-            }
-          />
-        )}
-      />
-    );
-  };
-
-  const renderRent = () => {
-    if (rentLoading) return <SkeletonLoader count={3} style={styles.tabContent} />;
-
-    const currentYear = new Date().getFullYear();
-
-    return (
-      <FlatList
-        data={rentPayments}
-        keyExtractor={(payment) => payment.id}
-        contentContainerStyle={styles.tabContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListHeaderComponent={
-          <MonthlyGrid
-            payments={rentPayments}
-            year={currentYear}
-            language={language}
-            onMonthPress={(month, payment) => {
-              if (!canManage) return;
-              openRentSheet(month, currentYear, payment);
-            }}
-          />
-        }
-        ListEmptyComponent={
-          <EmptyState
-            title={t('empty.noRentPayments')}
-            subtitle={t('empty.noRentPaymentsHint')}
-            ctaLabel={canManage ? t('rent.addPayment') : undefined}
-            onCtaPress={
-              canManage
-                ? () => router.push({ pathname: '/rent/new', params: { propertyId: id! } })
-                : undefined
-            }
-          />
-        }
-        renderItem={({ item: payment }) => {
-          const tenant = tenantMap.get(payment.tenant_id);
-          return (
-            <RentPaymentCard
-              payment={payment}
-              tenantName={tenant ? `${tenant.first_name} ${tenant.last_name}` : undefined}
-              currency={currency}
-              language={language}
-            />
-          );
-        }}
-      />
-    );
-  };
+  }, [handleAddRentPayment, handleAddTenant, index, routes]);
 
   const renderScene = ({ route }: { route: Route }) => {
     switch (route.key as TabKey) {
       case 'overview':
-        return renderOverview();
+        return (
+          <PropertyOverviewTab
+            property={property!}
+            childProperties={childProperties}
+            isRented={Boolean(isRented)}
+            canManage={canManage}
+            currency={currency}
+            language={language}
+            month={currentMonthRange.month}
+            year={currentMonthRange.year}
+            monthExpenses={currentMonthExpenses}
+            monthExpenseTotal={currentMonthExpenseTotal}
+            monthIncome={currentMonthIncome}
+            categoryMap={categoryMap}
+            rentPayment={currentMonthRentPayment}
+            activeTenant={activeTenant}
+            hasAnyExpenses={expenses.length > 0}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            onOpenAddress={handleOpenAddress}
+            onShowUsageHistory={handleShowUsageHistory}
+            onGoToRent={goToRentTab}
+            onViewAllExpenses={goToExpensesTab}
+            onMarkRentPaid={canManage ? handleCurrentMonthMarkPaid : undefined}
+            onSelectTenant={handleSelectTenant}
+            onSelectExpense={handleSelectExpense}
+            onMarkExpensePaid={handleMarkExpensePaid}
+            onAddExpense={handleAddExpense}
+          />
+        );
       case 'tenants':
-        return renderTenants();
+        return (
+          <PropertyTenantsTab
+            tenants={tenants}
+            isLoading={tenantsLoading}
+            canManage={canManage}
+            currency={currency}
+            language={language}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            onSelectTenant={handleSelectTenant}
+            onAddTenant={handleAddTenant}
+          />
+        );
       case 'expenses':
-        return renderExpenses();
+        return (
+          <PropertyExpensesTab
+            expenses={expenses}
+            monthExpenses={currentMonthExpenses}
+            monthExpenseTotal={currentMonthExpenseTotal}
+            month={currentMonthRange.month}
+            year={currentMonthRange.year}
+            isLoading={expensesLoading}
+            canManage={canManage}
+            currency={currency}
+            language={language}
+            categoryMap={categoryMap}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            onSelectExpense={handleSelectExpense}
+            onMarkExpensePaid={handleMarkExpensePaid}
+            onAddExpense={handleAddExpense}
+          />
+        );
       case 'rent':
-        return renderRent();
+        return (
+          <PropertyRentTab
+            rentPayments={rentPayments}
+            tenantMap={tenantMap}
+            year={currentYear}
+            isLoading={rentLoading}
+            canManage={canManage}
+            currency={currency}
+            language={language}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            onMonthPress={handleRentMonthPress}
+            onAddPayment={handleAddRentPayment}
+          />
+        );
       default:
         return null;
     }
@@ -815,16 +604,7 @@ export default function PropertyDetailScreen() {
         <AppFab
           style={[styles.fab, { backgroundColor: theme.colors.primary }]}
           color={Colors.textInverse}
-          onPress={() => {
-            const currentRoute = routes[index]?.key as TabKey;
-            if (currentRoute === 'tenants') {
-              router.push({ pathname: '/tenant/new', params: { propertyId: id! } });
-            } else if (currentRoute === 'rent') {
-              router.push({ pathname: '/rent/new', params: { propertyId: id! } });
-            } else {
-              setQuickAddVisible(true);
-            }
-          }}
+          onPress={handleFabPress}
         />
       ) : null}
     </DetailScreenScaffold>
@@ -835,78 +615,6 @@ const styles = StyleSheet.create({
   parentBanner: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-  },
-  tabContent: {
-    padding: Spacing.md,
-    paddingBottom: Spacing.xxl + 56,
-    gap: Spacing.sm,
-  },
-  photo: {
-    width: '100%',
-    height: 200,
-    borderRadius: 12,
-    marginBottom: Spacing.sm,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.xs,
-    marginBottom: Spacing.sm,
-  },
-  propertyName: {
-    ...Typography.headlineMedium,
-    marginBottom: Spacing.xs,
-  },
-  address: {
-    ...Typography.bodyMedium,
-    marginBottom: Spacing.sm,
-  },
-  meta: {
-    ...Typography.bodySmall,
-    marginBottom: Spacing.xs,
-  },
-  rentAmount: {
-    ...Typography.titleMedium,
-    marginBottom: Spacing.sm,
-  },
-  rentStatusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm,
-  },
-  rentStatusLabel: {
-    ...Typography.bodySmall,
-  },
-  notes: {
-    ...Typography.bodyMedium,
-    marginBottom: Spacing.md,
-  },
-  sectionTitle: {
-    ...Typography.titleMedium,
-    marginTop: Spacing.md,
-    marginBottom: Spacing.sm,
-  },
-  expensesSectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: Spacing.md,
-  },
-  viewAllLink: {
-    ...Typography.bodyMedium,
-    textAlign: 'center',
-    marginVertical: Spacing.sm,
-  },
-  expenseFilter: {
-    marginBottom: Spacing.sm,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.sm,
-    backgroundColor: 'transparent',
   },
   fab: {
     position: 'absolute',

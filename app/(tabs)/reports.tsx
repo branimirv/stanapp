@@ -27,6 +27,7 @@ import type { PickerOption } from '@/components/ui/AppPicker';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { listPerformanceProps } from '@/constants/list';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { buildReportPeriod, useReports } from '@/hooks/useReports';
@@ -216,6 +217,7 @@ export default function ReportsScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       data={report.propertySummaries}
       keyExtractor={(summary) => summary.propertyId}
+      {...listPerformanceProps}
       renderItem={({ item: summary }) => (
         <AppCard style={styles.propertyCard}>
           <Text style={[styles.propertyName, { color: theme.colors.onSurface }]}>

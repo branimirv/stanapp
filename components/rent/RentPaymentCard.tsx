@@ -22,9 +22,9 @@ export interface RentPaymentCardProps {
   propertyName?: string;
   currency?: string;
   language?: Language;
-  onPress?: () => void;
-  onMarkPaid?: () => void;
-  onDelete?: () => void;
+  onPress?: (payment: RentPayment) => void;
+  onMarkPaid?: (paymentId: string) => void;
+  onDelete?: (paymentId: string) => void;
 }
 
 function RentPaymentCardComponent({
@@ -42,6 +42,7 @@ function RentPaymentCardComponent({
   const swipeableRef = useRef<Swipeable>(null);
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
   const isPaid = payment.status === 'paid';
+  const handlePress = onPress ? () => onPress(payment) : undefined;
 
   const renderRightActions = () => (
     <View style={styles.actions}>
@@ -50,7 +51,7 @@ function RentPaymentCardComponent({
           style={[styles.action, styles.paidAction]}
           onPress={() => {
             swipeableRef.current?.close();
-            onMarkPaid();
+            onMarkPaid(payment.id);
           }}
           accessibilityRole="button"
           accessibilityLabel={t('rent.markPaid')}
@@ -64,7 +65,7 @@ function RentPaymentCardComponent({
           style={[styles.action, styles.deleteAction]}
           onPress={() => {
             swipeableRef.current?.close();
-            onDelete();
+            onDelete(payment.id);
           }}
           accessibilityRole="button"
           accessibilityLabel={t('common.delete')}
@@ -77,7 +78,7 @@ function RentPaymentCardComponent({
   );
 
   const card = (
-    <Pressable onPress={onPress} disabled={!onPress}>
+    <Pressable onPress={handlePress} disabled={!handlePress}>
       <Card
         mode="elevated"
         style={[

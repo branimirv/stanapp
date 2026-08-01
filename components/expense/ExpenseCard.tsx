@@ -16,9 +16,9 @@ export interface ExpenseCardProps {
   propertyName?: string;
   currency?: string;
   language?: Language;
-  onPress?: () => void;
+  onPress?: (expenseId: string) => void;
   onMarkPaid?: (expenseId: string) => void;
-  onDelete?: () => void;
+  onDelete?: (expenseId: string) => void;
 }
 
 function ExpenseCardComponent({
@@ -37,6 +37,7 @@ function ExpenseCardComponent({
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
   const isPaid = Boolean(expense.paid_at);
   const overdue = !isPaid && isOverdue(expense.due_date, expense.paid_at);
+  const handlePress = onPress ? () => onPress(expense.id) : undefined;
 
   const renderRightActions = () => (
     <View style={styles.actions}>
@@ -59,7 +60,7 @@ function ExpenseCardComponent({
           style={[styles.action, styles.deleteAction]}
           onPress={() => {
             swipeableRef.current?.close();
-            onDelete();
+            onDelete(expense.id);
           }}
           accessibilityRole="button"
           accessibilityLabel={t('common.delete')}
@@ -72,7 +73,7 @@ function ExpenseCardComponent({
   );
 
   const card = (
-    <Pressable onPress={onPress} disabled={!onPress}>
+    <Pressable onPress={handlePress} disabled={!handlePress}>
       <Card
         mode="elevated"
         style={[

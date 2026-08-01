@@ -39,7 +39,7 @@ export interface TenantCardProps {
   tenant: Tenant;
   currency?: string;
   language?: Language;
-  onPress?: () => void;
+  onPress?: (tenantId: string) => void;
 }
 
 function openUrl(url: string) {
@@ -59,9 +59,10 @@ function TenantCardComponent({
   const fullName = `${tenant.first_name} ${tenant.last_name}`;
   const avatarColor = getAvatarColor(fullName);
   const initials = getInitials(tenant.first_name, tenant.last_name);
+  const handlePress = onPress ? () => onPress(tenant.id) : undefined;
 
   return (
-    <Pressable onPress={onPress} disabled={!onPress}>
+    <Pressable onPress={handlePress} disabled={!handlePress}>
       <Card
         mode="elevated"
         style={[

@@ -19,6 +19,7 @@ import { AppExpandableSearch } from '@/components/ui/AppExpandableSearch';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { listPerformanceProps } from '@/constants/list';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useMyMemberships } from '@/hooks/useMembers';
@@ -30,7 +31,7 @@ import { useRefetchOnFocus } from '@/hooks/useRefetchOnFocus';
 import { useTenants } from '@/hooks/useTenants';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
-import type { Language, PropertyType, UsageStatus } from '@/types/app.types';
+import type { Language, Property, PropertyType, UsageStatus } from '@/types/app.types';
 
 type TypeFilter = 'all' | PropertyType;
 type UsageFilter = 'all' | UsageStatus;
@@ -196,6 +197,47 @@ export default function PropertiesScreen() {
     [handleArchive, handleDelete, t],
   );
 
+  const handlePropertyPress = useCallback(
+    (propertyId: string) => {
+      dismissSearchIfEmpty();
+      router.push(`/property/${propertyId}`);
+    },
+    [dismissSearchIfEmpty],
+  );
+
+  const renderProperty = useCallback(
+    ({ item }: { item: Property }) => {
+      const membership = membershipByProperty.get(item.id);
+      const canArchive = membership?.role === 'owner' || membership?.role === 'manager';
+      const canDelete = item.user_id === user?.id;
+      return (
+        <Swipeable
+          enabled={canArchive || canDelete}
+          renderRightActions={() => renderRightActions(item.id, canArchive, canDelete)}
+        >
+          <PropertyCard
+            property={item}
+            tenantName={tenantByProperty.get(item.id)}
+            overdueCount={overdueByProperty.get(item.id) ?? 0}
+            currency={currency}
+            language={language}
+            onPress={handlePropertyPress}
+          />
+        </Swipeable>
+      );
+    },
+    [
+      currency,
+      handlePropertyPress,
+      language,
+      membershipByProperty,
+      overdueByProperty,
+      renderRightActions,
+      tenantByProperty,
+      user?.id,
+    ],
+  );
+
   const listFiltersHeader = (
     <>
       <AppExpandableSearch
@@ -237,36 +279,14 @@ export default function PropertiesScreen() {
         data={filteredProperties}
         keyExtractor={(item) => item.id}
         {...listKeyboardProps}
+        {...listPerformanceProps}
         contentContainerStyle={[
           styles.listContent,
           filteredProperties.length === 0 && styles.listEmpty,
           { paddingBottom: scrollPadding },
         ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        renderItem={({ item }) => {
-          const membership = membershipByProperty.get(item.id);
-          const canArchive =
-            membership?.role === 'owner' || membership?.role === 'manager';
-          const canDelete = item.user_id === user?.id;
-          return (
-            <Swipeable
-              enabled={canArchive || canDelete}
-              renderRightActions={() => renderRightActions(item.id, canArchive, canDelete)}
-            >
-              <PropertyCard
-                property={item}
-                tenantName={tenantByProperty.get(item.id)}
-                overdueCount={overdueByProperty.get(item.id) ?? 0}
-                currency={currency}
-                language={language}
-                onPress={() => {
-                  dismissSearchIfEmpty();
-                  router.push(`/property/${item.id}`);
-                }}
-              />
-            </Swipeable>
-          );
-        }}
+        renderItem={renderProperty}
         ListEmptyComponent={
           <EmptyState
             icon={Building2}
@@ -277,7 +297,7 @@ export default function PropertiesScreen() {
                 : t('empty.noPropertiesHint')
             }
             ctaLabel={t('properties.addNew')}
-            onCtaPress={() => router.push('/property/new')}
+            onCtaPress={handleCreatePress}
           />
         }
       />

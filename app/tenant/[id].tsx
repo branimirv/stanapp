@@ -11,6 +11,7 @@ import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { RentPaymentCard } from '@/components/rent/RentPaymentCard';
+import { listPerformanceProps } from '@/constants/list';
 import { Spacing, Typography } from '@/constants/theme';
 import { CONTRACT_EXPIRING_DAYS } from '@/constants/config';
 import { useLocale } from '@/hooks/useLocale';
@@ -140,6 +141,7 @@ export default function TenantDetailScreen() {
       <FlatList
         data={paymentsLoading ? [] : rentPayments}
         keyExtractor={(payment) => payment.id}
+        {...listPerformanceProps}
         renderItem={({ item: payment }) => (
           <RentPaymentCard
             payment={payment}
