@@ -4,7 +4,6 @@ import { Trash2 } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/ui/AppButton';
@@ -15,8 +14,9 @@ import { AppTextInput } from '@/components/ui/AppTextInput';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { Text } from '@/components/ui/text';
 import { MEMBERSHIP_ROLES } from '@/constants/config';
-import { Spacing, Typography } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { useMyMembership, useMyMemberships, usePropertyInvites, usePropertyMembers } from '@/hooks/useMembers';
 import { useProperties } from '@/hooks/useProperties';
 import { useAuthStore } from '@/stores/authStore';
@@ -28,7 +28,6 @@ import { inviteSchema, type InviteFormValues } from '@/utils/validators';
 export default function PropertyMembersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
-  const theme = useTheme();
   const showToast = useUiStore((s) => s.showToast);
   const showConfirmDialog = useUiStore((s) => s.showConfirmDialog);
   const user = useAuthStore((s) => s.user);
@@ -187,13 +186,10 @@ export default function PropertyMembersScreen() {
               const name = member.profile?.full_name ?? t('members.unknownUser');
               const isSelf = member.user_id === user?.id;
               return (
-                <View
-                  key={member.id}
-                  style={[styles.row, { borderColor: theme.colors.outlineVariant }]}
-                >
+                <View key={member.id} style={styles.row} className="border-border">
                   <View style={styles.rowText}>
-                    <Text style={[styles.name, { color: theme.colors.onSurface }]}>{name}</Text>
-                    <Text style={{ color: theme.colors.onSurfaceVariant }}>
+                    <Text className="text-base">{name}</Text>
+                    <Text className="text-muted-foreground">
                       {t(`members.roles.${member.role}`)}
                       {isSelf ? ` · ${t('members.you')}` : ''}
                     </Text>
@@ -205,7 +201,7 @@ export default function PropertyMembersScreen() {
                       accessibilityRole="button"
                       accessibilityLabel={t('common.remove')}
                     >
-                      <Trash2 size={20} color={theme.colors.error} strokeWidth={2} />
+                      <Trash2 size={20} color={Colors.danger} strokeWidth={2} />
                     </Pressable>
                   ) : null}
                 </View>
@@ -216,18 +212,13 @@ export default function PropertyMembersScreen() {
 
         <AppFormSection label={t('members.pendingInvites')}>
           {invites.length === 0 ? (
-            <Text style={{ color: theme.colors.onSurfaceVariant }}>{t('members.noPending')}</Text>
+            <Text className="text-muted-foreground">{t('members.noPending')}</Text>
           ) : (
             invites.map((inviteItem) => (
-              <View
-                key={inviteItem.id}
-                style={[styles.row, { borderColor: theme.colors.outlineVariant }]}
-              >
+              <View key={inviteItem.id} style={styles.row} className="border-border">
                 <View style={styles.rowText}>
-                  <Text style={[styles.name, { color: theme.colors.onSurface }]}>
-                    {inviteItem.email}
-                  </Text>
-                  <Text style={{ color: theme.colors.onSurfaceVariant }}>
+                  <Text className="text-base">{inviteItem.email}</Text>
+                  <Text className="text-muted-foreground">
                     {t(`members.roles.${inviteItem.role}`)}
                   </Text>
                 </View>
@@ -237,7 +228,7 @@ export default function PropertyMembersScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={t('common.remove')}
                 >
-                  <Trash2 size={20} color={theme.colors.error} strokeWidth={2} />
+                  <Trash2 size={20} color={Colors.danger} strokeWidth={2} />
                 </Pressable>
               </View>
             ))
@@ -275,7 +266,7 @@ export default function PropertyMembersScreen() {
               )}
             />
 
-            <Text style={[styles.sectionHint, { color: theme.colors.onSurfaceVariant }]}>
+            <Text className="text-muted-foreground mb-1 text-xs">
               {t('members.selectProperties')}
             </Text>
             {selectableProperties.map((property) => {
@@ -299,7 +290,7 @@ export default function PropertyMembersScreen() {
               );
             })}
             {form.formState.errors.propertyIds?.message ? (
-              <Text style={{ color: theme.colors.error }}>
+              <Text className="text-destructive">
                 {translateFieldError(t, form.formState.errors.propertyIds.message)}
               </Text>
             ) : null}
@@ -334,12 +325,5 @@ const styles = StyleSheet.create({
   rowText: {
     flex: 1,
     gap: 2,
-  },
-  name: {
-    ...Typography.bodyLarge,
-  },
-  sectionHint: {
-    ...Typography.bodySmall,
-    marginBottom: Spacing.xs,
   },
 });

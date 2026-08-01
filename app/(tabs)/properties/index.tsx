@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useTheme } from 'react-native-paper';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import { Building2 } from 'lucide-react-native';
@@ -37,7 +36,6 @@ type UsageFilter = 'all' | UsageStatus;
 
 export default function PropertiesScreen() {
   const { t, i18n } = useTranslation();
-  const theme = useTheme();
   const showConfirmDialog = useUiStore((state) => state.showConfirmDialog);
   const showToast = useUiStore((state) => state.showToast);
 
@@ -255,7 +253,7 @@ export default function PropertiesScreen() {
 
   if (isLoading && properties.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View className="bg-background flex-1">
         <SkeletonLoader count={5} height={140} style={styles.skeleton} />
       </View>
     );
@@ -263,14 +261,14 @@ export default function PropertiesScreen() {
 
   if (error && properties.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View className="bg-background flex-1">
         <ErrorState message={error} onRetry={refetch} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View className="bg-background flex-1">
       <View style={styles.listHeader}>{listFiltersHeader}</View>
       <FlatList
         style={styles.list}
@@ -304,9 +302,6 @@ export default function PropertiesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   list: {
     flex: 1,
   },

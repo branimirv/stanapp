@@ -1,13 +1,15 @@
 import { Archive, MapPin, Trash2 } from 'lucide-react-native';
 import { memo, useRef } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import { Card, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
+
 import { AppBadge } from '@/components/ui/AppBadge';
 import { PropertyTypeBadge } from '@/components/property/PropertyTypeBadge';
 import { UsageStatusBadge } from '@/components/property/UsageStatusBadge';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Card } from '@/components/ui/card';
+import { Text } from '@/components/ui/text';
+import { Colors } from '@/constants/theme';
 import { formatCurrencyShort } from '@/utils/formatters';
 import type { Language, Property } from '@/types/app.types';
 
@@ -32,7 +34,6 @@ function PropertyCardComponent({
   onArchive,
   onDelete,
 }: PropertyCardProps) {
-  const theme = useTheme();
   const { t, i18n } = useTranslation();
   const swipeableRef = useRef<Swipeable>(null);
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
@@ -40,10 +41,11 @@ function PropertyCardComponent({
   const handlePress = onPress ? () => onPress(property.id) : undefined;
 
   const renderRightActions = () => (
-    <View style={styles.actions}>
+    <View className="mb-2 flex-row">
       {onArchive ? (
         <Pressable
-          style={[styles.action, styles.archiveAction]}
+          className="ml-1 w-20 items-center justify-center gap-1 rounded-xl px-2"
+          style={{ backgroundColor: Colors.warning }}
           onPress={() => {
             swipeableRef.current?.close();
             onArchive(property.id);
@@ -52,12 +54,15 @@ function PropertyCardComponent({
           accessibilityLabel={t('common.archive')}
         >
           <Archive size={20} color={Colors.textInverse} strokeWidth={2} />
-          <Text style={styles.actionLabel}>{t('common.archive')}</Text>
+          <Text className="text-center text-[11px] font-medium" style={{ color: Colors.textInverse }}>
+            {t('common.archive')}
+          </Text>
         </Pressable>
       ) : null}
       {onDelete ? (
         <Pressable
-          style={[styles.action, styles.deleteAction]}
+          className="ml-1 w-20 items-center justify-center gap-1 rounded-xl px-2"
+          style={{ backgroundColor: Colors.danger }}
           onPress={() => {
             swipeableRef.current?.close();
             onDelete(property.id);
@@ -66,7 +71,9 @@ function PropertyCardComponent({
           accessibilityLabel={t('common.delete')}
         >
           <Trash2 size={20} color={Colors.textInverse} strokeWidth={2} />
-          <Text style={styles.actionLabel}>{t('common.delete')}</Text>
+          <Text className="text-center text-[11px] font-medium" style={{ color: Colors.textInverse }}>
+            {t('common.delete')}
+          </Text>
         </Pressable>
       ) : null}
     </View>
@@ -74,65 +81,51 @@ function PropertyCardComponent({
 
   const card = (
     <Pressable onPress={handlePress} disabled={!handlePress}>
-      <Card
-        mode="elevated"
-        style={[
-          styles.card,
-          { backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface },
-        ]}
-      >
-        <Card.Content style={styles.content}>
-          <View style={styles.header}>
-            <PropertyTypeBadge type={property.type} compact />
-            <UsageStatusBadge status={property.usage_status} />
-          </View>
+      <Card className="mb-2 gap-2 rounded-xl p-4">
+        <View className="flex-row items-center justify-between gap-2">
+          <PropertyTypeBadge type={property.type} compact />
+          <UsageStatusBadge status={property.usage_status} />
+        </View>
 
-          <Text style={[styles.name, { color: theme.colors.onSurface }]} numberOfLines={1}>
-            {property.name}
+        <Text className="text-lg font-semibold" numberOfLines={1}>
+          {property.name}
+        </Text>
+
+        <View className="flex-row items-center gap-1">
+          <MapPin size={14} className="text-muted-foreground" strokeWidth={2} />
+          <Text className="text-muted-foreground flex-1 text-sm" numberOfLines={1}>
+            {property.address}
           </Text>
+        </View>
 
-          <View style={styles.addressRow}>
-            <MapPin size={14} color={theme.colors.onSurfaceVariant} strokeWidth={2} />
-            <Text
-              style={[styles.address, { color: theme.colors.onSurfaceVariant }]}
-              numberOfLines={1}
-            >
-              {property.address}
-            </Text>
-          </View>
-
-          <View style={styles.footer}>
-            {isRented ? (
-              <View style={styles.tenantBlock}>
-                <Text style={[styles.metaLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  {tenantName ?? t('properties.noTenant')}
-                </Text>
-                <Text style={[styles.rent, { color: theme.colors.onSurface }]}>
-                  {formatCurrencyShort(
-                    Number(property.rent_amount),
-                    property.currency ?? currency,
-                    resolvedLanguage,
-                  )}
-                  <Text style={[styles.rentSuffix, { color: theme.colors.onSurfaceVariant }]}>
-                    {' '}
-                    {t('properties.perMonthSuffix')}
-                  </Text>
-                </Text>
-              </View>
-            ) : (
-              <Text style={[styles.statusLabel, { color: theme.colors.onSurfaceVariant }]}>
-                {t(`usageStatus.${property.usage_status}`)}
+        <View className="mt-1 flex-row items-end justify-between gap-2">
+          {isRented ? (
+            <View className="flex-1 gap-0.5">
+              <Text className="text-muted-foreground text-sm">
+                {tenantName ?? t('properties.noTenant')}
               </Text>
-            )}
+              <Text className="text-base font-medium">
+                {formatCurrencyShort(
+                  Number(property.rent_amount),
+                  property.currency ?? currency,
+                  resolvedLanguage,
+                )}
+                <Text className="text-muted-foreground text-xs"> {t('properties.perMonthSuffix')}</Text>
+              </Text>
+            </View>
+          ) : (
+            <Text className="text-muted-foreground flex-1 text-sm">
+              {t(`usageStatus.${property.usage_status}`)}
+            </Text>
+          )}
 
-            {overdueCount > 0 ? (
-              <AppBadge
-                label={t('properties.overdueBadge', { count: overdueCount })}
-                variant="error"
-              />
-            ) : null}
-          </View>
-        </Card.Content>
+          {overdueCount > 0 ? (
+            <AppBadge
+              label={t('properties.overdueBadge', { count: overdueCount })}
+              variant="error"
+            />
+          ) : null}
+        </View>
       </Card>
     </Pressable>
   );
@@ -149,79 +142,3 @@ function PropertyCardComponent({
 }
 
 export const PropertyCard = memo(PropertyCardComponent);
-
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 12,
-    marginBottom: Spacing.sm,
-  },
-  content: {
-    gap: Spacing.sm,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.sm,
-  },
-  name: {
-    ...Typography.titleLarge,
-  },
-  addressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  address: {
-    ...Typography.bodyMedium,
-    flex: 1,
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    gap: Spacing.sm,
-    marginTop: Spacing.xs,
-  },
-  tenantBlock: {
-    flex: 1,
-    gap: 2,
-  },
-  metaLabel: {
-    ...Typography.bodyMedium,
-  },
-  rent: {
-    ...Typography.titleMedium,
-  },
-  rentSuffix: {
-    ...Typography.bodySmall,
-  },
-  statusLabel: {
-    ...Typography.bodyMedium,
-    flex: 1,
-  },
-  actions: {
-    flexDirection: 'row',
-    marginBottom: Spacing.sm,
-  },
-  action: {
-    width: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-    borderRadius: 12,
-    marginLeft: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-  },
-  archiveAction: {
-    backgroundColor: Colors.warning,
-  },
-  deleteAction: {
-    backgroundColor: Colors.danger,
-  },
-  actionLabel: {
-    ...Typography.labelSmall,
-    color: Colors.textInverse,
-    textAlign: 'center',
-  },
-});

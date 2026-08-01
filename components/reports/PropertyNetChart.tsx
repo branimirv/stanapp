@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { ChartCard } from '@/components/reports/ChartCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { Colors, Spacing } from '@/constants/theme';
 import { formatCurrency } from '@/utils/formatters';
 import type { Language, PropertyReportSummary } from '@/types/app.types';
 
@@ -15,7 +16,7 @@ export interface PropertyNetChartProps {
 }
 
 export function PropertyNetChart({ data, language = 'hr', style }: PropertyNetChartProps) {
-  const theme = useTheme();
+  const { isDark } = useAppTheme();
   const { t } = useTranslation();
 
   const chartItems = useMemo(
@@ -40,9 +41,7 @@ export function PropertyNetChart({ data, language = 'hr', style }: PropertyNetCh
 
   return (
     <ChartCard style={style}>
-      <Text style={[styles.title, { color: theme.colors.onSurface }]}>
-        {t('reports.propertyNet')}
-      </Text>
+      <Text className="text-lg font-medium">{t('reports.propertyNet')}</Text>
 
       <View style={styles.list}>
         {chartItems.map((item) => {
@@ -52,20 +51,17 @@ export function PropertyNetChart({ data, language = 'hr', style }: PropertyNetCh
           return (
             <View key={item.propertyId} style={styles.row}>
               <View style={styles.rowHeader}>
-                <Text
-                  style={[styles.propertyName, { color: theme.colors.onSurface }]}
-                  numberOfLines={1}
-                >
+                <Text className="flex-1 text-sm font-semibold" numberOfLines={1}>
                   {item.propertyName}
                 </Text>
-                <Text style={[styles.netValue, { color: barColor }]}>
+                <Text className="text-sm font-bold" style={{ color: barColor }}>
                   {formatCurrency(item.net, item.currency, language)}
                 </Text>
               </View>
               <View
                 style={[
                   styles.track,
-                  { backgroundColor: theme.dark ? Colors.surfaceVariantDark : Colors.surfaceVariant },
+                  { backgroundColor: isDark ? Colors.surfaceVariantDark : Colors.surfaceVariant },
                 ]}
               >
                 <View
@@ -87,9 +83,6 @@ export function PropertyNetChart({ data, language = 'hr', style }: PropertyNetCh
 }
 
 const styles = StyleSheet.create({
-  title: {
-    ...Typography.titleMedium,
-  },
   list: {
     gap: Spacing.md,
   },
@@ -101,15 +94,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.sm,
-  },
-  propertyName: {
-    ...Typography.bodyMedium,
-    fontWeight: '600',
-    flex: 1,
-  },
-  netValue: {
-    ...Typography.labelLarge,
-    fontWeight: '700',
   },
   track: {
     height: 8,

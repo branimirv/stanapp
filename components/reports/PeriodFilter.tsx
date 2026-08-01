@@ -7,11 +7,13 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppDatePicker } from '@/components/ui/AppDatePicker';
+import { Text } from '@/components/ui/text';
 import { buildReportPeriod } from '@/hooks/useReports';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { cn } from '@/lib/utils';
+import { Colors, Spacing } from '@/constants/theme';
 import type { ReportPeriod, ReportPeriodPreset } from '@/types/app.types';
 
 const PRESET_OPTIONS: ReportPeriodPreset[] = [
@@ -52,7 +54,7 @@ function formatDateValue(date: Date | null): string {
 }
 
 export function PeriodFilter({ value, onChange, style }: PeriodFilterProps) {
-  const theme = useTheme();
+  const { isDark } = useAppTheme();
   const { t } = useTranslation();
   const [customStart, setCustomStart] = useState(value.startDate);
   const [customEnd, setCustomEnd] = useState(value.endDate);
@@ -101,26 +103,18 @@ export function PeriodFilter({ value, onChange, style }: PeriodFilterProps) {
               onPress={() => handlePresetChange(pill.value)}
               style={({ pressed }) => [
                 styles.pill,
-                {
-                  backgroundColor: isSelected
-                    ? theme.colors.primary
-                    : theme.dark
-                      ? Colors.surfaceVariantDark
-                      : Colors.surfaceVariant,
-                  opacity: pressed ? 0.85 : 1,
-                },
+                !isSelected && { backgroundColor: isDark ? Colors.surfaceVariantDark : Colors.surfaceVariant },
+                { opacity: pressed ? 0.85 : 1 },
               ]}
+              className={isSelected ? 'bg-primary' : undefined}
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected }}
             >
               <Text
-                style={[
-                  styles.pillLabel,
-                  {
-                    color: isSelected ? theme.colors.onPrimary : theme.colors.onSurfaceVariant,
-                    fontWeight: isSelected ? '700' : '500',
-                  },
-                ]}
+                className={cn(
+                  'text-center text-sm',
+                  isSelected ? 'text-primary-foreground font-bold' : 'text-muted-foreground font-medium',
+                )}
                 numberOfLines={1}
               >
                 {pill.label}
@@ -166,10 +160,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     minHeight: 38,
     justifyContent: 'center',
-  },
-  pillLabel: {
-    ...Typography.labelLarge,
-    textAlign: 'center',
   },
   customRange: {
     flexDirection: 'row',

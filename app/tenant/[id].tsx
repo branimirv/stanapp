@@ -1,7 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { FlatList, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { Mail, MessageSquare, Pencil, Phone } from 'lucide-react-native';
-import { Divider, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppBadge } from '@/components/ui/AppBadge';
 import { AppButton } from '@/components/ui/AppButton';
@@ -9,10 +8,12 @@ import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Separator } from '@/components/ui/separator';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { Text } from '@/components/ui/text';
 import { RentPaymentCard } from '@/components/rent/RentPaymentCard';
 import { listPerformanceProps } from '@/constants/list';
-import { Spacing, Typography } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { CONTRACT_EXPIRING_DAYS } from '@/constants/config';
 import { useLocale } from '@/hooks/useLocale';
 import { useProfile } from '@/hooks/useProfile';
@@ -40,7 +41,6 @@ function getContractBadge(tenant: Tenant, t: (key: string, opts?: Record<string,
 export default function TenantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
-  const theme = useTheme();
   const showToast = useUiStore((s) => s.showToast);
   const showConfirmDialog = useUiStore((s) => s.showConfirmDialog);
 
@@ -153,22 +153,22 @@ export default function TenantDetailScreen() {
         ListHeaderComponent={
           <View style={styles.headerContent}>
             <View style={styles.header}>
-              <Text style={[styles.name, { color: theme.colors.onSurface }]}>{fullName}</Text>
+              <Text className="flex-1 text-2xl font-semibold">{fullName}</Text>
               <AppBadge label={badge.label} variant={badge.variant} />
             </View>
 
             {property ? (
               <Text
-                style={[styles.propertyLink, { color: theme.colors.primary }]}
+                className="text-primary text-base"
                 onPress={() => router.push(`/property/${property.id}`)}
               >
                 {property.name}
               </Text>
             ) : null}
 
-            <Divider style={styles.divider} />
+            <Separator style={styles.divider} />
 
-            <Text style={[styles.section, { color: theme.colors.onSurface }]}>
+            <Text className="text-foreground mt-2 text-lg font-medium">
               {t('tenants.contactInfo')}
             </Text>
             {tenant.email ? (
@@ -178,8 +178,8 @@ export default function TenantDetailScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={t('tenants.emailTenant')}
               >
-                <Mail size={16} color={theme.colors.primary} strokeWidth={2} />
-                <Text style={[styles.row, { color: theme.colors.primary }]}>{tenant.email}</Text>
+                <Mail size={16} className="text-primary" strokeWidth={2} />
+                <Text className="text-primary text-base">{tenant.email}</Text>
               </Pressable>
             ) : null}
 
@@ -191,8 +191,8 @@ export default function TenantDetailScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={t('tenants.callTenant')}
                 >
-                  <Phone size={16} color={theme.colors.primary} strokeWidth={2} />
-                  <Text style={[styles.row, { color: theme.colors.primary }]}>{tenant.phone}</Text>
+                  <Phone size={16} className="text-primary" strokeWidth={2} />
+                  <Text className="text-primary text-base">{tenant.phone}</Text>
                 </Pressable>
                 <Pressable
                   style={styles.contactRow}
@@ -200,16 +200,16 @@ export default function TenantDetailScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={t('tenants.messageTenant')}
                 >
-                  <MessageSquare size={16} color={theme.colors.primary} strokeWidth={2} />
-                  <Text style={[styles.row, { color: theme.colors.primary }]}>{t('tenants.sendMessage')}</Text>
+                  <MessageSquare size={16} className="text-primary" strokeWidth={2} />
+                  <Text className="text-primary text-base">{t('tenants.sendMessage')}</Text>
                 </Pressable>
               </>
             ) : null}
 
-            <Text style={[styles.section, { color: theme.colors.onSurface }]}>
+            <Text className="text-foreground mt-2 text-lg font-medium">
               {t('tenants.contractPeriod')}
             </Text>
-            <Text style={[styles.row, { color: theme.colors.onSurfaceVariant }]}>
+            <Text className="text-muted-foreground text-base">
               {formatDate(tenant.contract_start, language)}
               {' — '}
               {tenant.contract_end
@@ -217,18 +217,20 @@ export default function TenantDetailScreen() {
                 : t('tenants.noContractEnd')}
             </Text>
 
-            <Text style={[styles.row, { color: theme.colors.onSurfaceVariant }]}>
+            <Text className="text-muted-foreground text-base">
               {t('tenants.deposit')}: {formatCurrency(tenant.deposit_amount, currency, language)}
             </Text>
 
             {tenant.notes ? (
               <>
-                <Text style={[styles.section, { color: theme.colors.onSurface }]}>{t('common.notes')}</Text>
-                <Text style={{ color: theme.colors.onSurfaceVariant }}>{tenant.notes}</Text>
+                <Text className="text-foreground mt-2 text-lg font-medium">
+                  {t('common.notes')}
+                </Text>
+                <Text className="text-muted-foreground">{tenant.notes}</Text>
               </>
             ) : null}
 
-            <Text style={[styles.section, { color: theme.colors.onSurface }]}>
+            <Text className="text-foreground mt-2 text-lg font-medium">
               {t('tenants.rentPayments')}
             </Text>
 
@@ -256,7 +258,7 @@ export default function TenantDetailScreen() {
                 {t('tenants.deactivate')}
               </AppButton>
             ) : null}
-            <AppButton mode="outlined" textColor={theme.colors.error} onPress={handleDelete}>
+            <AppButton mode="outlined" textColor="destructive" onPress={handleDelete}>
               {t('common.delete')}
             </AppButton>
           </View>
@@ -282,22 +284,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: Spacing.sm,
   },
-  name: {
-    ...Typography.headlineMedium,
-    flex: 1,
-  },
-  propertyLink: {
-    ...Typography.bodyMedium,
-  },
   divider: {
     marginVertical: Spacing.sm,
-  },
-  section: {
-    ...Typography.titleMedium,
-    marginTop: Spacing.sm,
-  },
-  row: {
-    ...Typography.bodyMedium,
   },
   contactRow: {
     flexDirection: 'row',

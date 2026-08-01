@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { BarChart3 } from 'lucide-react-native';
+import { BarChart3, Share } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
@@ -8,7 +8,6 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
@@ -24,9 +23,11 @@ import { AppCard } from '@/components/ui/AppCard';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { Icon } from '@/components/ui/icon';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { Text } from '@/components/ui/text';
 import { listPerformanceProps } from '@/constants/list';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { buildReportPeriod, useReports } from '@/hooks/useReports';
 import { useProfile } from '@/hooks/useProfile';
@@ -38,7 +39,6 @@ import type { Language, ReportCategoryTypeFilter, ReportPeriod } from '@/types/a
 
 export default function ReportsScreen() {
   const { t, i18n } = useTranslation();
-  const theme = useTheme();
   const showToast = useUiStore((state) => state.showToast);
   const { profile } = useProfile();
   const { properties } = useProperties();
@@ -165,7 +165,7 @@ export default function ReportsScreen() {
 
   if (isLoading && !report) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={styles.container} className="bg-background">
         <SkeletonLoader count={4} height={120} style={styles.skeleton} />
       </View>
     );
@@ -173,7 +173,7 @@ export default function ReportsScreen() {
 
   if (error && !report) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={styles.container} className="bg-background">
         <ErrorState message={error} onRetry={refetch} />
       </View>
     );
@@ -182,7 +182,8 @@ export default function ReportsScreen() {
   if (!report || !hasData) {
     return (
       <ScrollView
-        style={[styles.container, { backgroundColor: theme.colors.background }]}
+        style={styles.container}
+        className="bg-background"
         contentContainerStyle={[styles.content, styles.emptyContent]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
@@ -208,7 +209,8 @@ export default function ReportsScreen() {
 
   return (
     <FlatList
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      style={styles.container}
+      className="bg-background"
       contentContainerStyle={[styles.content, { paddingBottom: Spacing.lg }]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       data={report.propertySummaries}
@@ -216,31 +218,29 @@ export default function ReportsScreen() {
       {...listPerformanceProps}
       renderItem={({ item: summary }) => (
         <AppCard style={styles.propertyCard}>
-          <Text style={[styles.propertyName, { color: theme.colors.onSurface }]}>
-            {summary.propertyName}
-          </Text>
+          <Text className="mb-2 text-lg font-medium">{summary.propertyName}</Text>
           <View style={styles.propertyStats}>
             <View style={styles.propertyStat}>
-              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>
+              <Text className="text-muted-foreground mb-0.5 text-[11px] uppercase tracking-wide">
                 {t('reports.collected')}
               </Text>
-              <Text style={[styles.statValue, { color: Colors.accent }]}>
+              <Text className="text-base font-semibold" style={{ color: Colors.accent }}>
                 {formatCurrency(summary.totalRentCollected, summary.currency, language)}
               </Text>
             </View>
             <View style={styles.propertyStat}>
-              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>
+              <Text className="text-muted-foreground mb-0.5 text-[11px] uppercase tracking-wide">
                 {t('reports.spent')}
               </Text>
-              <Text style={[styles.statValue, { color: Colors.danger }]}>
+              <Text className="text-base font-semibold" style={{ color: Colors.danger }}>
                 {formatCurrency(summary.totalExpensesPaid, summary.currency, language)}
               </Text>
             </View>
             <View style={styles.propertyStat}>
-              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>
+              <Text className="text-muted-foreground mb-0.5 text-[11px] uppercase tracking-wide">
                 {t('reports.net')}
               </Text>
-              <Text style={[styles.statValue, { color: Colors.primary }]}>
+              <Text className="text-base font-semibold" style={{ color: Colors.primary }}>
                 {formatCurrency(summary.net, summary.currency, language)}
               </Text>
             </View>
@@ -263,7 +263,9 @@ export default function ReportsScreen() {
 
           {report.hasMixedCurrencies ? (
             <View style={styles.warningBanner}>
-              <Text style={styles.warningText}>{t('reports.mixedCurrencyWarning')}</Text>
+              <Text className="text-sm" style={{ color: '#92400E' }}>
+                {t('reports.mixedCurrencyWarning')}
+              </Text>
             </View>
           ) : null}
 
@@ -278,26 +280,26 @@ export default function ReportsScreen() {
 
           <View style={styles.totalsRow}>
             <AppCard style={styles.totalCard}>
-              <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
+              <Text className="text-muted-foreground mb-1 text-[11px] uppercase tracking-wide">
                 {t('reports.totalIncome')}
               </Text>
-              <Text style={[styles.totalValue, { color: Colors.accent }]}>
+              <Text className="text-lg font-bold" style={{ color: Colors.accent }}>
                 {formatCurrency(report.totalIncome, report.currency, language)}
               </Text>
             </AppCard>
             <AppCard style={styles.totalCard}>
-              <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
+              <Text className="text-muted-foreground mb-1 text-[11px] uppercase tracking-wide">
                 {t('reports.totalExpenses')}
               </Text>
-              <Text style={[styles.totalValue, { color: Colors.danger }]}>
+              <Text className="text-lg font-bold" style={{ color: Colors.danger }}>
                 {formatCurrency(report.totalExpenses, report.currency, language)}
               </Text>
             </AppCard>
             <AppCard style={styles.totalCard}>
-              <Text style={[styles.totalLabel, { color: theme.colors.onSurfaceVariant }]}>
+              <Text className="text-muted-foreground mb-1 text-[11px] uppercase tracking-wide">
                 {t('reports.netTotal')}
               </Text>
-              <Text style={[styles.totalValue, { color: Colors.primary }]}>
+              <Text className="text-lg font-bold" style={{ color: Colors.primary }}>
                 {formatCurrency(report.netIncome, report.currency, language)}
               </Text>
             </AppCard>
@@ -331,9 +333,7 @@ export default function ReportsScreen() {
             />
           </View>
 
-          <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-            {t('reports.perProperty')}
-          </Text>
+          <Text className="mb-2 text-lg font-medium">{t('reports.perProperty')}</Text>
         </View>
       }
       ListEmptyComponent={
@@ -346,12 +346,14 @@ export default function ReportsScreen() {
       ListFooterComponent={
         <AppButton
           mode="contained"
-          icon="export"
           loading={exporting}
           onPress={handleExport}
           style={styles.exportButton}
         >
-          {t('reports.export')}
+          <View className="flex-row items-center gap-2">
+            <Icon as={Share} size={18} className="text-primary-foreground" />
+            <Text className="text-primary-foreground">{t('reports.export')}</Text>
+          </View>
         </AppButton>
       }
     />
@@ -380,10 +382,6 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     marginBottom: Spacing.md,
   },
-  warningText: {
-    ...Typography.bodySmall,
-    color: '#92400E',
-  },
   totalsRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
@@ -394,27 +392,9 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
     borderRadius: 16,
   },
-  totalLabel: {
-    ...Typography.labelSmall,
-    marginBottom: Spacing.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  totalValue: {
-    ...Typography.titleMedium,
-    fontWeight: '700',
-  },
-  sectionTitle: {
-    ...Typography.titleMedium,
-    marginBottom: Spacing.sm,
-  },
   propertyCard: {
     marginBottom: Spacing.sm,
     borderRadius: 16,
-  },
-  propertyName: {
-    ...Typography.titleMedium,
-    marginBottom: Spacing.sm,
   },
   propertyStats: {
     flexDirection: 'row',
@@ -422,14 +402,6 @@ const styles = StyleSheet.create({
   },
   propertyStat: {
     flex: 1,
-  },
-  statLabel: {
-    ...Typography.labelSmall,
-    marginBottom: 2,
-  },
-  statValue: {
-    ...Typography.bodyMedium,
-    fontWeight: '600',
   },
   exportButton: {
     marginTop: Spacing.md,

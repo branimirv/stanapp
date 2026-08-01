@@ -1,29 +1,41 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { Plus } from 'lucide-react-native';
-import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
-import { FAB, type FABProps } from 'react-native-paper';
-import { Spacing } from '@/constants/theme';
+import { Pressable, type StyleProp, type ViewStyle } from 'react-native';
 
-type AppFabProps = Omit<FABProps, 'icon'> & {
+import { Icon } from '@/components/ui/icon';
+import { cn } from '@/lib/utils';
+
+type AppFabProps = {
   icon?: LucideIcon;
+  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
+  className?: string;
+  accessibilityLabel?: string;
+  visible?: boolean;
 };
 
 export function AppFab({
-  icon: Icon = Plus,
+  icon: FabIcon = Plus,
+  onPress,
   style,
-  ...rest
+  className,
+  accessibilityLabel,
+  visible = true,
 }: AppFabProps) {
+  if (!visible) return null;
+
   return (
-    <FAB
-      icon={({ size, color }) => <Icon size={size} color={color} strokeWidth={2} />}
-      style={[styles.fab, style]}
-      {...rest}
-    />
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      className={cn(
+        'bg-primary mr-4 h-14 w-14 items-center justify-center rounded-2xl shadow-lg active:opacity-90',
+        className,
+      )}
+      style={style}
+    >
+      <Icon as={FabIcon} size={24} className="text-primary-foreground" strokeWidth={2} />
+    </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  fab: {
-    marginRight: Spacing.md,
-  },
-});

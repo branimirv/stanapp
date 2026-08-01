@@ -1,12 +1,13 @@
 import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react-native';
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
-import { Portal, Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+
+import { Text } from '@/components/ui/text';
 import { NATIVE_TAB_BAR_OFFSET } from '@/constants/tabBar';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { useUiStore, type ToastType } from '@/stores/uiStore';
 
 function getToastColors(type: ToastType) {
@@ -60,62 +61,30 @@ export function Toast() {
   const { background, foreground, icon: Icon } = getToastColors(toast.type);
 
   return (
-    <Portal>
-      <View
-        pointerEvents="box-none"
-        style={[
-          styles.wrapper,
-          { bottom: insets.bottom + NATIVE_TAB_BAR_OFFSET + Spacing.sm },
-        ]}
+    <View
+      pointerEvents="box-none"
+      className="absolute left-4 right-4 z-9999"
+      style={{ bottom: insets.bottom + NATIVE_TAB_BAR_OFFSET + Spacing.sm }}
+    >
+      <Animated.View
+        entering={FadeInDown.duration(250)}
+        exiting={FadeOutDown.duration(200)}
+        className="flex-row items-center gap-2 rounded-xl px-4 py-4 shadow-lg"
+        style={{ backgroundColor: background }}
       >
-        <Animated.View
-          entering={FadeInDown.duration(250)}
-          exiting={FadeOutDown.duration(200)}
-          style={[styles.toast, { backgroundColor: background }]}
+        <Icon size={20} color={foreground} strokeWidth={2} />
+        <Text className="flex-1 text-sm" style={{ color: foreground }} numberOfLines={3}>
+          {toast.message}
+        </Text>
+        <Pressable
+          onPress={hideToast}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t('ui.dismissToast')}
         >
-          <Icon size={20} color={foreground} strokeWidth={2} />
-          <Text
-            style={[styles.message, { color: foreground }]}
-            numberOfLines={3}
-          >
-            {toast.message}
-          </Text>
-          <Pressable
-            onPress={hideToast}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={t('ui.dismissToast')}
-          >
-            <X size={18} color={foreground} strokeWidth={2} />
-          </Pressable>
-        </Animated.View>
-      </View>
-    </Portal>
+          <X size={18} color={foreground} strokeWidth={2} />
+        </Pressable>
+      </Animated.View>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrapper: {
-    position: 'absolute',
-    left: Spacing.md,
-    right: Spacing.md,
-    zIndex: 9999,
-  },
-  toast: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    borderRadius: 12,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  message: {
-    ...Typography.bodyMedium,
-    flex: 1,
-  },
-});

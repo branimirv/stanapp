@@ -1,13 +1,13 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, SectionList, StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { ExpenseCard } from '@/components/expense/ExpenseCard';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { Text } from '@/components/ui/text';
 import { listPerformanceProps } from '@/constants/list';
-import { Spacing, Typography } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import type { Expense, ExpenseCategory, Language } from '@/types/app.types';
 import { formatCurrency, formatPeriod } from '@/utils/formatters';
 
@@ -59,7 +59,6 @@ function PropertyExpensesTabComponent({
   onAddExpense,
 }: PropertyExpensesTabProps) {
   const { t } = useTranslation();
-  const theme = useTheme();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
 
   const expensesByMonth = useMemo<ExpenseMonthSection[]>(() => {
@@ -111,13 +110,13 @@ function PropertyExpensesTabComponent({
   const renderSectionHeader = useCallback(
     ({ section }: { section: ExpenseMonthSection }) => (
       <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>{section.title}</Text>
-        <Text style={{ color: theme.colors.onSurfaceVariant }}>
+        <Text className="text-base font-medium">{section.title}</Text>
+        <Text className="text-muted-foreground">
           {formatCurrency(section.total, currency, language)}
         </Text>
       </View>
     ),
-    [currency, language, theme.colors.onSurface, theme.colors.onSurfaceVariant],
+    [currency, language],
   );
 
   if (isLoading) return <SkeletonLoader count={4} style={styles.content} />;
@@ -157,10 +156,10 @@ function PropertyExpensesTabComponent({
             {periodSwitcher}
             {monthExpenses.length > 0 ? (
               <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+                <Text className="text-base font-medium">
                   {formatPeriod(month, year, language)}
                 </Text>
-                <Text style={{ color: theme.colors.onSurfaceVariant }}>
+                <Text className="text-muted-foreground">
                   {formatCurrency(monthExpenseTotal, currency, language)}
                 </Text>
               </View>
@@ -195,11 +194,6 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   periodFilter: {
-    marginBottom: Spacing.sm,
-  },
-  sectionTitle: {
-    ...Typography.titleMedium,
-    marginTop: Spacing.md,
     marginBottom: Spacing.sm,
   },
   sectionHeader: {

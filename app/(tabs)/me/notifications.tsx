@@ -1,11 +1,11 @@
 import { Stack } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { Switch, Text, useTheme } from 'react-native-paper';
+import { ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppButton } from '@/components/ui/AppButton';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
-import { Spacing, Typography } from '@/constants/theme';
+import { Switch } from '@/components/ui/switch';
+import { Text } from '@/components/ui/text';
 import { requestNotificationPermissions } from '@/lib/notifications';
 import { useUiStore } from '@/stores/uiStore';
 import {
@@ -16,7 +16,6 @@ import {
 
 export default function NotificationSettingsScreen() {
   const { t } = useTranslation();
-  const theme = useTheme();
   const showToast = useUiStore((s) => s.showToast);
 
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
@@ -70,7 +69,7 @@ export default function NotificationSettingsScreen() {
     return (
       <>
         <Stack.Screen options={{ title: t('settings.notificationPreferences') }} />
-        <SkeletonLoader count={4} style={styles.loader} />
+        <SkeletonLoader count={4} className="p-4" />
       </>
     );
   }
@@ -101,20 +100,16 @@ export default function NotificationSettingsScreen() {
     <>
       <Stack.Screen options={{ title: t('settings.notificationPreferences') }} />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerClassName="gap-6 p-4 pb-12">
         {items.map((item) => (
-          <View key={item.key} style={styles.row}>
-            <View style={styles.text}>
-              <Text style={[styles.title, { color: theme.colors.onSurface }]}>
-                {item.title}
-              </Text>
-              <Text style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}>
-                {item.hint}
-              </Text>
+          <View key={item.key} className="flex-row items-center justify-between gap-4">
+            <View className="flex-1 gap-1">
+              <Text className="text-base font-medium">{item.title}</Text>
+              <Text className="text-muted-foreground text-xs">{item.hint}</Text>
             </View>
             <Switch
-              value={preferences[item.key]}
-              onValueChange={(value) => updatePreference(item.key, value)}
+              checked={preferences[item.key]}
+              onCheckedChange={(value) => updatePreference(item.key, value)}
             />
           </View>
         ))}
@@ -126,30 +121,3 @@ export default function NotificationSettingsScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  loader: {
-    padding: Spacing.md,
-  },
-  content: {
-    padding: Spacing.md,
-    gap: Spacing.lg,
-    paddingBottom: Spacing.xxl,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.md,
-  },
-  text: {
-    flex: 1,
-    gap: Spacing.xs,
-  },
-  title: {
-    ...Typography.titleMedium,
-  },
-  hint: {
-    ...Typography.bodySmall,
-  },
-});

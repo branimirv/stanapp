@@ -1,20 +1,18 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { StyleSheet } from 'react-native';
-import { ActivityIndicator, Text, useTheme } from 'react-native-paper';
+import { ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/ui/AppButton';
-import { Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
 import { queryKeys } from '@/lib/queryKeys';
 import { acceptPendingInvites } from '@/services/invites';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function InviteAcceptScreen() {
   const { t } = useTranslation();
-  const theme = useTheme();
   const queryClient = useQueryClient();
   const session = useAuthStore((s) => s.session);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
@@ -52,21 +50,17 @@ export default function InviteAcceptScreen() {
   }, [isAuthLoading, queryClient, session, t]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView className="bg-background flex-1 items-center justify-center gap-4 p-6">
       {status === 'loading' ? (
         <>
           <ActivityIndicator />
-          <Text style={[styles.message, { color: theme.colors.onSurface }]}>
-            {t('members.accepting')}
-          </Text>
+          <Text className="text-center text-sm">{t('members.accepting')}</Text>
         </>
       ) : null}
 
       {status === 'auth' ? (
         <>
-          <Text style={[styles.title, { color: theme.colors.onSurface }]}>
-            {t('members.signInToAccept')}
-          </Text>
+          <Text className="text-center text-lg font-semibold">{t('members.signInToAccept')}</Text>
           <AppButton mode="contained" onPress={() => router.replace('/(auth)/login')}>
             {t('auth.signIn')}
           </AppButton>
@@ -75,10 +69,8 @@ export default function InviteAcceptScreen() {
 
       {status === 'success' ? (
         <>
-          <Text style={[styles.title, { color: theme.colors.onSurface }]}>
-            {t('members.acceptSuccess')}
-          </Text>
-          <Text style={[styles.message, { color: theme.colors.onSurfaceVariant }]}>
+          <Text className="text-center text-lg font-semibold">{t('members.acceptSuccess')}</Text>
+          <Text className="text-muted-foreground text-center text-sm">
             {t('members.acceptSuccessCount', { count: acceptedCount })}
           </Text>
           <AppButton mode="contained" onPress={() => router.replace('/(tabs)/properties')}>
@@ -89,11 +81,9 @@ export default function InviteAcceptScreen() {
 
       {status === 'error' ? (
         <>
-          <Text style={[styles.title, { color: theme.colors.onSurface }]}>
-            {t('members.acceptFailed')}
-          </Text>
+          <Text className="text-center text-lg font-semibold">{t('members.acceptFailed')}</Text>
           {errorMessage ? (
-            <Text style={[styles.message, { color: theme.colors.error }]}>{errorMessage}</Text>
+            <Text className="text-destructive text-center text-sm">{errorMessage}</Text>
           ) : null}
           <AppButton mode="contained" onPress={() => router.replace('/(tabs)/properties')}>
             {t('common.goHome')}
@@ -103,21 +93,3 @@ export default function InviteAcceptScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing.lg,
-    gap: Spacing.md,
-  },
-  title: {
-    ...Typography.titleLarge,
-    textAlign: 'center',
-  },
-  message: {
-    ...Typography.bodyMedium,
-    textAlign: 'center',
-  },
-});

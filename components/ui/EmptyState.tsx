@@ -1,9 +1,11 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { Inbox } from 'lucide-react-native';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
+
 import { AppButton } from '@/components/ui/AppButton';
+import { Text } from '@/components/ui/text';
+import { Colors } from '@/constants/theme';
+import { cn } from '@/lib/utils';
 
 export interface EmptyStateProps {
   icon?: LucideIcon;
@@ -12,6 +14,7 @@ export interface EmptyStateProps {
   ctaLabel?: string;
   onCtaPress?: () => void;
   style?: StyleProp<ViewStyle>;
+  className?: string;
 }
 
 export function EmptyState({
@@ -21,69 +24,28 @@ export function EmptyState({
   ctaLabel,
   onCtaPress,
   style,
+  className,
 }: EmptyStateProps) {
-  const theme = useTheme();
-
   return (
-    <View style={[styles.container, style]}>
-      <View
-        style={[
-          styles.iconWrap,
-          { backgroundColor: theme.dark ? Colors.surfaceVariantDark : Colors.primaryLight },
-        ]}
-      >
-        <Icon
-          size={40}
-          color={theme.colors.primary}
-          strokeWidth={1.75}
-        />
+    <View
+      className={cn('flex-1 items-center justify-center px-8 py-12', className)}
+      style={style}
+    >
+      <View className="mb-6 h-20 w-20 items-center justify-center rounded-full bg-accent">
+        <Icon size={40} color={Colors.primary} strokeWidth={1.75} />
       </View>
 
-      <Text style={[styles.title, { color: theme.colors.onSurface }]}>{title}</Text>
+      <Text className="mb-2 text-center text-lg font-semibold">{title}</Text>
 
       {subtitle ? (
-        <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
-          {subtitle}
-        </Text>
+        <Text className="text-muted-foreground mb-6 text-center text-sm">{subtitle}</Text>
       ) : null}
 
       {ctaLabel && onCtaPress ? (
-        <AppButton mode="contained" onPress={onCtaPress} style={styles.cta}>
+        <AppButton mode="contained" onPress={onCtaPress} className="mt-2 min-w-40">
           {ctaLabel}
         </AppButton>
       ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.xxl,
-  },
-  iconWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.lg,
-  },
-  title: {
-    ...Typography.titleLarge,
-    textAlign: 'center',
-    marginBottom: Spacing.sm,
-  },
-  subtitle: {
-    ...Typography.bodyMedium,
-    textAlign: 'center',
-    marginBottom: Spacing.lg,
-  },
-  cta: {
-    marginTop: Spacing.sm,
-    minWidth: 160,
-  },
-});

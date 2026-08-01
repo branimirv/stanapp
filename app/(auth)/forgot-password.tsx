@@ -1,20 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { AppTextInput } from '@/components/ui/AppTextInput';
-import { Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
 import { resetPassword } from '@/lib/auth';
 import { useUiStore } from '@/stores/uiStore';
 import { translateFieldError } from '@/utils/formHelpers';
@@ -22,51 +15,9 @@ import { forgotPasswordSchema, type ForgotPasswordFormValues } from '@/utils/val
 
 export default function ForgotPasswordScreen() {
   const { t } = useTranslation();
-  const theme = useTheme();
   const showToast = useUiStore((state) => state.showToast);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        safeArea: {
-          flex: 1,
-          backgroundColor: theme.colors.background,
-        },
-        flex: {
-          flex: 1,
-        },
-        scrollContent: {
-          flexGrow: 1,
-          paddingHorizontal: Spacing.lg,
-          paddingVertical: Spacing.lg,
-        },
-        header: {
-          marginBottom: Spacing.xl,
-        },
-        subtitle: {
-          ...Typography.bodyLarge,
-          color: theme.colors.onSurfaceVariant,
-        },
-        form: {
-          gap: Spacing.md,
-        },
-        submitButton: {
-          marginTop: Spacing.sm,
-        },
-        successBox: {
-          backgroundColor: theme.colors.primaryContainer,
-          borderRadius: 12,
-          padding: Spacing.lg,
-        },
-        successText: {
-          ...Typography.bodyLarge,
-          color: theme.colors.onPrimaryContainer,
-          textAlign: 'center',
-        },
-      }),
-    [theme],
-  );
 
   const {
     control,
@@ -103,26 +54,28 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+    <SafeAreaView className="bg-background flex-1" edges={['bottom']}>
       <KeyboardAvoidingView
-        style={styles.flex}
+        className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerClassName="flex-grow px-6 py-6"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
-            <Text style={styles.subtitle}>{t('auth.forgotPasswordSubtitle')}</Text>
+          <View className="mb-8">
+            <Text className="text-muted-foreground text-base">
+              {t('auth.forgotPasswordSubtitle')}
+            </Text>
           </View>
 
           {isSubmitted ? (
-            <View style={styles.successBox}>
-              <Text style={styles.successText}>{t('auth.resetLinkSent')}</Text>
+            <View className="bg-primary/10 rounded-xl p-6">
+              <Text className="text-center text-base">{t('auth.resetLinkSent')}</Text>
             </View>
           ) : (
-            <View style={styles.form}>
+            <View className="gap-4">
               <Controller
                 control={control}
                 name="email"
@@ -149,7 +102,7 @@ export default function ForgotPasswordScreen() {
                 loading={isSubmitting}
                 disabled={!isValid}
                 onPress={handleSubmit(onSubmit)}
-                style={styles.submitButton}
+                className="mt-2"
               >
                 {t('auth.sendResetLink')}
               </AppButton>

@@ -1,15 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppFormScroll, AppFormSection, AppFormSubmit } from '@/components/ui/AppFormScroll';
 import { AppPicker } from '@/components/ui/AppPicker';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { AppTextInput } from '@/components/ui/AppTextInput';
+import { Text } from '@/components/ui/text';
 import { PROPERTY_TYPES, USAGE_STATUSES } from '@/constants/config';
-import { Spacing, Typography } from '@/constants/theme';
 import type { Property, PropertyType, UsageStatus } from '@/types/app.types';
 import { translateFieldError } from '@/utils/formHelpers';
 import { propertySchema, type PropertyFormValues } from '@/utils/validators';
@@ -62,7 +60,6 @@ export function PropertyForm({
   onUsageStatusChangeAwayFromRented,
   onUsageStatusChange,
 }: PropertyFormProps) {
-  const theme = useTheme();
   const { t } = useTranslation();
   const resolvedDefaults = { ...defaultFormValues, ...defaultValues, ...initialValues };
   const submitting = isSubmitting || isLoading;
@@ -255,7 +252,7 @@ export function PropertyForm({
       ) : null}
 
       {selectedType === 'garage' ? (
-        <Text style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}>
+        <Text className="text-muted-foreground -mt-2 text-xs">
           {t('properties.parentPropertyHint')}
         </Text>
       ) : null}
@@ -278,10 +275,3 @@ export function PropertyForm({
     </AppFormScroll>
   );
 }
-
-const styles = StyleSheet.create({
-  hint: {
-    ...Typography.bodySmall,
-    marginTop: -Spacing.sm,
-  },
-});

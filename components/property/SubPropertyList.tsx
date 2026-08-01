@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { Card, Text, useTheme } from 'react-native-paper';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PropertyTypeBadge } from '@/components/property/PropertyTypeBadge';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Card } from '@/components/ui/card';
+import { Text } from '@/components/ui/text';
 import type { Property } from '@/types/app.types';
 
 export interface SubPropertyListProps {
@@ -19,7 +20,6 @@ export function SubPropertyList({
   properties,
   onPropertyPress,
 }: SubPropertyListProps) {
-  const theme = useTheme();
   const { t } = useTranslation();
   const items = subProperties ?? properties ?? [];
 
@@ -36,99 +36,38 @@ export function SubPropertyList({
       <EmptyState
         title={t('empty.noSubProperties')}
         subtitle={t('empty.noSubPropertiesHint')}
-        style={styles.empty}
+        className="py-6"
       />
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={[styles.heading, { color: theme.colors.onSurface }]}>
-        {t('properties.subProperties')}
-      </Text>
-      <Text style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}>
+    <View className="gap-2">
+      <Text className="mb-1 text-base font-medium">{t('properties.subProperties')}</Text>
+      <Text className="text-muted-foreground mb-2 text-xs">
         {t('properties.subPropertiesHint')}
       </Text>
 
       {items.map((property) => (
         <Pressable key={property.id} onPress={() => handlePress(property.id)}>
-          <Card
-            mode="outlined"
-            style={[
-              styles.card,
-              {
-                backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-                borderColor: theme.colors.outline,
-              },
-            ]}
-          >
-            <Card.Content style={styles.cardContent}>
-              <View style={styles.cardMain}>
+          <Card className="border-border mb-2 gap-0 rounded-xl border p-0">
+            <View className="flex-row items-center justify-between gap-2 px-4 py-2">
+              <View className="flex-1 flex-row items-center gap-2">
                 <PropertyTypeBadge type={property.type} compact />
-                <View style={styles.cardText}>
-                  <Text
-                    style={[styles.name, { color: theme.colors.onSurface }]}
-                    numberOfLines={1}
-                  >
+                <View className="flex-1 gap-0.5">
+                  <Text className="text-base font-medium" numberOfLines={1}>
                     {property.name}
                   </Text>
-                  <Text
-                    style={[styles.address, { color: theme.colors.onSurfaceVariant }]}
-                    numberOfLines={1}
-                  >
+                  <Text className="text-muted-foreground text-xs" numberOfLines={1}>
                     {property.address}
                   </Text>
                 </View>
               </View>
-              <ChevronRight size={20} color={theme.colors.onSurfaceVariant} strokeWidth={2} />
-            </Card.Content>
+              <ChevronRight size={20} className="text-muted-foreground" strokeWidth={2} />
+            </View>
           </Card>
         </Pressable>
       ))}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    gap: Spacing.sm,
-  },
-  heading: {
-    ...Typography.titleMedium,
-    marginBottom: Spacing.xs,
-  },
-  hint: {
-    ...Typography.bodySmall,
-    marginBottom: Spacing.sm,
-  },
-  empty: {
-    paddingVertical: Spacing.lg,
-  },
-  card: {
-    borderRadius: 12,
-    marginBottom: Spacing.sm,
-  },
-  cardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.sm,
-  },
-  cardMain: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  cardText: {
-    flex: 1,
-    gap: 2,
-  },
-  name: {
-    ...Typography.titleMedium,
-  },
-  address: {
-    ...Typography.bodySmall,
-  },
-});

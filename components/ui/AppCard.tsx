@@ -1,29 +1,20 @@
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { useTheme } from 'react-native-paper';
-import { Colors, Spacing } from '@/constants/theme';
+import { Pressable, type StyleProp, type ViewStyle } from 'react-native';
+
+import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 export interface AppCardProps {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   onPress?: () => void;
+  className?: string;
 }
 
-export function AppCard({ children, style, onPress }: AppCardProps) {
-  const theme = useTheme();
-
+export function AppCard({ children, style, onPress, className }: AppCardProps) {
   const content = (
-    <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-          borderColor: theme.dark ? Colors.borderDark : Colors.border,
-        },
-        style,
-      ]}
-    >
+    <Card className={cn('gap-0 rounded-2xl p-4 py-4', className)} style={style}>
       {children}
-    </View>
+    </Card>
   );
 
   if (onPress) {
@@ -36,11 +27,3 @@ export function AppCard({ children, style, onPress }: AppCardProps) {
 
   return content;
 }
-
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: Spacing.md,
-  },
-});

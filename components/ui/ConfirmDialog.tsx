@@ -1,5 +1,16 @@
-import { Portal, Dialog, Button, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Text } from '@/components/ui/text';
 import { useUiStore } from '@/stores/uiStore';
 
 function translateLabel(t: (key: string) => string, label: string): string {
@@ -10,7 +21,6 @@ function translateLabel(t: (key: string) => string, label: string): string {
 }
 
 export function ConfirmDialog() {
-  const theme = useTheme();
   const { t } = useTranslation();
   const confirmDialog = useUiStore((state) => state.confirmDialog);
   const hideConfirmDialog = useUiStore((state) => state.hideConfirmDialog);
@@ -20,31 +30,31 @@ export function ConfirmDialog() {
     hideConfirmDialog();
   };
 
-  const handleDismiss = () => {
-    hideConfirmDialog();
+  const handleOpenChange = (open: boolean) => {
+    if (!open) hideConfirmDialog();
   };
 
   return (
-    <Portal>
-      <Dialog visible={confirmDialog.visible} onDismiss={handleDismiss}>
-        <Dialog.Title>{confirmDialog.title}</Dialog.Title>
-        <Dialog.Content>
-          <Text variant="bodyMedium">{confirmDialog.message}</Text>
-        </Dialog.Content>
-        <Dialog.Actions>
-          <Button onPress={handleDismiss}>
-            {translateLabel(t, confirmDialog.cancelLabel)}
-          </Button>
-          <Button
+    <AlertDialog open={confirmDialog.visible} onOpenChange={handleOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{confirmDialog.title}</AlertDialogTitle>
+          <AlertDialogDescription>{confirmDialog.message}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onPress={hideConfirmDialog}>
+            <Text>{translateLabel(t, confirmDialog.cancelLabel)}</Text>
+          </AlertDialogCancel>
+          <AlertDialogAction
             onPress={handleConfirm}
-            textColor={confirmDialog.destructive ? theme.colors.error : undefined}
-            buttonColor={confirmDialog.destructive ? undefined : theme.colors.primary}
-            mode={confirmDialog.destructive ? 'text' : 'contained'}
+            className={confirmDialog.destructive ? 'bg-destructive' : undefined}
           >
-            {translateLabel(t, confirmDialog.confirmLabel)}
-          </Button>
-        </Dialog.Actions>
-      </Dialog>
-    </Portal>
+            <Text className="text-primary-foreground">
+              {translateLabel(t, confirmDialog.confirmLabel)}
+            </Text>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

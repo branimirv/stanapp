@@ -7,13 +7,13 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppDatePicker } from '@/components/ui/AppDatePicker';
 import { AppTextInput } from '@/components/ui/AppTextInput';
+import { Text } from '@/components/ui/text';
 import { CategoryBadge } from '@/components/expense/CategoryBadge';
-import { Spacing, Typography } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import type { ExpenseCategory } from '@/types/app.types';
 import {
   defaultRecurringForType,
@@ -55,7 +55,6 @@ export function QuickAddExpenseSheet({
   onSubmit,
   isSubmitting = false,
 }: QuickAddExpenseSheetProps) {
-  const theme = useTheme();
   const { t } = useTranslation();
 
   const regularCategories = useMemo(
@@ -112,12 +111,13 @@ export function QuickAddExpenseSheet({
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
       <Pressable style={styles.overlay} onPress={onDismiss}>
         <Pressable
-          style={[styles.content, { backgroundColor: theme.colors.surface }]}
+          style={styles.content}
+          className="bg-card"
           onPress={(event) => event.stopPropagation()}
         >
-          <View style={[styles.handle, { backgroundColor: theme.colors.outlineVariant }]} />
+          <View style={styles.handle} className="bg-border" />
 
-          <Text style={[styles.title, { color: theme.colors.onSurface }]}>
+          <Text className="mb-1 text-center text-lg font-medium">
             {t('expenses.quickAddTitle')}
           </Text>
 
@@ -130,7 +130,7 @@ export function QuickAddExpenseSheet({
             autoFocus
           />
 
-          <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>
+          <Text className="text-muted-foreground mt-1 text-sm font-semibold">
             {t('expenses.category')}
           </Text>
           <ScrollView
@@ -144,10 +144,8 @@ export function QuickAddExpenseSheet({
                 <Pressable
                   key={category.id}
                   onPress={() => setCategoryId(category.id)}
-                  style={[
-                    styles.chip,
-                    selected && { borderColor: theme.colors.primary, borderWidth: 2 },
-                  ]}
+                  style={styles.chip}
+                  className={selected ? 'border-primary border-2' : undefined}
                   accessibilityRole="button"
                   accessibilityState={{ selected }}
                 >
@@ -217,15 +215,6 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     marginBottom: Spacing.sm,
-  },
-  title: {
-    ...Typography.titleMedium,
-    textAlign: 'center',
-    marginBottom: Spacing.xs,
-  },
-  sectionLabel: {
-    ...Typography.labelLarge,
-    marginTop: Spacing.xs,
   },
   chipRow: {
     flexDirection: 'row',

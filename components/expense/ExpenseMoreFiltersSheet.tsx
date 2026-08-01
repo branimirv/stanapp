@@ -1,12 +1,13 @@
 import { ChevronDown } from 'lucide-react-native';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppButton } from '@/components/ui/AppButton';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { Colors, Spacing } from '@/constants/theme';
 import type { ExpenseType } from '@/types/app.types';
 
 export type RecurringFilter = 'all' | 'recurring' | 'one_time';
@@ -41,7 +42,7 @@ function InlineSelectField({
   onValueChange,
   placeholder,
 }: InlineSelectFieldProps) {
-  const theme = useTheme();
+  const { isDark } = useAppTheme();
   const [expanded, setExpanded] = useState(false);
   const selectedOption = options.find((option) => option.value === value);
 
@@ -52,13 +53,8 @@ function InlineSelectField({
 
   return (
     <View
-      style={[
-        styles.selectField,
-        {
-          borderColor: theme.colors.outlineVariant,
-          backgroundColor: theme.dark ? Colors.surfaceVariantDark : Colors.surface,
-        },
-      ]}
+      style={[styles.selectField, { backgroundColor: isDark ? Colors.surfaceVariantDark : Colors.surface }]}
+      className="border-border"
     >
       <Pressable
         onPress={() => setExpanded((current) => !current)}
@@ -67,45 +63,32 @@ function InlineSelectField({
         accessibilityLabel={selectedOption?.label ?? placeholder}
         accessibilityState={{ expanded }}
       >
-        <Text style={[styles.selectValue, { color: theme.colors.primary }]} numberOfLines={1}>
+        <Text className="text-primary shrink text-base font-semibold" numberOfLines={1}>
           {selectedOption?.label ?? placeholder}
         </Text>
         <ChevronDown
           size={18}
-          color={theme.colors.primary}
+          className="text-primary"
           strokeWidth={2.5}
           style={{ transform: [{ rotate: expanded ? '180deg' : '0deg' }] }}
         />
       </Pressable>
 
       {expanded ? (
-        <View style={styles.selectOptions}>
+        <View style={styles.selectOptions} className="border-border">
           {options.map((option) => {
             const isSelected = option.value === value;
             return (
               <Pressable
                 key={option.value}
                 onPress={() => handleSelect(option.value)}
-                style={({ pressed }) => [
-                  styles.optionRow,
-                  isSelected && {
-                    backgroundColor: theme.dark
-                      ? Colors.surfaceDark
-                      : Colors.primaryLight,
-                  },
-                  { opacity: pressed ? 0.7 : 1 },
-                ]}
+                style={({ pressed }) => [styles.optionRow, { opacity: pressed ? 0.7 : 1 }]}
+                className={isSelected ? (isDark ? 'bg-secondary' : 'bg-accent') : undefined}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isSelected }}
               >
                 <Text
-                  style={[
-                    styles.optionLabel,
-                    {
-                      color: isSelected ? theme.colors.primary : theme.colors.onSurface,
-                      fontWeight: isSelected ? '600' : '400',
-                    },
-                  ]}
+                  className={isSelected ? 'text-primary text-base font-semibold' : 'text-foreground text-base'}
                 >
                   {option.label}
                 </Text>
@@ -133,7 +116,6 @@ export function ExpenseMoreFiltersSheet({
   onTypeFilterChange,
   onClearFilters,
 }: ExpenseMoreFiltersSheetProps) {
-  const theme = useTheme();
   const { t } = useTranslation();
 
   const handleClear = () => {
@@ -150,12 +132,13 @@ export function ExpenseMoreFiltersSheet({
     >
       <Pressable style={styles.overlay} onPress={onDismiss}>
         <Pressable
-          style={[styles.content, { backgroundColor: theme.colors.surface }]}
+          style={styles.content}
+          className="bg-card"
           onPress={(event) => event.stopPropagation()}
         >
-          <View style={[styles.handle, { backgroundColor: theme.colors.outlineVariant }]} />
+          <View style={styles.handle} className="bg-border" />
 
-          <Text style={[styles.title, { color: theme.colors.onSurface }]}>
+          <Text className="mb-2 text-center text-lg font-medium">
             {t('expenses.moreFilters')}
           </Text>
 
@@ -165,7 +148,7 @@ export function ExpenseMoreFiltersSheet({
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>
+            <Text className="text-muted-foreground mt-1 text-sm font-semibold">
               {t('expenses.property')}
             </Text>
             <InlineSelectField
@@ -175,7 +158,7 @@ export function ExpenseMoreFiltersSheet({
               placeholder={t('expenses.filterByProperty')}
             />
 
-            <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>
+            <Text className="text-muted-foreground mt-1 text-sm font-semibold">
               {t('expenses.category')}
             </Text>
             <InlineSelectField
@@ -185,7 +168,7 @@ export function ExpenseMoreFiltersSheet({
               placeholder={t('expenses.filterByCategory')}
             />
 
-            <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>
+            <Text className="text-muted-foreground mt-1 text-sm font-semibold">
               {t('expenses.frequency')}
             </Text>
             <AppSegmentedControl
@@ -198,7 +181,7 @@ export function ExpenseMoreFiltersSheet({
               onValueChange={(value) => onRecurringFilterChange(value as RecurringFilter)}
             />
 
-            <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>
+            <Text className="text-muted-foreground mt-1 text-sm font-semibold">
               {t('expenses.expenseType')}
             </Text>
             <AppSegmentedControl
@@ -247,21 +230,12 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     marginBottom: Spacing.sm,
   },
-  title: {
-    ...Typography.titleMedium,
-    textAlign: 'center',
-    marginBottom: Spacing.sm,
-  },
   scroll: {
     flexGrow: 0,
   },
   scrollContent: {
     gap: Spacing.sm,
     paddingBottom: Spacing.sm,
-  },
-  sectionLabel: {
-    ...Typography.labelLarge,
-    marginTop: Spacing.xs,
   },
   selectField: {
     borderWidth: 1,
@@ -276,21 +250,12 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
   },
-  selectValue: {
-    ...Typography.bodyLarge,
-    fontWeight: '600',
-    flexShrink: 1,
-  },
   selectOptions: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(148, 163, 184, 0.3)',
   },
   optionRow: {
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-  },
-  optionLabel: {
-    ...Typography.bodyLarge,
   },
   actions: {
     flexDirection: 'row',

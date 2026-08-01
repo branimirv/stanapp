@@ -1,14 +1,14 @@
 import { DynamicColorIOS, Platform } from 'react-native';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from 'react-native-paper';
 
 import { Colors } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useTabBarPreference } from '@/hooks/useTabBarPreference';
 
 export default function TabLayout() {
   const { t } = useTranslation();
-  const theme = useTheme();
+  const { theme } = useAppTheme();
   const isAndroid = Platform.OS === 'android';
   const { showLabels } = useTabBarPreference();
 

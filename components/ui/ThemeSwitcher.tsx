@@ -1,11 +1,11 @@
 import { Moon, Sun } from 'lucide-react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { Switch, Text, useTheme } from 'react-native-paper';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
+import { Switch } from '@/components/ui/switch';
+import { Text } from '@/components/ui/text';
 import { THEMES } from '@/constants/config';
-import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import type { Theme } from '@/types/app.types';
 
@@ -22,7 +22,6 @@ interface ThemeSwitcherProps {
 
 export function ThemeSwitcher({ onPersist, showSegmentedControl = true }: ThemeSwitcherProps) {
   const { t } = useTranslation();
-  const theme = useTheme();
   const { preference, isDark, setPreference } = useAppTheme();
 
   const handleChange = async (nextTheme: Theme) => {
@@ -35,17 +34,17 @@ export function ThemeSwitcher({ onPersist, showSegmentedControl = true }: ThemeS
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.switchRow}>
-        <View style={styles.switchLabel}>
+    <View className="gap-4">
+      <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center gap-2">
           {isDark ? (
-            <Moon size={20} color={theme.colors.onSurface} strokeWidth={2} />
+            <Moon size={20} className="text-foreground" strokeWidth={2} color="#FFFFFF" />
           ) : (
-            <Sun size={20} color={theme.colors.onSurface} strokeWidth={2} />
+            <Sun size={20} strokeWidth={2} color="#0F172A" />
           )}
-          <Text style={{ color: theme.colors.onSurface }}>{t('settings.darkMode')}</Text>
+          <Text>{t('settings.darkMode')}</Text>
         </View>
-        <Switch value={isDark} onValueChange={handleToggle} />
+        <Switch checked={isDark} onCheckedChange={handleToggle} />
       </View>
 
       {showSegmentedControl ? (
@@ -67,7 +66,6 @@ interface ThemeToggleButtonProps {
 }
 
 export function ThemeToggleButton({ onPersist }: ThemeToggleButtonProps) {
-  const theme = useTheme();
   const { isDark, setPreference } = useAppTheme();
 
   const toggle = async () => {
@@ -79,46 +77,17 @@ export function ThemeToggleButton({ onPersist }: ThemeToggleButtonProps) {
   return (
     <Pressable
       onPress={toggle}
-      style={styles.toggleButton}
+      className="p-2"
       accessibilityRole="button"
       accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       {({ pressed }) =>
         isDark ? (
-          <Sun
-            size={22}
-            color={theme.colors.onSurface}
-            strokeWidth={2}
-            opacity={pressed ? 0.5 : 1}
-          />
+          <Sun size={22} color="#FFFFFF" strokeWidth={2} opacity={pressed ? 0.5 : 1} />
         ) : (
-          <Moon
-            size={22}
-            color={theme.colors.onSurface}
-            strokeWidth={2}
-            opacity={pressed ? 0.5 : 1}
-          />
+          <Moon size={22} color="#0F172A" strokeWidth={2} opacity={pressed ? 0.5 : 1} />
         )
       }
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    gap: Spacing.md,
-  },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  switchLabel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  toggleButton: {
-    padding: Spacing.sm,
-  },
-});

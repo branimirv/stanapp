@@ -2,7 +2,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { Switch, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppDatePicker } from '@/components/ui/AppDatePicker';
@@ -10,8 +9,10 @@ import { AppFormScroll, AppFormSubmit } from '@/components/ui/AppFormScroll';
 import { AppPicker } from '@/components/ui/AppPicker';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { AppTextInput } from '@/components/ui/AppTextInput';
+import { Switch } from '@/components/ui/switch';
+import { Text } from '@/components/ui/text';
 import { CategoryChipPicker } from '@/components/expense/CategoryChipPicker';
-import { Spacing, Typography } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import type { ExpenseCategory, ExpenseType, Property } from '@/types/app.types';
 import {
   defaultRecurringForType,
@@ -50,7 +51,6 @@ export function ExpenseForm({
   submitLabel,
   onSubmit,
 }: ExpenseFormProps) {
-  const theme = useTheme();
   const { t } = useTranslation();
 
   const {
@@ -150,9 +150,7 @@ export function ExpenseForm({
     <>
       <AppFormScroll>
       <View style={styles.typeField}>
-        <Text style={[styles.typeLabel, { color: theme.colors.onSurface }]}>
-          {t('expenses.expenseType')}
-        </Text>
+        <Text className="text-lg font-medium">{t('expenses.expenseType')}</Text>
         <AppSegmentedControl
           segments={[
             { label: t('expenses.typeRegular'), value: 'regular' },
@@ -161,7 +159,7 @@ export function ExpenseForm({
           value={expenseType}
           onValueChange={(value) => handleExpenseTypeChange(value as ExpenseType)}
         />
-        <Text style={[styles.typeHint, { color: theme.colors.onSurfaceVariant }]}>
+        <Text className="text-muted-foreground text-sm">
           {expenseType === 'regular'
             ? t('expenses.typeRegularHint')
             : t('expenses.typeIrregularHint')}
@@ -231,14 +229,12 @@ export function ExpenseForm({
         render={({ field: { value, onChange } }) => (
           <View style={styles.switchRow}>
             <View style={styles.switchText}>
-              <Text style={[styles.switchLabel, { color: theme.colors.onSurface }]}>
-                {t('expenses.isRecurring')}
-              </Text>
-              <Text style={[styles.switchHint, { color: theme.colors.onSurfaceVariant }]}>
+              <Text className="text-lg font-medium">{t('expenses.isRecurring')}</Text>
+              <Text className="text-muted-foreground text-sm">
                 {t('expenses.isRecurringHint')}
               </Text>
             </View>
-            <Switch value={value} onValueChange={onChange} />
+            <Switch checked={value} onCheckedChange={onChange} />
           </View>
         )}
       />
@@ -294,12 +290,11 @@ export function ExpenseForm({
       >
         <Pressable style={styles.modalOverlay} onPress={() => setCustomCategoryVisible(false)}>
           <Pressable
-            style={[styles.modalCard, { backgroundColor: theme.colors.surface }]}
+            style={styles.modalCard}
+            className="bg-card"
             onPress={(event) => event.stopPropagation()}
           >
-            <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>
-              {t('expenses.addCustomCategory')}
-            </Text>
+            <Text className="text-lg font-medium">{t('expenses.addCustomCategory')}</Text>
             <AppTextInput
               label={t('expenses.customCategoryName')}
               placeholder={t('expenses.customCategoryPlaceholder')}
@@ -334,12 +329,6 @@ const styles = StyleSheet.create({
   typeField: {
     gap: Spacing.sm,
   },
-  typeLabel: {
-    ...Typography.titleMedium,
-  },
-  typeHint: {
-    ...Typography.bodySmall,
-  },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -349,12 +338,6 @@ const styles = StyleSheet.create({
   switchText: {
     flex: 1,
     gap: Spacing.xs,
-  },
-  switchLabel: {
-    ...Typography.titleMedium,
-  },
-  switchHint: {
-    ...Typography.bodySmall,
   },
   modalOverlay: {
     flex: 1,
@@ -366,9 +349,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: Spacing.md,
     gap: Spacing.sm,
-  },
-  modalTitle: {
-    ...Typography.titleMedium,
   },
   modalActions: {
     flexDirection: 'row',

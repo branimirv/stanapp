@@ -1,8 +1,8 @@
 import { Plus, Search, type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from 'react-native-paper';
 
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 type HeaderActionPreset = 'create' | 'search';
 
@@ -26,7 +26,7 @@ export function HeaderAction({
   expanded,
 }: HeaderActionProps) {
   const { t } = useTranslation();
-  const theme = useTheme();
+  const { theme } = useAppTheme();
 
   if (preset === 'create') {
     return (

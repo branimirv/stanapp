@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
-import { useTheme } from 'react-native-paper';
 
 import { Spacing } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 export function useThemedScreenStyles() {
-  const theme = useTheme();
+  const { theme } = useAppTheme();
 
   return useMemo(
     () => ({

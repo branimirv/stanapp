@@ -1,21 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { AppTextInput } from '@/components/ui/AppTextInput';
-import { Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
 import { signUp } from '@/lib/auth';
 import { useUiStore } from '@/stores/uiStore';
 import { translateFieldError } from '@/utils/formHelpers';
@@ -23,60 +16,8 @@ import { registerSchema, type RegisterFormValues } from '@/utils/validators';
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
-  const theme = useTheme();
   const showToast = useUiStore((state) => state.showToast);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        safeArea: {
-          flex: 1,
-          backgroundColor: theme.colors.background,
-        },
-        flex: {
-          flex: 1,
-        },
-        scrollContent: {
-          flexGrow: 1,
-          paddingHorizontal: Spacing.lg,
-          paddingVertical: Spacing.lg,
-        },
-        header: {
-          marginBottom: Spacing.xl,
-        },
-        title: {
-          ...Typography.headlineLarge,
-          color: theme.colors.onBackground,
-          marginBottom: Spacing.sm,
-        },
-        subtitle: {
-          ...Typography.bodyLarge,
-          color: theme.colors.onSurfaceVariant,
-        },
-        form: {
-          gap: Spacing.md,
-        },
-        submitButton: {
-          marginTop: Spacing.sm,
-        },
-        footer: {
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: Spacing.xs,
-          marginTop: Spacing.xl,
-        },
-        footerText: {
-          ...Typography.bodyMedium,
-          color: theme.colors.onSurfaceVariant,
-        },
-        footerLink: {
-          ...Typography.labelLarge,
-          color: theme.colors.primary,
-        },
-      }),
-    [theme],
-  );
 
   const {
     control,
@@ -128,22 +69,22 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+    <SafeAreaView className="bg-background flex-1" edges={['bottom']}>
       <KeyboardAvoidingView
-        style={styles.flex}
+        className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerClassName="flex-grow px-6 py-6"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
-            <Text style={styles.title}>{t('auth.registerTitle')}</Text>
-            <Text style={styles.subtitle}>{t('auth.registerSubtitle')}</Text>
+          <View className="mb-8">
+            <Text className="mb-2 text-2xl font-semibold">{t('auth.registerTitle')}</Text>
+            <Text className="text-muted-foreground text-base">{t('auth.registerSubtitle')}</Text>
           </View>
 
-          <View style={styles.form}>
+          <View className="gap-4">
             <Controller
               control={control}
               name="full_name"
@@ -226,16 +167,16 @@ export default function RegisterScreen() {
               loading={isSubmitting}
               disabled={!isValid}
               onPress={handleSubmit(onSubmit)}
-              style={styles.submitButton}
+              className="mt-2"
             >
               {t('auth.createAccount')}
             </AppButton>
           </View>
 
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>{t('auth.haveAccount')}</Text>
+          <View className="mt-8 flex-row items-center justify-center gap-1">
+            <Text className="text-muted-foreground text-sm">{t('auth.haveAccount')}</Text>
             <Link href="/(auth)/login">
-              <Text style={styles.footerLink}>{t('auth.signIn')}</Text>
+              <Text className="text-primary text-sm font-medium">{t('auth.signIn')}</Text>
             </Link>
           </View>
         </ScrollView>

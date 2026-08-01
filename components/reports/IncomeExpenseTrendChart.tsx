@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { ChartCard } from '@/components/reports/ChartCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Text } from '@/components/ui/text';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { formatCurrency } from '@/utils/formatters';
 import type { Language, MonthlyIncomeExpense } from '@/types/app.types';
@@ -22,7 +23,7 @@ export function IncomeExpenseTrendChart({
   language = 'hr',
   style,
 }: IncomeExpenseTrendChartProps) {
-  const theme = useTheme();
+  const { theme, isDark } = useAppTheme();
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
 
@@ -62,22 +63,16 @@ export function IncomeExpenseTrendChart({
 
   return (
     <ChartCard style={style}>
-      <Text style={[styles.title, { color: theme.colors.onSurface }]}>
-        {t('reports.incomeExpenseTrend')}
-      </Text>
+      <Text className="text-lg font-medium">{t('reports.incomeExpenseTrend')}</Text>
 
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: Colors.accent }]} />
-          <Text style={[styles.legendLabel, { color: theme.colors.onSurfaceVariant }]}>
-            {t('reports.chartIncome')}
-          </Text>
+          <Text className="text-muted-foreground text-xs">{t('reports.chartIncome')}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: Colors.danger }]} />
-          <Text style={[styles.legendLabel, { color: theme.colors.onSurfaceVariant }]}>
-            {t('reports.chartExpenses')}
-          </Text>
+          <Text className="text-muted-foreground text-xs">{t('reports.chartExpenses')}</Text>
         </View>
       </View>
 
@@ -133,7 +128,7 @@ export function IncomeExpenseTrendChart({
                   style={[
                     styles.tooltip,
                     {
-                      backgroundColor: theme.dark ? Colors.surfaceVariantDark : Colors.textPrimary,
+                      backgroundColor: isDark ? Colors.surfaceVariantDark : Colors.textPrimary,
                     },
                   ]}
                 >
@@ -157,9 +152,6 @@ export function IncomeExpenseTrendChart({
 }
 
 const styles = StyleSheet.create({
-  title: {
-    ...Typography.titleMedium,
-  },
   legend: {
     flexDirection: 'row',
     gap: Spacing.lg,
@@ -173,9 +165,6 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-  },
-  legendLabel: {
-    ...Typography.bodySmall,
   },
   tooltip: {
     borderRadius: 8,

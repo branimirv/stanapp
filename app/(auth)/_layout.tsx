@@ -1,17 +1,17 @@
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from 'react-native-paper';
 
 import { useAppHeaderOptions } from '@/hooks/useAppHeaderOptions';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 export default function AuthLayout() {
   const { t } = useTranslation();
-  const theme = useTheme();
+  const { isDark } = useAppTheme();
   const themedScreenOptions = useAppHeaderOptions();
 
   return (
     <Stack
-      key={theme.dark ? 'dark' : 'light'}
+      key={isDark ? 'dark' : 'light'}
       screenOptions={{
         ...themedScreenOptions,
         headerBackTitle: t('common.back'),

@@ -1,8 +1,9 @@
-import { Pressable, StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
+import { Colors } from '@/constants/theme';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import type { Language, RecentActivityItem } from '@/types/app.types';
 
@@ -20,7 +21,6 @@ function getItemDetail(item: RecentActivityItem, t: (key: string, options?: { de
 }
 
 export function RecentActivity({ items, language = 'hr', onItemPress }: RecentActivityProps) {
-  const theme = useTheme();
   const { t, i18n } = useTranslation();
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
 
@@ -29,16 +29,14 @@ export function RecentActivity({ items, language = 'hr', onItemPress }: RecentAc
       <EmptyState
         title={t('dashboard.noRecentActivity')}
         subtitle={t('empty.noActivityHint')}
-        style={styles.empty}
+        className="py-6"
       />
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={[styles.heading, { color: theme.colors.onSurface }]}>
-        {t('dashboard.recentActivity')}
-      </Text>
+    <View className="gap-2">
+      <Text className="mb-1 text-base font-medium">{t('dashboard.recentActivity')}</Text>
 
       {items.map((item) => {
         const isIncome = item.type === 'rent_payment';
@@ -47,27 +45,19 @@ export function RecentActivity({ items, language = 'hr', onItemPress }: RecentAc
         const detail = getItemDetail(item, t);
 
         const content = (
-          <View
-            style={[
-              styles.row,
-              {
-                backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-                borderColor: theme.colors.outline,
-              },
-            ]}
-          >
-            <View style={styles.rowContent}>
-              <Text style={styles.titleLine} numberOfLines={1}>
+          <View className="bg-card border-border mb-1 flex-row items-center gap-2 rounded-md border px-4 py-2.5">
+            <View className="flex-1 gap-px">
+              <Text className="text-base" numberOfLines={1}>
                 <Text style={{ color: accentColor }}>{typeLabel}</Text>
-                <Text style={{ color: theme.colors.onSurfaceVariant }}> · </Text>
-                <Text style={{ color: theme.colors.onSurface }}>{detail}</Text>
+                <Text className="text-muted-foreground"> · </Text>
+                <Text>{detail}</Text>
               </Text>
-              <Text style={[styles.date, { color: theme.colors.onSurfaceVariant }]}>
+              <Text className="text-muted-foreground text-xs">
                 {formatDate(item.created_at, resolvedLanguage)}
               </Text>
             </View>
 
-            <Text style={[styles.amount, { color: accentColor }]}>
+            <Text className="text-base font-semibold" style={{ color: accentColor }}>
               {isIncome ? '+' : '-'}
               {formatCurrency(item.amount, item.currency ?? 'EUR', resolvedLanguage)}
             </Text>
@@ -87,40 +77,3 @@ export function RecentActivity({ items, language = 'hr', onItemPress }: RecentAc
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    gap: Spacing.sm,
-  },
-  heading: {
-    ...Typography.titleMedium,
-    marginBottom: Spacing.xs,
-  },
-  empty: {
-    paddingVertical: Spacing.lg,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
-    marginBottom: Spacing.xs,
-  },
-  rowContent: {
-    flex: 1,
-    gap: 1,
-  },
-  titleLine: {
-    ...Typography.bodyLarge,
-  },
-  date: {
-    ...Typography.bodySmall,
-  },
-  amount: {
-    ...Typography.bodyLarge,
-    fontWeight: '600',
-  },
-});

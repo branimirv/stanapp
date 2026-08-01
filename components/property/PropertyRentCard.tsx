@@ -1,10 +1,11 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { User } from 'lucide-react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
+
 import { AppBadge } from '@/components/ui/AppBadge';
 import { AppButton } from '@/components/ui/AppButton';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Separator } from '@/components/ui/separator';
+import { Text } from '@/components/ui/text';
 import type { Language, RentPayment } from '@/types/app.types';
 import {
   formatCurrencyShort,
@@ -37,7 +38,6 @@ export function PropertyRentCard({
   onTenantPress,
   onMarkPaid,
 }: PropertyRentCardProps) {
-  const theme = useTheme();
   const { t } = useTranslation();
 
   const isPaid = payment?.status === 'paid';
@@ -45,58 +45,44 @@ export function PropertyRentCard({
   const statusVariant = payment?.status ?? 'pending';
 
   return (
-    <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-          borderColor: theme.colors.outline,
-        },
-      ]}
-    >
+    <View className="bg-card border-border gap-0 rounded-xl border px-4 py-2">
       <Pressable
-        style={({ pressed }) => [styles.header, { opacity: pressed ? 0.7 : 1 }]}
+        className="gap-0.5 py-2"
+        style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
         onPress={onStatusPress}
         accessibilityRole="button"
         accessibilityLabel={`${t('properties.currentRentStatus', {
           month: formatMonthName(month, year, language),
         })}: ${statusLabel}`}
       >
-        <Text style={[styles.rentLabel, { color: theme.colors.onSurfaceVariant }]}>
-          {t('properties.rentLabel')}
-        </Text>
-        <View style={styles.amountRow}>
-          <Text style={[styles.rentValue, { color: theme.colors.onSurface }]}>
+        <Text className="text-muted-foreground text-xs">{t('properties.rentLabel')}</Text>
+        <View className="flex-row items-center justify-between gap-2">
+          <Text className="text-xl font-semibold">
             {formatCurrencyShort(rentAmount, currency, language)}
-            <Text style={[styles.rentUnit, { color: theme.colors.onSurfaceVariant }]}>
-              {' '}
-              {t('properties.perMonthSuffix')}
-            </Text>
+            <Text className="text-muted-foreground text-sm"> {t('properties.perMonthSuffix')}</Text>
           </Text>
           <AppBadge
             label={`${formatMonthNameShort(month, year, language)} · ${statusLabel}`}
             variant={statusVariant}
-            style={styles.statusBadge}
+            className="shrink"
           />
         </View>
       </Pressable>
 
       {tenantName ? (
         <>
-          <View style={[styles.divider, { backgroundColor: theme.colors.outline }]} />
+          <Separator className="-mx-4 w-auto" />
           <Pressable
-            style={({ pressed }) => [styles.row, { opacity: pressed ? 0.7 : 1 }]}
+            className="min-h-11 flex-row items-center justify-between gap-2 py-2"
+            style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
             onPress={onTenantPress}
             disabled={!onTenantPress}
             accessibilityRole="button"
             accessibilityLabel={tenantName}
           >
-            <View style={styles.tenant}>
-              <User size={16} color={theme.colors.onSurfaceVariant} strokeWidth={2} />
-              <Text
-                style={[styles.tenantName, { color: theme.colors.onSurface }]}
-                numberOfLines={1}
-              >
+            <View className="shrink flex-row items-center gap-2">
+              <User size={16} className="text-muted-foreground" strokeWidth={2} />
+              <Text className="text-sm" numberOfLines={1}>
                 {tenantName}
               </Text>
             </View>
@@ -106,7 +92,7 @@ export function PropertyRentCard({
 
       {onMarkPaid && !isPaid ? (
         <>
-          <View style={[styles.divider, { backgroundColor: theme.colors.outline }]} />
+          <Separator className="-mx-4 w-auto" />
           <AppButton mode="text" onPress={onMarkPaid}>
             {t('rent.markPaid')}
           </AppButton>
@@ -115,55 +101,3 @@ export function PropertyRentCard({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-  },
-  header: {
-    paddingVertical: Spacing.sm,
-    gap: 2,
-  },
-  amountRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.sm,
-  },
-  rentLabel: {
-    ...Typography.bodySmall,
-  },
-  rentValue: {
-    ...Typography.headlineMedium,
-  },
-  rentUnit: {
-    ...Typography.bodyMedium,
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    marginHorizontal: -Spacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    minHeight: 44,
-  },
-  statusBadge: {
-    flexShrink: 1,
-  },
-  tenant: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    flexShrink: 1,
-  },
-  tenantName: {
-    ...Typography.bodyMedium,
-  },
-});

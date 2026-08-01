@@ -1,15 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -17,7 +10,7 @@ import { AppButton } from '@/components/ui/AppButton';
 import { AppCheckbox } from '@/components/ui/AppCheckbox';
 import { AppTextInput } from '@/components/ui/AppTextInput';
 import { ThemeToggleButton } from '@/components/ui/ThemeSwitcher';
-import { Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
 import { signIn } from '@/lib/auth';
 import { useUiStore } from '@/stores/uiStore';
 import { translateFieldError } from '@/utils/formHelpers';
@@ -26,81 +19,9 @@ import { loginSchema, type LoginFormValues } from '@/utils/validators';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
-  const theme = useTheme();
   const showToast = useUiStore((state) => state.showToast);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        safeArea: {
-          flex: 1,
-          backgroundColor: theme.colors.background,
-        },
-        flex: {
-          flex: 1,
-        },
-        scrollContent: {
-          flexGrow: 1,
-          paddingHorizontal: Spacing.lg,
-          paddingVertical: Spacing.xl,
-          justifyContent: 'center',
-        },
-        themeToggleRow: {
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          marginBottom: Spacing.md,
-        },
-        header: {
-          marginBottom: Spacing.xl,
-        },
-        appName: {
-          ...Typography.labelLarge,
-          color: theme.colors.primary,
-          marginBottom: Spacing.sm,
-        },
-        title: {
-          ...Typography.displayMedium,
-          color: theme.colors.onBackground,
-          marginBottom: Spacing.sm,
-        },
-        subtitle: {
-          ...Typography.bodyLarge,
-          color: theme.colors.onSurfaceVariant,
-        },
-        form: {
-          gap: Spacing.md,
-        },
-        optionsRow: {
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        },
-        forgotText: {
-          ...Typography.bodyMedium,
-          color: theme.colors.primary,
-        },
-        submitButton: {
-          marginTop: Spacing.sm,
-        },
-        footer: {
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: Spacing.xs,
-          marginTop: Spacing.xl,
-        },
-        footerText: {
-          ...Typography.bodyMedium,
-          color: theme.colors.onSurfaceVariant,
-        },
-        footerLink: {
-          ...Typography.labelLarge,
-          color: theme.colors.primary,
-        },
-      }),
-    [theme],
-  );
 
   const {
     control,
@@ -163,27 +84,27 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView className="bg-background flex-1">
       <KeyboardAvoidingView
-        style={styles.flex}
+        className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerClassName="flex-grow justify-center px-6 py-8"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.themeToggleRow}>
+          <View className="mb-4 flex-row justify-end">
             <ThemeToggleButton />
           </View>
 
-          <View style={styles.header}>
-            <Text style={styles.appName}>{t('common.appName')}</Text>
-            <Text style={styles.title}>{t('auth.loginTitle')}</Text>
-            <Text style={styles.subtitle}>{t('auth.loginSubtitle')}</Text>
+          <View className="mb-8">
+            <Text className="text-primary mb-2 text-sm font-medium">{t('common.appName')}</Text>
+            <Text className="mb-2 text-3xl font-bold">{t('auth.loginTitle')}</Text>
+            <Text className="text-muted-foreground text-base">{t('auth.loginSubtitle')}</Text>
           </View>
 
-          <View style={styles.form}>
+          <View className="gap-4">
             <Controller
               control={control}
               name="email"
@@ -224,7 +145,7 @@ export default function LoginScreen() {
               )}
             />
 
-            <View style={styles.optionsRow}>
+            <View className="flex-row items-center justify-between">
               <AppCheckbox
                 checked={rememberMe}
                 onChange={handleRememberMeChange}
@@ -232,7 +153,9 @@ export default function LoginScreen() {
               />
 
               <Link href="/(auth)/forgot-password">
-                <Text style={styles.forgotText}>{t('auth.forgotPassword')}</Text>
+                <Text className="text-primary text-sm font-medium">
+                  {t('auth.forgotPassword')}
+                </Text>
               </Link>
             </View>
 
@@ -241,16 +164,16 @@ export default function LoginScreen() {
               loading={isSubmitting}
               disabled={!isValid}
               onPress={handleSubmit(onSubmit)}
-              style={styles.submitButton}
+              className="mt-2"
             >
               {t('auth.signIn')}
             </AppButton>
           </View>
 
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>{t('auth.noAccount')}</Text>
+          <View className="mt-8 flex-row items-center justify-center gap-1">
+            <Text className="text-muted-foreground text-sm">{t('auth.noAccount')}</Text>
             <Link href="/(auth)/register">
-              <Text style={styles.footerLink}>{t('auth.signUp')}</Text>
+              <Text className="text-primary text-sm font-medium">{t('auth.signUp')}</Text>
             </Link>
           </View>
         </ScrollView>

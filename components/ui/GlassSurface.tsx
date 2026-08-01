@@ -2,7 +2,6 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { useTheme } from 'react-native-paper';
 
 import {
   getGlassBlurIntensity,
@@ -11,6 +10,7 @@ import {
   getGlassGlossColors,
   getGlassOverlayColor,
 } from '@/constants/glass';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 type GlassSurfaceShape = 'pill' | 'circle' | 'rect';
 
@@ -33,8 +33,7 @@ export function GlassSurface({
   style,
   contentStyle,
 }: GlassSurfaceProps) {
-  const theme = useTheme();
-  const isDark = theme.dark;
+  const { isDark } = useAppTheme();
   const radius = borderRadiusForShape(shape);
 
   const overlay = (

@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { Modal, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+
 import { AppButton } from '@/components/ui/AppButton';
-import { Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
 import type { Expense, ExpenseCategory, Language, Property, RentPayment, Tenant } from '@/types/app.types';
 import { getMonthRange, isDateInRange } from '@/utils/dateRange';
 import { exportPropertyStatementPDF } from '@/utils/statement';
@@ -40,7 +40,6 @@ export function StatementSheet({
   onExportSuccess,
   onExportError,
 }: StatementSheetProps) {
-  const theme = useTheme();
   const { t } = useTranslation();
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -122,74 +121,64 @@ export function StatementSheet({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
-      <Pressable style={styles.overlay} onPress={onDismiss}>
+      <Pressable className="flex-1 justify-end bg-black/45" onPress={onDismiss}>
         <Pressable
-          style={[styles.content, { backgroundColor: theme.colors.surface }]}
+          className="bg-card gap-4 rounded-t-[20px] px-6 pb-8 pt-2"
           onPress={(event) => event.stopPropagation()}
         >
-          <View style={[styles.handle, { backgroundColor: theme.colors.outlineVariant }]} />
+          <View className="bg-border mb-2 h-1 w-9 self-center rounded-full" />
 
-          <Text style={[styles.title, { color: theme.colors.onSurface }]}>
-            {t('statement.title')}
-          </Text>
+          <Text className="text-center text-base font-medium">{t('statement.title')}</Text>
 
-          <View style={styles.periodPicker}>
+          <View className="flex-row items-center justify-center gap-4">
             <Pressable
               onPress={() => shiftMonth(-1)}
-              style={styles.periodButton}
+              className="p-1"
               accessibilityRole="button"
               accessibilityLabel={t('common.previous')}
             >
-              <ChevronLeft size={24} color={theme.colors.onSurface} strokeWidth={2} />
+              <ChevronLeft size={24} className="text-foreground" strokeWidth={2} />
             </Pressable>
-            <Text style={[styles.periodLabel, { color: theme.colors.onSurface }]}>
+            <Text className="min-w-35 text-center text-base font-medium">
               {formatPeriod(month, year, language)}
             </Text>
             <Pressable
               onPress={() => shiftMonth(1)}
-              style={styles.periodButton}
+              className="p-1"
               accessibilityRole="button"
               accessibilityLabel={t('common.next')}
             >
-              <ChevronRight size={24} color={theme.colors.onSurface} strokeWidth={2} />
+              <ChevronRight size={24} className="text-foreground" strokeWidth={2} />
             </Pressable>
           </View>
 
-          <View style={[styles.preview, { borderColor: theme.colors.outline }]}>
-            <Text style={[styles.previewLabel, { color: theme.colors.onSurfaceVariant }]}>
+          <View className="border-border gap-2 rounded-xl border p-4">
+            <Text className="text-muted-foreground text-xs font-medium">
               {t('statement.billTo')}
             </Text>
-            <Text style={[styles.previewValue, { color: theme.colors.onSurface }]}>
-              {tenantName}
-            </Text>
+            <Text className="mb-2 text-base font-medium">{tenantName}</Text>
 
-            <View style={styles.lineItem}>
-              <Text style={{ color: theme.colors.onSurface }}>{t('statement.rent')}</Text>
-              <Text style={{ color: theme.colors.onSurface }}>
-                {formatCurrency(rentAmount, currency, language)}
-              </Text>
+            <View className="flex-row items-center justify-between gap-2">
+              <Text>{t('statement.rent')}</Text>
+              <Text>{formatCurrency(rentAmount, currency, language)}</Text>
             </View>
 
             {regularExpenses.map((line) => (
-              <View key={line.label} style={styles.lineItem}>
-                <Text style={{ color: theme.colors.onSurface }}>{line.label}</Text>
-                <Text style={{ color: theme.colors.onSurface }}>
-                  {formatCurrency(line.amount, currency, language)}
-                </Text>
+              <View key={line.label} className="flex-row items-center justify-between gap-2">
+                <Text>{line.label}</Text>
+                <Text>{formatCurrency(line.amount, currency, language)}</Text>
               </View>
             ))}
 
             {regularExpenses.length === 0 ? (
-              <Text style={[styles.emptyHint, { color: theme.colors.onSurfaceVariant }]}>
+              <Text className="text-muted-foreground text-xs italic">
                 {t('statement.noRegularExpenses')}
               </Text>
             ) : null}
 
-            <View style={[styles.lineItem, styles.totalRow, { borderTopColor: theme.colors.outline }]}>
-              <Text style={[styles.totalLabel, { color: theme.colors.onSurface }]}>
-                {t('statement.totalDue')}
-              </Text>
-              <Text style={[styles.totalValue, { color: theme.colors.primary }]}>
+            <View className="border-border mt-1 flex-row items-center justify-between gap-2 border-t pt-2">
+              <Text className="text-base font-medium">{t('statement.totalDue')}</Text>
+              <Text className="text-primary text-lg font-semibold">
                 {formatCurrency(totalDue, currency, language)}
               </Text>
             </View>
@@ -203,78 +192,3 @@ export function StatementSheet({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-  },
-  content: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.md,
-  },
-  handle: {
-    alignSelf: 'center',
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    marginBottom: Spacing.sm,
-  },
-  title: {
-    ...Typography.titleMedium,
-    textAlign: 'center',
-  },
-  periodPicker: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.md,
-  },
-  periodButton: {
-    padding: Spacing.xs,
-  },
-  periodLabel: {
-    ...Typography.titleMedium,
-    minWidth: 140,
-    textAlign: 'center',
-  },
-  preview: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: Spacing.md,
-    gap: Spacing.sm,
-  },
-  previewLabel: {
-    ...Typography.labelMedium,
-  },
-  previewValue: {
-    ...Typography.titleMedium,
-    marginBottom: Spacing.sm,
-  },
-  lineItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  emptyHint: {
-    ...Typography.bodySmall,
-    fontStyle: 'italic',
-  },
-  totalRow: {
-    borderTopWidth: 1,
-    paddingTop: Spacing.sm,
-    marginTop: Spacing.xs,
-  },
-  totalLabel: {
-    ...Typography.titleMedium,
-  },
-  totalValue: {
-    ...Typography.titleLarge,
-  },
-});

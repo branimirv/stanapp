@@ -16,7 +16,9 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { useTheme } from 'react-native-paper';
+
+import { Colors } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 const INPUT_HEIGHT = 48;
 const DEBOUNCE_MS = 250;
@@ -53,7 +55,7 @@ export const AppExpandableSearch = forwardRef<
   },
   ref,
 ) {
-  const theme = useTheme();
+  const { isDark, theme } = useAppTheme();
   const inputRef = useRef<TextInput>(null);
   const didAutoFocus = useRef(false);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -62,9 +64,10 @@ export const AppExpandableSearch = forwardRef<
   const [hasText, setHasText] = useState(false);
   const [focused, setFocused] = useState(false);
 
-  const inputBackground = theme.colors.background;
+  const inputBackground = isDark ? Colors.backgroundDark : Colors.background;
   const iconColor = theme.colors.onSurfaceVariant;
   const borderColor = focused ? theme.colors.primary : theme.colors.outline;
+  const textColor = theme.colors.onSurface;
 
   const syncHasText = useCallback(
     (next: string) => {
@@ -187,10 +190,10 @@ export const AppExpandableSearch = forwardRef<
           autoCorrect={false}
           autoComplete="off"
           spellCheck={false}
-          placeholderTextColor={theme.colors.onSurfaceVariant}
-          selectionColor={theme.colors.primary}
-          cursorColor={theme.colors.primary}
-          style={[styles.nativeInput, { color: theme.colors.onSurface }]}
+          placeholderTextColor={iconColor}
+          selectionColor={Colors.primary}
+          cursorColor={Colors.primary}
+          style={[styles.nativeInput, { color: textColor }]}
         />
 
         <Pressable

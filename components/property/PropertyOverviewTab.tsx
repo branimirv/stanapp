@@ -2,7 +2,6 @@ import { Image } from 'expo-image';
 import { MapPin } from 'lucide-react-native';
 import { memo, useCallback, useMemo } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { ExpenseCard } from '@/components/expense/ExpenseCard';
 import { PropertyRentCard } from '@/components/property/PropertyRentCard';
@@ -11,8 +10,9 @@ import { PropertyTypeBadge } from '@/components/property/PropertyTypeBadge';
 import { SubPropertyList } from '@/components/property/SubPropertyList';
 import { UsageStatusBadge } from '@/components/property/UsageStatusBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Text } from '@/components/ui/text';
 import { listPerformanceProps } from '@/constants/list';
-import { Spacing, Typography } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import type {
   Expense,
   ExpenseCategory,
@@ -85,7 +85,6 @@ function PropertyOverviewTabComponent({
   onAddExpense,
 }: PropertyOverviewTabProps) {
   const { t } = useTranslation();
-  const theme = useTheme();
 
   const propertyMeta = useMemo(() => {
     const parts: string[] = [];
@@ -131,13 +130,13 @@ function PropertyOverviewTabComponent({
         accessibilityRole="button"
         accessibilityLabel={t('properties.openInMaps')}
       >
-        <MapPin size={18} color={theme.colors.primary} strokeWidth={2} />
-        <Text style={[styles.address, { color: theme.colors.onSurface }]} numberOfLines={2}>
+        <MapPin size={18} className="text-primary" strokeWidth={2} />
+        <Text className="flex-1 text-base font-medium" numberOfLines={2}>
           {property.address}
         </Text>
       </Pressable>
       {propertyMeta ? (
-        <Text style={[styles.meta, { color: theme.colors.onSurfaceVariant }]}>{propertyMeta}</Text>
+        <Text className="text-muted-foreground mb-1 text-xs">{propertyMeta}</Text>
       ) : null}
 
       {isRented ? (
@@ -158,9 +157,7 @@ function PropertyOverviewTabComponent({
       ) : null}
 
       {property.notes ? (
-        <Text style={[styles.notes, { color: theme.colors.onSurfaceVariant }]}>
-          {property.notes}
-        </Text>
+        <Text className="text-muted-foreground mb-4 text-sm">{property.notes}</Text>
       ) : null}
 
       <PropertyStats
@@ -172,10 +169,10 @@ function PropertyOverviewTabComponent({
       />
 
       <View style={styles.expensesSectionHeader}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+        <Text className="text-base font-medium">
           {t('properties.thisMonthExpenses', { month: formatMonthName(month, year, language) })}
         </Text>
-        <Text style={{ color: theme.colors.onSurfaceVariant }}>
+        <Text className="text-muted-foreground">
           {formatCurrency(monthExpenseTotal, currency, language)}
         </Text>
       </View>
@@ -186,7 +183,7 @@ function PropertyOverviewTabComponent({
     <>
       {hasAnyExpenses ? (
         <Text
-          style={[styles.viewAllLink, { color: theme.colors.primary }]}
+          className="text-primary my-2 text-center text-sm"
           onPress={onViewAllExpenses}
         >
           {t('properties.viewAllExpenses')}
@@ -248,33 +245,11 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     minHeight: 44,
   },
-  address: {
-    ...Typography.titleMedium,
-    flex: 1,
-  },
-  meta: {
-    ...Typography.bodySmall,
-    marginBottom: Spacing.xs,
-  },
-  notes: {
-    ...Typography.bodyMedium,
-    marginBottom: Spacing.md,
-  },
-  sectionTitle: {
-    ...Typography.titleMedium,
-    marginTop: Spacing.md,
-    marginBottom: Spacing.sm,
-  },
   expensesSectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: Spacing.md,
-  },
-  viewAllLink: {
-    ...Typography.bodyMedium,
-    textAlign: 'center',
-    marginVertical: Spacing.sm,
   },
   subPropertiesSection: {
     marginTop: Spacing.md,

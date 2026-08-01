@@ -1,9 +1,11 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react-native';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+
+import { Text } from '@/components/ui/text';
+import { Colors } from '@/constants/theme';
+import { cn } from '@/lib/utils';
 
 export interface SummaryCardProps {
   title: string;
@@ -14,6 +16,7 @@ export interface SummaryCardProps {
   invertDelta?: boolean;
   hero?: boolean;
   style?: StyleProp<ViewStyle>;
+  className?: string;
 }
 
 function formatDelta(delta: number): string {
@@ -29,13 +32,12 @@ function DeltaBadge({
   invertDelta?: boolean;
 }) {
   const { t } = useTranslation();
-  const theme = useTheme();
 
   if (delta === null || delta === undefined) {
     return (
-      <View style={styles.deltaRow}>
-        <Minus size={12} color={theme.colors.onSurfaceVariant} strokeWidth={2} />
-        <Text style={[styles.deltaText, { color: theme.colors.onSurfaceVariant }]}>
+      <View className="mt-0.5 flex-row items-center gap-1">
+        <Minus size={12} color={Colors.textSecondary} strokeWidth={2} />
+        <Text className="text-muted-foreground text-[11px] font-medium">
           {t('dashboard.noComparison')}
         </Text>
       </View>
@@ -44,17 +46,13 @@ function DeltaBadge({
 
   const isPositive = invertDelta ? delta < 0 : delta > 0;
   const isNeutral = delta === 0;
-  const color = isNeutral
-    ? theme.colors.onSurfaceVariant
-    : isPositive
-      ? Colors.accent
-      : Colors.danger;
+  const color = isNeutral ? Colors.textSecondary : isPositive ? Colors.accent : Colors.danger;
   const Icon = isNeutral ? Minus : delta > 0 ? TrendingUp : TrendingDown;
 
   return (
-    <View style={styles.deltaRow}>
+    <View className="mt-0.5 flex-row items-center gap-1">
       <Icon size={12} color={color} strokeWidth={2} />
-      <Text style={[styles.deltaText, { color }]}>
+      <Text className="text-[11px] font-medium" style={{ color }}>
         {formatDelta(delta)} {t('dashboard.vsLastMonth')}
       </Text>
     </View>
@@ -70,30 +68,27 @@ export function SummaryCard({
   invertDelta,
   hero = false,
   style,
+  className,
 }: SummaryCardProps) {
-  const theme = useTheme();
-
   if (hero) {
     return (
       <View
-        style={[
-          styles.heroCard,
-          {
-            backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-            borderColor: theme.colors.outline,
-          },
-          style,
-        ]}
+        className={cn(
+          'bg-card border-border mb-4 gap-2 rounded-2xl border p-6',
+          className,
+        )}
+        style={style}
       >
-        <View style={styles.heroHeader}>
-          <View style={[styles.iconWrap, { backgroundColor: `${accentColor}22` }]}>
+        <View className="flex-row items-center gap-2">
+          <View
+            className="h-10 w-10 items-center justify-center rounded-full"
+            style={{ backgroundColor: `${accentColor}22` }}
+          >
             <Icon size={24} color={accentColor} strokeWidth={2} />
           </View>
-          <Text style={[styles.heroTitle, { color: theme.colors.onSurfaceVariant }]}>
-            {title}
-          </Text>
+          <Text className="text-muted-foreground text-base font-medium">{title}</Text>
         </View>
-        <Text style={[styles.heroValue, { color: theme.colors.onSurface }]} numberOfLines={1}>
+        <Text className="text-3xl font-bold" numberOfLines={1}>
           {value}
         </Text>
         <DeltaBadge delta={delta} invertDelta={invertDelta} />
@@ -103,76 +98,22 @@ export function SummaryCard({
 
   return (
     <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-          borderColor: theme.colors.outline,
-        },
-        style,
-      ]}
+      className={cn('bg-card border-border min-w-25 flex-1 gap-2 rounded-2xl border p-4', className)}
+      style={style}
     >
-      <View style={[styles.iconWrap, { backgroundColor: `${accentColor}22` }]}>
+      <View
+        className="h-10 w-10 items-center justify-center rounded-full"
+        style={{ backgroundColor: `${accentColor}22` }}
+      >
         <Icon size={22} color={accentColor} strokeWidth={2} />
       </View>
-      <Text style={[styles.title, { color: theme.colors.onSurfaceVariant }]} numberOfLines={1}>
+      <Text className="text-muted-foreground text-xs font-medium" numberOfLines={1}>
         {title}
       </Text>
-      <Text style={[styles.value, { color: theme.colors.onSurface }]} numberOfLines={1}>
+      <Text className="text-lg font-semibold" numberOfLines={1}>
         {value}
       </Text>
       {delta !== undefined ? <DeltaBadge delta={delta} invertDelta={invertDelta} /> : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    flex: 1,
-    minWidth: 100,
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: Spacing.md,
-    gap: Spacing.sm,
-  },
-  heroCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: Spacing.lg,
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
-  },
-  heroHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  heroTitle: {
-    ...Typography.titleMedium,
-  },
-  heroValue: {
-    ...Typography.displayMedium,
-  },
-  iconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    ...Typography.labelMedium,
-  },
-  value: {
-    ...Typography.titleLarge,
-  },
-  deltaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 2,
-  },
-  deltaText: {
-    ...Typography.labelSmall,
-  },
-});

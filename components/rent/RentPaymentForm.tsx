@@ -2,14 +2,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppDatePicker } from '@/components/ui/AppDatePicker';
 import { AppFormScroll, AppFormSubmit } from '@/components/ui/AppFormScroll';
 import { AppPicker } from '@/components/ui/AppPicker';
 import { AppTextInput } from '@/components/ui/AppTextInput';
+import { Text } from '@/components/ui/text';
 import { PAYMENT_STATUSES } from '@/constants/config';
-import { Spacing, Typography } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import type { PaymentStatus, Property, Tenant } from '@/types/app.types';
 import { parseDateString, toDateString, translateFieldError } from '@/utils/formHelpers';
 import { rentPaymentSchema, type RentPaymentFormValues } from '@/utils/validators';
@@ -47,7 +47,6 @@ export function RentPaymentForm({
   submitLabel,
   onSubmit,
 }: RentPaymentFormProps) {
-  const theme = useTheme();
   const { t } = useTranslation();
 
   const {
@@ -166,9 +165,7 @@ export function RentPaymentForm({
         </View>
 
         <View style={styles.periodField}>
-          <Text style={[styles.periodLabel, { color: theme.colors.onSurface }]}>
-            {t('rent.periodYear')}
-          </Text>
+          <Text className="mb-1 text-sm font-semibold">{t('rent.periodYear')}</Text>
           <Controller
             control={control}
             name="period_year"
@@ -243,10 +240,6 @@ const styles = StyleSheet.create({
   },
   periodField: {
     flex: 1,
-  },
-  periodLabel: {
-    ...Typography.labelLarge,
-    marginBottom: Spacing.xs,
   },
   periodInput: {
     height: 56,

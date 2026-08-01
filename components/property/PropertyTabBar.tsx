@@ -1,8 +1,10 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { Pressable, View } from 'react-native';
 import type { NavigationState, SceneRendererProps } from 'react-native-tab-view';
-import { Spacing, Typography } from '@/constants/theme';
+
+import { Icon as UiIcon } from '@/components/ui/icon';
+import { Text } from '@/components/ui/text';
+import { cn } from '@/lib/utils';
 
 export interface PropertyTabBarProps extends SceneRendererProps {
   navigationState: NavigationState<{ key: string; title?: string }>;
@@ -10,40 +12,36 @@ export interface PropertyTabBarProps extends SceneRendererProps {
 }
 
 export function PropertyTabBar({ navigationState, jumpTo, icons }: PropertyTabBarProps) {
-  const theme = useTheme();
-
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: theme.colors.background,
-          borderBottomColor: theme.colors.outline,
-        },
-      ]}
-    >
+    <View className="bg-background border-border flex-row border-b">
       {navigationState.routes.map((route, index) => {
         const isFocused = navigationState.index === index;
-        const Icon = icons[route.key];
-        const color = isFocused ? theme.colors.primary : theme.colors.onSurfaceVariant;
+        const RouteIcon = icons[route.key];
 
         return (
           <Pressable
             key={route.key}
-            style={[
-              styles.tab,
-              isFocused && {
-                borderBottomColor: theme.colors.primary,
-                borderBottomWidth: 2,
-              },
-            ]}
+            className={cn(
+              'min-h-13 flex-1 items-center justify-center gap-0.5 px-1 py-2',
+              isFocused && 'border-primary border-b-2',
+            )}
             onPress={() => jumpTo(route.key)}
             accessibilityRole="tab"
             accessibilityState={{ selected: isFocused }}
           >
-            {Icon ? <Icon size={20} color={color} strokeWidth={2} /> : null}
+            {RouteIcon ? (
+              <UiIcon
+                as={RouteIcon}
+                size={20}
+                className={isFocused ? 'text-primary' : 'text-muted-foreground'}
+                strokeWidth={2}
+              />
+            ) : null}
             <Text
-              style={[styles.label, { color }, isFocused && styles.labelActive]}
+              className={cn(
+                'text-center text-[11px] font-medium',
+                isFocused ? 'text-primary font-semibold' : 'text-muted-foreground',
+              )}
               numberOfLines={1}
             >
               {route.title}
@@ -54,26 +52,3 @@ export function PropertyTabBar({ navigationState, jumpTo, icons }: PropertyTabBa
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.xs,
-    gap: 2,
-    minHeight: 52,
-  },
-  label: {
-    ...Typography.labelSmall,
-    textAlign: 'center',
-  },
-  labelActive: {
-    fontWeight: '600',
-  },
-});

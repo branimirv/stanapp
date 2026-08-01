@@ -2,10 +2,11 @@ import { TrendingDown, TrendingUp } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { ChartCard } from '@/components/reports/ChartCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Text } from '@/components/ui/text';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { formatCurrency } from '@/utils/formatters';
 import type { Language, MonthlyIncomeExpense } from '@/types/app.types';
@@ -30,7 +31,7 @@ export function NetCashFlowChart({
   language = 'hr',
   style,
 }: NetCashFlowChartProps) {
-  const theme = useTheme();
+  const { theme, isDark } = useAppTheme();
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
 
@@ -81,10 +82,10 @@ export function NetCashFlowChart({
   return (
     <ChartCard style={style}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.colors.onSurfaceVariant }]}>
+        <Text className="text-muted-foreground text-sm font-semibold uppercase tracking-wide">
           {t('reports.netCashFlow')}
         </Text>
-        <Text style={[styles.heroValue, { color: netColor }]}>
+        <Text className="text-3xl font-bold" style={{ color: netColor }}>
           {formatCurrency(netTotal, currency, language)}
         </Text>
         {deltaPct !== null ? (
@@ -94,7 +95,7 @@ export function NetCashFlowChart({
             ) : (
               <TrendingDown size={14} color={deltaColor} strokeWidth={2.5} />
             )}
-            <Text style={[styles.deltaText, { color: deltaColor }]}>
+            <Text className="text-sm font-semibold" style={{ color: deltaColor }}>
               {formatDelta(deltaPct)} {t('reports.vsPrevious')}
             </Text>
           </View>
@@ -145,7 +146,7 @@ export function NetCashFlowChart({
                   style={[
                     styles.tooltip,
                     {
-                      backgroundColor: theme.dark ? Colors.surfaceVariantDark : Colors.textPrimary,
+                      backgroundColor: isDark ? Colors.surfaceVariantDark : Colors.textPrimary,
                     },
                   ]}
                 >
@@ -167,22 +168,10 @@ const styles = StyleSheet.create({
   header: {
     gap: Spacing.xs,
   },
-  title: {
-    ...Typography.labelLarge,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  heroValue: {
-    ...Typography.displayMedium,
-  },
   deltaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
-  },
-  deltaText: {
-    ...Typography.bodySmall,
-    fontWeight: '600',
   },
   tooltip: {
     borderRadius: 8,

@@ -1,16 +1,32 @@
 import { forwardRef, type ComponentRef, type ReactElement } from 'react';
 import { Controller, type Control, type FieldPath, type FieldValues } from 'react-hook-form';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import {
-  HelperText,
   TextInput,
-  useTheme,
-  type TextInputProps,
-} from 'react-native-paper';
+  View,
+  type StyleProp,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
 
-type BaseAppTextInputProps = Omit<TextInputProps, 'error'> & {
+import { Input } from '@/components/ui/input';
+import { Text } from '@/components/ui/text';
+import { cn } from '@/lib/utils';
+
+type BaseAppTextInputProps = Omit<
+  React.ComponentProps<typeof TextInput>,
+  'style' | 'onChange' | 'value'
+> & {
   error?: string;
   containerStyle?: StyleProp<ViewStyle>;
+  label?: string;
+  value?: string;
+  onChangeText?: (text: string) => void;
+  style?: StyleProp<TextStyle>;
+  className?: string;
+  left?: React.ReactNode;
+  right?: React.ReactNode;
+  mode?: 'outlined' | 'flat';
+  dense?: boolean;
 };
 
 export type AppTextInputProps<TFieldValues extends FieldValues = FieldValues> =
@@ -24,36 +40,30 @@ const AppTextInputInner = forwardRef<ComponentRef<typeof TextInput>, BaseAppText
     {
       error,
       containerStyle,
-      mode = 'outlined',
+      label,
+      className,
       style,
+      left: _left,
+      right: _right,
+      mode: _mode,
+      dense: _dense,
       ...rest
     },
     ref,
   ) {
-    const theme = useTheme();
     const hasError = Boolean(error);
-    const inputBackground = theme.colors.background;
 
     return (
-      <View style={[styles.container, containerStyle]}>
-        <TextInput
-          ref={ref as never}
-          mode={mode}
-          error={hasError}
-          textColor={theme.colors.onSurface}
-          outlineColor={theme.colors.outline}
-          activeOutlineColor={theme.colors.primary}
-          placeholderTextColor={theme.colors.onSurfaceVariant}
-          selectionColor={theme.colors.primary}
-          cursorColor={theme.colors.primary}
-          style={[styles.input, { backgroundColor: inputBackground }, style]}
+      <View className="w-full gap-1.5" style={containerStyle}>
+        {label ? <Text className="text-muted-foreground text-sm font-medium">{label}</Text> : null}
+        <Input
+          ref={ref}
+          className={cn('min-h-11 rounded-xl', hasError && 'border-destructive', className)}
+          style={style}
+          aria-invalid={hasError}
           {...rest}
         />
-        {hasError ? (
-          <HelperText type="error" visible={hasError}>
-            {error}
-          </HelperText>
-        ) : null}
+        {hasError ? <Text className="text-destructive text-sm">{error}</Text> : null}
       </View>
     );
   },
@@ -99,12 +109,3 @@ export const AppTextInput = forwardRef(function AppTextInput<
     ref?: React.Ref<ComponentRef<typeof TextInput>>;
   },
 ) => ReactElement | null;
-
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-  },
-  input: {
-    backgroundColor: 'transparent',
-  },
-});

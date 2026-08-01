@@ -10,7 +10,6 @@ import {
   UserPlus,
 } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { router, useLocalSearchParams } from 'expo-router';
 import { TabView, type Route } from 'react-native-tab-view';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +17,7 @@ import { AppFab } from '@/components/ui/AppFab';
 import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import { Text } from '@/components/ui/text';
 import { PropertyExpensesTab } from '@/components/property/PropertyExpensesTab';
 import { PropertyOverviewTab } from '@/components/property/PropertyOverviewTab';
 import { PropertyRentTab } from '@/components/property/PropertyRentTab';
@@ -27,7 +27,8 @@ import { UsageHistorySheet } from '@/components/property/UsageHistorySheet';
 import { QuickAddExpenseSheet } from '@/components/expense/QuickAddExpenseSheet';
 import { StatementSheet } from '@/components/property/StatementSheet';
 import { RentMonthActionSheet } from '@/components/rent/RentMonthActionSheet';
-import { Colors, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useLocale } from '@/hooks/useLocale';
 import { useMyMembership } from '@/hooks/useMembers';
@@ -58,7 +59,7 @@ const TAB_ICONS: Record<TabKey, LucideIcon> = {
 export default function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
-  const theme = useTheme();
+  const { isDark } = useAppTheme();
   const layout = useWindowDimensions();
   const showToast = useUiStore((s) => s.showToast);
 
@@ -533,13 +534,11 @@ export default function PropertyDetailScreen() {
     >
       {parentProperty ? (
         <View
-          style={[
-            styles.parentBanner,
-            { backgroundColor: theme.dark ? Colors.surfaceVariantDark : Colors.primaryLight },
-          ]}
+          style={styles.parentBanner}
+          className={isDark ? 'bg-secondary' : 'bg-accent'}
         >
           <Text
-            style={{ color: theme.colors.primary }}
+            className="text-primary"
             onPress={() => router.push(`/property/${parentProperty.id}`)}
           >
             {t('properties.linkedTo', { name: parentProperty.name })}
@@ -600,13 +599,7 @@ export default function PropertyDetailScreen() {
         onAddDetails={handleRentAddDetails}
       />
 
-      {canManage ? (
-        <AppFab
-          style={[styles.fab, { backgroundColor: theme.colors.primary }]}
-          color={Colors.textInverse}
-          onPress={handleFabPress}
-        />
-      ) : null}
+      {canManage ? <AppFab style={styles.fab} onPress={handleFabPress} /> : null}
     </DetailScreenScaffold>
   );
 }

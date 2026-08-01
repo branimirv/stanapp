@@ -1,12 +1,13 @@
 import { SlidersHorizontal } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { ReportFiltersSheet } from '@/components/reports/ReportFiltersSheet';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { FilterChipRow, type FilterChip } from '@/components/ui/FilterChipRow';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { Colors, Spacing } from '@/constants/theme';
 import type { ReportCategoryTypeFilter } from '@/types/app.types';
 
 export interface ReportFiltersProps {
@@ -42,7 +43,7 @@ export function ReportFilters({
   propertyOptions,
   categoryOptions,
 }: ReportFiltersProps) {
-  const theme = useTheme();
+  const { isDark } = useAppTheme();
   const { t } = useTranslation();
   const [sheetVisible, setSheetVisible] = useState(false);
 
@@ -120,22 +121,18 @@ export function ReportFilters({
         onPress={() => setSheetVisible(true)}
         style={({ pressed }) => [
           styles.filtersTrigger,
-          {
-            borderColor: theme.colors.outline,
-            backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-            opacity: pressed ? 0.7 : 1,
-          },
+          { backgroundColor: isDark ? Colors.surfaceDark : Colors.surface },
+          { opacity: pressed ? 0.7 : 1 },
         ]}
+        className="border-border"
         accessibilityRole="button"
         accessibilityLabel={filtersAccessibilityLabel}
       >
-        <SlidersHorizontal size={16} color={theme.colors.primary} strokeWidth={2.5} />
-        <Text style={[styles.filtersLabel, { color: theme.colors.primary }]}>
-          {t('reports.filters')}
-        </Text>
+        <SlidersHorizontal size={16} className="text-primary" strokeWidth={2.5} />
+        <Text className="text-primary text-sm font-semibold">{t('reports.filters')}</Text>
         {activeFilterCount > 0 ? (
-          <View style={[styles.badge, { backgroundColor: theme.colors.primary }]}>
-            <Text style={[styles.badgeText, { color: theme.colors.onPrimary }]}>
+          <View style={styles.badge} className="bg-primary">
+            <Text className="text-primary-foreground text-[11px] font-bold">
               {activeFilterCount}
             </Text>
           </View>
@@ -176,10 +173,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
-  filtersLabel: {
-    ...Typography.labelLarge,
-    fontWeight: '600',
-  },
   badge: {
     minWidth: 18,
     height: 18,
@@ -187,10 +180,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
-  },
-  badgeText: {
-    ...Typography.labelSmall,
-    fontWeight: '700',
-    fontSize: 11,
   },
 });

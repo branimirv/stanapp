@@ -1,9 +1,9 @@
 import { format } from 'date-fns';
 import { enUS, hr } from 'date-fns/locale';
-import { StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Spacing, Typography } from '@/constants/theme';
+
+import { Text } from '@/components/ui/text';
 import type { Language } from '@/types/app.types';
 
 const dateLocales = { en: enUS, hr } as const;
@@ -21,7 +21,6 @@ function getGreetingKey(): string {
 }
 
 export function DashboardHeader({ name, language = 'hr' }: DashboardHeaderProps) {
-  const theme = useTheme();
   const { t } = useTranslation();
   const locale = dateLocales[language];
 
@@ -29,22 +28,9 @@ export function DashboardHeader({ name, language = 'hr' }: DashboardHeaderProps)
   const dateLabel = format(new Date(), 'EEEE, d MMMM yyyy', { locale });
 
   return (
-    <View style={styles.container}>
-      <Text style={[styles.greeting, { color: theme.colors.onSurface }]}>{greeting}</Text>
-      <Text style={[styles.date, { color: theme.colors.onSurfaceVariant }]}>{dateLabel}</Text>
+    <View className="mb-4 gap-0.5">
+      <Text className="text-xl font-semibold">{greeting}</Text>
+      <Text className="text-muted-foreground text-sm">{dateLabel}</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: Spacing.md,
-    gap: 2,
-  },
-  greeting: {
-    ...Typography.headlineMedium,
-  },
-  date: {
-    ...Typography.bodyMedium,
-  },
-});

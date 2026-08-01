@@ -1,9 +1,42 @@
-import { ActivityIndicator, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
-import { Button, useTheme, type ButtonProps } from 'react-native-paper';
+import { ActivityIndicator, type StyleProp, type ViewStyle } from 'react-native';
 
-export interface AppButtonProps extends Omit<ButtonProps, 'loading'> {
+import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
+import { cn } from '@/lib/utils';
+
+type PaperMode = 'contained' | 'outlined' | 'text' | 'elevated' | 'contained-tonal';
+
+export interface AppButtonProps {
+  mode?: PaperMode;
   loading?: boolean;
+  disabled?: boolean;
+  children?: React.ReactNode;
+  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
   containerStyle?: StyleProp<ViewStyle>;
+  /** Paper compat — used for destructive outlined/text actions */
+  textColor?: string;
+  className?: string;
+  accessibilityLabel?: string;
+}
+
+function mapModeToVariant(
+  mode: PaperMode,
+  textColor?: string,
+): 'default' | 'outline' | 'ghost' | 'secondary' | 'destructive' {
+  if (textColor) return 'destructive';
+  switch (mode) {
+    case 'outlined':
+      return 'outline';
+    case 'text':
+      return 'ghost';
+    case 'contained-tonal':
+      return 'secondary';
+    case 'elevated':
+    case 'contained':
+    default:
+      return 'default';
+  }
 }
 
 export function AppButton({
@@ -11,38 +44,34 @@ export function AppButton({
   disabled,
   children,
   mode = 'contained',
-  containerStyle,
+  onPress,
   style,
-  ...rest
+  textColor,
+  className,
+  accessibilityLabel,
 }: AppButtonProps) {
-  const theme = useTheme();
   const isDisabled = disabled || loading;
+  const variant = mapModeToVariant(mode, textColor);
 
   return (
     <Button
-      mode={mode}
+      variant={variant}
       disabled={isDisabled}
-      style={[styles.button, style]}
-      contentStyle={[styles.content, containerStyle]}
-      {...rest}
+      onPress={onPress}
+      accessibilityLabel={accessibilityLabel}
+      className={cn('min-h-11 rounded-xl', className)}
+      style={style}
     >
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={mode === 'contained' ? theme.colors.onPrimary : theme.colors.primary}
+          color={variant === 'default' || variant === 'destructive' ? '#FFFFFF' : '#2563EB'}
         />
+      ) : typeof children === 'string' || typeof children === 'number' ? (
+        <Text>{children}</Text>
       ) : (
         children
       )}
     </Button>
   );
 }
-
-const styles = StyleSheet.create({
-  button: {
-    borderRadius: 12,
-  },
-  content: {
-    minHeight: 44,
-  },
-});

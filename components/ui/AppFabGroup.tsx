@@ -1,16 +1,11 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { Plus, X } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
-import {
-  Platform,
-  Pressable,
-  StyleSheet,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
-import { FAB, Text, useTheme } from 'react-native-paper';
-import { Spacing, Typography } from '@/constants/theme';
+import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
+
+import { Icon } from '@/components/ui/icon';
+import { Text } from '@/components/ui/text';
+import { cn } from '@/lib/utils';
 
 export type AppFabAction = {
   icon: LucideIcon;
@@ -22,16 +17,10 @@ type AppFabGroupProps = {
   actions: AppFabAction[];
   style?: StyleProp<ViewStyle>;
   fabStyle?: StyleProp<ViewStyle>;
+  className?: string;
 };
 
-function renderLucideIcon(Icon: LucideIcon) {
-  return ({ size, color }: { size: number; color: string }) => (
-    <Icon size={size} color={color} strokeWidth={2} />
-  );
-}
-
-function WebFabGroup({ actions, style, fabStyle }: AppFabGroupProps) {
-  const theme = useTheme();
+export function AppFabGroup({ actions, style, fabStyle, className }: AppFabGroupProps) {
   const [open, setOpen] = useState(false);
 
   const close = useCallback(() => setOpen(false), []);
@@ -45,45 +34,37 @@ function WebFabGroup({ actions, style, fabStyle }: AppFabGroupProps) {
   );
 
   return (
-    <View pointerEvents="box-none" style={[styles.container, style]}>
+    <View
+      pointerEvents="box-none"
+      className={cn('absolute inset-0 items-end justify-end', className)}
+      style={style}
+    >
       {open ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Close menu"
           onPress={close}
-          style={[styles.backdrop, { backgroundColor: theme.colors.scrim }]}
+          className="absolute inset-0 bg-black/40"
         />
       ) : null}
 
       {open ? (
-        <View pointerEvents="box-none" style={styles.actions}>
+        <View pointerEvents="box-none" className="mb-4 mr-4 items-end gap-4">
           {actions.map((action) => {
-            const Icon = action.icon;
+            const ActionIcon = action.icon;
             return (
               <Pressable
                 key={action.label}
                 accessibilityRole="button"
                 accessibilityLabel={action.label}
                 onPress={() => handleActionPress(action.onPress)}
-                style={({ pressed }) => [styles.actionRow, pressed && styles.actionRowPressed]}
+                className="flex-row items-center gap-2 active:opacity-85"
               >
-                <View
-                  style={[
-                    styles.labelCard,
-                    { backgroundColor: theme.colors.elevation.level2 },
-                  ]}
-                >
-                  <Text style={[styles.label, { color: theme.colors.onSurface }]}>
-                    {action.label}
-                  </Text>
+                <View className="bg-card rounded-xl px-4 py-2 shadow-sm">
+                  <Text className="text-base font-medium">{action.label}</Text>
                 </View>
-                <View
-                  style={[
-                    styles.actionFab,
-                    { backgroundColor: theme.colors.secondaryContainer },
-                  ]}
-                >
-                  <Icon size={24} color={theme.colors.onSecondaryContainer} strokeWidth={2} />
+                <View className="bg-accent h-10 w-10 items-center justify-center rounded-full shadow-sm">
+                  <ActionIcon size={24} color="#1E40AF" strokeWidth={2} />
                 </View>
               </Pressable>
             );
@@ -91,93 +72,20 @@ function WebFabGroup({ actions, style, fabStyle }: AppFabGroupProps) {
         </View>
       ) : null}
 
-      <FAB
-        icon={renderLucideIcon(open ? X : Plus)}
+      <Pressable
+        accessibilityRole="button"
         accessibilityState={{ expanded: open }}
         onPress={() => setOpen((value) => !value)}
-        style={[styles.fab, fabStyle]}
-      />
+        className="bg-primary mr-4 h-14 w-14 items-center justify-center rounded-2xl shadow-lg active:opacity-90"
+        style={fabStyle}
+      >
+        <Icon
+          as={open ? X : Plus}
+          size={24}
+          className="text-primary-foreground"
+          strokeWidth={2}
+        />
+      </Pressable>
     </View>
   );
 }
-
-function NativeFabGroup({ actions, style, fabStyle }: AppFabGroupProps) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <FAB.Group
-      open={open}
-      visible
-      icon={renderLucideIcon(open ? X : Plus)}
-      actions={actions.map((action) => ({
-        icon: renderLucideIcon(action.icon),
-        label: action.label,
-        onPress: action.onPress,
-      }))}
-      onStateChange={({ open: nextOpen }) => setOpen(nextOpen)}
-      style={style}
-      fabStyle={fabStyle}
-    />
-  );
-}
-
-export function AppFabGroup(props: AppFabGroupProps) {
-  if (Platform.OS === 'web') {
-    return <WebFabGroup {...props} />;
-  }
-
-  return <NativeFabGroup {...props} />;
-}
-
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'flex-end',
-    alignItems: 'flex-end',
-  },
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  actions: {
-    alignItems: 'flex-end',
-    gap: Spacing.md,
-    marginBottom: Spacing.md,
-    paddingRight: Spacing.md,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  actionRowPressed: {
-    opacity: 0.85,
-  },
-  labelCard: {
-    borderRadius: 12,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    elevation: 2,
-  },
-  label: {
-    ...Typography.titleMedium,
-  },
-  actionFab: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 2,
-  },
-  fab: {
-    marginRight: Spacing.md,
-  },
-});

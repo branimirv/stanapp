@@ -2,7 +2,6 @@ import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { Divider, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { Pencil } from 'lucide-react-native';
 import { AppBadge } from '@/components/ui/AppBadge';
@@ -10,8 +9,10 @@ import { AppButton } from '@/components/ui/AppButton';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
+import { Separator } from '@/components/ui/separator';
+import { Text } from '@/components/ui/text';
 import { CategoryBadge } from '@/components/expense/CategoryBadge';
-import { Spacing, Typography } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useExpense, useExpenseMutations } from '@/hooks/useExpenses';
 import { useLocale } from '@/hooks/useLocale';
@@ -25,7 +26,6 @@ import { formatCurrency, formatDate, isOverdue } from '@/utils/formatters';
 export default function ExpenseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
-  const theme = useTheme();
   const showToast = useUiStore((s) => s.showToast);
   const showConfirmDialog = useUiStore((s) => s.showConfirmDialog);
 
@@ -156,47 +156,47 @@ export default function ExpenseDetailScreen() {
           />
         </View>
 
-        <Text style={[styles.amount, { color: theme.colors.onSurface }]}>
+        <Text className="text-foreground text-3xl font-bold">
           {formatCurrency(expense.amount, currency, language)}
         </Text>
 
         {property ? (
           <Text
-            style={[styles.link, { color: theme.colors.primary }]}
+            className="text-primary text-base"
             onPress={() => router.push(`/property/${property.id}`)}
           >
             {property.name}
           </Text>
         ) : null}
 
-        <Divider style={styles.divider} />
+        <Separator style={styles.divider} />
 
-        <Text style={[styles.row, { color: theme.colors.onSurfaceVariant }]}>
+        <Text className="text-muted-foreground text-base">
           {t('expenses.billingDate')}: {formatDate(expense.billing_date, language)}
         </Text>
         {expense.due_date ? (
-          <Text style={[styles.row, { color: theme.colors.onSurfaceVariant }]}>
+          <Text className="text-muted-foreground text-base">
             {t('expenses.dueDate')}: {formatDate(expense.due_date, language)}
           </Text>
         ) : null}
         {expense.paid_at ? (
-          <Text style={[styles.row, { color: theme.colors.onSurfaceVariant }]}>
+          <Text className="text-muted-foreground text-base">
             {t('expenses.paidAt')}: {formatDate(expense.paid_at.slice(0, 10), language)}
           </Text>
         ) : null}
 
         {expense.notes ? (
           <>
-            <Text style={[styles.section, { color: theme.colors.onSurface }]}>
+            <Text className="text-foreground mt-2 text-lg font-medium">
               {t('common.notes')}
             </Text>
-            <Text style={{ color: theme.colors.onSurfaceVariant }}>{expense.notes}</Text>
+            <Text className="text-muted-foreground">{expense.notes}</Text>
           </>
         ) : null}
 
         {expense.receipt_photo_url ? (
           <>
-            <Text style={[styles.section, { color: theme.colors.onSurface }]}>
+            <Text className="text-foreground mt-2 text-lg font-medium">
               {t('expenses.receipt')}
             </Text>
             <Image
@@ -213,7 +213,7 @@ export default function ExpenseDetailScreen() {
               {t('expenses.markPaid')}
             </AppButton>
           ) : null}
-          <AppButton mode="outlined" textColor={theme.colors.error} onPress={handleDelete}>
+          <AppButton mode="outlined" textColor="destructive" onPress={handleDelete}>
             {t('common.delete')}
           </AppButton>
         </View>
@@ -236,21 +236,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: Spacing.xs,
   },
-  amount: {
-    ...Typography.displayMedium,
-  },
-  link: {
-    ...Typography.bodyMedium,
-  },
   divider: {
     marginVertical: Spacing.sm,
-  },
-  row: {
-    ...Typography.bodyMedium,
-  },
-  section: {
-    ...Typography.titleMedium,
-    marginTop: Spacing.sm,
   },
   receipt: {
     width: '100%',

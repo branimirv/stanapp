@@ -1,0 +1,103 @@
+@import 'tailwindcss';
+@import 'uniwind';
+@import 'tw-animate-css';
+
+@theme {
+  --radius: 12px;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --spacing-hairline: hairlineWidth();
+}
+
+@layer theme {
+  :root {
+    @variant light {
+      /* Stanapp brand — mapped from constants/theme.ts */
+      --color-background: #f8fafc;
+      --color-foreground: #0f172a;
+      --color-card: #ffffff;
+      --color-card-foreground: #0f172a;
+      --color-popover: #ffffff;
+      --color-popover-foreground: #0f172a;
+      --color-primary: #2563eb;
+      --color-primary-foreground: #ffffff;
+      --color-secondary: #f1f5f9;
+      --color-secondary-foreground: #0f172a;
+      --color-muted: #f1f5f9;
+      --color-muted-foreground: #64748b;
+      --color-accent: #dbeafe;
+      --color-accent-foreground: #1e40af;
+      --color-destructive: #ef4444;
+      --color-border: #e2e8f0;
+      --color-input: #e2e8f0;
+      --color-ring: #2563eb;
+      --color-chart-1: #2563eb;
+      --color-chart-2: #10b981;
+      --color-chart-3: #f59e0b;
+      --color-chart-4: #8b5cf6;
+      --color-chart-5: #ef4444;
+      --color-sidebar: #ffffff;
+      --color-sidebar-foreground: #0f172a;
+      --color-sidebar-primary: #2563eb;
+      --color-sidebar-primary-foreground: #ffffff;
+      --color-sidebar-accent: #f1f5f9;
+      --color-sidebar-accent-foreground: #0f172a;
+      --color-sidebar-border: #e2e8f0;
+      --color-sidebar-ring: #2563eb;
+
+      /* Domain extras */
+      --color-success: #10b981;
+      --color-warning: #f59e0b;
+      --color-status-paid: #10b981;
+      --color-status-pending: #f59e0b;
+      --color-status-late: #ef4444;
+      --color-status-partial: #8b5cf6;
+      --color-surface-variant: #f1f5f9;
+    }
+
+    @variant dark {
+      --color-background: #000000;
+      --color-foreground: #ffffff;
+      --color-card: #121212;
+      --color-card-foreground: #ffffff;
+      --color-popover: #121212;
+      --color-popover-foreground: #ffffff;
+      --color-primary: #2563eb;
+      --color-primary-foreground: #ffffff;
+      --color-secondary: #1c1c1e;
+      --color-secondary-foreground: #ffffff;
+      --color-muted: #1c1c1e;
+      --color-muted-foreground: #9ca3af;
+      --color-accent: #1e3a8a;
+      --color-accent-foreground: #dbeafe;
+      --color-destructive: #ef4444;
+      --color-border: #2a2a2c;
+      --color-input: #2a2a2c;
+      --color-ring: #2563eb;
+      --color-chart-1: #3b82f6;
+      --color-chart-2: #10b981;
+      --color-chart-3: #f59e0b;
+      --color-chart-4: #8b5cf6;
+      --color-chart-5: #ef4444;
+      --color-sidebar: #121212;
+      --color-sidebar-foreground: #ffffff;
+      --color-sidebar-primary: #2563eb;
+      --color-sidebar-primary-foreground: #ffffff;
+      --color-sidebar-accent: #1c1c1e;
+      --color-sidebar-accent-foreground: #ffffff;
+      --color-sidebar-border: #2a2a2c;
+      --color-sidebar-ring: #2563eb;
+
+      --color-success: #10b981;
+      --color-warning: #f59e0b;
+      --color-status-paid: #10b981;
+      --color-status-pending: #f59e0b;
+      --color-status-late: #ef4444;
+      --color-status-partial: #8b5cf6;
+      --color-surface-variant: #1c1c1e;
+    }
+  }
+}

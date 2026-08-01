@@ -1,7 +1,9 @@
-import { StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+
+import { Text } from '@/components/ui/text';
+import { Colors } from '@/constants/theme';
+import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/formatters';
 import type { Language } from '@/types/app.types';
 
@@ -20,7 +22,6 @@ export function PropertyStats({
   language = 'hr',
   periodLabel,
 }: PropertyStatsProps) {
-  const theme = useTheme();
   const { t, i18n } = useTranslation();
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
   const net = totalIncome - totalExpenses;
@@ -47,36 +48,21 @@ export function PropertyStats({
   ] as const;
 
   return (
-    <View style={styles.wrapper}>
-      {periodLabel ? (
-        <Text style={[styles.periodLabel, { color: theme.colors.onSurfaceVariant }]}>
-          {periodLabel}
-        </Text>
-      ) : null}
-      <View
-        style={[
-          styles.container,
-          {
-            backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-            borderColor: theme.colors.outline,
-          },
-        ]}
-      >
+    <View className="gap-1">
+      {periodLabel ? <Text className="text-muted-foreground text-xs">{periodLabel}</Text> : null}
+      <View className="bg-card border-border flex-row overflow-hidden rounded-xl border">
         {stats.map((stat, index) => (
           <View
             key={stat.key}
-            style={[
-              styles.stat,
-              index < stats.length - 1 && [
-                styles.statDivider,
-                { borderRightColor: theme.colors.outline },
-              ],
-            ]}
+            className={cn(
+              'flex-1 items-center justify-center px-2 py-4',
+              index < stats.length - 1 && 'border-border border-r',
+            )}
           >
-            <Text style={[styles.label, { color: theme.colors.onSurfaceVariant }]}>
+            <Text className="text-muted-foreground mb-1 text-center text-xs font-medium">
               {stat.label}
             </Text>
-            <Text style={[styles.value, { color: stat.color }]} numberOfLines={1}>
+            <Text className="text-center text-base font-medium" style={{ color: stat.color }} numberOfLines={1}>
               {stat.value}
             </Text>
           </View>
@@ -85,37 +71,3 @@ export function PropertyStats({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrapper: {
-    gap: Spacing.xs,
-  },
-  periodLabel: {
-    ...Typography.bodySmall,
-  },
-  container: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  stat: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
-  },
-  statDivider: {
-    borderRightWidth: 1,
-  },
-  label: {
-    ...Typography.labelMedium,
-    marginBottom: Spacing.xs,
-    textAlign: 'center',
-  },
-  value: {
-    ...Typography.titleMedium,
-    textAlign: 'center',
-  },
-});

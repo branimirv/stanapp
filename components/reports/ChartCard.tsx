@@ -1,7 +1,7 @@
 import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
-import { useTheme } from 'react-native-paper';
 import { AppCard } from '@/components/ui/AppCard';
 import { Colors, Spacing } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 export interface ChartCardProps {
   children: React.ReactNode;
@@ -9,15 +9,15 @@ export interface ChartCardProps {
 }
 
 export function ChartCard({ children, style }: ChartCardProps) {
-  const theme = useTheme();
+  const { isDark } = useAppTheme();
 
   return (
     <AppCard
       style={[
         styles.card,
         {
-          backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-          borderColor: theme.dark ? Colors.borderDark : Colors.border,
+          backgroundColor: isDark ? Colors.surfaceDark : Colors.surface,
+          borderColor: isDark ? Colors.borderDark : Colors.border,
         },
         style,
       ]}

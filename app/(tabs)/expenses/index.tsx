@@ -9,7 +9,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { ExpenseCard } from '@/components/expense/ExpenseCard';
 import {
@@ -23,7 +22,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { listPerformanceProps } from '@/constants/list';
-import { Spacing, Typography } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useExpandableSearchState } from '@/hooks/useExpandableSearch';
@@ -45,7 +44,6 @@ interface ExpenseSection {
 
 export default function ExpensesScreen() {
   const { t, i18n } = useTranslation();
-  const theme = useTheme();
   const params = useLocalSearchParams<{ filter?: string }>();
   const showConfirmDialog = useUiStore((state) => state.showConfirmDialog);
   const showToast = useUiStore((state) => state.showToast);
@@ -261,11 +259,9 @@ export default function ExpensesScreen() {
 
   const renderSectionHeader = useCallback(
     ({ section }: { section: ExpenseSection }) => (
-      <View style={[styles.sectionHeader, { backgroundColor: theme.colors.background }]}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-          {section.title}
-        </Text>
-        <Text style={[styles.sectionTotal, { color: theme.colors.onSurfaceVariant }]}>
+      <View style={styles.sectionHeader} className="bg-background">
+        <Text className="text-base font-medium">{section.title}</Text>
+        <Text className="text-muted-foreground mt-0.5 text-xs">
           {t('expenses.monthTotal', {
             period: formatPeriod(section.month, section.year, language),
           })}
@@ -274,12 +270,12 @@ export default function ExpensesScreen() {
         </Text>
       </View>
     ),
-    [currency, language, t, theme.colors.background, theme.colors.onSurface, theme.colors.onSurfaceVariant],
+    [currency, language, t],
   );
 
   if (isLoading && expenses.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={styles.container} className="bg-background">
         <SkeletonLoader count={6} height={120} style={styles.skeleton} />
       </View>
     );
@@ -287,14 +283,14 @@ export default function ExpensesScreen() {
 
   if (error && expenses.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={styles.container} className="bg-background">
         <ErrorState message={error} onRetry={refetch} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={styles.container} className="bg-background">
       <View style={styles.listHeader}>
         <AppExpandableSearch
           {...searchBarControlProps}
@@ -377,13 +373,6 @@ const styles = StyleSheet.create({
   sectionHeader: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-  },
-  sectionTitle: {
-    ...Typography.titleMedium,
-  },
-  sectionTotal: {
-    ...Typography.bodySmall,
-    marginTop: 2,
   },
   itemWrap: {
     paddingHorizontal: Spacing.md,

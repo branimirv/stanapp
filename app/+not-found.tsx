@@ -1,9 +1,8 @@
 import { Link, Stack } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
-import { Text } from 'react-native-paper';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { Colors } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
 
 export default function NotFoundScreen() {
   const { t } = useTranslation();
@@ -11,30 +10,12 @@ export default function NotFoundScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t('errors.notFound') }} />
-      <View style={styles.container}>
-        <Text variant="headlineSmall">{t('errors.notFound')}</Text>
-        <Link href="/" style={styles.link}>
-          <Text style={styles.linkText}>{t('common.goHome')}</Text>
+      <View className="bg-background flex-1 items-center justify-center p-5">
+        <Text className="text-xl font-semibold">{t('errors.notFound')}</Text>
+        <Link href="/" className="mt-4 py-4">
+          <Text className="text-primary text-sm">{t('common.goHome')}</Text>
         </Link>
       </View>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-    backgroundColor: Colors.background,
-  },
-  link: {
-    marginTop: 15,
-    paddingVertical: 15,
-  },
-  linkText: {
-    fontSize: 14,
-    color: Colors.primary,
-  },
-});

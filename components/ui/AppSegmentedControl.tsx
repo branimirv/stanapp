@@ -1,12 +1,14 @@
 import { useEffect } from 'react';
-import { LayoutChangeEvent, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { LayoutChangeEvent, Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { Text, useTheme } from 'react-native-paper';
-import { Spacing, Typography } from '@/constants/theme';
+
+import { Text } from '@/components/ui/text';
+import { Spacing } from '@/constants/theme';
+import { cn } from '@/lib/utils';
 
 export interface SegmentedOption<T extends string = string> {
   label: string;
@@ -19,6 +21,7 @@ export interface AppSegmentedControlProps<T extends string = string> {
   onValueChange: (value: T) => void;
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
+  className?: string;
 }
 
 const INDICATOR_INSET = Spacing.xs / 2;
@@ -29,21 +32,18 @@ export function AppSegmentedControl<T extends string = string>({
   onValueChange,
   style,
   disabled = false,
+  className,
 }: AppSegmentedControlProps<T>) {
-  const theme = useTheme();
   const segmentCount = Math.max(segments.length, 1);
   const selectedIndex = Math.max(
     0,
     segments.findIndex((segment) => segment.value === value),
   );
 
-  // Position is always derived from (index * segmentWidth) so it cannot drift
-  // from the selected value the way an independently set translateX could.
   const indexProgress = useSharedValue(selectedIndex);
   const segmentWidth = useSharedValue(0);
 
   useEffect(() => {
-    // Snap on first layout (width still 0); animate once we have measurements.
     if (segmentWidth.value <= 0) {
       indexProgress.value = selectedIndex;
       return;
@@ -56,7 +56,6 @@ export function AppSegmentedControl<T extends string = string>({
     const nextWidth = trackWidth / segmentCount;
     const wasUnmeasured = segmentWidth.value <= 0;
     segmentWidth.value = nextWidth;
-    // After first measurement, snap to the current selection (covers remounts).
     if (wasUnmeasured) {
       indexProgress.value = selectedIndex;
     }
@@ -70,33 +69,28 @@ export function AppSegmentedControl<T extends string = string>({
     };
   });
 
-  const trackColor = theme.colors.surfaceVariant;
-  const indicatorColor = theme.colors.surface;
-
   return (
     <View
-      style={[
-        styles.track,
-        { backgroundColor: trackColor, opacity: disabled ? 0.6 : 1 },
-        style,
-      ]}
+      className={cn(
+        'bg-muted relative min-h-11 flex-row rounded-xl p-0.5',
+        disabled && 'opacity-60',
+        className,
+      )}
+      style={style}
       onLayout={handleLayout}
     >
       <Animated.View
-        style={[
-          styles.indicator,
-          { backgroundColor: indicatorColor },
-          indicatorStyle,
-        ]}
+        className="bg-card absolute bottom-0.5 top-0.5 rounded-md shadow-sm"
+        style={indicatorStyle}
       />
 
-      {segments.map((segment, index) => {
+      {segments.map((segment) => {
         const isSelected = segment.value === value;
 
         return (
           <Pressable
             key={segment.value}
-            style={styles.segment}
+            className="z-1 flex-1 items-center justify-center px-2 py-2"
             onPress={() => {
               if (disabled) return;
               onValueChange(segment.value);
@@ -106,15 +100,10 @@ export function AppSegmentedControl<T extends string = string>({
             accessibilityState={{ selected: isSelected, disabled }}
           >
             <Text
-              style={[
-                styles.segmentLabel,
-                {
-                  color: isSelected
-                    ? theme.colors.primary
-                    : theme.colors.onSurfaceVariant,
-                  fontWeight: isSelected ? '600' : '500',
-                },
-              ]}
+              className={cn(
+                'text-center text-sm',
+                isSelected ? 'text-primary font-semibold' : 'text-muted-foreground font-medium',
+              )}
               numberOfLines={1}
             >
               {segment.label}
@@ -125,36 +114,3 @@ export function AppSegmentedControl<T extends string = string>({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  track: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    padding: INDICATOR_INSET,
-    position: 'relative',
-    minHeight: 44,
-  },
-  indicator: {
-    position: 'absolute',
-    top: INDICATOR_INSET,
-    bottom: INDICATOR_INSET,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  segment: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    zIndex: 1,
-  },
-  segmentLabel: {
-    ...Typography.labelLarge,
-    textAlign: 'center',
-  },
-});

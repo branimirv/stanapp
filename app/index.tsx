@@ -1,9 +1,9 @@
 import { Redirect } from 'expo-router';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { Text } from 'react-native-paper';
+import { ActivityIndicator, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { Colors, Spacing } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
+import { Colors } from '@/constants/theme';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function Index() {
@@ -13,11 +13,9 @@ export default function Index() {
 
   if (isLoading) {
     return (
-      <View style={styles.loading}>
+      <View className="bg-background flex-1 items-center justify-center gap-4">
         <ActivityIndicator size="large" color={Colors.primary} />
-        <Text variant="bodyMedium" style={styles.loadingText}>
-          {t('common.loading')}
-        </Text>
+        <Text className="text-muted-foreground text-sm">{t('common.loading')}</Text>
       </View>
     );
   }
@@ -28,16 +26,3 @@ export default function Index() {
 
   return <Redirect href="/(auth)/login" />;
 }
-
-const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.md,
-    backgroundColor: Colors.background,
-  },
-  loadingText: {
-    color: Colors.textSecondary,
-  },
-});

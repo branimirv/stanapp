@@ -1,8 +1,8 @@
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { HelperText, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { CategoryBadge } from '@/components/expense/CategoryBadge';
-import { Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
+import { Spacing } from '@/constants/theme';
 import type { ExpenseCategory } from '@/types/app.types';
 
 export interface CategoryChipPickerProps {
@@ -22,17 +22,14 @@ export function CategoryChipPicker({
   label,
   error,
 }: CategoryChipPickerProps) {
-  const theme = useTheme();
   const { t } = useTranslation();
 
   return (
     <View style={styles.container}>
-      {label ? (
-        <Text style={[styles.label, { color: theme.colors.onSurface }]}>{label}</Text>
-      ) : null}
+      {label ? <Text className="text-sm font-semibold">{label}</Text> : null}
 
       {categories.length === 0 && !onAddCustom ? (
-        <Text style={[styles.emptyHint, { color: theme.colors.onSurfaceVariant }]}>
+        <Text className="text-muted-foreground py-2 text-base">
           {t('expenses.noCategories')}
         </Text>
       ) : (
@@ -69,14 +66,12 @@ export function CategoryChipPicker({
           {onAddCustom ? (
             <Pressable
               onPress={onAddCustom}
-              style={[
-                styles.addCustomChip,
-                { borderColor: theme.colors.primary },
-              ]}
+              className="border-primary"
+              style={styles.addCustomChip}
               accessibilityRole="button"
               accessibilityLabel={t('expenses.addCustomCategory')}
             >
-              <Text style={[styles.addCustomLabel, { color: theme.colors.primary }]}>
+              <Text className="text-primary text-xs font-semibold">
                 + {t('expenses.addCustomCategory')}
               </Text>
             </Pressable>
@@ -84,11 +79,7 @@ export function CategoryChipPicker({
         </ScrollView>
       )}
 
-      {error ? (
-        <HelperText type="error" visible>
-          {error}
-        </HelperText>
-      ) : null}
+      {error ? <Text className="text-destructive text-sm">{error}</Text> : null}
     </View>
   );
 }
@@ -97,13 +88,6 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     gap: Spacing.xs,
-  },
-  label: {
-    ...Typography.labelLarge,
-  },
-  emptyHint: {
-    ...Typography.bodyMedium,
-    paddingVertical: Spacing.sm,
   },
   chipRow: {
     gap: Spacing.sm,
@@ -120,9 +104,5 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
     justifyContent: 'center',
     alignSelf: 'center',
-  },
-  addCustomLabel: {
-    ...Typography.labelMedium,
-    fontWeight: '600',
   },
 });

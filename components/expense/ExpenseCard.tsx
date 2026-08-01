@@ -1,12 +1,15 @@
 import { Calendar, CheckCircle, Trash2 } from 'lucide-react-native';
 import { memo, useRef } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
-import { Card, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
+
 import { AppBadge } from '@/components/ui/AppBadge';
 import { CategoryBadge } from '@/components/expense/CategoryBadge';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Card } from '@/components/ui/card';
+import { Text } from '@/components/ui/text';
+import { Colors } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { formatCurrency, formatDate, isOverdue } from '@/utils/formatters';
 import type { Expense, ExpenseCategory, Language } from '@/types/app.types';
 
@@ -31,7 +34,7 @@ function ExpenseCardComponent({
   onMarkPaid,
   onDelete,
 }: ExpenseCardProps) {
-  const theme = useTheme();
+  const { isDark } = useAppTheme();
   const { t, i18n } = useTranslation();
   const swipeableRef = useRef<Swipeable>(null);
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
@@ -40,10 +43,11 @@ function ExpenseCardComponent({
   const handlePress = onPress ? () => onPress(expense.id) : undefined;
 
   const renderRightActions = () => (
-    <View style={styles.actions}>
+    <View className="mb-2 flex-row">
       {!isPaid && onMarkPaid ? (
         <Pressable
-          style={[styles.action, styles.paidAction]}
+          className="ml-1 w-22 items-center justify-center gap-1 rounded-xl px-2"
+          style={{ backgroundColor: Colors.accent }}
           onPress={() => {
             swipeableRef.current?.close();
             onMarkPaid(expense.id);
@@ -52,12 +56,18 @@ function ExpenseCardComponent({
           accessibilityLabel={t('expenses.markPaid')}
         >
           <CheckCircle size={20} color={Colors.textInverse} strokeWidth={2} />
-          <Text style={styles.actionLabel}>{t('expenses.markPaid')}</Text>
+          <Text
+            className="text-center text-[11px] font-medium"
+            style={{ color: Colors.textInverse }}
+          >
+            {t('expenses.markPaid')}
+          </Text>
         </Pressable>
       ) : null}
       {onDelete ? (
         <Pressable
-          style={[styles.action, styles.deleteAction]}
+          className="ml-1 w-22 items-center justify-center gap-1 rounded-xl px-2"
+          style={{ backgroundColor: Colors.danger }}
           onPress={() => {
             swipeableRef.current?.close();
             onDelete(expense.id);
@@ -66,7 +76,12 @@ function ExpenseCardComponent({
           accessibilityLabel={t('common.delete')}
         >
           <Trash2 size={20} color={Colors.textInverse} strokeWidth={2} />
-          <Text style={styles.actionLabel}>{t('common.delete')}</Text>
+          <Text
+            className="text-center text-[11px] font-medium"
+            style={{ color: Colors.textInverse }}
+          >
+            {t('common.delete')}
+          </Text>
         </Pressable>
       ) : null}
     </View>
@@ -75,71 +90,61 @@ function ExpenseCardComponent({
   const card = (
     <Pressable onPress={handlePress} disabled={!handlePress}>
       <Card
-        mode="elevated"
-        style={[
-          styles.card,
-          { backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface },
-        ]}
+        className="mb-2 gap-2 rounded-xl p-4"
+        style={{ backgroundColor: isDark ? Colors.surfaceDark : Colors.surface }}
       >
-        <Card.Content style={styles.content}>
-          <View style={styles.header}>
-            {category ? (
-              <CategoryBadge
-                categoryKey={category.key}
-                categoryName={category.name}
-                icon={category.icon}
-                color={category.color}
-              />
+        <View className="flex-row items-start justify-between gap-2">
+          {category ? (
+            <CategoryBadge
+              categoryKey={category.key}
+              categoryName={category.name}
+              icon={category.icon}
+              color={category.color}
+            />
+          ) : null}
+          <View className="flex-1 flex-row flex-wrap justify-end gap-1">
+            {category?.type === 'irregular' ? (
+              <AppBadge label={t('expenses.typeIrregular')} variant="warning" />
+            ) : category?.type === 'regular' ? (
+              <AppBadge label={t('expenses.typeRegular')} variant="success" />
             ) : null}
-            <View style={styles.badges}>
-              {category?.type === 'irregular' ? (
-                <AppBadge label={t('expenses.typeIrregular')} variant="warning" />
-              ) : category?.type === 'regular' ? (
-                <AppBadge label={t('expenses.typeRegular')} variant="success" />
-              ) : null}
-              {expense.is_recurring ? (
-                <AppBadge label={t('expenses.recurring')} variant="info" />
-              ) : (
-                <AppBadge label={t('expenses.oneTime')} variant="default" />
-              )}
-              {isPaid ? (
-                <AppBadge label={t('expenses.paid')} variant="paid" />
-              ) : overdue ? (
-                <AppBadge label={t('expenses.overdue')} variant="error" />
-              ) : (
-                <AppBadge label={t('expenses.unpaid')} variant="pending" />
-              )}
-            </View>
+            {expense.is_recurring ? (
+              <AppBadge label={t('expenses.recurring')} variant="info" />
+            ) : (
+              <AppBadge label={t('expenses.oneTime')} variant="default" />
+            )}
+            {isPaid ? (
+              <AppBadge label={t('expenses.paid')} variant="paid" />
+            ) : overdue ? (
+              <AppBadge label={t('expenses.overdue')} variant="error" />
+            ) : (
+              <AppBadge label={t('expenses.unpaid')} variant="pending" />
+            )}
           </View>
+        </View>
 
-          {propertyName ? (
-            <Text style={[styles.propertyName, { color: theme.colors.onSurfaceVariant }]}>
-              {propertyName}
+        {propertyName ? (
+          <Text className="text-muted-foreground text-sm">{propertyName}</Text>
+        ) : null}
+
+        <Text className="text-2xl font-semibold">
+          {formatCurrency(Number(expense.amount), expense.currency ?? currency, resolvedLanguage)}
+        </Text>
+
+        {expense.due_date ? (
+          <View className="flex-row items-center gap-1">
+            <Calendar size={14} className="text-muted-foreground" strokeWidth={2} />
+            <Text className="text-muted-foreground text-xs">
+              {t('expenses.dueDate')}: {formatDate(expense.due_date, resolvedLanguage)}
             </Text>
-          ) : null}
+          </View>
+        ) : null}
 
-          <Text style={[styles.amount, { color: theme.colors.onSurface }]}>
-            {formatCurrency(Number(expense.amount), expense.currency ?? currency, resolvedLanguage)}
+        {expense.notes ? (
+          <Text className="text-muted-foreground text-xs" numberOfLines={2}>
+            {expense.notes}
           </Text>
-
-          {expense.due_date ? (
-            <View style={styles.dateRow}>
-              <Calendar size={14} color={theme.colors.onSurfaceVariant} strokeWidth={2} />
-              <Text style={[styles.dateText, { color: theme.colors.onSurfaceVariant }]}>
-                {t('expenses.dueDate')}: {formatDate(expense.due_date, resolvedLanguage)}
-              </Text>
-            </View>
-          ) : null}
-
-          {expense.notes ? (
-            <Text
-              style={[styles.notes, { color: theme.colors.onSurfaceVariant }]}
-              numberOfLines={2}
-            >
-              {expense.notes}
-            </Text>
-          ) : null}
-        </Card.Content>
+        ) : null}
       </Card>
     </Pressable>
   );
@@ -156,67 +161,3 @@ function ExpenseCardComponent({
 }
 
 export const ExpenseCard = memo(ExpenseCardComponent);
-
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 12,
-    marginBottom: Spacing.sm,
-  },
-  content: {
-    gap: Spacing.sm,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: Spacing.sm,
-  },
-  badges: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-end',
-    gap: Spacing.xs,
-    flex: 1,
-  },
-  propertyName: {
-    ...Typography.bodyMedium,
-  },
-  amount: {
-    ...Typography.headlineMedium,
-  },
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  dateText: {
-    ...Typography.bodySmall,
-  },
-  notes: {
-    ...Typography.bodySmall,
-  },
-  actions: {
-    flexDirection: 'row',
-    marginBottom: Spacing.sm,
-  },
-  action: {
-    width: 88,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-    borderRadius: 12,
-    marginLeft: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-  },
-  paidAction: {
-    backgroundColor: Colors.accent,
-  },
-  deleteAction: {
-    backgroundColor: Colors.danger,
-  },
-  actionLabel: {
-    ...Typography.labelSmall,
-    color: Colors.textInverse,
-    textAlign: 'center',
-  },
-});

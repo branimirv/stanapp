@@ -1,12 +1,12 @@
 import { Tabs } from 'expo-router';
 import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassSurface } from '@/components/ui/GlassSurface';
 import { getGlassActiveIndicatorColor } from '@/constants/glass';
 import { Spacing } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useTabBarPreference } from '@/hooks/useTabBarPreference';
 
 type GlassTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
@@ -17,9 +17,9 @@ const TAB_BAR_BOTTOM_OFFSET = Spacing.sm;
 
 export function GlassTabBar({ state, descriptors, navigation }: GlassTabBarProps) {
   const insets = useSafeAreaInsets();
-  const theme = useTheme();
+  const { theme, isDark } = useAppTheme();
   const { showLabels } = useTabBarPreference();
-  const activeIndicatorColor = getGlassActiveIndicatorColor(theme.dark);
+  const activeIndicatorColor = getGlassActiveIndicatorColor(isDark);
 
   return (
     <View

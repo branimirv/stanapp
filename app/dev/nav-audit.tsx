@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet } from 'react-native';
-import { List, Text } from 'react-native-paper';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { Text } from '@/components/ui/text';
 import { Spacing } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProperties } from '@/hooks/useProperties';
 
 const TAB_LINKS: { title: string; href: string }[] = [
@@ -13,34 +14,75 @@ const TAB_LINKS: { title: string; href: string }[] = [
   { title: 'Me (tab)', href: '/(tabs)/me' },
 ];
 
+function NavListSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.section}>
+      <Text variant="small" className="text-muted-foreground uppercase" style={styles.sectionTitle}>
+        {title}
+      </Text>
+      {children}
+    </View>
+  );
+}
+
+function NavListItem({
+  title,
+  description,
+  onPress,
+}: {
+  title: string;
+  description?: string;
+  onPress: () => void;
+}) {
+  const { theme } = useAppTheme();
+
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => [
+        styles.item,
+        { borderColor: theme.colors.outline, opacity: pressed ? 0.6 : 1 },
+      ]}
+    >
+      <Text>{title}</Text>
+      {description ? (
+        <Text variant="muted" style={styles.itemDescription}>
+          {description}
+        </Text>
+      ) : null}
+    </Pressable>
+  );
+}
+
 export default function NavAuditScreen() {
   const { properties } = useProperties();
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <Text variant="bodyMedium" style={styles.hint}>
+      <Text variant="muted" style={styles.hint}>
         Dev-only: jump to routes for navigation chrome screenshots.
       </Text>
-      <List.Section title="Tab roots">
+      <NavListSection title="Tab roots">
         {TAB_LINKS.map((link) => (
-          <List.Item
+          <NavListItem
             key={link.href}
             title={link.title}
             onPress={() => router.push(link.href as never)}
           />
         ))}
-      </List.Section>
+      </NavListSection>
       {properties.length > 0 ? (
-        <List.Section title="Entity push (property)">
+        <NavListSection title="Entity push (property)">
           {properties.slice(0, 5).map((property) => (
-            <List.Item
+            <NavListItem
               key={property.id}
               title={property.name}
               description={property.id}
               onPress={() => router.push(`/property/${property.id}`)}
             />
           ))}
-        </List.Section>
+        </NavListSection>
       ) : null}
     </ScrollView>
   );
@@ -53,5 +95,19 @@ const styles = StyleSheet.create({
   },
   hint: {
     marginBottom: Spacing.sm,
+  },
+  section: {
+    gap: Spacing.xs,
+  },
+  sectionTitle: {
+    marginBottom: Spacing.xs,
+  },
+  item: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  itemDescription: {
+    marginTop: 2,
   },
 });

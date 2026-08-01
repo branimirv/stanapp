@@ -1,21 +1,22 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { router, Stack } from 'expo-router';
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronRight, Download } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Divider, Text, useTheme } from 'react-native-paper';
+import { Linking, Pressable, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppPicker } from '@/components/ui/AppPicker';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { Icon } from '@/components/ui/icon';
+import { Separator } from '@/components/ui/separator';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
-import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher';
 import { TabBarStyleSwitcher } from '@/components/ui/TabBarStyleSwitcher';
+import { Text } from '@/components/ui/text';
+import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher';
 import { SUPPORTED_CURRENCIES } from '@/constants/config';
 import { tabRootScreenOptions } from '@/constants/header';
-import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useProfile } from '@/hooks/useProfile';
 import i18n from '@/i18n';
 import { signOut } from '@/lib/auth';
@@ -26,7 +27,6 @@ import { exportAllDataCSV } from '@/utils/export';
 
 export default function MeScreen() {
   const { t } = useTranslation();
-  const theme = useTheme();
   const { user } = useAuthStore();
   const showToast = useUiStore((s) => s.showToast);
   const showConfirmDialog = useUiStore((s) => s.showConfirmDialog);
@@ -127,7 +127,7 @@ export default function MeScreen() {
     return (
       <>
         <Stack.Screen options={tabRootScreenOptions(t('tabs.me'))} />
-        <SkeletonLoader count={8} style={styles.loader} />
+        <SkeletonLoader count={8} className="p-4" />
       </>
     );
   }
@@ -147,34 +147,24 @@ export default function MeScreen() {
     <>
       <Stack.Screen options={tabRootScreenOptions(t('tabs.me'))} />
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>
+      <ScrollView contentContainerClassName="gap-4 p-4 pb-12">
+        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
           {t('settings.account')}
         </Text>
-        <View
-          style={[
-            styles.card,
-            {
-              backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-              borderColor: theme.dark ? Colors.borderDark : Colors.border,
-            },
-          ]}
-        >
-          <Text style={[styles.displayName, { color: theme.colors.onSurface }]}>
-            {profile?.full_name}
-          </Text>
-          <Text style={{ color: theme.colors.onSurfaceVariant }}>{user?.email}</Text>
+        <View className="bg-card border-border gap-1 rounded-xl border p-4">
+          <Text className="text-lg font-semibold">{profile?.full_name}</Text>
+          <Text className="text-muted-foreground">{user?.email}</Text>
 
           <Pressable
-            style={styles.rowLink}
+            className="flex-row items-center justify-between py-2"
             onPress={() => router.push('/(tabs)/me/profile')}
           >
-            <Text style={{ color: theme.colors.primary }}>{t('settings.editProfile')}</Text>
-            <ChevronRight size={18} color={theme.colors.primary} />
+            <Text className="text-primary">{t('settings.editProfile')}</Text>
+            <Icon as={ChevronRight} size={18} className="text-primary" />
           </Pressable>
         </View>
 
-        <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>
+        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
           {t('settings.language')}
         </Text>
         <AppSegmentedControl<Language>
@@ -186,7 +176,7 @@ export default function MeScreen() {
           onValueChange={handleLanguageChange}
         />
 
-        <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>
+        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
           {t('settings.currency')}
         </Text>
         <AppPicker
@@ -198,16 +188,14 @@ export default function MeScreen() {
           value={profile?.default_currency ?? 'EUR'}
           onValueChange={handleCurrencyChange}
         />
-        <Text style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}>
-          {t('settings.currencyHint')}
-        </Text>
+        <Text className="text-muted-foreground text-xs">{t('settings.currencyHint')}</Text>
 
-        <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>
+        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
           {t('settings.appearance')}
         </Text>
         <ThemeSwitcher onPersist={handleThemeChange} />
 
-        <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>
+        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
           {t('settings.tabBarStyle')}
         </Text>
         <TabBarStyleSwitcher
@@ -215,62 +203,55 @@ export default function MeScreen() {
             showToast({ message: t('settings.tabBarStyleUpdated'), type: 'success' });
           }}
         />
-        <Text style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}>
-          {t('settings.tabBarStyleHint')}
-        </Text>
+        <Text className="text-muted-foreground text-xs">{t('settings.tabBarStyleHint')}</Text>
 
-        <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>
+        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
           {t('settings.notifications')}
         </Text>
         <Pressable
-          style={styles.rowLink}
+          className="flex-row items-center justify-between py-2"
           onPress={() => router.push('/(tabs)/me/notifications')}
         >
-          <View style={styles.flex}>
-            <Text style={{ color: theme.colors.onSurface }}>
-              {t('settings.notificationPreferences')}
-            </Text>
-            <Text style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}>
+          <View className="flex-1">
+            <Text>{t('settings.notificationPreferences')}</Text>
+            <Text className="text-muted-foreground text-xs">
               {t('settings.dueDateRemindersHint')}
             </Text>
           </View>
-          <ChevronRight size={18} color={theme.colors.onSurfaceVariant} />
+          <Icon as={ChevronRight} size={18} className="text-muted-foreground" />
         </Pressable>
 
-        <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>
+        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
           {t('settings.data')}
         </Text>
-        <AppButton mode="outlined" loading={isExporting} onPress={handleExport} icon="download">
-          {t('settings.exportData')}
+        <AppButton mode="outlined" loading={isExporting} onPress={handleExport}>
+          <View className="flex-row items-center gap-2">
+            <Icon as={Download} size={18} />
+            <Text>{t('settings.exportData')}</Text>
+          </View>
         </AppButton>
-        <Text style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}>
-          {t('settings.exportDataHint')}
-        </Text>
+        <Text className="text-muted-foreground text-xs">{t('settings.exportDataHint')}</Text>
 
-        <Divider style={styles.divider} />
+        <Separator className="my-2" />
 
-        <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>
+        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
           {t('settings.about')}
         </Text>
-        <Text style={{ color: theme.colors.onSurfaceVariant }}>
+        <Text className="text-muted-foreground">
           {t('settings.version')}: {Constants.expoConfig?.version ?? '1.0.0'}
         </Text>
         <Pressable onPress={() => Linking.openURL('https://stanapp.app/privacy')}>
-          <Text style={[styles.link, { color: theme.colors.primary }]}>
-            {t('settings.privacyPolicy')}
-          </Text>
+          <Text className="text-primary mt-1 text-sm">{t('settings.privacyPolicy')}</Text>
         </Pressable>
         <Pressable onPress={() => Linking.openURL('https://stanapp.app/terms')}>
-          <Text style={[styles.link, { color: theme.colors.primary }]}>
-            {t('settings.termsOfService')}
-          </Text>
+          <Text className="text-primary mt-1 text-sm">{t('settings.termsOfService')}</Text>
         </Pressable>
 
         <AppButton
           mode="contained"
+          textColor="destructive"
           onPress={handleSignOut}
-          buttonColor={theme.colors.error}
-          style={styles.signOut}
+          className="mt-6"
         >
           {t('settings.signOut')}
         </AppButton>
@@ -278,50 +259,3 @@ export default function MeScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  loader: {
-    padding: Spacing.md,
-  },
-  content: {
-    padding: Spacing.md,
-    paddingBottom: Spacing.xxl,
-    gap: Spacing.md,
-  },
-  sectionTitle: {
-    ...Typography.labelLarge,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  card: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: Spacing.md,
-    gap: Spacing.xs,
-  },
-  displayName: {
-    ...Typography.titleLarge,
-  },
-  rowLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.sm,
-  },
-  flex: {
-    flex: 1,
-  },
-  hint: {
-    ...Typography.bodySmall,
-  },
-  divider: {
-    marginVertical: Spacing.sm,
-  },
-  link: {
-    ...Typography.bodyMedium,
-    marginTop: Spacing.xs,
-  },
-  signOut: {
-    marginTop: Spacing.lg,
-  },
-});

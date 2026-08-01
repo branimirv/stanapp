@@ -6,15 +6,15 @@ import {
   Modal,
   Platform,
   Pressable,
-  StyleSheet,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
+
 import { AppButton } from '@/components/ui/AppButton';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
+import { cn } from '@/lib/utils';
 import { formatPeriod } from '@/utils/formatters';
 import type { DashboardPeriod, Language } from '@/types/app.types';
 
@@ -26,6 +26,7 @@ export interface DashboardPeriodFilterProps {
   onChange: (period: DashboardPeriod) => void;
   language?: Language;
   style?: StyleProp<ViewStyle>;
+  className?: string;
 }
 
 function getCurrentMonthYear() {
@@ -48,8 +49,8 @@ export function DashboardPeriodFilter({
   onChange,
   language = 'hr',
   style,
+  className,
 }: DashboardPeriodFilterProps) {
-  const theme = useTheme();
   const { t } = useTranslation();
   const [showPicker, setShowPicker] = useState(false);
 
@@ -113,46 +114,34 @@ export function DashboardPeriodFilter({
   const canConfirmMonth = !isFutureMonth(pickerMonth, pickerYear);
 
   return (
-    <View style={[styles.container, style]}>
-      <View style={styles.row}>
+    <View className={cn('mb-4', className)} style={style}>
+      <View className="flex-row items-center justify-center gap-2">
         <Pressable
           onPress={handlePrev}
-          style={[styles.chevron, { backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface }]}
+          className="bg-card h-9 w-9 items-center justify-center rounded-full"
           accessibilityRole="button"
           accessibilityLabel={t('common.previous')}
         >
-          <ChevronLeft size={20} color={theme.colors.onSurface} strokeWidth={2} />
+          <ChevronLeft size={20} className="text-foreground" strokeWidth={2} />
         </Pressable>
 
         <Pressable
           onPress={openPicker}
-          style={[
-            styles.pill,
-            {
-              backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-              borderColor: theme.colors.outline,
-            },
-          ]}
+          className="bg-card border-border max-w-55 flex-1 items-center rounded-full border px-4 py-2"
           accessibilityRole="button"
           accessibilityLabel={t('dashboard.selectPeriod')}
         >
-          <Text style={[styles.pillText, { color: theme.colors.onSurface }]}>{displayLabel}</Text>
+          <Text className="text-base font-medium">{displayLabel}</Text>
         </Pressable>
 
         <Pressable
           onPress={handleNext}
           disabled={!canStepForward}
-          style={[
-            styles.chevron,
-            {
-              backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-              opacity: canStepForward ? 1 : 0.35,
-            },
-          ]}
+          className={cn('bg-card h-9 w-9 items-center justify-center rounded-full', !canStepForward && 'opacity-35')}
           accessibilityRole="button"
           accessibilityLabel={t('common.next')}
         >
-          <ChevronRight size={20} color={theme.colors.onSurface} strokeWidth={2} />
+          <ChevronRight size={20} className="text-foreground" strokeWidth={2} />
         </Pressable>
       </View>
 
@@ -162,39 +151,31 @@ export function DashboardPeriodFilter({
         animationType="slide"
         onRequestClose={closePicker}
       >
-        <View style={styles.modalOverlay}>
+        <View className="flex-1 justify-end bg-black/45">
           <View
-            style={[
-              styles.modalContent,
-              { backgroundColor: theme.colors.surface },
-            ]}
+            className="bg-card rounded-t-[20px] px-6 pt-6"
+            style={{ paddingBottom: Platform.OS === 'ios' ? 40 : 32 }}
           >
-            <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>
+            <Text className="mb-4 text-center text-base font-medium">
               {t('dashboard.selectPeriod')}
             </Text>
 
-            <View style={styles.yearRow}>
-              <Pressable
-                onPress={() => handleYearStep(-1)}
-                style={styles.yearChevron}
-                accessibilityRole="button"
-              >
-                <ChevronLeft size={22} color={theme.colors.onSurface} strokeWidth={2} />
+            <View className="mb-4 flex-row items-center justify-center gap-6">
+              <Pressable onPress={() => handleYearStep(-1)} className="p-1" accessibilityRole="button">
+                <ChevronLeft size={22} className="text-foreground" strokeWidth={2} />
               </Pressable>
-              <Text style={[styles.yearLabel, { color: theme.colors.onSurface }]}>
-                {pickerYear}
-              </Text>
+              <Text className="min-w-18 text-center text-xl font-semibold">{pickerYear}</Text>
               <Pressable
                 onPress={() => handleYearStep(1)}
                 disabled={!canStepYearForward}
-                style={[styles.yearChevron, { opacity: canStepYearForward ? 1 : 0.35 }]}
+                className={cn('p-1', !canStepYearForward && 'opacity-35')}
                 accessibilityRole="button"
               >
-                <ChevronRight size={22} color={theme.colors.onSurface} strokeWidth={2} />
+                <ChevronRight size={22} className="text-foreground" strokeWidth={2} />
               </Pressable>
             </View>
 
-            <View style={styles.monthGrid}>
+            <View className="mb-6 flex-row flex-wrap gap-2">
               {MONTHS.map((month, index) => {
                 const isSelected = pickerMonth === month;
                 const isDisabled = isFutureMonth(month, pickerYear);
@@ -204,25 +185,18 @@ export function DashboardPeriodFilter({
                     key={month}
                     onPress={() => handleMonthSelect(month)}
                     disabled={isDisabled}
-                    style={[
-                      styles.monthCell,
-                      {
-                        backgroundColor: isSelected
-                          ? Colors.primary
-                          : theme.dark
-                            ? Colors.surfaceVariantDark
-                            : Colors.surfaceVariant,
-                        opacity: isDisabled ? 0.35 : 1,
-                      },
-                    ]}
+                    className={cn(
+                      'grow items-center rounded-md py-2',
+                      isSelected ? 'bg-primary' : 'bg-muted',
+                      isDisabled && 'opacity-35',
+                    )}
+                    style={{ width: '30%' }}
                   >
                     <Text
-                      style={[
-                        styles.monthLabel,
-                        {
-                          color: isSelected ? Colors.textInverse : theme.colors.onSurface,
-                        },
-                      ]}
+                      className={cn(
+                        'text-sm font-medium',
+                        isSelected && 'text-primary-foreground',
+                      )}
                     >
                       {monthLabels[index]}
                     </Text>
@@ -231,7 +205,7 @@ export function DashboardPeriodFilter({
               })}
             </View>
 
-            <View style={styles.modalActions}>
+            <View className="flex-row items-center justify-end gap-1">
               <AppButton mode="text" onPress={closePicker}>
                 {t('common.cancel')}
               </AppButton>
@@ -245,88 +219,3 @@ export function DashboardPeriodFilter({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: Spacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-  },
-  chevron: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pill: {
-    flex: 1,
-    maxWidth: 220,
-    borderRadius: 20,
-    borderWidth: 1,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    alignItems: 'center',
-  },
-  pillText: {
-    ...Typography.titleMedium,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-  },
-  modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: Spacing.lg,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Platform.OS === 'ios' ? Spacing.xl + 8 : Spacing.xl,
-  },
-  modalTitle: {
-    ...Typography.titleMedium,
-    textAlign: 'center',
-    marginBottom: Spacing.md,
-  },
-  yearRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.lg,
-    marginBottom: Spacing.md,
-  },
-  yearChevron: {
-    padding: Spacing.xs,
-  },
-  yearLabel: {
-    ...Typography.headlineMedium,
-    minWidth: 72,
-    textAlign: 'center',
-  },
-  monthGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
-  },
-  monthCell: {
-    width: '30%',
-    flexGrow: 1,
-    borderRadius: 10,
-    paddingVertical: Spacing.sm,
-    alignItems: 'center',
-  },
-  monthLabel: {
-    ...Typography.labelLarge,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: Spacing.xs,
-  },
-});

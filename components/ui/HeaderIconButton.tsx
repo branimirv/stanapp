@@ -1,8 +1,8 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
-import { useTheme } from 'react-native-paper';
 
 import { HEADER_ACTION_SLOT, HEADER_ICON_SIZE } from '@/constants/header';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 interface HeaderIconButtonProps {
   icon: LucideIcon;
@@ -19,7 +19,7 @@ export function HeaderIconButton({
   color,
   style,
 }: HeaderIconButtonProps) {
-  const theme = useTheme();
+  const { theme } = useAppTheme();
 
   return (
     <Pressable

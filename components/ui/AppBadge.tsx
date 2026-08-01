@@ -1,5 +1,3 @@
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import {
   CircleAlert,
   CircleCheck,
@@ -7,7 +5,11 @@ import {
   Clock3,
   type LucideIcon,
 } from 'lucide-react-native';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
+
+import { Text } from '@/components/ui/text';
+import { Colors } from '@/constants/theme';
+import { cn } from '@/lib/utils';
 import type { PaymentStatus } from '@/types/app.types';
 import { getStatusColor } from '@/utils/formatters';
 
@@ -35,6 +37,7 @@ export interface AppBadgeProps {
   variant?: AppBadgeVariant;
   color?: string;
   style?: StyleProp<ViewStyle>;
+  className?: string;
 }
 
 function resolveBadgeColors(
@@ -62,7 +65,7 @@ function resolveBadgeColors(
     case 'error':
       return { background: `${Colors.danger}22`, text: Colors.danger };
     case 'info':
-      return { background: `${Colors.primaryLight}`, text: Colors.primary };
+      return { background: Colors.primaryLight, text: Colors.primary };
     case 'default':
     default:
       return { background: Colors.surfaceVariant, text: Colors.textSecondary };
@@ -74,36 +77,23 @@ export function AppBadge({
   variant = 'default',
   color,
   style,
+  className,
 }: AppBadgeProps) {
-  const theme = useTheme();
   const { background, text } = resolveBadgeColors(variant, color);
-
-  const resolvedBackground =
-    variant === 'default' && theme.dark ? Colors.surfaceVariantDark : background;
   const StatusIcon = PAYMENT_STATUS_ICONS[variant as PaymentStatus];
 
   return (
-    <View style={[styles.badge, { backgroundColor: resolvedBackground }, style]}>
+    <View
+      className={cn(
+        'max-w-full flex-row items-center gap-1 self-start rounded-full px-2.5 py-1',
+        className,
+      )}
+      style={[{ backgroundColor: background }, style]}
+    >
       {StatusIcon ? <StatusIcon size={14} color={text} strokeWidth={2} /> : null}
-      <Text style={[styles.label, { color: text }]} numberOfLines={1}>
+      <Text className="text-xs font-medium" style={{ color: text }} numberOfLines={1}>
         {label}
       </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: Spacing.xs,
-    borderRadius: 999,
-    paddingHorizontal: Spacing.sm + 2,
-    paddingVertical: Spacing.xs,
-    maxWidth: '100%',
-  },
-  label: {
-    ...Typography.labelMedium,
-  },
-});

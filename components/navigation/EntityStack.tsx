@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { Stack } from 'expo-router';
-import { useTheme } from 'react-native-paper';
 
 import { useAppHeaderOptions } from '@/hooks/useAppHeaderOptions';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 /**
  * Shared stack layout for entity CRUD sections (property, tenant, expense, rent).
@@ -10,11 +10,11 @@ import { useAppHeaderOptions } from '@/hooks/useAppHeaderOptions';
  * layouts only declare their screens.
  */
 export function EntityStack({ children }: { children: ReactNode }) {
-  const theme = useTheme();
+  const { isDark } = useAppTheme();
   const screenOptions = useAppHeaderOptions({ variant: 'stack' });
 
   return (
-    <Stack key={theme.dark ? 'dark' : 'light'} screenOptions={screenOptions}>
+    <Stack key={isDark ? 'dark' : 'light'} screenOptions={screenOptions}>
       {children}
     </Stack>
   );

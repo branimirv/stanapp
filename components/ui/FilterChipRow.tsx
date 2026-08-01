@@ -1,9 +1,10 @@
 import { X } from 'lucide-react-native';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { Pressable, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
+import { Colors } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 export interface FilterChip {
   key: string;
@@ -16,7 +17,7 @@ interface FilterChipRowProps {
 }
 
 export function FilterChipRow({ chips }: FilterChipRowProps) {
-  const theme = useTheme();
+  const { isDark } = useAppTheme();
   const { t } = useTranslation();
 
   if (chips.length === 0) return null;
@@ -25,21 +26,19 @@ export function FilterChipRow({ chips }: FilterChipRowProps) {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.chipRow}
+      contentContainerClassName="flex-row gap-1 py-1"
       keyboardShouldPersistTaps="handled"
     >
       {chips.map((chip) => (
         <View
           key={chip.key}
-          style={[
-            styles.chip,
-            {
-              backgroundColor: theme.dark ? Colors.surfaceVariantDark : Colors.primaryLight,
-              borderColor: theme.colors.primary,
-            },
-          ]}
+          className="max-w-50 flex-row items-center gap-1 rounded-2xl border px-1 py-1 pl-2"
+          style={{
+            backgroundColor: isDark ? Colors.surfaceVariantDark : Colors.primaryLight,
+            borderColor: Colors.primary,
+          }}
         >
-          <Text style={[styles.chipLabel, { color: theme.colors.primary }]} numberOfLines={1}>
+          <Text className="shrink text-xs font-medium" style={{ color: Colors.primary }} numberOfLines={1}>
             {chip.label}
           </Text>
           <Pressable
@@ -48,33 +47,10 @@ export function FilterChipRow({ chips }: FilterChipRowProps) {
             accessibilityRole="button"
             accessibilityLabel={t('expenses.removeFilter', { filter: chip.label })}
           >
-            <X size={14} color={theme.colors.primary} strokeWidth={2.5} />
+            <X size={14} color={Colors.primary} strokeWidth={2.5} />
           </Pressable>
         </View>
       ))}
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  chipRow: {
-    flexDirection: 'row',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.xs,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.xs,
-    paddingLeft: Spacing.sm,
-    paddingRight: Spacing.xs,
-    borderRadius: 16,
-    borderWidth: 1,
-    maxWidth: 200,
-  },
-  chipLabel: {
-    ...Typography.labelMedium,
-    flexShrink: 1,
-  },
-});

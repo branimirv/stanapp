@@ -1,11 +1,12 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { Divider, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AppBadge } from '@/components/ui/AppBadge';
 import { AppButton } from '@/components/ui/AppButton';
 import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
-import { Spacing, Typography } from '@/constants/theme';
+import { Separator } from '@/components/ui/separator';
+import { Text } from '@/components/ui/text';
+import { Spacing } from '@/constants/theme';
 import { useLocale } from '@/hooks/useLocale';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperty } from '@/hooks/useProperties';
@@ -18,7 +19,6 @@ import { formatCurrency, formatDate, formatPeriod } from '@/utils/formatters';
 export default function RentPaymentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
-  const theme = useTheme();
   const showToast = useUiStore((s) => s.showToast);
   const showConfirmDialog = useUiStore((s) => s.showConfirmDialog);
 
@@ -103,19 +103,19 @@ export default function RentPaymentDetailScreen() {
     >
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={[styles.period, { color: theme.colors.onSurface }]}>
+          <Text className="text-foreground text-2xl font-semibold">
             {formatPeriod(payment.period_month, payment.period_year, language)}
           </Text>
           <AppBadge label={t(`rent.${payment.status}`)} variant={payment.status} />
         </View>
 
-        <Text style={[styles.amount, { color: theme.colors.primary }]}>
+        <Text className="text-primary text-3xl font-bold">
           {formatCurrency(payment.amount, currency, language)}
         </Text>
 
         {property ? (
           <Text
-            style={[styles.link, { color: theme.colors.primary }]}
+            className="text-primary text-base"
             onPress={() => router.push(`/property/${property.id}`)}
           >
             {property.name}
@@ -124,27 +124,27 @@ export default function RentPaymentDetailScreen() {
 
         {tenant ? (
           <Text
-            style={[styles.link, { color: theme.colors.primary }]}
+            className="text-primary text-base"
             onPress={() => router.push(`/tenant/${tenant.id}`)}
           >
             {tenant.first_name} {tenant.last_name}
           </Text>
         ) : null}
 
-        <Divider style={styles.divider} />
+        <Separator style={styles.divider} />
 
         {payment.payment_date ? (
-          <Text style={[styles.row, { color: theme.colors.onSurfaceVariant }]}>
+          <Text className="text-muted-foreground text-base">
             {t('rent.paymentDate')}: {formatDate(payment.payment_date, language)}
           </Text>
         ) : null}
 
         {payment.notes ? (
           <>
-            <Text style={[styles.section, { color: theme.colors.onSurface }]}>
+            <Text className="text-foreground mt-2 text-lg font-medium">
               {t('common.notes')}
             </Text>
-            <Text style={{ color: theme.colors.onSurfaceVariant }}>{payment.notes}</Text>
+            <Text className="text-muted-foreground">{payment.notes}</Text>
           </>
         ) : null}
 
@@ -154,7 +154,7 @@ export default function RentPaymentDetailScreen() {
               {t('rent.markPaid')}
             </AppButton>
           ) : null}
-          <AppButton mode="outlined" textColor={theme.colors.error} onPress={handleDelete}>
+          <AppButton mode="outlined" textColor="destructive" onPress={handleDelete}>
             {t('common.delete')}
           </AppButton>
         </View>
@@ -174,24 +174,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  period: {
-    ...Typography.headlineMedium,
-  },
-  amount: {
-    ...Typography.displayMedium,
-  },
-  link: {
-    ...Typography.bodyMedium,
-  },
   divider: {
     marginVertical: Spacing.sm,
-  },
-  row: {
-    ...Typography.bodyMedium,
-  },
-  section: {
-    ...Typography.titleMedium,
-    marginTop: Spacing.sm,
   },
   actions: {
     marginTop: Spacing.lg,

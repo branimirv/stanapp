@@ -9,10 +9,12 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { Divider, HelperText, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { AppButton } from '@/components/ui/AppButton';
+import { Separator } from '@/components/ui/separator';
+import { Text } from '@/components/ui/text';
 
 export interface PickerOption<T extends string = string> {
   label: string;
@@ -40,7 +42,7 @@ export function AppPicker<T extends string = string>({
   disabled = false,
   style,
 }: AppPickerProps<T>) {
-  const theme = useTheme();
+  const { theme, isDark } = useAppTheme();
   const { t } = useTranslation();
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -69,49 +71,28 @@ export function AppPicker<T extends string = string>({
     <Pressable
       onPress={openPicker}
       disabled={disabled}
-      style={[
-        styles.field,
-        {
-          borderColor,
-          backgroundColor: theme.colors.background,
-          opacity: disabled ? 0.6 : 1,
-        },
-      ]}
+      style={[styles.field, { borderColor, opacity: disabled ? 0.6 : 1 }]}
+      className="bg-background"
       accessibilityRole="button"
       accessibilityLabel={label ?? t('common.select')}
     >
       <Text
-        style={[
-          styles.value,
-          {
-            color: selectedOption
-              ? theme.colors.onSurface
-              : theme.colors.onSurfaceVariant,
-          },
-        ]}
+        className={selectedOption ? 'flex-1 text-base' : 'text-muted-foreground flex-1 text-base'}
         numberOfLines={1}
       >
         {selectedOption?.label ?? displayPlaceholder}
       </Text>
-      <ChevronDown size={20} color={theme.colors.onSurfaceVariant} strokeWidth={2} />
+      <ChevronDown size={20} className="text-muted-foreground" strokeWidth={2} />
     </Pressable>
   );
 
   return (
     <View style={[styles.container, style]}>
-      {label ? (
-        <Text style={[styles.label, { color: theme.colors.onSurface }]}>
-          {label}
-        </Text>
-      ) : null}
+      {label ? <Text className="mb-1 text-sm font-semibold">{label}</Text> : null}
 
       {trigger}
 
-      {error ? (
-        <HelperText type="error" visible>
-          {error}
-        </HelperText>
-      ) : null}
+      {error ? <Text className="text-destructive mt-1 text-sm">{error}</Text> : null}
 
       <Modal
         visible={modalVisible}
@@ -120,54 +101,42 @@ export function AppPicker<T extends string = string>({
         onRequestClose={() => setModalVisible(false)}
       >
         <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
-          <Pressable
-            style={[
-              styles.modalContent,
-              { backgroundColor: theme.colors.surface },
-            ]}
-            onPress={(event) => event.stopPropagation()}
-          >
-            <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>
-              {label ?? t('common.select')}
-            </Text>
+        <Pressable
+          style={styles.modalContent}
+          className="bg-card"
+          onPress={(event) => event.stopPropagation()}
+        >
+          <Text className="mb-2 text-center text-lg font-medium">
+            {label ?? t('common.select')}
+          </Text>
 
-            <ScrollView style={styles.optionsList}>
-              {options.map((option, index) => (
-                <View key={option.value}>
-                  <Pressable
-                    onPress={() => handleSelect(option.value)}
-                    style={[
-                      styles.optionRow,
-                      option.value === value && {
-                        backgroundColor: theme.dark
-                          ? Colors.surfaceVariantDark
-                          : Colors.primaryLight,
-                      },
-                    ]}
+          <ScrollView style={styles.optionsList}>
+            {options.map((option, index) => (
+              <View key={option.value}>
+                <Pressable
+                  onPress={() => handleSelect(option.value)}
+                  style={[
+                    styles.optionRow,
+                    option.value === value && {
+                      backgroundColor: isDark ? Colors.surfaceVariantDark : Colors.primaryLight,
+                    },
+                  ]}
+                >
+                  <Text
+                    className={option.value === value ? 'text-primary text-base' : 'text-base'}
                   >
-                    <Text
-                      style={[
-                        styles.optionLabel,
-                        {
-                          color:
-                            option.value === value
-                              ? theme.colors.primary
-                              : theme.colors.onSurface,
-                        },
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                  {index < options.length - 1 ? <Divider /> : null}
-                </View>
-              ))}
-            </ScrollView>
+                    {option.label}
+                  </Text>
+                </Pressable>
+                {index < options.length - 1 ? <Separator /> : null}
+              </View>
+            ))}
+          </ScrollView>
 
-            <AppButton mode="text" onPress={() => setModalVisible(false)}>
-              {t('common.cancel')}
-            </AppButton>
-          </Pressable>
+          <AppButton mode="text" onPress={() => setModalVisible(false)}>
+            {t('common.cancel')}
+          </AppButton>
+        </Pressable>
         </Pressable>
       </Modal>
     </View>
@@ -178,10 +147,6 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
   },
-  label: {
-    ...Typography.labelLarge,
-    marginBottom: Spacing.xs,
-  },
   field: {
     minHeight: 56,
     borderWidth: 1,
@@ -191,10 +156,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.sm,
-  },
-  value: {
-    ...Typography.bodyLarge,
-    flex: 1,
   },
   modalOverlay: {
     flex: 1,
@@ -209,11 +170,6 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xl,
     maxHeight: '70%',
   },
-  modalTitle: {
-    ...Typography.titleMedium,
-    textAlign: 'center',
-    marginBottom: Spacing.md,
-  },
   optionsList: {
     marginBottom: Spacing.md,
   },
@@ -221,8 +177,5 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.sm,
     borderRadius: 8,
-  },
-  optionLabel: {
-    ...Typography.bodyLarge,
   },
 });

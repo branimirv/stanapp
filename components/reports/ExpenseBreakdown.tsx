@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { PieChart } from 'react-native-gifted-charts';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { CategoryBadge } from '@/components/expense/CategoryBadge';
 import { ChartCard } from '@/components/reports/ChartCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { Colors, Spacing } from '@/constants/theme';
 import { getCategoryLabel } from '@/utils/expense';
 import { formatCurrency } from '@/utils/formatters';
 import type { CategoryBreakdown, Language } from '@/types/app.types';
@@ -24,7 +25,7 @@ export function ExpenseBreakdown({
   language = 'hr',
   style,
 }: ExpenseBreakdownProps) {
-  const theme = useTheme();
+  const { isDark } = useAppTheme();
   const { t, i18n } = useTranslation();
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
@@ -56,9 +57,7 @@ export function ExpenseBreakdown({
 
   return (
     <ChartCard style={style}>
-      <Text style={[styles.title, { color: theme.colors.onSurface }]}>
-        {t('reports.expenseBreakdown')}
-      </Text>
+      <Text className="text-lg font-medium">{t('reports.expenseBreakdown')}</Text>
 
       <View style={styles.chartWrap}>
         <PieChart
@@ -66,30 +65,30 @@ export function ExpenseBreakdown({
           donut
           radius={100}
           innerRadius={62}
-          innerCircleColor={theme.dark ? Colors.surfaceDark : Colors.surface}
+          innerCircleColor={isDark ? Colors.surfaceDark : Colors.surface}
           centerLabelComponent={() => (
             <View style={styles.centerLabel}>
               {focusedItem ? (
                 <>
-                  <Text style={[styles.centerTitle, { color: theme.colors.onSurfaceVariant }]}>
+                  <Text className="text-muted-foreground text-center text-xs font-medium">
                     {getCategoryLabel(
                       { key: focusedItem.categoryKey, name: focusedItem.categoryName },
                       t,
                     )}
                   </Text>
-                  <Text style={[styles.centerValue, { color: theme.colors.onSurface }]}>
+                  <Text className="text-center text-lg font-medium">
                     {formatCurrency(focusedItem.amount, currency, resolvedLanguage)}
                   </Text>
-                  <Text style={[styles.centerShare, { color: theme.colors.onSurfaceVariant }]}>
+                  <Text className="text-muted-foreground text-center text-xs">
                     {focusedItem.percentage.toFixed(1)}%
                   </Text>
                 </>
               ) : (
                 <>
-                  <Text style={[styles.centerTitle, { color: theme.colors.onSurfaceVariant }]}>
+                  <Text className="text-muted-foreground text-center text-xs font-medium">
                     {t('common.total')}
                   </Text>
-                  <Text style={[styles.centerValue, { color: theme.colors.onSurface }]}>
+                  <Text className="text-center text-lg font-medium">
                     {formatCurrency(total, currency, resolvedLanguage)}
                   </Text>
                 </>
@@ -138,7 +137,7 @@ function PressableRow({
   currency,
   language,
 }: PressableRowProps) {
-  const theme = useTheme();
+  const { isDark } = useAppTheme();
   const { t } = useTranslation();
   const isFocused = focusedIndex === index;
 
@@ -148,14 +147,14 @@ function PressableRow({
       style={[
         styles.listRow,
         {
-          borderBottomColor: theme.colors.outline,
           backgroundColor: isFocused
-            ? theme.dark
+            ? isDark
               ? Colors.surfaceVariantDark
               : Colors.primaryLight
             : 'transparent',
         },
       ]}
+      className="border-border"
     >
       <CategoryBadge
         categoryKey={item.categoryKey}
@@ -164,10 +163,10 @@ function PressableRow({
         color={item.color}
       />
       <View style={styles.listMeta}>
-        <Text style={[styles.amount, { color: theme.colors.onSurface }]}>
+        <Text className="text-lg font-medium">
           {formatCurrency(item.amount, currency, language)}
         </Text>
-        <Text style={[styles.share, { color: theme.colors.onSurfaceVariant }]}>
+        <Text className="text-muted-foreground text-xs">
           {t('reports.categoryShare')}: {item.percentage.toFixed(1)}%
         </Text>
       </View>
@@ -176,9 +175,6 @@ function PressableRow({
 }
 
 const styles = StyleSheet.create({
-  title: {
-    ...Typography.titleMedium,
-  },
   chartWrap: {
     alignItems: 'center',
     paddingVertical: Spacing.md,
@@ -188,18 +184,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 2,
     maxWidth: 110,
-  },
-  centerTitle: {
-    ...Typography.labelMedium,
-    textAlign: 'center',
-  },
-  centerValue: {
-    ...Typography.titleMedium,
-    textAlign: 'center',
-  },
-  centerShare: {
-    ...Typography.bodySmall,
-    textAlign: 'center',
   },
   list: {
     gap: Spacing.sm,
@@ -218,12 +202,6 @@ const styles = StyleSheet.create({
   listMeta: {
     alignItems: 'flex-end',
     gap: 2,
-  },
-  amount: {
-    ...Typography.titleMedium,
-  },
-  share: {
-    ...Typography.bodySmall,
   },
   empty: {
     paddingVertical: Spacing.lg,

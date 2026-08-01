@@ -1,9 +1,9 @@
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { Banknote, CheckCircle, FileEdit, PieChart } from 'lucide-react-native';
 import { AppBadge } from '@/components/ui/AppBadge';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
+import { Colors, Spacing } from '@/constants/theme';
 import type { Language, PaymentStatus, RentPayment } from '@/types/app.types';
 import { formatCurrency, formatPeriod } from '@/utils/formatters';
 
@@ -41,7 +41,6 @@ export function RentMonthActionSheet({
   onPartialPayment,
   onAddDetails,
 }: RentMonthActionSheetProps) {
-  const theme = useTheme();
   const { t } = useTranslation();
 
   const periodLabel = formatPeriod(month, year, language);
@@ -77,7 +76,7 @@ export function RentMonthActionSheet({
       key: 'details',
       label: payment ? t('rent.editPayment') : t('rent.addDetails'),
       icon: payment ? FileEdit : Banknote,
-      color: theme.colors.primary,
+      color: Colors.primary,
       onPress: () => {
         onDismiss();
         onAddDetails();
@@ -89,15 +88,16 @@ export function RentMonthActionSheet({
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
       <Pressable style={styles.overlay} onPress={onDismiss}>
         <Pressable
-          style={[styles.content, { backgroundColor: theme.colors.surface }]}
+          style={styles.content}
+          className="bg-card"
           onPress={(event) => event.stopPropagation()}
         >
-          <View style={[styles.handle, { backgroundColor: theme.colors.outlineVariant }]} />
+          <View style={styles.handle} className="bg-border" />
 
-          <Text style={[styles.title, { color: theme.colors.onSurface }]}>{periodLabel}</Text>
+          <Text className="text-center text-lg font-medium">{periodLabel}</Text>
 
           <View style={styles.summaryRow}>
-            <Text style={[styles.amount, { color: theme.colors.primary }]}>
+            <Text className="text-primary text-2xl font-semibold">
               {formatCurrency(displayAmount, currency, language)}
             </Text>
             {payment ? (
@@ -116,19 +116,15 @@ export function RentMonthActionSheet({
               return (
                 <Pressable
                   key={action.key}
-                  style={[
-                    styles.actionRow,
-                    { borderColor: theme.colors.outline },
-                  ]}
+                  style={styles.actionRow}
+                  className="border-border"
                   onPress={action.onPress}
                   accessibilityRole="button"
                 >
                   <View style={[styles.actionIcon, { backgroundColor: `${action.color}22` }]}>
                     <Icon size={20} color={action.color} strokeWidth={2} />
                   </View>
-                  <Text style={[styles.actionLabel, { color: theme.colors.onSurface }]}>
-                    {action.label}
-                  </Text>
+                  <Text className="flex-1 text-lg font-medium">{action.label}</Text>
                 </Pressable>
               );
             })}
@@ -160,18 +156,11 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     marginBottom: Spacing.sm,
   },
-  title: {
-    ...Typography.titleMedium,
-    textAlign: 'center',
-  },
   summaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
-  },
-  amount: {
-    ...Typography.headlineMedium,
   },
   actions: {
     gap: Spacing.sm,
@@ -191,9 +180,5 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  actionLabel: {
-    ...Typography.titleMedium,
-    flex: 1,
   },
 });

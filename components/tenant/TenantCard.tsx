@@ -1,12 +1,15 @@
 import { differenceInDays, parseISO } from 'date-fns';
 import { Calendar, Mail, MessageSquare, Phone } from 'lucide-react-native';
 import { memo } from 'react';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
-import { Card, Text, useTheme } from 'react-native-paper';
+import { Linking, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
 import { AppBadge } from '@/components/ui/AppBadge';
+import { Card } from '@/components/ui/card';
+import { Text } from '@/components/ui/text';
 import { CONTRACT_EXPIRING_DAYS } from '@/constants/config';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { getAvatarColor, getInitials } from '@/utils/avatar';
 import type { Language, Tenant } from '@/types/app.types';
@@ -52,7 +55,7 @@ function TenantCardComponent({
   language = 'hr',
   onPress,
 }: TenantCardProps) {
-  const theme = useTheme();
+  const { isDark } = useAppTheme();
   const { t, i18n } = useTranslation();
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
   const contractStatus = getContractStatus(tenant);
@@ -64,159 +67,97 @@ function TenantCardComponent({
   return (
     <Pressable onPress={handlePress} disabled={!handlePress}>
       <Card
-        mode="elevated"
-        style={[
-          styles.card,
-          { backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface },
-        ]}
+        className="mb-2 gap-2 rounded-xl p-4"
+        style={{ backgroundColor: isDark ? Colors.surfaceDark : Colors.surface }}
       >
-        <Card.Content style={styles.content}>
-          <View style={styles.header}>
-            <View style={[styles.avatar, { backgroundColor: `${avatarColor}22` }]}>
-              <Text style={[styles.initials, { color: avatarColor }]}>{initials}</Text>
-            </View>
-            <View style={styles.headerText}>
-              <Text style={[styles.name, { color: theme.colors.onSurface }]} numberOfLines={1}>
-                {fullName}
-              </Text>
-              <AppBadge
-                label={t(CONTRACT_LABELS[contractStatus])}
-                variant={CONTRACT_VARIANTS[contractStatus]}
-              />
-            </View>
-            <View style={styles.contactActions}>
-              {tenant.phone ? (
-                <Pressable
-                  onPress={() => openUrl(`tel:${tenant.phone}`)}
-                  style={[styles.contactButton, { backgroundColor: theme.colors.surfaceVariant }]}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('tenants.callTenant')}
-                >
-                  <Phone size={16} color={theme.colors.primary} strokeWidth={2} />
-                </Pressable>
-              ) : null}
-              {tenant.email ? (
-                <Pressable
-                  onPress={() => openUrl(`mailto:${tenant.email}`)}
-                  style={[styles.contactButton, { backgroundColor: theme.colors.surfaceVariant }]}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('tenants.emailTenant')}
-                >
-                  <Mail size={16} color={theme.colors.primary} strokeWidth={2} />
-                </Pressable>
-              ) : null}
-              {tenant.phone ? (
-                <Pressable
-                  onPress={() => openUrl(`sms:${tenant.phone}`)}
-                  style={[styles.contactButton, { backgroundColor: theme.colors.surfaceVariant }]}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('tenants.messageTenant')}
-                >
-                  <MessageSquare size={16} color={theme.colors.primary} strokeWidth={2} />
-                </Pressable>
-              ) : null}
-            </View>
-          </View>
-
-          <View style={styles.metaRow}>
-            <Calendar size={14} color={theme.colors.onSurfaceVariant} strokeWidth={2} />
-            <Text style={[styles.metaText, { color: theme.colors.onSurfaceVariant }]}>
-              {formatDate(tenant.contract_start, resolvedLanguage)}
-              {' — '}
-              {tenant.contract_end
-                ? formatDate(tenant.contract_end, resolvedLanguage)
-                : t('tenants.noContractEnd')}
+        <View className="flex-row items-center gap-2">
+          <View
+            className="h-11 w-11 items-center justify-center rounded-full"
+            style={{ backgroundColor: `${avatarColor}22` }}
+          >
+            <Text className="text-lg font-bold" style={{ color: avatarColor }}>
+              {initials}
             </Text>
           </View>
-
-          {tenant.email ? (
-            <View style={styles.metaRow}>
-              <Mail size={14} color={theme.colors.onSurfaceVariant} strokeWidth={2} />
-              <Text
-                style={[styles.metaText, { color: theme.colors.onSurfaceVariant }]}
-                numberOfLines={1}
+          <View className="flex-1 gap-1">
+            <Text className="text-lg font-medium" numberOfLines={1}>
+              {fullName}
+            </Text>
+            <AppBadge
+              label={t(CONTRACT_LABELS[contractStatus])}
+              variant={CONTRACT_VARIANTS[contractStatus]}
+            />
+          </View>
+          <View className="flex-row gap-1">
+            {tenant.phone ? (
+              <Pressable
+                onPress={() => openUrl(`tel:${tenant.phone}`)}
+                className="bg-secondary h-8 w-8 items-center justify-center rounded-full"
+                accessibilityRole="button"
+                accessibilityLabel={t('tenants.callTenant')}
               >
-                {tenant.email}
-              </Text>
-            </View>
-          ) : null}
+                <Phone size={16} className="text-primary" strokeWidth={2} />
+              </Pressable>
+            ) : null}
+            {tenant.email ? (
+              <Pressable
+                onPress={() => openUrl(`mailto:${tenant.email}`)}
+                className="bg-secondary h-8 w-8 items-center justify-center rounded-full"
+                accessibilityRole="button"
+                accessibilityLabel={t('tenants.emailTenant')}
+              >
+                <Mail size={16} className="text-primary" strokeWidth={2} />
+              </Pressable>
+            ) : null}
+            {tenant.phone ? (
+              <Pressable
+                onPress={() => openUrl(`sms:${tenant.phone}`)}
+                className="bg-secondary h-8 w-8 items-center justify-center rounded-full"
+                accessibilityRole="button"
+                accessibilityLabel={t('tenants.messageTenant')}
+              >
+                <MessageSquare size={16} className="text-primary" strokeWidth={2} />
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
 
-          {tenant.phone ? (
-            <View style={styles.metaRow}>
-              <Phone size={14} color={theme.colors.onSurfaceVariant} strokeWidth={2} />
-              <Text style={[styles.metaText, { color: theme.colors.onSurfaceVariant }]}>
-                {tenant.phone}
-              </Text>
-            </View>
-          ) : null}
+        <View className="flex-row items-center gap-1">
+          <Calendar size={14} className="text-muted-foreground" strokeWidth={2} />
+          <Text className="text-muted-foreground flex-1 text-sm">
+            {formatDate(tenant.contract_start, resolvedLanguage)}
+            {' — '}
+            {tenant.contract_end
+              ? formatDate(tenant.contract_end, resolvedLanguage)
+              : t('tenants.noContractEnd')}
+          </Text>
+        </View>
 
-          {Number(tenant.deposit_amount) > 0 ? (
-            <Text style={[styles.deposit, { color: theme.colors.primary }]}>
-              {t('tenants.deposit')}:{' '}
-              {formatCurrency(Number(tenant.deposit_amount), currency, resolvedLanguage)}
+        {tenant.email ? (
+          <View className="flex-row items-center gap-1">
+            <Mail size={14} className="text-muted-foreground" strokeWidth={2} />
+            <Text className="text-muted-foreground flex-1 text-sm" numberOfLines={1}>
+              {tenant.email}
             </Text>
-          ) : null}
-        </Card.Content>
+          </View>
+        ) : null}
+
+        {tenant.phone ? (
+          <View className="flex-row items-center gap-1">
+            <Phone size={14} className="text-muted-foreground" strokeWidth={2} />
+            <Text className="text-muted-foreground flex-1 text-sm">{tenant.phone}</Text>
+          </View>
+        ) : null}
+
+        {Number(tenant.deposit_amount) > 0 ? (
+          <Text className="text-primary mt-1 text-sm font-semibold">
+            {t('tenants.deposit')}:{' '}
+            {formatCurrency(Number(tenant.deposit_amount), currency, resolvedLanguage)}
+          </Text>
+        ) : null}
       </Card>
     </Pressable>
   );
 }
 
 export const TenantCard = memo(TenantCardComponent);
-
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: 12,
-    marginBottom: Spacing.sm,
-  },
-  content: {
-    gap: Spacing.sm,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  initials: {
-    ...Typography.titleMedium,
-    fontWeight: '700',
-  },
-  headerText: {
-    flex: 1,
-    gap: Spacing.xs,
-  },
-  name: {
-    ...Typography.titleMedium,
-  },
-  contactActions: {
-    flexDirection: 'row',
-    gap: Spacing.xs,
-  },
-  contactButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  metaText: {
-    ...Typography.bodySmall,
-    flex: 1,
-  },
-  deposit: {
-    ...Typography.labelLarge,
-    marginTop: Spacing.xs,
-  },
-});

@@ -1,15 +1,18 @@
 import { AlertCircle } from 'lucide-react-native';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+
 import { AppButton } from '@/components/ui/AppButton';
+import { Text } from '@/components/ui/text';
+import { Colors } from '@/constants/theme';
+import { cn } from '@/lib/utils';
 
 export interface ErrorStateProps {
   message?: string;
   onRetry?: () => void;
   retryLabel?: string;
   style?: StyleProp<ViewStyle>;
+  className?: string;
 }
 
 export function ErrorState({
@@ -17,77 +20,33 @@ export function ErrorState({
   onRetry,
   retryLabel,
   style,
+  className,
 }: ErrorStateProps) {
-  const theme = useTheme();
   const { t } = useTranslation();
 
   const displayMessage = message ?? t('errors.loadFailed');
   const displayRetryLabel = retryLabel ?? t('common.retry');
 
   return (
-    <View style={[styles.container, style]}>
-      <View
-        style={[
-          styles.iconWrap,
-          { backgroundColor: theme.dark ? 'rgba(239, 68, 68, 0.15)' : '#FEE2E2' },
-        ]}
-      >
+    <View
+      className={cn('flex-1 items-center justify-center px-8 py-12', className)}
+      style={style}
+    >
+      <View className="mb-6 h-20 w-20 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/40">
         <AlertCircle size={40} color={Colors.danger} strokeWidth={1.75} />
       </View>
 
-      <Text style={[styles.title, { color: theme.colors.onSurface }]}>
-        {t('common.error')}
-      </Text>
+      <Text className="mb-2 text-center text-lg font-semibold">{t('common.error')}</Text>
 
-      <Text style={[styles.message, { color: theme.colors.onSurfaceVariant }]}>
-        {displayMessage}
-      </Text>
+      <Text className="text-muted-foreground mb-2 text-center text-sm">{displayMessage}</Text>
 
-      <Text style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}>
-        {t('errors.retryHint')}
-      </Text>
+      <Text className="text-muted-foreground mb-6 text-center text-xs">{t('errors.retryHint')}</Text>
 
       {onRetry ? (
-        <AppButton mode="contained" onPress={onRetry} style={styles.retry}>
+        <AppButton mode="contained" onPress={onRetry} className="min-w-36">
           {displayRetryLabel}
         </AppButton>
       ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.xxl,
-  },
-  iconWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.lg,
-  },
-  title: {
-    ...Typography.titleLarge,
-    textAlign: 'center',
-    marginBottom: Spacing.sm,
-  },
-  message: {
-    ...Typography.bodyMedium,
-    textAlign: 'center',
-    marginBottom: Spacing.sm,
-  },
-  hint: {
-    ...Typography.bodySmall,
-    textAlign: 'center',
-    marginBottom: Spacing.lg,
-  },
-  retry: {
-    minWidth: 140,
-  },
-});

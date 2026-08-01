@@ -1,7 +1,8 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { Colors, Spacing } from '@/constants/theme';
 import { formatPeriodShort } from '@/utils/formatters';
 import type { Language, PaymentStatus, RentPayment } from '@/types/app.types';
 
@@ -21,7 +22,7 @@ export interface MonthlyGridProps {
 }
 
 export function MonthlyGrid({ year, payments, language = 'hr', onMonthPress }: MonthlyGridProps) {
-  const theme = useTheme();
+  const { isDark } = useAppTheme();
   const { t, i18n } = useTranslation();
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
 
@@ -35,7 +36,7 @@ export function MonthlyGrid({ year, payments, language = 'hr', onMonthPress }: M
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, { color: theme.colors.onSurface }]}>
+      <Text className="text-lg font-medium">
         {t('rent.monthlyGrid')} — {year}
       </Text>
 
@@ -50,23 +51,18 @@ export function MonthlyGrid({ year, payments, language = 'hr', onMonthPress }: M
           return (
             <Pressable
               key={month}
-              style={[
-                styles.cell,
-                {
-                  backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-                  borderColor: theme.colors.outline,
-                },
-              ]}
+              style={[styles.cell, { backgroundColor: isDark ? Colors.surfaceDark : Colors.surface }]}
+              className="border-border"
               onPress={() => onMonthPress?.(month, payment)}
               disabled={!onMonthPress}
               accessibilityRole="button"
               accessibilityLabel={`${formatPeriodShort(month, year, resolvedLanguage)} — ${label}`}
             >
-              <Text style={[styles.monthLabel, { color: theme.colors.onSurfaceVariant }]}>
+              <Text className="text-muted-foreground text-center text-xs font-medium">
                 {formatPeriodShort(month, year, resolvedLanguage)}
               </Text>
               <View style={[styles.statusDot, { backgroundColor: color }]} />
-              <Text style={[styles.statusLabel, { color }]} numberOfLines={1}>
+              <Text className="text-center text-[11px]" style={{ color }} numberOfLines={1}>
                 {label}
               </Text>
             </Pressable>
@@ -80,9 +76,6 @@ export function MonthlyGrid({ year, payments, language = 'hr', onMonthPress }: M
 const styles = StyleSheet.create({
   container: {
     gap: Spacing.md,
-  },
-  title: {
-    ...Typography.titleMedium,
   },
   grid: {
     flexDirection: 'row',
@@ -99,17 +92,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.xs,
   },
-  monthLabel: {
-    ...Typography.labelMedium,
-    textAlign: 'center',
-  },
   statusDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-  },
-  statusLabel: {
-    ...Typography.labelSmall,
-    textAlign: 'center',
   },
 });

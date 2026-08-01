@@ -1,22 +1,22 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { ScrollView, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
-import { Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
+import { cn } from '@/lib/utils';
 
 interface AppFormScrollProps {
   children: ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
+  className?: string;
 }
 
-export function AppFormScroll({ children, contentStyle }: AppFormScrollProps) {
-  const theme = useTheme();
-
+export function AppFormScroll({ children, contentStyle, className }: AppFormScrollProps) {
   return (
     <ScrollView
-      style={{ backgroundColor: theme.colors.background }}
-      contentContainerStyle={[styles.scrollContent, contentStyle]}
+      className={cn('bg-background flex-1', className)}
+      contentContainerClassName="gap-4 p-4 pb-12"
+      contentContainerStyle={contentStyle}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
@@ -31,11 +31,9 @@ interface AppFormSectionProps {
 }
 
 export function AppFormSection({ label, children }: AppFormSectionProps) {
-  const theme = useTheme();
-
   return (
-    <View style={styles.section}>
-      <Text style={[styles.label, { color: theme.colors.onSurface }]}>{label}</Text>
+    <View className="gap-2">
+      <Text className="text-sm font-medium">{label}</Text>
       {children}
     </View>
   );
@@ -49,25 +47,8 @@ interface AppFormSubmitProps {
 
 export function AppFormSubmit({ label, loading = false, onPress }: AppFormSubmitProps) {
   return (
-    <AppButton mode="contained" loading={loading} onPress={onPress} style={styles.submit}>
+    <AppButton mode="contained" loading={loading} onPress={onPress} className="mt-2">
       {label}
     </AppButton>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollContent: {
-    padding: Spacing.md,
-    gap: Spacing.md,
-    paddingBottom: Spacing.xxl,
-  },
-  section: {
-    gap: Spacing.sm,
-  },
-  label: {
-    ...Typography.labelLarge,
-  },
-  submit: {
-    marginTop: Spacing.sm,
-  },
-});

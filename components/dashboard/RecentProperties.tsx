@@ -1,11 +1,12 @@
-import { Pressable, StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
+import { Text } from '@/components/ui/text';
 import {
   PROPERTY_TYPE_COLORS,
   PROPERTY_TYPE_ICONS,
 } from '@/constants/propertyType';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/formatters';
 import type { Language, Property } from '@/types/app.types';
 
@@ -24,7 +25,6 @@ export function RecentProperties({
   onPropertyPress,
   onViewAll,
 }: RecentPropertiesProps) {
-  const theme = useTheme();
   const { t } = useTranslation();
 
   if (properties.length === 0) {
@@ -32,14 +32,12 @@ export function RecentProperties({
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={[styles.heading, { color: theme.colors.onSurface }]}>
-          {t('dashboard.recentProperties')}
-        </Text>
+    <View className="mt-6 gap-2">
+      <View className="mb-1 flex-row items-center justify-between">
+        <Text className="text-base font-medium">{t('dashboard.recentProperties')}</Text>
         {onViewAll ? (
           <Pressable onPress={onViewAll} accessibilityRole="button">
-            <Text style={[styles.viewAll, { color: theme.colors.primary }]}>
+            <Text className="text-primary text-sm font-medium">
               {t('dashboard.viewAllProperties')}
             </Text>
           </Pressable>
@@ -59,36 +57,25 @@ export function RecentProperties({
           : t(`usageStatus.${property.usage_status}`);
 
         const content = (
-          <View
-            style={[
-              styles.row,
-              {
-                backgroundColor: theme.dark ? Colors.surfaceDark : Colors.surface,
-                borderColor: theme.colors.outline,
-              },
-            ]}
-          >
-            <View style={[styles.iconWrap, { backgroundColor: `${iconColor}22` }]}>
+          <View className="bg-card border-border mb-2 flex-row items-center gap-2 rounded-xl border p-4">
+            <View
+              className="h-9 w-9 items-center justify-center rounded-full"
+              style={{ backgroundColor: `${iconColor}22` }}
+            >
               <Icon size={18} color={iconColor} strokeWidth={2} />
             </View>
 
-            <View style={styles.rowContent}>
-              <Text style={[styles.title, { color: theme.colors.onSurface }]} numberOfLines={1}>
+            <View className="flex-1 gap-0.5">
+              <Text className="text-base" numberOfLines={1}>
                 {property.name}
               </Text>
-              <Text
-                style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}
-                numberOfLines={1}
-              >
+              <Text className="text-muted-foreground text-xs" numberOfLines={1}>
                 {property.address}
               </Text>
             </View>
 
             <Text
-              style={[
-                styles.meta,
-                { color: isRented ? theme.colors.primary : theme.colors.onSurfaceVariant },
-              ]}
+              className={cn('max-w-24 text-right text-sm font-medium', isRented ? 'text-primary' : 'text-muted-foreground')}
               numberOfLines={1}
             >
               {rightLabel}
@@ -109,53 +96,3 @@ export function RecentProperties({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    gap: Spacing.sm,
-    marginTop: Spacing.lg,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.xs,
-  },
-  heading: {
-    ...Typography.titleMedium,
-  },
-  viewAll: {
-    ...Typography.labelLarge,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: Spacing.md,
-    marginBottom: Spacing.sm,
-  },
-  iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowContent: {
-    flex: 1,
-    gap: 2,
-  },
-  title: {
-    ...Typography.bodyLarge,
-  },
-  subtitle: {
-    ...Typography.bodySmall,
-  },
-  meta: {
-    ...Typography.labelLarge,
-    maxWidth: 96,
-    textAlign: 'right',
-  },
-});

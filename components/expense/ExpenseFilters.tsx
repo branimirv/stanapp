@@ -1,7 +1,6 @@
 import { SlidersHorizontal } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import {
   ExpenseMoreFiltersSheet,
@@ -11,7 +10,8 @@ import {
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { FilterChipRow, type FilterChip } from '@/components/ui/FilterChipRow';
-import { Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
+import { Spacing } from '@/constants/theme';
 import type { ExpenseStatusFilter } from '@/types/app.types';
 
 export type StatusFilter = 'all' | ExpenseStatusFilter;
@@ -61,7 +61,6 @@ export function ExpenseFilters({
   categoryOptions,
   onInteraction,
 }: ExpenseFiltersProps) {
-  const theme = useTheme();
   const { t } = useTranslation();
   const [sheetVisible, setSheetVisible] = useState(false);
 
@@ -181,13 +180,13 @@ export function ExpenseFilters({
         accessibilityRole="button"
         accessibilityLabel={moreFiltersAccessibilityLabel}
       >
-        <SlidersHorizontal size={16} color={theme.colors.primary} strokeWidth={2.5} />
-        <Text style={[styles.moreFiltersLabel, { color: theme.colors.primary }]}>
+        <SlidersHorizontal size={16} className="text-primary" strokeWidth={2.5} />
+        <Text className="text-primary text-sm font-semibold">
           {t('expenses.moreFilters')}
         </Text>
         {secondaryFilterCount > 0 ? (
-          <View style={[styles.badge, { backgroundColor: theme.colors.primary }]}>
-            <Text style={[styles.badgeText, { color: theme.colors.onPrimary }]}>
+          <View style={styles.badge} className="bg-primary">
+            <Text className="text-primary-foreground text-[11px] font-bold">
               {secondaryFilterCount}
             </Text>
           </View>
@@ -226,10 +225,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
     alignSelf: 'flex-start',
   },
-  moreFiltersLabel: {
-    ...Typography.labelLarge,
-    fontWeight: '600',
-  },
   badge: {
     minWidth: 18,
     height: 18,
@@ -237,10 +232,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
-  },
-  badgeText: {
-    ...Typography.labelSmall,
-    fontWeight: '700',
-    fontSize: 11,
   },
 });

@@ -1,5 +1,3 @@
-import { MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
-
 export const Colors = {
   // Brand
   primary: '#2563EB',
@@ -63,10 +61,33 @@ export const Spacing = {
   xxl: 48,
 } as const;
 
-export const lightTheme = {
-  ...MD3LightTheme,
+/** App theme shape (Paper-compatible colors for gradual migration leftovers). */
+export type AppThemeColors = {
+  primary: string;
+  primaryContainer: string;
+  secondary: string;
+  secondaryContainer: string;
+  background: string;
+  surface: string;
+  surfaceVariant: string;
+  error: string;
+  onPrimary: string;
+  onSecondary: string;
+  onBackground: string;
+  onSurface: string;
+  onSurfaceVariant: string;
+  outline: string;
+};
+
+export type AppTheme = {
+  dark: boolean;
+  colors: AppThemeColors;
+  roundness: number;
+};
+
+export const lightTheme: AppTheme = {
+  dark: false,
   colors: {
-    ...MD3LightTheme.colors,
     primary: Colors.primary,
     primaryContainer: Colors.primaryLight,
     secondary: Colors.accent,
@@ -85,10 +106,9 @@ export const lightTheme = {
   roundness: 12,
 };
 
-export const darkTheme = {
-  ...MD3DarkTheme,
+export const darkTheme: AppTheme = {
+  dark: true,
   colors: {
-    ...MD3DarkTheme.colors,
     primary: Colors.primary,
     primaryContainer: '#1E3A8A',
     secondary: Colors.accent,

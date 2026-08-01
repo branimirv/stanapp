@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { PieChart } from 'react-native-gifted-charts';
-import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { ChartCard } from '@/components/reports/ChartCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Text } from '@/components/ui/text';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { Colors, Spacing } from '@/constants/theme';
 import { formatCurrency } from '@/utils/formatters';
 import type { Language, PropertyReportSummary } from '@/types/app.types';
 
@@ -33,7 +34,7 @@ export function PropertyIncomeShareChart({
   language = 'hr',
   style,
 }: PropertyIncomeShareChartProps) {
-  const theme = useTheme();
+  const { isDark } = useAppTheme();
   const { t } = useTranslation();
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
@@ -73,9 +74,7 @@ export function PropertyIncomeShareChart({
 
   return (
     <ChartCard style={style}>
-      <Text style={[styles.title, { color: theme.colors.onSurface }]}>
-        {t('reports.incomeShare')}
-      </Text>
+      <Text className="text-lg font-medium">{t('reports.incomeShare')}</Text>
 
       <View style={styles.chartWrap}>
         <PieChart
@@ -83,27 +82,27 @@ export function PropertyIncomeShareChart({
           donut
           radius={96}
           innerRadius={60}
-          innerCircleColor={theme.dark ? Colors.surfaceDark : Colors.surface}
+          innerCircleColor={isDark ? Colors.surfaceDark : Colors.surface}
           centerLabelComponent={() => (
             <View style={styles.centerLabel}>
               {focusedItem ? (
                 <>
                   <Text
-                    style={[styles.centerTitle, { color: theme.colors.onSurfaceVariant }]}
+                    className="text-muted-foreground text-center text-[11px] font-medium"
                     numberOfLines={2}
                   >
                     {focusedItem.propertyName}
                   </Text>
-                  <Text style={[styles.centerValue, { color: theme.colors.onSurface }]}>
+                  <Text className="text-center text-lg font-medium">
                     {formatCurrency(focusedItem.totalRentCollected, focusedItem.currency, language)}
                   </Text>
                 </>
               ) : (
                 <>
-                  <Text style={[styles.centerTitle, { color: theme.colors.onSurfaceVariant }]}>
+                  <Text className="text-muted-foreground text-center text-[11px] font-medium">
                     {t('reports.totalIncome')}
                   </Text>
-                  <Text style={[styles.centerValue, { color: theme.colors.onSurface }]}>
+                  <Text className="text-center text-lg font-medium">
                     {formatCurrency(totalIncome, currency, language)}
                   </Text>
                 </>
@@ -124,27 +123,18 @@ export function PropertyIncomeShareChart({
           const color = PROPERTY_COLORS[index % PROPERTY_COLORS.length];
 
           return (
-            <View
-              key={item.propertyId}
-              style={[
-                styles.listRow,
-                { borderBottomColor: theme.colors.outline },
-              ]}
-            >
+            <View key={item.propertyId} style={styles.listRow} className="border-border">
               <View style={styles.listLeft}>
                 <View style={[styles.colorDot, { backgroundColor: color }]} />
-                <Text
-                  style={[styles.propertyName, { color: theme.colors.onSurface }]}
-                  numberOfLines={1}
-                >
+                <Text className="shrink text-sm font-medium" numberOfLines={1}>
                   {item.propertyName}
                 </Text>
               </View>
               <View style={styles.listMeta}>
-                <Text style={[styles.amount, { color: theme.colors.onSurface }]}>
+                <Text className="text-lg font-medium">
                   {formatCurrency(item.totalRentCollected, item.currency, language)}
                 </Text>
-                <Text style={[styles.share, { color: theme.colors.onSurfaceVariant }]}>
+                <Text className="text-muted-foreground text-xs">
                   {t('reports.categoryShare')}: {share.toFixed(1)}%
                 </Text>
               </View>
@@ -157,9 +147,6 @@ export function PropertyIncomeShareChart({
 }
 
 const styles = StyleSheet.create({
-  title: {
-    ...Typography.titleMedium,
-  },
   chartWrap: {
     alignItems: 'center',
     paddingVertical: Spacing.sm,
@@ -169,14 +156,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 2,
     maxWidth: 100,
-  },
-  centerTitle: {
-    ...Typography.labelSmall,
-    textAlign: 'center',
-  },
-  centerValue: {
-    ...Typography.titleMedium,
-    textAlign: 'center',
   },
   list: {
     gap: Spacing.sm,
@@ -200,20 +179,9 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
   },
-  propertyName: {
-    ...Typography.bodyMedium,
-    fontWeight: '500',
-    flexShrink: 1,
-  },
   listMeta: {
     alignItems: 'flex-end',
     gap: 2,
-  },
-  amount: {
-    ...Typography.titleMedium,
-  },
-  share: {
-    ...Typography.bodySmall,
   },
   empty: {
     paddingVertical: Spacing.lg,

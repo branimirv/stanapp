@@ -1,8 +1,10 @@
 import { AlertTriangle, Clock, Wallet } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { Pressable, View } from 'react-native';
+
+import { Text } from '@/components/ui/text';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { Colors } from '@/constants/theme';
 
 export type AlertBannerVariant = 'danger' | 'warning' | 'info';
 
@@ -56,69 +58,42 @@ export function AlertBanner({
   icon,
   onPress,
 }: AlertBannerProps) {
-  const theme = useTheme();
-  const styles = variantStyles[variant];
+  const { isDark } = useAppTheme();
+  const palette = variantStyles[variant];
   const Icon = icon ?? defaultIcons[variant];
 
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
-      style={[
-        bannerStyles.container,
-        {
-          backgroundColor: theme.dark ? styles.bgDark : styles.bgLight,
-          borderColor: styles.border,
-        },
-      ]}
+      className="mb-4 flex-row items-center gap-4 rounded-xl border p-4"
+      style={{
+        backgroundColor: isDark ? palette.bgDark : palette.bgLight,
+        borderColor: palette.border,
+      }}
       accessibilityRole="button"
     >
-      <View style={[bannerStyles.iconWrap, { backgroundColor: `${styles.border}22` }]}>
-        <Icon size={22} color={styles.border} strokeWidth={2} />
+      <View
+        className="h-10 w-10 items-center justify-center rounded-full"
+        style={{ backgroundColor: `${palette.border}22` }}
+      >
+        <Icon size={22} color={palette.border} strokeWidth={2} />
       </View>
 
-      <View style={bannerStyles.content}>
-        <Text style={[bannerStyles.title, { color: styles.border }]}>{title}</Text>
-        <Text style={[bannerStyles.message, { color: theme.dark ? styles.textDark : styles.text }]}>
+      <View className="flex-1 gap-0.5">
+        <Text className="text-base font-medium" style={{ color: palette.border }}>
+          {title}
+        </Text>
+        <Text className="text-xs" style={{ color: isDark ? palette.textDark : palette.text }}>
           {message}
         </Text>
       </View>
 
       {onPress && actionLabel ? (
-        <Text style={[bannerStyles.action, { color: styles.border }]}>{actionLabel}</Text>
+        <Text className="text-sm font-medium" style={{ color: palette.border }}>
+          {actionLabel}
+        </Text>
       ) : null}
     </Pressable>
   );
 }
-
-const bannerStyles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-  },
-  iconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  content: {
-    flex: 1,
-    gap: 2,
-  },
-  title: {
-    ...Typography.titleMedium,
-  },
-  message: {
-    ...Typography.bodySmall,
-  },
-  action: {
-    ...Typography.labelLarge,
-  },
-});

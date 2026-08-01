@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Appearance, Platform, useColorScheme as useSystemColorScheme } from 'react-native';
+import { Uniwind } from 'uniwind';
 
 import { Colors, darkTheme, lightTheme } from '@/constants/theme';
 import { useProfile } from '@/hooks/useProfile';
 import { resolveIsDark, useThemeStore } from '@/stores/themeStore';
+import type { Theme } from '@/types/app.types';
+
+function syncUniwindTheme(preference: Theme) {
+  Uniwind.setTheme(preference === 'system' ? 'system' : preference);
+}
 
 export function useAppTheme() {
   const systemScheme = useSystemColorScheme();
@@ -45,6 +51,11 @@ export function useAppTheme() {
   const theme = isDark ? darkTheme : lightTheme;
 
   useEffect(() => {
+    if (!isHydrated) return;
+    syncUniwindTheme(preference);
+  }, [preference, isHydrated]);
+
+  useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
 
     document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
@@ -56,7 +67,7 @@ export function useAppTheme() {
   useEffect(() => {
     if (Platform.OS !== 'android' || !isHydrated) return;
     if (preference === 'system') {
-      Appearance.setColorScheme(null);
+      Appearance.setColorScheme('unspecified');
       return;
     }
     Appearance.setColorScheme(isDark ? 'dark' : 'light');

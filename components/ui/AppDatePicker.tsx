@@ -14,10 +14,11 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { HelperText, Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import { Spacing, Typography } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { AppButton } from '@/components/ui/AppButton';
+import { Text } from '@/components/ui/text';
 
 const dateLocales = { en: enUS, hr } as const;
 
@@ -44,7 +45,7 @@ export function AppDatePicker({
   disabled = false,
   style,
 }: AppDatePickerProps) {
-  const theme = useTheme();
+  const { theme } = useAppTheme();
   const { t, i18n } = useTranslation();
   const [showPicker, setShowPicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date>(value ?? new Date());
@@ -94,43 +95,24 @@ export function AppDatePicker({
 
   return (
     <View style={[styles.container, style]}>
-      <Text style={[styles.label, { color: theme.colors.onSurface }]}>
-        {displayLabel}
-      </Text>
+      <Text className="mb-1 text-sm font-semibold">{displayLabel}</Text>
 
       <Pressable
         onPress={openPicker}
         disabled={disabled}
-        style={[
-          styles.field,
-          {
-            borderColor,
-            backgroundColor: theme.colors.background,
-            opacity: disabled ? 0.6 : 1,
-          },
-        ]}
+        style={[styles.field, { borderColor, opacity: disabled ? 0.6 : 1 }]}
+        className="bg-background"
         accessibilityRole="button"
         accessibilityLabel={displayLabel}
         accessibilityHint={t('ui.selectDate')}
       >
-        <Calendar size={20} color={theme.colors.primary} strokeWidth={2} />
-        <Text
-          style={[
-            styles.value,
-            {
-              color: value ? theme.colors.onSurface : theme.colors.onSurfaceVariant,
-            },
-          ]}
-        >
+        <Calendar size={20} className="text-primary" strokeWidth={2} />
+        <Text className={value ? 'flex-1 text-base' : 'text-muted-foreground flex-1 text-base'}>
           {formattedValue}
         </Text>
       </Pressable>
 
-      {error ? (
-        <HelperText type="error" visible>
-          {error}
-        </HelperText>
-      ) : null}
+      {error ? <Text className="text-destructive mt-1 text-sm">{error}</Text> : null}
 
       {Platform.OS === 'android' && showPicker ? (
         <DateTimePicker
@@ -151,13 +133,8 @@ export function AppDatePicker({
           onRequestClose={closePicker}
         >
           <View style={styles.modalOverlay}>
-            <View
-              style={[
-                styles.modalContent,
-                { backgroundColor: theme.colors.surface },
-              ]}
-            >
-              <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>
+            <View style={styles.modalContent} className="bg-card">
+              <Text className="mb-2 text-center text-lg font-medium">
                 {t('ui.selectDate')}
               </Text>
 
@@ -199,10 +176,6 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
   },
-  label: {
-    ...Typography.labelLarge,
-    marginBottom: Spacing.xs,
-  },
   field: {
     minHeight: 56,
     borderWidth: 1,
@@ -211,10 +184,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-  },
-  value: {
-    ...Typography.bodyLarge,
-    flex: 1,
   },
   modalOverlay: {
     flex: 1,
@@ -227,11 +196,6 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xl,
-  },
-  modalTitle: {
-    ...Typography.titleMedium,
-    textAlign: 'center',
-    marginBottom: Spacing.md,
   },
   picker: {
     alignSelf: 'center',

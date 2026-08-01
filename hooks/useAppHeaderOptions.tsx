@@ -1,5 +1,3 @@
-import { useTheme } from 'react-native-paper';
-
 import { HeaderBackButton } from '@/components/ui/HeaderBackButton';
 import {
   HEADER_EDGE_INSET,
@@ -8,6 +6,7 @@ import {
   headerRightContainerStyle,
 } from '@/constants/header';
 import { Colors, Typography } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 export type AppHeaderVariant = 'tabRoot' | 'stack';
 
@@ -18,12 +17,12 @@ interface UseAppHeaderOptionsParams {
 export function useAppHeaderOptions({
   variant = 'stack',
 }: UseAppHeaderOptionsParams = {}) {
-  const theme = useTheme();
+  const { theme, isDark } = useAppTheme();
   const isTabRoot = variant === 'tabRoot';
 
   return {
     headerStyle: {
-      backgroundColor: theme.dark ? Colors.backgroundDark : Colors.surface,
+      backgroundColor: isDark ? Colors.backgroundDark : Colors.surface,
       ...headerBarStyle,
     },
     headerTitleStyle: {

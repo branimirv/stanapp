@@ -1,12 +1,13 @@
 import '@/i18n';
+import '../global.css';
 
 import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { PaperProvider } from 'react-native-paper';
+import { PortalHost } from '@rn-primitives/portal';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
@@ -18,6 +19,7 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProfile } from '@/hooks/useProfile';
 import { onAuthStateChange } from '@/lib/auth';
 import { queryClient } from '@/lib/queryClient';
+import { NAV_THEME } from '@/lib/theme';
 import { useAuthStore } from '@/stores/authStore';
 
 export { ErrorBoundary } from 'expo-router';
@@ -74,7 +76,7 @@ export default function RootLayout() {
 
 function AppProviders({ children }: { children: React.ReactNode }) {
   const { profile } = useProfile();
-  const { theme, isDark, isHydrated } = useAppTheme();
+  const { isDark, isHydrated } = useAppTheme();
 
   useEffect(() => {
     if (profile?.language) {
@@ -86,25 +88,12 @@ function AppProviders({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  const navigationTheme = {
-    ...(isDark ? DarkTheme : DefaultTheme),
-    colors: {
-      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
-      background: theme.colors.background,
-      card: theme.colors.surface,
-      text: theme.colors.onSurface,
-      border: theme.colors.outline,
-      primary: theme.colors.primary,
-    },
-  };
-
   return (
-    <PaperProvider theme={theme}>
-      <ThemeProvider value={navigationTheme}>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-        {children}
-      </ThemeProvider>
-    </PaperProvider>
+    <ThemeProvider value={NAV_THEME[isDark ? 'dark' : 'light']}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      {children}
+      <PortalHost />
+    </ThemeProvider>
   );
 }
 

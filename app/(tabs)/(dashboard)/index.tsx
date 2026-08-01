@@ -2,7 +2,6 @@ import { router } from 'expo-router';
 import { Banknote, Building2, TrendingDown, TrendingUp } from 'lucide-react-native';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { AlertBanner } from '@/components/dashboard/AlertBanner';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
@@ -31,7 +30,6 @@ function getInitialPeriod(): DashboardPeriod {
 
 export default function DashboardScreen() {
   const { t, i18n } = useTranslation();
-  const theme = useTheme();
   const [period, setPeriod] = useState<DashboardPeriod>(getInitialPeriod);
   const { stats, isLoading, error, refetch } = useDashboardStats(period);
   const { properties } = useProperties();
@@ -60,7 +58,7 @@ export default function DashboardScreen() {
   }, [refetch]);
 
   const wrap = (children: ReactNode) => (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View className="bg-background flex-1">
       <QuickCreateSheet visible={createSheetVisible} onDismiss={closeCreateSheet} />
       {children}
     </View>
@@ -210,9 +208,6 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   content: {
     padding: Spacing.md,
   },

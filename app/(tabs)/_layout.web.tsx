@@ -1,9 +1,9 @@
 import { Tabs } from 'expo-router';
 import { BarChart3, Building2, Home, Receipt, User } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from 'react-native-paper';
 
 import { GlassTabBar } from '@/components/ui/GlassTabBar';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 /**
  * Web keeps the JS Tabs + GlassTabBar. Native platforms use NativeTabs
@@ -11,7 +11,7 @@ import { GlassTabBar } from '@/components/ui/GlassTabBar';
  */
 export default function WebTabLayout() {
   const { t } = useTranslation();
-  const theme = useTheme();
+  const { theme } = useAppTheme();
 
   return (
     <Tabs

@@ -1,8 +1,7 @@
-import { Check } from 'lucide-react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { Pressable } from 'react-native';
 
-import { Typography } from '@/constants/theme';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Text } from '@/components/ui/text';
 
 interface AppCheckboxProps {
   checked: boolean;
@@ -11,46 +10,15 @@ interface AppCheckboxProps {
 }
 
 export function AppCheckbox({ checked, onChange, label }: AppCheckboxProps) {
-  const theme = useTheme();
-
   return (
     <Pressable
-      style={styles.row}
+      className="flex-row items-center gap-2"
       onPress={() => onChange(!checked)}
       accessibilityRole="checkbox"
       accessibilityState={{ checked }}
     >
-      <View
-        style={[
-          styles.box,
-          {
-            borderColor: checked ? theme.colors.primary : theme.colors.outline,
-            backgroundColor: checked ? theme.colors.primary : 'transparent',
-          },
-        ]}
-      >
-        {checked ? <Check size={14} color={theme.colors.onPrimary} strokeWidth={3} /> : null}
-      </View>
-      <Text style={[styles.label, { color: theme.colors.onSurfaceVariant }]}>{label}</Text>
+      <Checkbox checked={checked} onCheckedChange={onChange} className="size-5 rounded-md" />
+      <Text className="text-muted-foreground text-sm">{label}</Text>
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  box: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  label: {
-    ...Typography.bodyMedium,
-  },
-});
