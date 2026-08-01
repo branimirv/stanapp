@@ -11,7 +11,6 @@ import {
 import { useTheme } from 'react-native-paper';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
-import { useGlassTabBarInset } from '@/hooks/useGlassTabBarInset';
 import { Building2 } from 'lucide-react-native';
 import { PropertyCard } from '@/components/property/PropertyCard';
 import { PropertyFilters } from '@/components/property/PropertyFilters';
@@ -39,7 +38,6 @@ type UsageFilter = 'all' | UsageStatus;
 export default function PropertiesScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
-  const { scrollPadding } = useGlassTabBarInset();
   const showConfirmDialog = useUiStore((state) => state.showConfirmDialog);
   const showToast = useUiStore((state) => state.showToast);
 
@@ -283,7 +281,7 @@ export default function PropertiesScreen() {
         contentContainerStyle={[
           styles.listContent,
           filteredProperties.length === 0 && styles.listEmpty,
-          { paddingBottom: scrollPadding },
+          { paddingBottom: Spacing.lg },
         ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         renderItem={renderProperty}

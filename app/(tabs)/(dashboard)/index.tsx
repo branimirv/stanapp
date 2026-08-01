@@ -4,7 +4,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import { useGlassTabBarInset } from '@/hooks/useGlassTabBarInset';
 import { useDefaultTabHeader } from '@/hooks/useDefaultTabHeader';
 import { AlertBanner } from '@/components/dashboard/AlertBanner';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
@@ -33,7 +32,6 @@ function getInitialPeriod(): DashboardPeriod {
 export default function DashboardScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
-  const { scrollPadding } = useGlassTabBarInset();
   useDefaultTabHeader();
   const [period, setPeriod] = useState<DashboardPeriod>(getInitialPeriod);
   const { stats, isLoading, error, refetch } = useDashboardStats(period);
@@ -96,7 +94,7 @@ export default function DashboardScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: scrollPadding }]}
+        contentContainerStyle={[styles.content, { paddingBottom: Spacing.lg }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <DashboardHeader name={profile?.full_name} language={language} />

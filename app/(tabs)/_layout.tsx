@@ -1,67 +1,98 @@
-import { Tabs } from 'expo-router';
-import { BarChart3, Building2, LayoutDashboard, Receipt } from 'lucide-react-native';
+import { DynamicColorIOS, Platform } from 'react-native';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'react-native-paper';
 
-import { GlassTabBar } from '@/components/ui/GlassTabBar';
-import { useAppHeaderOptions } from '@/hooks/useAppHeaderOptions';
+import { Colors } from '@/constants/theme';
+import { useTabBarPreference } from '@/hooks/useTabBarPreference';
 
 export default function TabLayout() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const headerOptions = useAppHeaderOptions({ variant: 'tabRoot' });
+  const isAndroid = Platform.OS === 'android';
+  const { showLabels } = useTabBarPreference();
+
+  const tintColor =
+    Platform.OS === 'ios'
+      ? DynamicColorIOS({
+          light: Colors.primary,
+          dark: Colors.primary,
+        })
+      : theme.colors.primary;
+
+  const labelStyle =
+    Platform.OS === 'ios'
+      ? {
+          color: DynamicColorIOS({
+            light: Colors.textPrimary,
+            dark: Colors.textInverse,
+          }),
+        }
+      : {
+          default: { color: theme.colors.onSurfaceVariant },
+          selected: { color: theme.colors.primary },
+        };
+
+  // Android NativeTabs follow Material dynamic colors (system theme), not Paper.
+  // Pin bar chrome so dark app theme does not leave a white selected-only bar.
+  const androidTabBarProps = isAndroid
+    ? {
+        backgroundColor: theme.colors.surface,
+        labelVisibilityMode: (showLabels ? 'labeled' : 'unlabeled') as
+          | 'labeled'
+          | 'unlabeled',
+        // No Material active-indicator pill behind the selected icon (iOS-like).
+        disableIndicator: true,
+        iconColor: {
+          default: theme.colors.onSurfaceVariant,
+          selected: theme.colors.primary,
+        },
+      }
+    : {};
 
   return (
-    <Tabs
-      tabBar={(props) => <GlassTabBar {...props} />}
-      screenOptions={{
-        ...headerOptions,
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
-        tabBarStyle: {
-          position: 'absolute',
-          backgroundColor: 'transparent',
-          borderTopWidth: 0,
-          elevation: 0,
-        },
-      }}
+    <NativeTabs
+      tintColor={tintColor}
+      labelStyle={labelStyle}
+      minimizeBehavior="onScrollDown"
+      {...androidTabBarProps}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: t('tabs.dashboard'),
-          tabBarIcon: ({ color, size }) => (
-            <LayoutDashboard color={color} size={size ?? 24} strokeWidth={2} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="properties"
-        options={{
-          title: t('tabs.properties'),
-          tabBarIcon: ({ color, size }) => (
-            <Building2 color={color} size={size ?? 24} strokeWidth={2} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="expenses"
-        options={{
-          title: t('tabs.expenses'),
-          tabBarIcon: ({ color, size }) => (
-            <Receipt color={color} size={size ?? 24} strokeWidth={2} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="reports"
-        options={{
-          title: t('tabs.reports'),
-          tabBarIcon: ({ color, size }) => (
-            <BarChart3 color={color} size={size ?? 24} strokeWidth={2} />
-          ),
-        }}
-      />
-    </Tabs>
+      <NativeTabs.Trigger name="(dashboard)">
+        <NativeTabs.Trigger.Label hidden={!showLabels}>
+          {t('tabs.dashboard')}
+        </NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'house', selected: 'house.fill' }}
+          md="home"
+        />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="properties" disableTransparentOnScrollEdge>
+        <NativeTabs.Trigger.Label hidden={!showLabels}>
+          {t('tabs.properties')}
+        </NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'building.2', selected: 'building.2.fill' }}
+          md="apartment"
+        />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="expenses" disableTransparentOnScrollEdge>
+        <NativeTabs.Trigger.Label hidden={!showLabels}>
+          {t('tabs.expenses')}
+        </NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'creditcard', selected: 'creditcard.fill' }}
+          md="receipt_long"
+        />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="reports">
+        <NativeTabs.Trigger.Label hidden={!showLabels}>
+          {t('tabs.reports')}
+        </NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }}
+          md="bar_chart"
+        />
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }

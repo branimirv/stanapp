@@ -159,7 +159,7 @@ export default function LoginScreen() {
       message: t('auth.loginSuccess'),
       type: 'success',
     });
-    router.replace('/(tabs)');
+    router.replace('/(tabs)/(dashboard)');
   };
 
   return (

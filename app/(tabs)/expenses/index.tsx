@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import { useGlassTabBarInset } from '@/hooks/useGlassTabBarInset';
 import { ExpenseCard } from '@/components/expense/ExpenseCard';
 import {
   ExpenseFilters,
@@ -47,7 +46,6 @@ interface ExpenseSection {
 export default function ExpensesScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
-  const { scrollPadding } = useGlassTabBarInset();
   const params = useLocalSearchParams<{ filter?: string }>();
   const showConfirmDialog = useUiStore((state) => state.showConfirmDialog);
   const showToast = useUiStore((state) => state.showToast);
@@ -328,7 +326,7 @@ export default function ExpensesScreen() {
         {...listPerformanceProps}
         contentContainerStyle={[
           sections.length === 0 && styles.listEmpty,
-          { paddingBottom: scrollPadding },
+          { paddingBottom: Spacing.lg },
         ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         renderSectionHeader={renderSectionHeader}

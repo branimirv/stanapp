@@ -64,5 +64,10 @@
     "ios": "expo run:ios",
     "web": "expo start --web"
   },
-  "private": true
+  "private": true,
+  "pnpm": {
+    "patchedDependencies": {
+      "@react-native/gradle-plugin@0.85.3": "patches/@react-native__gradle-plugin@0.85.3.patch"
+    }
+  }
 }

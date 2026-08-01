@@ -6,7 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PaperProvider } from 'react-native-paper';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { Stack } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
@@ -86,10 +86,24 @@ function AppProviders({ children }: { children: React.ReactNode }) {
     return null;
   }
 
+  const navigationTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+      background: theme.colors.background,
+      card: theme.colors.surface,
+      text: theme.colors.onSurface,
+      border: theme.colors.outline,
+      primary: theme.colors.primary,
+    },
+  };
+
   return (
     <PaperProvider theme={theme}>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-      {children}
+      <ThemeProvider value={navigationTheme}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        {children}
+      </ThemeProvider>
     </PaperProvider>
   );
 }

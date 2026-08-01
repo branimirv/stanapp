@@ -5,10 +5,9 @@ import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import { Portal, Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { NATIVE_TAB_BAR_OFFSET } from '@/constants/tabBar';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useUiStore, type ToastType } from '@/stores/uiStore';
-
-const TAB_BAR_OFFSET = 56;
 
 function getToastColors(type: ToastType) {
   switch (type) {
@@ -66,7 +65,7 @@ export function Toast() {
         pointerEvents="box-none"
         style={[
           styles.wrapper,
-          { bottom: insets.bottom + TAB_BAR_OFFSET + Spacing.sm },
+          { bottom: insets.bottom + NATIVE_TAB_BAR_OFFSET + Spacing.sm },
         ]}
       >
         <Animated.View

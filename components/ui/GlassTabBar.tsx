@@ -7,26 +7,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassSurface } from '@/components/ui/GlassSurface';
 import { getGlassActiveIndicatorColor } from '@/constants/glass';
 import { Spacing } from '@/constants/theme';
+import { useTabBarPreference } from '@/hooks/useTabBarPreference';
 
 type GlassTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 
 const TAB_BAR_HEIGHT = 60;
 const TAB_BAR_HORIZONTAL_MARGIN = Spacing.lg;
 const TAB_BAR_BOTTOM_OFFSET = Spacing.sm;
-const TAB_BAR_SCROLL_PADDING = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_OFFSET + Spacing.lg;
-const TAB_BAR_FAB_OFFSET = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_OFFSET + Spacing.md;
-
-export function getGlassTabBarScrollPadding(bottomInset: number) {
-  return bottomInset + TAB_BAR_SCROLL_PADDING;
-}
-
-export function getGlassTabBarFabBottom(bottomInset: number) {
-  return bottomInset + TAB_BAR_FAB_OFFSET;
-}
 
 export function GlassTabBar({ state, descriptors, navigation }: GlassTabBarProps) {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
+  const { showLabels } = useTabBarPreference();
   const activeIndicatorColor = getGlassActiveIndicatorColor(theme.dark);
 
   return (
@@ -88,9 +80,11 @@ export function GlassTabBar({ state, descriptors, navigation }: GlassTabBarProps
                   <View style={styles.iconWrap}>
                     {options.tabBarIcon?.({ focused: isFocused, color, size: 20 })}
                   </View>
-                  <Text style={[styles.label, { color }]} numberOfLines={1}>
-                    {label}
-                  </Text>
+                  {showLabels ? (
+                    <Text style={[styles.label, { color }]} numberOfLines={1}>
+                      {label}
+                    </Text>
+                  ) : null}
                 </View>
               </Pressable>
             );

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Platform, useColorScheme as useSystemColorScheme } from 'react-native';
+import { Appearance, Platform, useColorScheme as useSystemColorScheme } from 'react-native';
 
 import { Colors, darkTheme, lightTheme } from '@/constants/theme';
 import { useProfile } from '@/hooks/useProfile';
@@ -50,6 +50,17 @@ export function useAppTheme() {
     document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
     document.body.style.backgroundColor = isDark ? Colors.backgroundDark : Colors.background;
   }, [isDark]);
+
+  // NativeTabs on Android use Material dynamic colors tied to Appearance.
+  // Keep them aligned with the in-app theme (which can differ from system).
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !isHydrated) return;
+    if (preference === 'system') {
+      Appearance.setColorScheme(null);
+      return;
+    }
+    Appearance.setColorScheme(isDark ? 'dark' : 'light');
+  }, [preference, isDark, isHydrated]);
 
   return {
     preference,

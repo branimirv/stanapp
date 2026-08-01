@@ -40,6 +40,7 @@ export type PaymentStatus = 'pending' | 'paid' | 'late' | 'partial';
 export type MembershipRole = 'owner' | 'manager' | 'tenant';
 export type Language = 'en' | 'hr';
 export type Theme = 'light' | 'dark' | 'system';
+export type TabBarLabelMode = 'iconAndLabel' | 'iconOnly';
 
 export interface PropertyMemberWithProfile extends PropertyMember {
   profile: Pick<Profile, 'id' | 'full_name'> | null;

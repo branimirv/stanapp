@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import { useGlassTabBarInset } from '@/hooks/useGlassTabBarInset';
 import { useDefaultTabHeader } from '@/hooks/useDefaultTabHeader';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
@@ -41,7 +40,6 @@ import type { Language, ReportCategoryTypeFilter, ReportPeriod } from '@/types/a
 export default function ReportsScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
-  const { scrollPadding } = useGlassTabBarInset();
   useDefaultTabHeader();
   const showToast = useUiStore((state) => state.showToast);
   const { profile } = useProfile();
@@ -213,7 +211,7 @@ export default function ReportsScreen() {
   return (
     <FlatList
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={[styles.content, { paddingBottom: scrollPadding }]}
+      contentContainerStyle={[styles.content, { paddingBottom: Spacing.lg }]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       data={report.propertySummaries}
       keyExtractor={(summary) => summary.propertyId}

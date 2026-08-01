@@ -6,7 +6,7 @@ import { Spacing } from '@/constants/theme';
 import { useProperties } from '@/hooks/useProperties';
 
 const TAB_LINKS: { title: string; href: string }[] = [
-  { title: 'Dashboard', href: '/(tabs)' },
+  { title: 'Dashboard', href: '/(tabs)/(dashboard)' },
   { title: 'Properties (tab)', href: '/(tabs)/properties' },
   { title: 'Expenses (tab)', href: '/(tabs)/expenses' },
   { title: 'Reports (tab)', href: '/(tabs)/reports' },

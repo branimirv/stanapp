@@ -12,6 +12,7 @@ import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher';
+import { TabBarStyleSwitcher } from '@/components/ui/TabBarStyleSwitcher';
 import { SUPPORTED_CURRENCIES } from '@/constants/config';
 import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useProfile } from '@/hooks/useProfile';
@@ -201,6 +202,18 @@ export default function SettingsScreen() {
           {t('settings.appearance')}
         </Text>
         <ThemeSwitcher onPersist={handleThemeChange} />
+
+        <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>
+          {t('settings.tabBarStyle')}
+        </Text>
+        <TabBarStyleSwitcher
+          onPersist={() => {
+            showToast({ message: t('settings.tabBarStyleUpdated'), type: 'success' });
+          }}
+        />
+        <Text style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}>
+          {t('settings.tabBarStyleHint')}
+        </Text>
 
         <Text style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>
           {t('settings.notifications')}
