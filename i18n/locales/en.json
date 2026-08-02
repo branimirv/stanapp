@@ -253,6 +253,8 @@
     "thisMonthExpenses": "{{month}} expenses",
     "viewAllExpenses": "See all",
     "noExpensesThisMonth": "No expenses this month",
+    "expenseCount": "{{count}} entry",
+    "expenseCount_plural": "{{count}} entries",
     "expensePeriodAll": "All",
     "expensePeriodThisMonth": "This month",
     "usageHistory": "Usage history",

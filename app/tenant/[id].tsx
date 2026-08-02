@@ -6,6 +6,7 @@ import { AppBadge } from '@/components/ui/AppBadge';
 import { AppButton } from '@/components/ui/AppButton';
 import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import { ScreenPageTitle } from '@/components/ui/ScreenPageTitle';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Separator } from '@/components/ui/separator';
@@ -123,6 +124,7 @@ export default function TenantDetailScreen() {
   return (
     <DetailScreenScaffold
       title={fullName}
+      hideHeaderTitle
       isLoading={false}
       isReady
       error={null}
@@ -153,7 +155,7 @@ export default function TenantDetailScreen() {
         ListHeaderComponent={
           <View style={styles.headerContent}>
             <View style={styles.header}>
-              <Text className="flex-1 text-2xl font-semibold">{fullName}</Text>
+              <ScreenPageTitle className="flex-1">{fullName}</ScreenPageTitle>
               <AppBadge label={badge.label} variant={badge.variant} />
             </View>
 

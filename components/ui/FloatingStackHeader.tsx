@@ -9,8 +9,8 @@ import { HEADER_ACTION_SLOT, HEADER_EDGE_INSET } from '@/constants/header';
 interface FloatingStackHeaderProps {
   title?: string;
   /**
-   * Hide the nav title when the screen shows a full-width page title below
-   * (e.g. property detail with long names).
+   * Hide the centered nav title. Prefer content page titles so long strings can wrap.
+   * Defaults to true; pass false only if a screen still needs a header title.
    */
   hideTitle?: boolean;
   right?: ReactNode;
@@ -28,12 +28,12 @@ export function useFloatingStackHeaderInset() {
 }
 
 /**
- * Revolut-style stack chrome: back + title (+ optional actions) float over
- * edge-to-edge content with no native header bar.
+ * Revolut-style stack chrome: back (+ optional actions) float over
+ * edge-to-edge content with no native header bar. Screen titles live in content.
  */
 export function FloatingStackHeader({
   title,
-  hideTitle = false,
+  hideTitle = true,
   right,
 }: FloatingStackHeaderProps) {
   const insets = useSafeAreaInsets();

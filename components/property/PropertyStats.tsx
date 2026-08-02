@@ -33,12 +33,6 @@ export function PropertyStats({
       color: Colors.accent,
     },
     {
-      key: 'expenses',
-      label: t('properties.statsExpenses'),
-      value: formatCurrency(totalExpenses, currency, resolvedLanguage),
-      color: Colors.danger,
-    },
-    {
       key: 'net',
       label: t('properties.statsNet'),
       value: formatCurrency(net, currency, resolvedLanguage),
@@ -47,15 +41,15 @@ export function PropertyStats({
   ] as const;
 
   return (
-    <View className="gap-2">
+    <View className="gap-2.5">
       {periodLabel ? (
         <Text className="text-muted-foreground text-xs font-medium">{periodLabel}</Text>
       ) : null}
-      <View className="flex-row gap-2">
+      <View className="flex-row gap-2.5">
         {stats.map((stat) => (
           <View
             key={stat.key}
-            className="bg-card border-border min-w-0 flex-1 gap-1 rounded-3xl border px-3 py-4"
+            className="bg-muted/60 min-w-0 flex-1 gap-1.5 rounded-3xl px-3 py-4"
           >
             <Text
               className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase"
@@ -64,7 +58,7 @@ export function PropertyStats({
               {stat.label}
             </Text>
             <Text
-              className="text-base font-bold"
+              className="text-lg font-bold"
               style={{ color: stat.color }}
               numberOfLines={1}
               adjustsFontSizeToFit

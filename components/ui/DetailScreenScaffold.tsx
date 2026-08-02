@@ -8,7 +8,10 @@ import { Spacing } from '@/constants/theme';
 
 interface DetailScreenScaffoldProps {
   title: string;
-  /** Hide nav title when the screen owns a page title below chrome. */
+  /**
+   * When true, chrome stays title-less and the screen owns its page title
+   * (e.g. property detail). Default shows the title in content.
+   */
   hideHeaderTitle?: boolean;
   isLoading: boolean;
   isReady: boolean;
@@ -37,7 +40,7 @@ export function DetailScreenScaffold({
 }: DetailScreenScaffoldProps) {
   if (isLoading) {
     return (
-      <StackScreenChrome title={title}>
+      <StackScreenChrome title={title} hideHeaderTitle={hideHeaderTitle} edgeToEdge={edgeToEdge}>
         <SkeletonLoader count={loaderCount} style={styles.loader} />
       </StackScreenChrome>
     );
@@ -45,7 +48,7 @@ export function DetailScreenScaffold({
 
   if (error || !isReady) {
     return (
-      <StackScreenChrome title={title}>
+      <StackScreenChrome title={title} hideHeaderTitle={hideHeaderTitle} edgeToEdge={edgeToEdge}>
         <ErrorState message={error ?? notFoundMessage} onRetry={onRetry} />
       </StackScreenChrome>
     );

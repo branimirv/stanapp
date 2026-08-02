@@ -13,12 +13,6 @@ export interface PropertyTabBarProps extends SceneRendererProps {
 /** Height of the floating pill row (padding + pill). */
 export const PROPERTY_TAB_BAR_HEIGHT = 38 + Spacing.sm * 2 + Spacing.xs;
 
-/**
- * Full-width page title under the nav (up to 2 lines).
- * text-2xl lineHeight 32 × 2 + vertical padding.
- */
-export const PROPERTY_PAGE_TITLE_HEIGHT = 32 * 2 + Spacing.sm + Spacing.xs;
-
 /** Extra space between floating tabs and scene content. */
 export const PROPERTY_SCENE_TOP_GAP = Spacing.md;
 

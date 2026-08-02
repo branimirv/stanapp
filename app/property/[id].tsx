@@ -15,7 +15,6 @@ import { PropertyExpensesTab } from '@/components/property/PropertyExpensesTab';
 import { PropertyOverviewTab } from '@/components/property/PropertyOverviewTab';
 import { PropertyRentTab } from '@/components/property/PropertyRentTab';
 import {
-  PROPERTY_PAGE_TITLE_HEIGHT,
   PROPERTY_TAB_BAR_HEIGHT,
   PropertyTabBar,
 } from '@/components/property/PropertyTabBar';
@@ -23,8 +22,6 @@ import { PropertyTenantsTab } from '@/components/property/PropertyTenantsTab';
 import { UsageHistorySheet } from '@/components/property/UsageHistorySheet';
 import { StatementSheet } from '@/components/property/StatementSheet';
 import { RentMonthActionSheet } from '@/components/rent/RentMonthActionSheet';
-import { HEADER_EDGE_INSET } from '@/constants/header';
-import { Spacing } from '@/constants/theme';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useLocale } from '@/hooks/useLocale';
 import { useMyMembership } from '@/hooks/useMembers';
@@ -155,16 +152,17 @@ export default function PropertyDetailScreen() {
 
   const routes = useMemo<PropertyRoute[]>(() => {
     const base: PropertyRoute[] = [{ key: 'overview', title: t('properties.overview') }];
-    if (isRented) base.push({ key: 'tenants', title: t('properties.tenantsTab') });
-    base.push({ key: 'expenses', title: t('properties.expensesTab') });
     if (isRented) base.push({ key: 'rent', title: t('properties.rentTab') });
+    base.push({ key: 'expenses', title: t('properties.expensesTab') });
+    if (isRented) base.push({ key: 'tenants', title: t('properties.tenantsTab') });
     return base;
   }, [isRented, t]);
 
-  const activeTenant = useMemo(
-    () => tenants.find((tenant) => tenant.is_active),
+  const activeTenants = useMemo(
+    () => tenants.filter((tenant) => tenant.is_active),
     [tenants],
   );
+  const activeTenant = activeTenants[0];
 
   const expensesTabIndex = useMemo(
     () => routes.findIndex((route) => route.key === 'expenses'),
@@ -187,6 +185,17 @@ export default function PropertyDetailScreen() {
       setIndex(rentTabIndex);
     }
   }, [rentTabIndex]);
+
+  const tenantsTabIndex = useMemo(
+    () => routes.findIndex((route) => route.key === 'tenants'),
+    [routes],
+  );
+
+  const goToTenantsTab = useCallback(() => {
+    if (tenantsTabIndex >= 0) {
+      setIndex(tenantsTabIndex);
+    }
+  }, [tenantsTabIndex]);
 
   const currentMonthRentPayment = useMemo(
     () =>
@@ -265,11 +274,6 @@ export default function PropertyDetailScreen() {
     [markMonthPaid, rentSheet],
   );
 
-  const handleCurrentMonthMarkPaid = useCallback(
-    () => markMonthPaid(currentMonthRange.month, currentMonthRange.year, currentMonthRentPayment),
-    [currentMonthRange.month, currentMonthRange.year, currentMonthRentPayment, markMonthPaid],
-  );
-
   const handleRentPartialPayment = useCallback(() => {
     const { month, year } = rentSheet;
     router.push({
@@ -346,7 +350,6 @@ export default function PropertyDetailScreen() {
   const overlayTop = headerInset;
   const sceneTopInset =
     headerInset +
-    PROPERTY_PAGE_TITLE_HEIGHT +
     PROPERTY_TAB_BAR_HEIGHT +
     (parentProperty ? PARENT_BANNER_HEIGHT : 0);
   const chromeBackdropHeight = sceneTopInset + CHROME_BACKDROP_BLEED;
@@ -370,16 +373,16 @@ export default function PropertyDetailScreen() {
             monthIncome={currentMonthIncome}
             categoryMap={categoryMap}
             rentPayment={currentMonthRentPayment}
-            activeTenant={activeTenant}
+            activeTenants={activeTenants}
             hasAnyExpenses={expenses.length > 0}
             refreshing={refreshing}
             onRefresh={onRefresh}
             onOpenAddress={handleOpenAddress}
             onShowUsageHistory={handleShowUsageHistory}
             onGoToRent={goToRentTab}
+            onGoToTenants={goToTenantsTab}
             onViewAllExpenses={goToExpensesTab}
             onOpenMembers={() => router.push(`/property/members/${property!.id}`)}
-            onMarkRentPaid={canManage ? handleCurrentMonthMarkPaid : undefined}
             onSelectTenant={handleSelectTenant}
             onSelectExpense={handleSelectExpense}
             onMarkExpensePaid={handleMarkExpensePaid}
@@ -502,15 +505,6 @@ export default function PropertyDetailScreen() {
             pointerEvents="box-none"
             style={[styles.tabOverlay, { top: overlayTop }]}
           >
-            <View style={styles.pageTitle}>
-              <Text
-                className="text-foreground text-2xl leading-8 font-bold"
-                numberOfLines={2}
-                accessibilityRole="header"
-              >
-                {property.name}
-              </Text>
-            </View>
             {parentProperty ? (
               <View className="px-4 pb-1">
                 <GlassSurface shape="pill" interactive contentStyle={styles.parentBanner}>
@@ -577,13 +571,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 10,
-  },
-  pageTitle: {
-    minHeight: PROPERTY_PAGE_TITLE_HEIGHT,
-    justifyContent: 'center',
-    paddingHorizontal: HEADER_EDGE_INSET,
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.xs,
   },
   parentBanner: {
     paddingHorizontal: 16,

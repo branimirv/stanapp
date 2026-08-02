@@ -4,6 +4,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ExpenseCard } from '@/components/expense/ExpenseCard';
+import { PropertyExpensesCard } from '@/components/property/PropertyExpensesCard';
 import { PropertyRentCard } from '@/components/property/PropertyRentCard';
 import { PropertyStats } from '@/components/property/PropertyStats';
 import { PropertyTypeBadge } from '@/components/property/PropertyTypeBadge';
@@ -11,10 +12,11 @@ import { SubPropertyList } from '@/components/property/SubPropertyList';
 import { UsageStatusBadge } from '@/components/property/UsageStatusBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/icon';
+import { ScreenPageTitle } from '@/components/ui/ScreenPageTitle';
 import { Text } from '@/components/ui/text';
 import { PROPERTY_SCENE_TOP_GAP } from '@/components/property/PropertyTabBar';
 import { listPerformanceProps } from '@/constants/list';
-import { Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import type {
   Expense,
   ExpenseCategory,
@@ -23,7 +25,11 @@ import type {
   RentPayment,
   Tenant,
 } from '@/types/app.types';
-import { formatCurrency, formatMonthName, formatPeriod } from '@/utils/formatters';
+import {
+  formatCurrency,
+  formatCurrencyShort,
+  formatPeriod,
+} from '@/utils/formatters';
 
 export interface PropertyOverviewTabProps {
   property: Property;
@@ -40,16 +46,16 @@ export interface PropertyOverviewTabProps {
   monthIncome: number;
   categoryMap: Map<string, ExpenseCategory>;
   rentPayment?: RentPayment;
-  activeTenant?: Tenant;
+  activeTenants: Tenant[];
   hasAnyExpenses: boolean;
   refreshing: boolean;
   onRefresh: () => void;
   onOpenAddress: () => void;
   onShowUsageHistory: () => void;
   onGoToRent: () => void;
+  onGoToTenants: () => void;
   onViewAllExpenses: () => void;
   onOpenMembers: () => void;
-  onMarkRentPaid?: () => void;
   onSelectTenant: (tenantId: string) => void;
   onSelectExpense: (expenseId: string) => void;
   onMarkExpensePaid: (expenseId: string) => void;
@@ -76,16 +82,16 @@ function PropertyOverviewTabComponent({
   monthIncome,
   categoryMap,
   rentPayment,
-  activeTenant,
+  activeTenants,
   hasAnyExpenses,
   refreshing,
   onRefresh,
   onOpenAddress,
   onShowUsageHistory,
   onGoToRent,
+  onGoToTenants,
   onViewAllExpenses,
   onOpenMembers,
-  onMarkRentPaid,
   onSelectTenant,
   onSelectExpense,
   onMarkExpensePaid,
@@ -99,6 +105,11 @@ function PropertyOverviewTabComponent({
     ? contentTopInset || Spacing.sm
     : (contentTopInset || 0) + PROPERTY_SCENE_TOP_GAP;
 
+  const monthBalance = monthIncome - monthExpenseTotal;
+  const periodLabel = formatPeriod(month, year, language);
+  const primaryTenant = activeTenants[0];
+  const extraTenantCount = Math.max(0, activeTenants.length - 1);
+
   const propertyMeta = useMemo(() => {
     const parts: string[] = [];
     if (property.floor != null) parts.push(t('properties.floorShort', { floor: property.floor }));
@@ -108,9 +119,13 @@ function PropertyOverviewTabComponent({
     return parts.join(' · ');
   }, [property.area_sqm, property.floor, t]);
 
-  const handleTenantPress = useCallback(() => {
-    if (activeTenant) onSelectTenant(activeTenant.id);
-  }, [activeTenant, onSelectTenant]);
+  const handleTenantCardPress = useCallback(() => {
+    if (activeTenants.length === 1 && primaryTenant) {
+      onSelectTenant(primaryTenant.id);
+      return;
+    }
+    onGoToTenants();
+  }, [activeTenants.length, onGoToTenants, onSelectTenant, primaryTenant]);
 
   const renderExpense = useCallback(
     ({ item }: { item: Expense }) => (
@@ -142,14 +157,11 @@ function PropertyOverviewTabComponent({
         />
       ) : null}
 
-      <View className="gap-3">
-        <View className="flex-row flex-wrap gap-2">
-          <PropertyTypeBadge type={property.type} />
-          <UsageStatusBadge status={property.usage_status} onPress={onShowUsageHistory} />
-        </View>
+      <View className="gap-2">
+        <ScreenPageTitle>{property.name}</ScreenPageTitle>
 
         <Pressable
-          className="min-h-11 flex-row items-center gap-2"
+          className="min-h-10 flex-row items-center gap-2"
           style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
           onPress={onOpenAddress}
           accessibilityRole="button"
@@ -160,27 +172,107 @@ function PropertyOverviewTabComponent({
             {property.address}
           </Text>
         </Pressable>
+
         {propertyMeta ? (
           <Text className="text-muted-foreground text-xs">{propertyMeta}</Text>
         ) : null}
+
+        <View className="flex-row flex-wrap gap-2">
+          <PropertyTypeBadge type={property.type} />
+          <UsageStatusBadge status={property.usage_status} onPress={onShowUsageHistory} />
+        </View>
       </View>
 
       {isRented ? (
-        <PropertyRentCard
-          rentAmount={property.rent_amount}
-          currency={currency}
-          language={language}
-          month={month}
-          year={year}
-          payment={rentPayment}
-          tenantName={
-            activeTenant ? `${activeTenant.first_name} ${activeTenant.last_name}` : undefined
-          }
-          onStatusPress={onGoToRent}
-          onTenantPress={activeTenant ? handleTenantPress : undefined}
-          onMarkPaid={onMarkRentPaid}
-        />
-      ) : null}
+        <View className="flex-row items-stretch gap-2">
+          <PropertyRentCard
+            rentAmount={property.rent_amount}
+            currency={currency}
+            language={language}
+            month={month}
+            year={year}
+            payment={rentPayment}
+            onStatusPress={onGoToRent}
+            className="min-w-0 flex-1"
+          />
+          <PropertyExpensesCard
+            total={monthExpenseTotal}
+            currency={currency}
+            language={language}
+            expenseCount={monthExpenses.length}
+            onPress={onViewAllExpenses}
+            className="min-w-0 flex-1"
+          />
+          <Pressable
+            className="bg-muted/60 min-h-[140px] min-w-0 flex-1 items-center justify-between rounded-[28px] px-3 py-4"
+            style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+            onPress={handleTenantCardPress}
+            accessibilityRole="button"
+            accessibilityLabel={
+              primaryTenant
+                ? `${primaryTenant.first_name} ${primaryTenant.last_name}${
+                    extraTenantCount > 0 ? ` +${extraTenantCount}` : ''
+                  }`
+                : t('properties.noTenant')
+            }
+          >
+            <Text
+              className="text-muted-foreground text-center text-[10px] font-semibold tracking-wide uppercase"
+              numberOfLines={1}
+            >
+              {t('tenants.title')}
+            </Text>
+
+            <View className="items-center justify-center py-2">
+              {primaryTenant ? (
+                <Text
+                  className="text-foreground text-center text-[18px] leading-6 font-bold"
+                  numberOfLines={2}
+                >
+                  {`${primaryTenant.first_name} ${primaryTenant.last_name}`}
+                </Text>
+              ) : (
+                <Text
+                  className="text-muted-foreground text-center text-xs font-medium"
+                  numberOfLines={2}
+                >
+                  {t('properties.noTenant')}
+                </Text>
+              )}
+            </View>
+
+            {extraTenantCount > 0 ? (
+              <Text className="text-muted-foreground text-center text-[11px] font-medium">
+                +{extraTenantCount}
+              </Text>
+            ) : (
+              <View className="h-4" />
+            )}
+          </Pressable>
+        </View>
+      ) : (
+        <View className="bg-muted/60 gap-2 rounded-3xl px-5 py-5">
+          <Text className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+            {t('properties.statsNet')}
+          </Text>
+          <Text
+            className="text-4xl leading-10 font-bold"
+            style={{ color: monthBalance >= 0 ? Colors.accent : Colors.danger }}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            {formatCurrencyShort(monthBalance, currency, language)}
+          </Text>
+        </View>
+      )}
+
+      <PropertyStats
+        totalIncome={monthIncome}
+        totalExpenses={monthExpenseTotal}
+        currency={currency}
+        language={language}
+        periodLabel={periodLabel}
+      />
 
       {property.notes ? (
         <View className="bg-muted/60 rounded-3xl px-4 py-3">
@@ -188,34 +280,9 @@ function PropertyOverviewTabComponent({
         </View>
       ) : null}
 
-      {isOwner ? (
-        <Pressable
-          className="bg-card min-h-14 flex-row items-center gap-3 rounded-3xl px-4 py-3.5 shadow-sm shadow-black/5"
-          style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
-          onPress={onOpenMembers}
-          accessibilityRole="button"
-          accessibilityLabel={t('members.title')}
-        >
-          <Icon as={Users} size={20} className="text-muted-foreground" strokeWidth={1.75} />
-          <View className="min-w-0 flex-1 gap-0.5">
-            <Text className="text-foreground text-[15px] font-semibold">{t('members.title')}</Text>
-            <Text className="text-muted-foreground text-xs">{t('members.overviewHint')}</Text>
-          </View>
-          <Icon as={ChevronRight} size={18} className="text-muted-foreground" strokeWidth={2} />
-        </Pressable>
-      ) : null}
-
-      <PropertyStats
-        totalIncome={monthIncome}
-        totalExpenses={monthExpenseTotal}
-        currency={currency}
-        language={language}
-        periodLabel={formatPeriod(month, year, language)}
-      />
-
       <View className="mt-1 flex-row items-end justify-between gap-2">
         <Text className="text-foreground flex-1 text-base font-bold">
-          {t('properties.thisMonthExpenses', { month: formatMonthName(month, year, language) })}
+          {t('properties.statsExpenses')}
         </Text>
         <Text className="text-muted-foreground text-sm font-medium">
           {formatCurrency(monthExpenseTotal, currency, language)}
@@ -236,6 +303,25 @@ function PropertyOverviewTabComponent({
       ) : null}
 
       {childProperties.length > 0 ? <SubPropertyList properties={childProperties} /> : null}
+
+      {isOwner ? (
+        <Pressable
+          className="bg-muted/60 min-h-14 flex-row items-center gap-3 rounded-3xl px-4 py-3.5"
+          style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+          onPress={onOpenMembers}
+          accessibilityRole="button"
+          accessibilityLabel={t('members.title')}
+        >
+          <View className="bg-card h-10 w-10 items-center justify-center rounded-full">
+            <Icon as={Users} size={18} className="text-muted-foreground" strokeWidth={1.75} />
+          </View>
+          <View className="min-w-0 flex-1 gap-0.5">
+            <Text className="text-foreground text-[15px] font-semibold">{t('members.title')}</Text>
+            <Text className="text-muted-foreground text-xs">{t('members.overviewHint')}</Text>
+          </View>
+          <Icon as={ChevronRight} size={18} className="text-muted-foreground" strokeWidth={2} />
+        </Pressable>
+      ) : null}
     </View>
   );
 

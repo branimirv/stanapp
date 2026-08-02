@@ -69,7 +69,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <StackScreenChrome title={t('auth.register')}>
+    <StackScreenChrome title={t('auth.registerTitle')}>
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -80,7 +80,6 @@ export default function RegisterScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View className="mb-8">
-            <Text className="mb-2 text-2xl font-semibold">{t('auth.registerTitle')}</Text>
             <Text className="text-muted-foreground text-base">{t('auth.registerSubtitle')}</Text>
           </View>
 

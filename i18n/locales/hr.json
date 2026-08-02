@@ -253,6 +253,8 @@
     "thisMonthExpenses": "Troškovi za {{month}}",
     "viewAllExpenses": "Prikaži sve",
     "noExpensesThisMonth": "Nema troškova ovog mjeseca",
+    "expenseCount": "{{count}} zapis",
+    "expenseCount_plural": "{{count}} zapisa",
     "expensePeriodAll": "Sve",
     "expensePeriodThisMonth": "Ovaj mjesec",
     "usageHistory": "Povijest korištenja",
