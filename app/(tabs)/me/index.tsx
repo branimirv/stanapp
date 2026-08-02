@@ -1,35 +1,68 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
-import { router, Stack } from 'expo-router';
-import { ChevronRight, Download } from 'lucide-react-native';
-import { useCallback, useState } from 'react';
-import { Linking, Pressable, ScrollView, View } from 'react-native';
+import { router, Stack, useFocusEffect } from 'expo-router';
+import {
+  Bell,
+  Coins,
+  Download,
+  FileText,
+  Globe,
+  LayoutGrid,
+  LogOut,
+  Moon,
+  Shield,
+  User,
+  Users,
+} from 'lucide-react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { Linking, Platform, ScrollView, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { AppButton } from '@/components/ui/AppButton';
-import { AppPicker } from '@/components/ui/AppPicker';
-import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
+
 import { ErrorState } from '@/components/ui/ErrorState';
-import { Icon } from '@/components/ui/icon';
-import { Separator } from '@/components/ui/separator';
+import {
+  SettingsGroup,
+  SettingsOptionSheet,
+  SettingsRow,
+} from '@/components/ui/SettingsList';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
-import { TabBarStyleSwitcher } from '@/components/ui/TabBarStyleSwitcher';
 import { Text } from '@/components/ui/text';
-import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher';
-import { SUPPORTED_CURRENCIES } from '@/constants/config';
+import { SUPPORTED_CURRENCIES, THEMES } from '@/constants/config';
 import { tabRootScreenOptions } from '@/constants/header';
+import { Spacing } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { useMyMemberships } from '@/hooks/useMembers';
 import { useProfile } from '@/hooks/useProfile';
+import { useTabBarPreference, type TabBarLabelMode } from '@/hooks/useTabBarPreference';
 import i18n from '@/i18n';
 import { signOut } from '@/lib/auth';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import type { Language, Theme } from '@/types/app.types';
 import { exportAllDataCSV } from '@/utils/export';
+import { loadNotificationPreferences } from '@/utils/notificationPreferences';
+
+type PickerKind = 'language' | 'currency' | 'theme' | 'tabBar' | null;
+
+const THEME_LABELS: Record<Theme, string> = {
+  light: 'settings.themeLight',
+  dark: 'settings.themeDark',
+  system: 'settings.themeSystem',
+};
+
+const TAB_BAR_LABELS: Record<TabBarLabelMode, string> = {
+  iconAndLabel: 'settings.tabBarIconAndLabel',
+  iconOnly: 'settings.tabBarIconOnly',
+};
 
 export default function MeScreen() {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
   const showToast = useUiStore((s) => s.showToast);
   const showConfirmDialog = useUiStore((s) => s.showConfirmDialog);
+  const { preference, setPreference } = useAppTheme();
+  const { labelMode, setLabelMode } = useTabBarPreference();
 
   const {
     profile,
@@ -40,8 +73,25 @@ export default function MeScreen() {
     updateCurrency,
     updateTheme,
   } = useProfile();
+  const { memberships } = useMyMemberships();
+  const ownsAnyProperty = useMemo(
+    () => memberships.some((membership) => membership.role === 'owner'),
+    [memberships],
+  );
 
   const [isExporting, setIsExporting] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [activePicker, setActivePicker] = useState<PickerKind>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadNotificationPreferences().then((prefs) => {
+        setNotificationsEnabled(
+          prefs.dueDateReminders || prefs.overdueAlerts || prefs.contractReminders,
+        );
+      });
+    }, []),
+  );
 
   const handleLanguageChange = useCallback(
     async (language: Language) => {
@@ -78,6 +128,7 @@ export default function MeScreen() {
   const handleThemeChange = useCallback(
     async (nextTheme: Theme) => {
       try {
+        await setPreference(nextTheme);
         await updateTheme(nextTheme);
         showToast({ message: t('settings.themeUpdated'), type: 'success' });
       } catch (err) {
@@ -87,7 +138,15 @@ export default function MeScreen() {
         });
       }
     },
-    [showToast, t, updateTheme],
+    [setPreference, showToast, t, updateTheme],
+  );
+
+  const handleTabBarChange = useCallback(
+    async (mode: TabBarLabelMode) => {
+      await setLabelMode(mode);
+      showToast({ message: t('settings.tabBarStyleUpdated'), type: 'success' });
+    },
+    [setLabelMode, showToast, t],
   );
 
   const handleExport = useCallback(async () => {
@@ -123,6 +182,15 @@ export default function MeScreen() {
     });
   }, [showConfirmDialog, showToast, t]);
 
+  const language = profile?.language ?? 'hr';
+  const currency = profile?.default_currency ?? 'EUR';
+
+  const languageLabel = useMemo(
+    () =>
+      language === 'en' ? t('settings.languageEnglish') : t('settings.languageCroatian'),
+    [language, t],
+  );
+
   if (isLoading) {
     return (
       <>
@@ -141,121 +209,166 @@ export default function MeScreen() {
     );
   }
 
-  const language = profile?.language ?? 'hr';
-
   return (
     <>
       <Stack.Screen options={tabRootScreenOptions(t('tabs.me'))} />
 
-      <ScrollView contentContainerClassName="gap-4 p-4 pb-12">
-        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-          {t('settings.account')}
-        </Text>
-        <View className="bg-card border-border gap-1 rounded-xl border p-4">
-          <Text className="text-lg font-semibold">{profile?.full_name}</Text>
-          <Text className="text-muted-foreground">{user?.email}</Text>
-
-          <Pressable
-            className="flex-row items-center justify-between py-2"
-            onPress={() => router.push('/(tabs)/me/profile')}
-          >
-            <Text className="text-primary">{t('settings.editProfile')}</Text>
-            <Icon as={ChevronRight} size={18} className="text-primary" />
-          </Pressable>
+      <ScrollView
+        className="bg-transparent"
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerClassName="gap-6 px-4 pb-12"
+        contentContainerStyle={{
+          // iOS automatic content inset covers the status bar; Android needs it manually.
+          paddingTop: Platform.OS === 'ios' ? Spacing.sm : insets.top + Spacing.sm,
+        }}
+      >
+        <View className="gap-1 px-1">
+          <Text className="text-2xl font-bold tracking-tight">
+            {profile?.full_name || t('tabs.me')}
+          </Text>
+          {user?.email ? (
+            <Text className="text-muted-foreground text-sm">{user.email}</Text>
+          ) : null}
         </View>
 
-        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-          {t('settings.language')}
-        </Text>
-        <AppSegmentedControl<Language>
-          segments={[
-            { value: 'en', label: t('settings.languageEnglish') },
-            { value: 'hr', label: t('settings.languageCroatian') },
-          ]}
-          value={language}
-          onValueChange={handleLanguageChange}
-        />
+        <SettingsGroup title={t('settings.account')}>
+          <SettingsRow
+            icon={User}
+            label={t('settings.editProfile')}
+            onPress={() => router.push('/(tabs)/me/profile')}
+          />
+          {ownsAnyProperty ? (
+            <SettingsRow
+              icon={Users}
+              label={t('members.teamTitle')}
+              subtitle={t('members.teamHint')}
+              onPress={() => router.push('/(tabs)/me/team')}
+            />
+          ) : null}
+        </SettingsGroup>
 
-        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-          {t('settings.currency')}
-        </Text>
-        <AppPicker
-          label={t('settings.currency')}
-          options={SUPPORTED_CURRENCIES.map((currency) => ({
-            value: currency,
-            label: currency,
-          }))}
-          value={profile?.default_currency ?? 'EUR'}
-          onValueChange={handleCurrencyChange}
-        />
-        <Text className="text-muted-foreground text-xs">{t('settings.currencyHint')}</Text>
+        <SettingsGroup title={t('settings.title')}>
+          <SettingsRow
+            icon={Globe}
+            label={t('settings.language')}
+            value={languageLabel}
+            onPress={() => setActivePicker('language')}
+          />
+          <SettingsRow
+            icon={Coins}
+            label={t('settings.currency')}
+            value={currency}
+            onPress={() => setActivePicker('currency')}
+          />
+          <SettingsRow
+            icon={Moon}
+            label={t('settings.appearance')}
+            value={t(THEME_LABELS[preference])}
+            onPress={() => setActivePicker('theme')}
+          />
+          <SettingsRow
+            icon={LayoutGrid}
+            label={t('settings.tabBarStyle')}
+            value={t(TAB_BAR_LABELS[labelMode])}
+            onPress={() => setActivePicker('tabBar')}
+          />
+          <SettingsRow
+            icon={Bell}
+            label={t('settings.notifications')}
+            badge={notificationsEnabled ? t('common.on') : t('common.off')}
+            badgeTone={notificationsEnabled ? 'accent' : 'muted'}
+            onPress={() => router.push('/(tabs)/me/notifications')}
+          />
+        </SettingsGroup>
 
-        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-          {t('settings.appearance')}
-        </Text>
-        <ThemeSwitcher onPersist={handleThemeChange} />
+        <SettingsGroup title={t('settings.data')}>
+          <SettingsRow
+            icon={Download}
+            label={t('settings.exportData')}
+            subtitle={t('settings.exportDataHint')}
+            loading={isExporting}
+            showChevron={false}
+            onPress={handleExport}
+          />
+        </SettingsGroup>
 
-        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-          {t('settings.tabBarStyle')}
-        </Text>
-        <TabBarStyleSwitcher
-          onPersist={() => {
-            showToast({ message: t('settings.tabBarStyleUpdated'), type: 'success' });
-          }}
-        />
-        <Text className="text-muted-foreground text-xs">{t('settings.tabBarStyleHint')}</Text>
+        <SettingsGroup title={t('settings.about')}>
+          <SettingsRow
+            icon={FileText}
+            label={t('settings.version')}
+            value={Constants.expoConfig?.version ?? '1.0.0'}
+            showChevron={false}
+          />
+          <SettingsRow
+            icon={Shield}
+            label={t('settings.privacyPolicy')}
+            onPress={() => Linking.openURL('https://stanapp.app/privacy')}
+          />
+          <SettingsRow
+            icon={FileText}
+            label={t('settings.termsOfService')}
+            onPress={() => Linking.openURL('https://stanapp.app/terms')}
+          />
+        </SettingsGroup>
 
-        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-          {t('settings.notifications')}
-        </Text>
-        <Pressable
-          className="flex-row items-center justify-between py-2"
-          onPress={() => router.push('/(tabs)/me/notifications')}
-        >
-          <View className="flex-1">
-            <Text>{t('settings.notificationPreferences')}</Text>
-            <Text className="text-muted-foreground text-xs">
-              {t('settings.dueDateRemindersHint')}
-            </Text>
-          </View>
-          <Icon as={ChevronRight} size={18} className="text-muted-foreground" />
-        </Pressable>
-
-        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-          {t('settings.data')}
-        </Text>
-        <AppButton mode="outlined" loading={isExporting} onPress={handleExport}>
-          <View className="flex-row items-center gap-2">
-            <Icon as={Download} size={18} />
-            <Text>{t('settings.exportData')}</Text>
-          </View>
-        </AppButton>
-        <Text className="text-muted-foreground text-xs">{t('settings.exportDataHint')}</Text>
-
-        <Separator className="my-2" />
-
-        <Text className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-          {t('settings.about')}
-        </Text>
-        <Text className="text-muted-foreground">
-          {t('settings.version')}: {Constants.expoConfig?.version ?? '1.0.0'}
-        </Text>
-        <Pressable onPress={() => Linking.openURL('https://stanapp.app/privacy')}>
-          <Text className="text-primary mt-1 text-sm">{t('settings.privacyPolicy')}</Text>
-        </Pressable>
-        <Pressable onPress={() => Linking.openURL('https://stanapp.app/terms')}>
-          <Text className="text-primary mt-1 text-sm">{t('settings.termsOfService')}</Text>
-        </Pressable>
-
-        <AppButton
-          mode="contained"
-          textColor="destructive"
-          onPress={handleSignOut}
-          className="mt-6"
-        >
-          {t('settings.signOut')}
-        </AppButton>
+        <SettingsGroup>
+          <SettingsRow
+            icon={LogOut}
+            label={t('settings.signOut')}
+            destructive
+            showChevron={false}
+            onPress={handleSignOut}
+          />
+        </SettingsGroup>
       </ScrollView>
+
+      <SettingsOptionSheet<Language>
+        visible={activePicker === 'language'}
+        title={t('settings.language')}
+        value={language}
+        options={[
+          { value: 'en', label: t('settings.languageEnglish') },
+          { value: 'hr', label: t('settings.languageCroatian') },
+        ]}
+        onSelect={handleLanguageChange}
+        onClose={() => setActivePicker(null)}
+      />
+
+      <SettingsOptionSheet
+        visible={activePicker === 'currency'}
+        title={t('settings.currency')}
+        value={currency}
+        options={SUPPORTED_CURRENCIES.map((item) => ({
+          value: item,
+          label: item,
+        }))}
+        onSelect={handleCurrencyChange}
+        onClose={() => setActivePicker(null)}
+      />
+
+      <SettingsOptionSheet<Theme>
+        visible={activePicker === 'theme'}
+        title={t('settings.appearance')}
+        value={preference}
+        options={THEMES.map((item) => ({
+          value: item,
+          label: t(THEME_LABELS[item]),
+        }))}
+        onSelect={handleThemeChange}
+        onClose={() => setActivePicker(null)}
+      />
+
+      <SettingsOptionSheet<TabBarLabelMode>
+        visible={activePicker === 'tabBar'}
+        title={t('settings.tabBarStyle')}
+        value={labelMode}
+        options={[
+          { value: 'iconAndLabel', label: t('settings.tabBarIconAndLabel') },
+          { value: 'iconOnly', label: t('settings.tabBarIconOnly') },
+        ]}
+        onSelect={handleTabBarChange}
+        onClose={() => setActivePicker(null)}
+      />
     </>
   );
 }

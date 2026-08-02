@@ -88,5 +88,6 @@ export const queryKeys = {
   invites: {
     all: ['invites'] as const,
     list: (propertyId: string) => [...queryKeys.invites.all, 'list', propertyId] as const,
+    ownedPending: () => [...queryKeys.invites.all, 'ownedPending'] as const,
   },
 } as const;

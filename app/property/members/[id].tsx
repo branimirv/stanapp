@@ -1,29 +1,19 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Trash2 } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/ui/AppButton';
-import { AppCheckbox } from '@/components/ui/AppCheckbox';
-import { AppFormScroll, AppFormSection, AppFormSubmit } from '@/components/ui/AppFormScroll';
-import { AppPicker } from '@/components/ui/AppPicker';
-import { AppTextInput } from '@/components/ui/AppTextInput';
+import { AppFormScroll, AppFormSection } from '@/components/ui/AppFormScroll';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { Text } from '@/components/ui/text';
-import { MEMBERSHIP_ROLES } from '@/constants/config';
 import { Colors, Spacing } from '@/constants/theme';
-import { useMyMembership, useMyMemberships, usePropertyInvites, usePropertyMembers } from '@/hooks/useMembers';
-import { useProperties } from '@/hooks/useProperties';
+import { useMyMembership, usePropertyInvites, usePropertyMembers } from '@/hooks/useMembers';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
-import type { MembershipRole } from '@/types/app.types';
-import { translateFieldError } from '@/utils/formHelpers';
-import { inviteSchema, type InviteFormValues } from '@/utils/validators';
 
 export default function PropertyMembersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -32,8 +22,6 @@ export default function PropertyMembersScreen() {
   const showConfirmDialog = useUiStore((s) => s.showConfirmDialog);
   const user = useAuthStore((s) => s.user);
 
-  const { properties } = useProperties();
-  const { memberships } = useMyMemberships();
   const { isOwner, isLoading: membershipLoading } = useMyMembership(id);
   const {
     members,
@@ -47,57 +35,8 @@ export default function PropertyMembersScreen() {
     isLoading: invitesLoading,
     error: invitesError,
     refetch: refetchInvites,
-    invite,
-    isInviting,
     revoke: revokeInvite,
   } = usePropertyInvites(id);
-
-  const [showInviteForm, setShowInviteForm] = useState(false);
-
-  const ownedPropertyIds = useMemo(
-    () =>
-      new Set(
-        memberships.filter((membership) => membership.role === 'owner').map((m) => m.property_id),
-      ),
-    [memberships],
-  );
-
-  const selectableProperties = useMemo(
-    () =>
-      properties.filter((property) => !property.is_archived && ownedPropertyIds.has(property.id)),
-    [ownedPropertyIds, properties],
-  );
-
-  const form = useForm<InviteFormValues>({
-    resolver: zodResolver(inviteSchema as never),
-    defaultValues: {
-      email: '',
-      role: 'tenant',
-      propertyIds: id ? [id] : [],
-    },
-  });
-
-  const selectedIds = form.watch('propertyIds');
-
-  const handleInvite = form.handleSubmit(async (values) => {
-    try {
-      const result = await invite(values);
-      showToast({
-        message: result.authInviteSent
-          ? t('members.inviteSent')
-          : t('members.invitePendingExisting'),
-        type: 'success',
-      });
-      form.reset({ email: '', role: 'tenant', propertyIds: id ? [id] : [] });
-      setShowInviteForm(false);
-      await refetchInvites();
-    } catch (err) {
-      showToast({
-        message: err instanceof Error ? err.message : t('members.inviteFailed'),
-        type: 'error',
-      });
-    }
-  });
 
   const handleRevokeMember = (memberId: string, name: string) => {
     showConfirmDialog({
@@ -143,26 +82,23 @@ export default function PropertyMembersScreen() {
 
   if (isLoading && members.length === 0) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('members.title') }} />
+      <StackScreenChrome title={t('members.title')}>
         <SkeletonLoader count={4} style={styles.loader} />
-      </>
+      </StackScreenChrome>
     );
   }
 
   if (!isOwner) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('members.title') }} />
+      <StackScreenChrome title={t('members.title')}>
         <ErrorState message={t('members.ownersOnly')} onRetry={() => router.back()} />
-      </>
+      </StackScreenChrome>
     );
   }
 
   if (membersError || invitesError) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('members.title') }} />
+      <StackScreenChrome title={t('members.title')}>
         <ErrorState
           message={membersError ?? invitesError ?? t('members.loadFailed')}
           onRetry={() => {
@@ -170,13 +106,12 @@ export default function PropertyMembersScreen() {
             void refetchInvites();
           }}
         />
-      </>
+      </StackScreenChrome>
     );
   }
 
   return (
-    <>
-      <Stack.Screen options={{ title: t('members.title') }} />
+    <StackScreenChrome title={t('members.title')}>
       <AppFormScroll>
         <AppFormSection label={t('members.membersSection')}>
           {members.length === 0 ? (
@@ -235,78 +170,19 @@ export default function PropertyMembersScreen() {
           )}
         </AppFormSection>
 
-        {!showInviteForm ? (
-          <AppButton mode="contained" onPress={() => setShowInviteForm(true)}>
-            {t('members.invitePeople')}
-          </AppButton>
-        ) : (
-          <AppFormSection label={t('members.invitePeople')}>
-            <AppTextInput
-              control={form.control}
-              name="email"
-              label={t('common.email')}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              error={translateFieldError(t, form.formState.errors.email?.message)}
-            />
-
-            <Controller
-              control={form.control}
-              name="role"
-              render={({ field: { value, onChange } }) => (
-                <AppPicker<MembershipRole>
-                  label={t('members.role')}
-                  options={MEMBERSHIP_ROLES.map((role) => ({
-                    value: role,
-                    label: t(`members.roles.${role}`),
-                  }))}
-                  value={value}
-                  onValueChange={onChange}
-                />
-              )}
-            />
-
-            <Text className="text-muted-foreground mb-1 text-xs">
-              {t('members.selectProperties')}
-            </Text>
-            {selectableProperties.map((property) => {
-              const checked = selectedIds.includes(property.id);
-              return (
-                <AppCheckbox
-                  key={property.id}
-                  checked={checked}
-                  label={property.name}
-                  onChange={(next) => {
-                    const current = form.getValues('propertyIds');
-                    form.setValue(
-                      'propertyIds',
-                      next
-                        ? Array.from(new Set([...current, property.id]))
-                        : current.filter((propertyId) => propertyId !== property.id),
-                      { shouldValidate: true },
-                    );
-                  }}
-                />
-              );
-            })}
-            {form.formState.errors.propertyIds?.message ? (
-              <Text className="text-destructive">
-                {translateFieldError(t, form.formState.errors.propertyIds.message)}
-              </Text>
-            ) : null}
-
-            <AppFormSubmit
-              label={t('members.sendInvite')}
-              loading={isInviting}
-              onPress={() => void handleInvite()}
-            />
-            <AppButton mode="text" onPress={() => setShowInviteForm(false)}>
-              {t('common.cancel')}
-            </AppButton>
-          </AppFormSection>
-        )}
+        <AppButton
+          mode="contained"
+          onPress={() =>
+            router.push({
+              pathname: '/(tabs)/me/team',
+              params: id ? { propertyId: id } : undefined,
+            })
+          }
+        >
+          {t('members.invitePeople')}
+        </AppButton>
       </AppFormScroll>
-    </>
+    </StackScreenChrome>
   );
 }
 

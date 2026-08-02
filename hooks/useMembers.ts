@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import {
   acceptPendingInvites,
+  fetchOwnedPendingInvites,
   fetchPropertyInvites,
   inviteToProperties,
   revokeInvite,
@@ -102,25 +103,13 @@ export function usePropertyMembers(propertyId: string | undefined) {
   };
 }
 
-export function usePropertyInvites(propertyId: string | undefined) {
-  const { user } = useAuthStore();
+function useInviteMutations(onRevokeSuccess?: () => void) {
   const queryClient = useQueryClient();
-
-  const query = useQuery({
-    queryKey: propertyId ? queryKeys.invites.list(propertyId) : queryKeys.invites.list('none'),
-    queryFn: () => fetchPropertyInvites(propertyId as string),
-    enabled: Boolean(user && propertyId),
-  });
-
-  const invalidate = useCallback(() => {
-    if (!propertyId) return;
-    queryClient.invalidateQueries({ queryKey: queryKeys.invites.list(propertyId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.invites.all });
-  }, [propertyId, queryClient]);
 
   const inviteMutation = useMutation({
     mutationFn: (input: InviteToPropertiesInput) => inviteToProperties(input),
     onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.invites.all });
       for (const id of variables.propertyIds) {
         queryClient.invalidateQueries({ queryKey: queryKeys.invites.list(id) });
       }
@@ -129,17 +118,56 @@ export function usePropertyInvites(propertyId: string | undefined) {
 
   const revokeMutation = useMutation({
     mutationFn: (inviteId: string) => revokeInvite(inviteId),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.invites.all });
+      onRevokeSuccess?.();
+    },
   });
+
+  return {
+    invite: (input: InviteToPropertiesInput) => inviteMutation.mutateAsync(input),
+    isInviting: inviteMutation.isPending,
+    revoke: (inviteId: string) => revokeMutation.mutateAsync(inviteId),
+  };
+}
+
+export function usePropertyInvites(propertyId: string | undefined) {
+  const { user } = useAuthStore();
+
+  const query = useQuery({
+    queryKey: propertyId ? queryKeys.invites.list(propertyId) : queryKeys.invites.list('none'),
+    queryFn: () => fetchPropertyInvites(propertyId as string),
+    enabled: Boolean(user && propertyId),
+  });
+
+  const mutations = useInviteMutations();
 
   return {
     invites: query.data ?? [],
     isLoading: query.isLoading,
     error: query.error ? (query.error as Error).message : null,
     refetch: query.refetch,
-    invite: (input: InviteToPropertiesInput) => inviteMutation.mutateAsync(input),
-    isInviting: inviteMutation.isPending,
-    revoke: (inviteId: string) => revokeMutation.mutateAsync(inviteId),
+    ...mutations,
+  };
+}
+
+export function useOwnedPendingInvites() {
+  const { user } = useAuthStore();
+
+  const query = useQuery({
+    queryKey: queryKeys.invites.ownedPending(),
+    queryFn: fetchOwnedPendingInvites,
+    enabled: Boolean(user),
+  });
+
+  const mutations = useInviteMutations();
+
+  return {
+    invites: query.data ?? [],
+    isLoading: query.isLoading,
+    error: query.error ? (query.error as Error).message : null,
+    refetch: query.refetch,
+    ...mutations,
   };
 }
 

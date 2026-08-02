@@ -63,6 +63,22 @@ export async function fetchPropertyInvites(propertyId: string): Promise<Property
   return data ?? [];
 }
 
+export type OwnedPendingInvite = PropertyInvite & {
+  property: { id: string; name: string } | null;
+};
+
+/** Pending invites for properties the current user owns (RLS-scoped). */
+export async function fetchOwnedPendingInvites(): Promise<OwnedPendingInvite[]> {
+  const { data, error } = await supabase
+    .from('property_invites')
+    .select('*, property:properties(id, name)')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as OwnedPendingInvite[];
+}
+
 export async function revokeInvite(inviteId: string): Promise<void> {
   const { error } = await supabase
     .from('property_invites')
