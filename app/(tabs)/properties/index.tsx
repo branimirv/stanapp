@@ -24,7 +24,8 @@ import { useMyMemberships } from '@/hooks/useMembers';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
 import { useExpandableSearchState } from '@/hooks/useExpandableSearch';
-import { useSearchableTabHeader } from '@/hooks/useSearchableTabHeader';
+import { useFloatingActionsInset } from '@/components/ui/FloatingScreenActions';
+import { SearchableTabActions } from '@/hooks/useSearchableTabHeader';
 import { useRefetchOnFocus } from '@/hooks/useRefetchOnFocus';
 import { useTenants } from '@/hooks/useTenants';
 import { useAuthStore } from '@/stores/authStore';
@@ -70,13 +71,7 @@ export default function PropertiesScreen() {
     listKeyboardProps,
   } = useExpandableSearchState();
 
-  useSearchableTabHeader({
-    showCreate: true,
-    onCreatePress: handleCreatePress,
-    searchActive: searchHasText,
-    searchExpanded,
-    onSearchPress: handleSearchPress,
-  });
+  const floatingInset = useFloatingActionsInset();
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [usageFilter, setUsageFilter] = useState<UsageFilter>('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -253,7 +248,7 @@ export default function PropertiesScreen() {
 
   if (isLoading && properties.length === 0) {
     return (
-      <View className="bg-background flex-1">
+      <View className="flex-1 bg-transparent">
         <SkeletonLoader count={5} height={140} style={styles.skeleton} />
       </View>
     );
@@ -261,17 +256,25 @@ export default function PropertiesScreen() {
 
   if (error && properties.length === 0) {
     return (
-      <View className="bg-background flex-1">
+      <View className="flex-1 bg-transparent">
         <ErrorState message={error} onRetry={refetch} />
       </View>
     );
   }
 
   return (
-    <View className="bg-background flex-1">
-      <View style={styles.listHeader}>{listFiltersHeader}</View>
+    <View className="flex-1 bg-transparent" collapsable={false}>
+      <SearchableTabActions
+        showCreate
+        onCreatePress={handleCreatePress}
+        searchActive={searchHasText}
+        searchExpanded={searchExpanded}
+        onSearchPress={handleSearchPress}
+      />
+      <View style={[styles.listHeader, { paddingTop: floatingInset }]}>{listFiltersHeader}</View>
       <FlatList
         style={styles.list}
+        contentInsetAdjustmentBehavior="automatic"
         data={filteredProperties}
         keyExtractor={(item) => item.id}
         {...listKeyboardProps}

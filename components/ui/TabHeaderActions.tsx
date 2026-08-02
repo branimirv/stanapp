@@ -25,7 +25,6 @@ export function TabHeaderActions({
 
   return (
     <HeaderActionsPill>
-      {hasCreate ? <CreateHeaderButton onPress={onCreatePress!} /> : null}
       {hasSearch ? (
         <SearchHeaderButton
           active={searchActive}
@@ -33,6 +32,7 @@ export function TabHeaderActions({
           onPress={onSearchPress!}
         />
       ) : null}
+      {hasCreate ? <CreateHeaderButton onPress={onCreatePress!} /> : null}
     </HeaderActionsPill>
   );
 }

@@ -21,7 +21,12 @@ export function HeaderBackButton() {
   }
 
   return (
-    <GlassSurface shape="circle" style={styles.circle} contentStyle={styles.circleOverlay}>
+    <GlassSurface
+      shape="circle"
+      interactive
+      style={styles.circle}
+      contentStyle={styles.circleOverlay}
+    >
       <HeaderIconButton
         icon={ChevronLeft}
         onPress={() => router.back()}

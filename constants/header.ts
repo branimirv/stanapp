@@ -1,8 +1,5 @@
 import { Spacing } from '@/constants/theme';
 
-/** Extra vertical room in the header bar (content area below status bar). */
-export const HEADER_BAR_HEIGHT = 52;
-
 /** Horizontal inset from screen edge — single source for header side padding. */
 export const HEADER_EDGE_INSET = Spacing.md;
 
@@ -20,10 +17,6 @@ export const headerRightContainerStyle = {
   paddingRight: HEADER_EDGE_INSET,
   justifyContent: 'flex-end' as const,
   alignItems: 'center' as const,
-};
-
-export const headerBarStyle = {
-  minHeight: HEADER_BAR_HEIGHT,
 };
 
 /**

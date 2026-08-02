@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { Text } from '@/components/ui/text';
 import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -59,32 +60,34 @@ export default function NavAuditScreen() {
   const { properties } = useProperties();
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
-      <Text variant="muted" style={styles.hint}>
-        Dev-only: jump to routes for navigation chrome screenshots.
-      </Text>
-      <NavListSection title="Tab roots">
-        {TAB_LINKS.map((link) => (
-          <NavListItem
-            key={link.href}
-            title={link.title}
-            onPress={() => router.push(link.href as never)}
-          />
-        ))}
-      </NavListSection>
-      {properties.length > 0 ? (
-        <NavListSection title="Entity push (property)">
-          {properties.slice(0, 5).map((property) => (
+    <StackScreenChrome title="Nav audit">
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text variant="muted" style={styles.hint}>
+          Dev-only: jump to routes for navigation chrome screenshots.
+        </Text>
+        <NavListSection title="Tab roots">
+          {TAB_LINKS.map((link) => (
             <NavListItem
-              key={property.id}
-              title={property.name}
-              description={property.id}
-              onPress={() => router.push(`/property/${property.id}`)}
+              key={link.href}
+              title={link.title}
+              onPress={() => router.push(link.href as never)}
             />
           ))}
         </NavListSection>
-      ) : null}
-    </ScrollView>
+        {properties.length > 0 ? (
+          <NavListSection title="Entity push (property)">
+            {properties.slice(0, 5).map((property) => (
+              <NavListItem
+                key={property.id}
+                title={property.name}
+                description={property.id}
+                onPress={() => router.push(`/property/${property.id}`)}
+              />
+            ))}
+          </NavListSection>
+        ) : null}
+      </ScrollView>
+    </StackScreenChrome>
   );
 }
 

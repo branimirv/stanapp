@@ -1,8 +1,9 @@
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { PropertyForm } from '@/components/property/PropertyForm';
+import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
 import { useProperties } from '@/hooks/useProperties';
 import { useAuthStore } from '@/stores/authStore';
@@ -57,9 +58,8 @@ export default function NewPropertyScreen() {
   };
 
   return (
-    <>
-      <Stack.Screen options={{ title: t('properties.newProperty') }} />
-      <View style={[screenStyles.container, styles.container]}>
+    <StackScreenChrome title={t('properties.newProperty')} edgeToEdge>
+      <View style={screenStyles.container}>
         <PropertyForm
           parentProperties={properties}
           onSubmit={handleSubmit}
@@ -68,12 +68,6 @@ export default function NewPropertyScreen() {
           submitLabel={t('common.create')}
         />
       </View>
-    </>
+    </StackScreenChrome>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    paddingTop: 8,
-  },
-});

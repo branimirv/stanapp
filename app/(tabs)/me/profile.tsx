@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router, Stack } from 'expo-router';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import { AppPicker } from '@/components/ui/AppPicker';
 import { AppTextInput } from '@/components/ui/AppTextInput';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { LANGUAGES, SUPPORTED_CURRENCIES, THEMES } from '@/constants/config';
 import { Spacing } from '@/constants/theme';
 import { useProfile } from '@/hooks/useProfile';
@@ -59,26 +60,22 @@ export default function ProfileSettingsScreen() {
 
   if (isLoading) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('settings.editProfile') }} />
+      <StackScreenChrome title={t('settings.editProfile')}>
         <SkeletonLoader count={5} style={styles.loader} />
-      </>
+      </StackScreenChrome>
     );
   }
 
   if (error || !profile) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('settings.editProfile') }} />
+      <StackScreenChrome title={t('settings.editProfile')}>
         <ErrorState message={error ?? t('settings.loadFailed')} onRetry={refetch} />
-      </>
+      </StackScreenChrome>
     );
   }
 
   return (
-    <>
-      <Stack.Screen options={{ title: t('settings.editProfile') }} />
-
+    <StackScreenChrome title={t('settings.editProfile')}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <AppTextInput
           control={form.control}
@@ -142,7 +139,7 @@ export default function ProfileSettingsScreen() {
           {t('common.save')}
         </AppButton>
       </ScrollView>
-    </>
+    </StackScreenChrome>
   );
 }
 

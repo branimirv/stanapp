@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Banknote, Building2, TrendingDown, TrendingUp } from 'lucide-react-native';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AlertBanner } from '@/components/dashboard/AlertBanner';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
@@ -14,9 +14,13 @@ import { RentCollectionCard } from '@/components/dashboard/RentCollectionCard';
 import { SummaryCard } from '@/components/dashboard/SummaryCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
+import {
+  FLOATING_ACTIONS_ROW_HEIGHT,
+  useFloatingActionsInset,
+} from '@/components/ui/FloatingScreenActions';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { Colors, Spacing } from '@/constants/theme';
-import { useDashboardCreateHeader } from '@/hooks/useDashboardCreateHeader';
+import { DashboardCreateActions } from '@/hooks/useDashboardCreateHeader';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
@@ -49,7 +53,14 @@ export default function DashboardScreen() {
     setCreateSheetVisible(false);
   }, []);
 
-  useDashboardCreateHeader(openCreateSheet);
+  // iOS ScrollView automatic inset already covers the status bar; only reserve
+  // space for the floating create button (+ a little breathing room). Android
+  // needs the full safe-area inset.
+  const floatingInset = useFloatingActionsInset();
+  const contentTopPad =
+    Platform.OS === 'ios'
+      ? FLOATING_ACTIONS_ROW_HEIGHT + Spacing.md
+      : floatingInset + Spacing.md;
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -58,21 +69,25 @@ export default function DashboardScreen() {
   }, [refetch]);
 
   const wrap = (children: ReactNode) => (
-    <View className="bg-background flex-1">
-      <QuickCreateSheet visible={createSheetVisible} onDismiss={closeCreateSheet} />
+    // collapsable={false}: keep ScrollView discoverable for NativeTabs
+    // liquid-glass scroll-edge / content-inset behavior.
+    <View className="flex-1 bg-transparent" collapsable={false}>
+      <DashboardCreateActions onCreatePress={openCreateSheet} />
       {children}
+      <QuickCreateSheet visible={createSheetVisible} onDismiss={closeCreateSheet} />
     </View>
   );
 
   if (isLoading && !stats) {
     return wrap(
-      <>
+      // Non-scroll shell has no automatic inset — use full floating safe-area pad.
+      <View style={{ paddingTop: floatingInset }}>
         <SkeletonLoader count={1} height={56} style={styles.skeleton} />
         <SkeletonLoader count={1} height={48} style={styles.skeleton} />
         <SkeletonLoader count={1} height={120} style={styles.skeleton} />
         <SkeletonLoader count={2} height={100} style={styles.skeleton} />
         <SkeletonLoader count={3} height={72} />
-      </>,
+      </View>,
     );
   }
 
@@ -100,7 +115,11 @@ export default function DashboardScreen() {
 
   return wrap(
     <ScrollView
-      contentContainerStyle={[styles.content, { paddingBottom: Spacing.lg }]}
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: contentTopPad, paddingBottom: Spacing.lg },
+      ]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <DashboardHeader name={profile?.full_name} language={language} />

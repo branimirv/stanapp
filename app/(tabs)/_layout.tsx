@@ -8,7 +8,7 @@ import { useTabBarPreference } from '@/hooks/useTabBarPreference';
 
 export default function TabLayout() {
   const { t } = useTranslation();
-  const { theme } = useAppTheme();
+  const { theme, isDark } = useAppTheme();
   const isAndroid = Platform.OS === 'android';
   const { showLabels } = useTabBarPreference();
 
@@ -33,15 +33,30 @@ export default function TabLayout() {
           selected: { color: theme.colors.primary },
         };
 
-  // Android NativeTabs follow Material dynamic colors (system theme), not Paper.
-  // Pin bar chrome so dark app theme does not leave a white selected-only bar.
+  // Soft brand wash lives in each tab layout (`AppScreenBackground`) because
+  // NativeTabs scenes are opaque and hide the root ambient.
+  // Frosted chrome stays translucent so scroll content shows through;
+  // icons/labels stay fully opaque via tintColor + labelStyle.
+  // disableTransparentOnScrollEdge keeps blur at the edge (otherwise iOS
+  // clears blurEffect to 'none' and the bar becomes fully invisible).
+  const iosTabBarProps = !isAndroid
+    ? {
+        blurEffect: isDark
+          ? ('systemChromeMaterialDark' as const)
+          : ('systemChromeMaterialLight' as const),
+        backgroundColor: 'transparent' as const,
+        disableTransparentOnScrollEdge: true,
+        shadowColor: 'transparent' as const,
+      }
+    : {};
+
+  // Android has no liquid glass; use a translucent surface so content peeks through.
   const androidTabBarProps = isAndroid
     ? {
-        backgroundColor: theme.colors.surface,
+        backgroundColor: isDark ? 'rgba(18, 18, 18, 0.88)' : 'rgba(255, 255, 255, 0.92)',
         labelVisibilityMode: (showLabels ? 'labeled' : 'unlabeled') as
           | 'labeled'
           | 'unlabeled',
-        // No Material active-indicator pill behind the selected icon (iOS-like).
         disableIndicator: true,
         iconColor: {
           default: theme.colors.onSurfaceVariant,
@@ -54,7 +69,10 @@ export default function TabLayout() {
     <NativeTabs
       tintColor={tintColor}
       labelStyle={labelStyle}
-      minimizeBehavior="onScrollDown"
+      // Keep the full tab bar always visible. iOS 26 minimize collapses
+      // to a single floating selected-tab control (too aggressive vs Instagram).
+      minimizeBehavior="never"
+      {...iosTabBarProps}
       {...androidTabBarProps}
     >
       <NativeTabs.Trigger name="(dashboard)">
@@ -66,7 +84,7 @@ export default function TabLayout() {
           md="home"
         />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="properties" disableTransparentOnScrollEdge>
+      <NativeTabs.Trigger name="properties">
         <NativeTabs.Trigger.Label hidden={!showLabels}>
           {t('tabs.properties')}
         </NativeTabs.Trigger.Label>
@@ -75,7 +93,7 @@ export default function TabLayout() {
           md="apartment"
         />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="expenses" disableTransparentOnScrollEdge>
+      <NativeTabs.Trigger name="expenses">
         <NativeTabs.Trigger.Label hidden={!showLabels}>
           {t('tabs.expenses')}
         </NativeTabs.Trigger.Label>
@@ -93,7 +111,7 @@ export default function TabLayout() {
           md="bar_chart"
         />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="me" disableTransparentOnScrollEdge>
+      <NativeTabs.Trigger name="me">
         <NativeTabs.Trigger.Label hidden={!showLabels}>
           {t('tabs.me')}
         </NativeTabs.Trigger.Label>

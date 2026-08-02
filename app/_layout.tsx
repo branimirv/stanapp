@@ -13,8 +13,9 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import i18n from '@/i18n';
-import { Toast } from '@/components/ui/Toast';
+import { AppScreenBackground } from '@/components/ui/AppScreenBackground';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Toast } from '@/components/ui/Toast';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProfile } from '@/hooks/useProfile';
 import { onAuthStateChange } from '@/lib/auth';
@@ -91,7 +92,7 @@ function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider value={NAV_THEME[isDark ? 'dark' : 'light']}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      {children}
+      <AppScreenBackground>{children}</AppScreenBackground>
       <PortalHost />
     </ThemeProvider>
   );
@@ -99,7 +100,12 @@ function AppProviders({ children }: { children: React.ReactNode }) {
 
 function RootStack() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: styles.transparentScreen,
+      }}
+    >
       <Stack.Screen name="index" />
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
@@ -118,5 +124,8 @@ function RootStack() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  transparentScreen: {
+    backgroundColor: 'transparent',
   },
 });

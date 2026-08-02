@@ -1,22 +1,19 @@
-import { SlidersHorizontal } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import {
-  ExpenseMoreFiltersSheet,
-  type RecurringFilter,
-  type TypeFilter,
-} from '@/components/expense/ExpenseMoreFiltersSheet';
+import { ExpenseFiltersSheet } from '@/components/expense/ExpenseFiltersSheet';
+import type {
+  RecurringFilter,
+  StatusFilter,
+  TypeFilter,
+} from '@/components/expense/expenseFilterTypes';
 import type { PickerOption } from '@/components/ui/AppPicker';
-import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { FilterChipRow, type FilterChip } from '@/components/ui/FilterChipRow';
-import { Text } from '@/components/ui/text';
 import { Spacing } from '@/constants/theme';
-import type { ExpenseStatusFilter } from '@/types/app.types';
 
-export type StatusFilter = 'all' | ExpenseStatusFilter;
+export type { RecurringFilter, StatusFilter, TypeFilter } from '@/components/expense/expenseFilterTypes';
 
-export interface ExpenseFiltersProps {
+export interface ExpenseFiltersStateProps {
   statusFilter: StatusFilter;
   onStatusFilterChange: (value: StatusFilter) => void;
   recurringFilter: RecurringFilter;
@@ -29,16 +26,22 @@ export interface ExpenseFiltersProps {
   onCategoryFilterChange: (value: string) => void;
   propertyOptions: PickerOption[];
   categoryOptions: PickerOption[];
-  onInteraction?: () => void;
 }
 
-function countSecondaryFilters(
+export interface ExpenseFiltersSheetHostProps extends ExpenseFiltersStateProps {
+  sheetVisible: boolean;
+  onSheetVisibleChange: (visible: boolean) => void;
+}
+
+function countActiveFilters(
+  statusFilter: StatusFilter,
   recurringFilter: RecurringFilter,
   typeFilter: TypeFilter,
   propertyFilter: string,
   categoryFilter: string,
 ): number {
   let count = 0;
+  if (statusFilter !== 'all') count += 1;
   if (recurringFilter !== 'all') count += 1;
   if (typeFilter !== 'all') count += 1;
   if (propertyFilter !== 'all') count += 1;
@@ -46,7 +49,23 @@ function countSecondaryFilters(
   return count;
 }
 
-export function ExpenseFilters({
+export function countExpenseActiveFilters(
+  statusFilter: StatusFilter,
+  recurringFilter: RecurringFilter,
+  typeFilter: TypeFilter,
+  propertyFilter: string,
+  categoryFilter: string,
+): number {
+  return countActiveFilters(
+    statusFilter,
+    recurringFilter,
+    typeFilter,
+    propertyFilter,
+    categoryFilter,
+  );
+}
+
+function useExpenseFilterChips({
   statusFilter,
   onStatusFilterChange,
   recurringFilter,
@@ -59,26 +78,31 @@ export function ExpenseFilters({
   onCategoryFilterChange,
   propertyOptions,
   categoryOptions,
-  onInteraction,
-}: ExpenseFiltersProps) {
+}: ExpenseFiltersStateProps) {
   const { t } = useTranslation();
-  const [sheetVisible, setSheetVisible] = useState(false);
 
-  const secondaryFilterCount = useMemo(
-    () =>
-      countSecondaryFilters(recurringFilter, typeFilter, propertyFilter, categoryFilter),
-    [categoryFilter, propertyFilter, recurringFilter, typeFilter],
-  );
-
-  const handleClearSecondaryFilters = () => {
-    onRecurringFilterChange('all');
-    onTypeFilterChange('all');
-    onPropertyFilterChange('all');
-    onCategoryFilterChange('all');
-  };
-
-  const activeFilterChips = useMemo(() => {
+  return useMemo(() => {
     const chips: FilterChip[] = [];
+
+    if (statusFilter === 'unpaid') {
+      chips.push({
+        key: 'unpaid',
+        label: t('expenses.filterUnpaid'),
+        onClear: () => onStatusFilterChange('all'),
+      });
+    } else if (statusFilter === 'paid') {
+      chips.push({
+        key: 'paid',
+        label: t('expenses.filterPaid'),
+        onClear: () => onStatusFilterChange('all'),
+      });
+    } else if (statusFilter === 'overdue') {
+      chips.push({
+        key: 'overdue',
+        label: t('expenses.overdue'),
+        onClear: () => onStatusFilterChange('all'),
+      });
+    }
 
     if (propertyFilter !== 'all') {
       const label = propertyOptions.find((option) => option.value === propertyFilter)?.label;
@@ -137,100 +161,78 @@ export function ExpenseFilters({
     onCategoryFilterChange,
     onPropertyFilterChange,
     onRecurringFilterChange,
+    onStatusFilterChange,
     onTypeFilterChange,
     propertyFilter,
     propertyOptions,
     recurringFilter,
+    statusFilter,
     t,
     typeFilter,
   ]);
+}
 
-  const moreFiltersAccessibilityLabel =
-    secondaryFilterCount > 0
-      ? t('expenses.moreFiltersWithCount', { count: secondaryFilterCount })
-      : t('expenses.moreFilters');
+/** Active filter chips shown above expense list content. */
+export function ExpenseActiveFilterChips(props: ExpenseFiltersStateProps) {
+  const chips = useExpenseFilterChips(props);
+  if (chips.length === 0) return null;
 
   return (
     <View style={styles.container}>
-      <AppSegmentedControl
-        segments={[
-          { label: t('expenses.filterAll'), value: 'all' },
-          { label: t('expenses.filterUnpaid'), value: 'unpaid' },
-          { label: t('expenses.filterPaid'), value: 'paid' },
-          { label: t('expenses.overdue'), value: 'overdue' },
-        ]}
-        value={statusFilter}
-        onValueChange={(value) => {
-          onInteraction?.();
-          onStatusFilterChange(value as StatusFilter);
-        }}
-      />
-
-      <FilterChipRow chips={activeFilterChips} />
-
-      <Pressable
-        onPress={() => {
-          onInteraction?.();
-          setSheetVisible(true);
-        }}
-        style={({ pressed }) => [
-          styles.moreFiltersTrigger,
-          { opacity: pressed ? 0.7 : 1 },
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel={moreFiltersAccessibilityLabel}
-      >
-        <SlidersHorizontal size={16} className="text-primary" strokeWidth={2.5} />
-        <Text className="text-primary text-sm font-semibold">
-          {t('expenses.moreFilters')}
-        </Text>
-        {secondaryFilterCount > 0 ? (
-          <View style={styles.badge} className="bg-primary">
-            <Text className="text-primary-foreground text-[11px] font-bold">
-              {secondaryFilterCount}
-            </Text>
-          </View>
-        ) : null}
-      </Pressable>
-
-      <ExpenseMoreFiltersSheet
-        visible={sheetVisible}
-        onDismiss={() => setSheetVisible(false)}
-        propertyFilter={propertyFilter}
-        onPropertyFilterChange={onPropertyFilterChange}
-        categoryFilter={categoryFilter}
-        onCategoryFilterChange={onCategoryFilterChange}
-        propertyOptions={propertyOptions}
-        categoryOptions={categoryOptions}
-        recurringFilter={recurringFilter}
-        onRecurringFilterChange={onRecurringFilterChange}
-        typeFilter={typeFilter}
-        onTypeFilterChange={onTypeFilterChange}
-        onClearFilters={handleClearSecondaryFilters}
-      />
+      <FilterChipRow chips={chips} />
     </View>
+  );
+}
+
+/** Filter sheet host kept outside scroll/list trees. */
+export function ExpenseFiltersSheetHost({
+  sheetVisible,
+  onSheetVisibleChange,
+  statusFilter,
+  onStatusFilterChange,
+  recurringFilter,
+  onRecurringFilterChange,
+  typeFilter,
+  onTypeFilterChange,
+  propertyFilter,
+  onPropertyFilterChange,
+  categoryFilter,
+  onCategoryFilterChange,
+  propertyOptions,
+  categoryOptions,
+}: ExpenseFiltersSheetHostProps) {
+  const handleClearFilters = () => {
+    onStatusFilterChange('all');
+    onRecurringFilterChange('all');
+    onTypeFilterChange('all');
+    onPropertyFilterChange('all');
+    onCategoryFilterChange('all');
+  };
+
+  return (
+    <ExpenseFiltersSheet
+      visible={sheetVisible}
+      onDismiss={() => onSheetVisibleChange(false)}
+      statusFilter={statusFilter}
+      onStatusFilterChange={onStatusFilterChange}
+      propertyFilter={propertyFilter}
+      onPropertyFilterChange={onPropertyFilterChange}
+      categoryFilter={categoryFilter}
+      onCategoryFilterChange={onCategoryFilterChange}
+      propertyOptions={propertyOptions}
+      categoryOptions={categoryOptions}
+      recurringFilter={recurringFilter}
+      onRecurringFilterChange={onRecurringFilterChange}
+      typeFilter={typeFilter}
+      onTypeFilterChange={onTypeFilterChange}
+      onClearFilters={handleClearFilters}
+    />
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    gap: Spacing.sm,
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.sm,
-  },
-  moreFiltersTrigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.xs,
-    alignSelf: 'flex-start',
-  },
-  badge: {
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
   },
 });

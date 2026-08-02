@@ -12,10 +12,14 @@ import {
 import { useTranslation } from 'react-i18next';
 import { ExpenseCard } from '@/components/expense/ExpenseCard';
 import {
-  ExpenseFilters,
+  countExpenseActiveFilters,
+  ExpenseActiveFilterChips,
+  ExpenseFiltersSheetHost,
+  type ExpenseFiltersStateProps,
   type StatusFilter,
 } from '@/components/expense/ExpenseFilters';
-import type { RecurringFilter, TypeFilter } from '@/components/expense/ExpenseMoreFiltersSheet';
+import type { RecurringFilter, TypeFilter } from '@/components/expense/expenseFilterTypes';
+import { ExpenseScreenActions } from '@/components/expense/ExpenseScreenActions';
 import { AppExpandableSearch } from '@/components/ui/AppExpandableSearch';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -26,7 +30,8 @@ import { Spacing } from '@/constants/theme';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useExpandableSearchState } from '@/hooks/useExpandableSearch';
-import { useSearchableTabHeader } from '@/hooks/useSearchableTabHeader';
+import { useFloatingActionsInset } from '@/components/ui/FloatingScreenActions';
+import { SearchableTabActions } from '@/hooks/useSearchableTabHeader';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
 import { useUiStore } from '@/stores/uiStore';
@@ -53,6 +58,7 @@ export default function ExpensesScreen() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [propertyFilter, setPropertyFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [filtersVisible, setFiltersVisible] = useState(false);
   const handleCreatePress = useCallback(() => {
     router.push('/expense/new');
   }, []);
@@ -67,14 +73,7 @@ export default function ExpensesScreen() {
     listKeyboardProps,
   } = useExpandableSearchState();
 
-  useSearchableTabHeader({
-    showCreate: true,
-    onCreatePress: handleCreatePress,
-    searchActive: searchHasText,
-    searchExpanded,
-    onSearchPress: handleSearchPress,
-  });
-
+  const floatingInset = useFloatingActionsInset();
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -127,6 +126,33 @@ export default function ExpensesScreen() {
     ],
     [categories, t],
   );
+
+  const activeFilterCount = useMemo(
+    () =>
+      countExpenseActiveFilters(
+        statusFilter,
+        recurringFilter,
+        typeFilter,
+        propertyFilter,
+        categoryFilter,
+      ),
+    [categoryFilter, propertyFilter, recurringFilter, statusFilter, typeFilter],
+  );
+
+  const filterStateProps: ExpenseFiltersStateProps = {
+    statusFilter,
+    onStatusFilterChange: setStatusFilter,
+    recurringFilter,
+    onRecurringFilterChange: setRecurringFilter,
+    typeFilter,
+    onTypeFilterChange: setTypeFilter,
+    propertyFilter,
+    onPropertyFilterChange: setPropertyFilter,
+    categoryFilter,
+    onCategoryFilterChange: setCategoryFilter,
+    propertyOptions,
+    categoryOptions,
+  };
 
   const filteredExpenses = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -239,6 +265,11 @@ export default function ExpensesScreen() {
     [dismissSearchIfEmpty],
   );
 
+  const handleFilterPress = useCallback(() => {
+    dismissSearchIfEmpty();
+    setFiltersVisible(true);
+  }, [dismissSearchIfEmpty]);
+
   const renderExpenseItem = useCallback(
     ({ item }: { item: Expense }) => (
       <View style={styles.itemWrap}>
@@ -275,7 +306,7 @@ export default function ExpensesScreen() {
 
   if (isLoading && expenses.length === 0) {
     return (
-      <View style={styles.container} className="bg-background">
+      <View style={styles.container} className="bg-transparent">
         <SkeletonLoader count={6} height={120} style={styles.skeleton} />
       </View>
     );
@@ -283,38 +314,36 @@ export default function ExpensesScreen() {
 
   if (error && expenses.length === 0) {
     return (
-      <View style={styles.container} className="bg-background">
+      <View style={styles.container} className="bg-transparent">
         <ErrorState message={error} onRetry={refetch} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container} className="bg-background">
-      <View style={styles.listHeader}>
+    <View style={styles.container} className="bg-transparent" collapsable={false}>
+      <ExpenseScreenActions
+        activeFilterCount={activeFilterCount}
+        onFilterPress={handleFilterPress}
+      />
+      <SearchableTabActions
+        showCreate
+        onCreatePress={handleCreatePress}
+        searchActive={searchHasText}
+        searchExpanded={searchExpanded}
+        onSearchPress={handleSearchPress}
+      />
+      <View style={[styles.listHeader, { paddingTop: floatingInset }]}>
         <AppExpandableSearch
           {...searchBarControlProps}
           placeholder={t('expenses.searchPlaceholder')}
           style={styles.searchBar}
         />
-        <ExpenseFilters
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          recurringFilter={recurringFilter}
-          onRecurringFilterChange={setRecurringFilter}
-          typeFilter={typeFilter}
-          onTypeFilterChange={setTypeFilter}
-          propertyFilter={propertyFilter}
-          onPropertyFilterChange={setPropertyFilter}
-          categoryFilter={categoryFilter}
-          onCategoryFilterChange={setCategoryFilter}
-          propertyOptions={propertyOptions}
-          categoryOptions={categoryOptions}
-          onInteraction={dismissSearchIfEmpty}
-        />
+        <ExpenseActiveFilterChips {...filterStateProps} />
       </View>
       <SectionList
         style={styles.list}
+        contentInsetAdjustmentBehavior="automatic"
         sections={sections}
         keyExtractor={(item) => item.id}
         stickySectionHeadersEnabled
@@ -332,19 +361,17 @@ export default function ExpensesScreen() {
             icon={Receipt}
             title={t('empty.noExpenses')}
             subtitle={
-              search ||
-              statusFilter !== 'all' ||
-              recurringFilter !== 'all' ||
-              typeFilter !== 'all' ||
-              propertyFilter !== 'all' ||
-              categoryFilter !== 'all'
+              search || activeFilterCount > 0
                 ? t('empty.noResultsHint')
                 : t('empty.noExpensesHint')
             }
-            ctaLabel={t('expenses.addNew')}
-            onCtaPress={handleCreatePress}
           />
         }
+      />
+      <ExpenseFiltersSheetHost
+        sheetVisible={filtersVisible}
+        onSheetVisibleChange={setFiltersVisible}
+        {...filterStateProps}
       />
     </View>
   );

@@ -1,9 +1,9 @@
-import { useFocusEffect, useNavigation } from 'expo-router';
-import { useCallback, useLayoutEffect } from 'react';
+import { CreateHeaderButton } from '@/components/ui/CreateHeaderButton';
+import { FloatingScreenActions } from '@/components/ui/FloatingScreenActions';
+import { HeaderActionsPill } from '@/components/ui/HeaderActionsPill';
+import { SearchHeaderButton } from '@/components/ui/SearchHeaderButton';
 
-import { TabHeaderActions } from '@/components/ui/TabHeaderActions';
-
-interface UseSearchableTabHeaderOptions {
+interface SearchableTabActionsProps {
   showCreate?: boolean;
   onCreatePress?: () => void;
   searchActive: boolean;
@@ -11,37 +11,26 @@ interface UseSearchableTabHeaderOptions {
   onSearchPress: () => void;
 }
 
-export function useSearchableTabHeader({
+/** Floating search + create (create last) for tab roots (no native header bar). */
+export function SearchableTabActions({
   showCreate,
   onCreatePress,
   searchActive = false,
   searchExpanded,
   onSearchPress,
-}: UseSearchableTabHeaderOptions) {
-  const navigation = useNavigation();
+}: SearchableTabActionsProps) {
+  const hasCreate = Boolean(showCreate && onCreatePress);
 
-  const updateHeader = useCallback(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <TabHeaderActions
-          showCreate={showCreate}
-          onCreatePress={onCreatePress}
-          showSearch
-          searchActive={searchActive}
-          searchExpanded={searchExpanded}
-          onSearchPress={onSearchPress}
+  return (
+    <FloatingScreenActions align="right">
+      <HeaderActionsPill>
+        <SearchHeaderButton
+          active={searchActive}
+          expanded={searchExpanded}
+          onPress={onSearchPress}
         />
-      ),
-    });
-  }, [navigation, onCreatePress, onSearchPress, searchActive, searchExpanded, showCreate]);
-
-  useLayoutEffect(() => {
-    updateHeader();
-  }, [updateHeader]);
-
-  useFocusEffect(
-    useCallback(() => {
-      updateHeader();
-    }, [updateHeader]),
+        {hasCreate ? <CreateHeaderButton onPress={onCreatePress!} /> : null}
+      </HeaderActionsPill>
+    </FloatingScreenActions>
   );
 }

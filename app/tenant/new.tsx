@@ -1,9 +1,10 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { TenantForm } from '@/components/tenant/TenantForm';
 import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
 import { useProperty } from '@/hooks/useProperties';
@@ -63,29 +64,26 @@ export default function NewTenantScreen() {
 
   if (isLoading) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('tenants.newTenant') }} />
+      <StackScreenChrome title={t('tenants.newTenant')}>
         <SkeletonLoader count={6} style={styles.loader} />
-      </>
+      </StackScreenChrome>
     );
   }
 
   if (error || !canAddTenant) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('tenants.newTenant') }} />
+      <StackScreenChrome title={t('tenants.newTenant')}>
         <ErrorState message={error ?? t('properties.notFound')} onRetry={loadProperty} />
-      </>
+      </StackScreenChrome>
     );
   }
 
   return (
-    <>
-      <Stack.Screen options={{ title: t('tenants.newTenant') }} />
+    <StackScreenChrome title={t('tenants.newTenant')}>
       <View style={[screenStyles.container, styles.container]}>
         <TenantForm onSubmit={handleSubmit} isSubmitting={isSaving} submitLabel={t('common.create')} />
       </View>
-    </>
+    </StackScreenChrome>
   );
 }
 

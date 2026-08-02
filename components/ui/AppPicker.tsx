@@ -82,7 +82,7 @@ export function AppPicker<T extends string = string>({
       >
         {selectedOption?.label ?? displayPlaceholder}
       </Text>
-      <ChevronDown size={20} className="text-muted-foreground" strokeWidth={2} />
+      <ChevronDown size={20} color={theme.colors.onSurface} strokeWidth={2} />
     </Pressable>
   );
 

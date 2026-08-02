@@ -106,7 +106,7 @@ export function AppDatePicker({
         accessibilityLabel={displayLabel}
         accessibilityHint={t('ui.selectDate')}
       >
-        <Calendar size={20} className="text-primary" strokeWidth={2} />
+        <Calendar size={20} color={theme.colors.primary} strokeWidth={2} />
         <Text className={value ? 'flex-1 text-base' : 'text-muted-foreground flex-1 text-base'}>
           {formattedValue}
         </Text>

@@ -13,7 +13,7 @@ export default function Index() {
 
   if (isLoading) {
     return (
-      <View className="bg-background flex-1 items-center justify-center gap-4">
+      <View className="flex-1 items-center justify-center gap-4 bg-transparent">
         <ActivityIndicator size="large" color={Colors.primary} />
         <Text className="text-muted-foreground text-sm">{t('common.loading')}</Text>
       </View>

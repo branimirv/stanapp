@@ -8,6 +8,7 @@ import { AppBadge } from '@/components/ui/AppBadge';
 import { PropertyTypeBadge } from '@/components/property/PropertyTypeBadge';
 import { UsageStatusBadge } from '@/components/property/UsageStatusBadge';
 import { Card } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { Colors } from '@/constants/theme';
 import { formatCurrencyShort } from '@/utils/formatters';
@@ -92,8 +93,8 @@ function PropertyCardComponent({
         </Text>
 
         <View className="flex-row items-center gap-1">
-          <MapPin size={14} className="text-muted-foreground" strokeWidth={2} />
-          <Text className="text-muted-foreground flex-1 text-sm" numberOfLines={1}>
+          <Icon as={MapPin} size={14} className="text-foreground" strokeWidth={2} />
+          <Text className="text-foreground flex-1 text-sm" numberOfLines={1}>
             {property.address}
           </Text>
         </View>

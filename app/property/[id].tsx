@@ -1,34 +1,30 @@
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
-import {
-  Pencil,
-  FileText,
-  LayoutGrid,
-  Users,
-  Receipt,
-  Banknote,
-  UserPlus,
-} from 'lucide-react-native';
-import type { LucideIcon } from 'lucide-react-native';
+import { Pencil, FileText } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { TabView, type Route } from 'react-native-tab-view';
 import { useTranslation } from 'react-i18next';
-import { AppFab } from '@/components/ui/AppFab';
 import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
+import { useFloatingStackHeaderInset } from '@/components/ui/FloatingStackHeader';
+import { GlassSurface } from '@/components/ui/GlassSurface';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { Text } from '@/components/ui/text';
+import { PropertyChromeBackdrop } from '@/components/property/PropertyChromeBackdrop';
 import { PropertyExpensesTab } from '@/components/property/PropertyExpensesTab';
 import { PropertyOverviewTab } from '@/components/property/PropertyOverviewTab';
 import { PropertyRentTab } from '@/components/property/PropertyRentTab';
-import { PropertyTabBar } from '@/components/property/PropertyTabBar';
+import {
+  PROPERTY_PAGE_TITLE_HEIGHT,
+  PROPERTY_TAB_BAR_HEIGHT,
+  PropertyTabBar,
+} from '@/components/property/PropertyTabBar';
 import { PropertyTenantsTab } from '@/components/property/PropertyTenantsTab';
 import { UsageHistorySheet } from '@/components/property/UsageHistorySheet';
-import { QuickAddExpenseSheet } from '@/components/expense/QuickAddExpenseSheet';
 import { StatementSheet } from '@/components/property/StatementSheet';
 import { RentMonthActionSheet } from '@/components/rent/RentMonthActionSheet';
+import { HEADER_EDGE_INSET } from '@/constants/header';
 import { Spacing } from '@/constants/theme';
-import { useAppTheme } from '@/hooks/useAppTheme';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useLocale } from '@/hooks/useLocale';
 import { useMyMembership } from '@/hooks/useMembers';
@@ -45,22 +41,19 @@ import { getCurrentMonthRange, isDateInRange } from '@/utils/dateRange';
 import { openAddressInMaps } from '@/utils/maps';
 import { formatDateOnly } from '@/utils/formatters';
 
+const PARENT_BANNER_HEIGHT = 44;
+/** Extra backdrop below tab pills so glass always refracts something colorful. */
+const CHROME_BACKDROP_BLEED = 140;
+
 type TabKey = 'overview' | 'tenants' | 'expenses' | 'rent';
 
 type PropertyRoute = Route & { key: TabKey };
 
-const TAB_ICONS: Record<TabKey, LucideIcon> = {
-  overview: LayoutGrid,
-  tenants: Users,
-  expenses: Receipt,
-  rent: Banknote,
-};
-
 export default function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
-  const { isDark } = useAppTheme();
   const layout = useWindowDimensions();
+  const headerInset = useFloatingStackHeaderInset();
   const showToast = useUiStore((s) => s.showToast);
 
   const {
@@ -74,10 +67,8 @@ export default function PropertyDetailScreen() {
   const { isOwner, canManage } = useMyMembership(id);
   const [index, setIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const [quickAddVisible, setQuickAddVisible] = useState(false);
   const [historyVisible, setHistoryVisible] = useState(false);
   const [statementVisible, setStatementVisible] = useState(false);
-  const [isSavingExpense, setIsSavingExpense] = useState(false);
   const [rentSheet, setRentSheet] = useState<{
     visible: boolean;
     month: number;
@@ -99,7 +90,6 @@ export default function PropertyDetailScreen() {
     isLoading: expensesLoading,
     refetch: refetchExpenses,
     markAsPaid,
-    create: createExpense,
   } = useExpenses({ propertyId: id });
   const {
     rentPayments,
@@ -213,32 +203,6 @@ export default function PropertyDetailScreen() {
     await Promise.all([refetchProperty(), refetchTenants(), refetchExpenses(), refetchRent()]);
     setRefreshing(false);
   }, [refetchProperty, refetchExpenses, refetchRent, refetchTenants]);
-
-  const handleQuickAddExpense = useCallback(
-    async (values: {
-      property_id: string;
-      category_id: string;
-      amount: number;
-      is_recurring: boolean;
-      billing_date: string;
-      notes: string | null;
-    }) => {
-      setIsSavingExpense(true);
-      try {
-        await createExpense(values);
-        showToast({ message: t('expenses.saveSuccess'), type: 'success' });
-        await refetchExpenses();
-      } catch (err) {
-        showToast({
-          message: err instanceof Error ? err.message : t('expenses.saveFailed'),
-          type: 'error',
-        });
-      } finally {
-        setIsSavingExpense(false);
-      }
-    },
-    [createExpense, refetchExpenses, showToast, t],
-  );
 
   const openRentSheet = useCallback((month: number, year: number, payment?: RentPayment) => {
     setRentSheet({ visible: true, month, year, payment });
@@ -367,10 +331,6 @@ export default function PropertyDetailScreen() {
     router.push(`/tenant/${tenantId}`);
   }, []);
 
-  const handleAddExpense = useCallback(() => {
-    router.push({ pathname: '/expense/new', params: { propertyId: id! } });
-  }, [id]);
-
   const handleAddTenant = useCallback(() => {
     router.push({ pathname: '/tenant/new', params: { propertyId: id! } });
   }, [id]);
@@ -383,16 +343,13 @@ export default function PropertyDetailScreen() {
     setHistoryVisible(true);
   }, []);
 
-  const handleFabPress = useCallback(() => {
-    const currentRoute = routes[index]?.key;
-    if (currentRoute === 'tenants') {
-      handleAddTenant();
-    } else if (currentRoute === 'rent') {
-      handleAddRentPayment();
-    } else {
-      setQuickAddVisible(true);
-    }
-  }, [handleAddRentPayment, handleAddTenant, index, routes]);
+  const overlayTop = headerInset;
+  const sceneTopInset =
+    headerInset +
+    PROPERTY_PAGE_TITLE_HEIGHT +
+    PROPERTY_TAB_BAR_HEIGHT +
+    (parentProperty ? PARENT_BANNER_HEIGHT : 0);
+  const chromeBackdropHeight = sceneTopInset + CHROME_BACKDROP_BLEED;
 
   const renderScene = ({ route }: { route: Route }) => {
     switch (route.key as TabKey) {
@@ -403,6 +360,7 @@ export default function PropertyDetailScreen() {
             childProperties={childProperties}
             isRented={Boolean(isRented)}
             canManage={canManage}
+            isOwner={isOwner}
             currency={currency}
             language={language}
             month={currentMonthRange.month}
@@ -420,11 +378,12 @@ export default function PropertyDetailScreen() {
             onShowUsageHistory={handleShowUsageHistory}
             onGoToRent={goToRentTab}
             onViewAllExpenses={goToExpensesTab}
+            onOpenMembers={() => router.push(`/property/members/${property!.id}`)}
             onMarkRentPaid={canManage ? handleCurrentMonthMarkPaid : undefined}
             onSelectTenant={handleSelectTenant}
             onSelectExpense={handleSelectExpense}
             onMarkExpensePaid={handleMarkExpensePaid}
-            onAddExpense={handleAddExpense}
+            contentTopInset={sceneTopInset}
           />
         );
       case 'tenants':
@@ -439,6 +398,7 @@ export default function PropertyDetailScreen() {
             onRefresh={onRefresh}
             onSelectTenant={handleSelectTenant}
             onAddTenant={handleAddTenant}
+            contentTopInset={sceneTopInset}
           />
         );
       case 'expenses':
@@ -458,7 +418,7 @@ export default function PropertyDetailScreen() {
             onRefresh={onRefresh}
             onSelectExpense={handleSelectExpense}
             onMarkExpensePaid={handleMarkExpensePaid}
-            onAddExpense={handleAddExpense}
+            contentTopInset={sceneTopInset}
           />
         );
       case 'rent':
@@ -475,6 +435,7 @@ export default function PropertyDetailScreen() {
             onRefresh={onRefresh}
             onMonthPress={handleRentMonthPress}
             onAddPayment={handleAddRentPayment}
+            contentTopInset={sceneTopInset}
           />
         );
       default:
@@ -501,20 +462,15 @@ export default function PropertyDetailScreen() {
   return (
     <DetailScreenScaffold
       title={property.name}
+      hideHeaderTitle
       isLoading={false}
       isReady
       error={null}
       notFoundMessage={t('properties.notFound')}
       onRetry={refetchProperty}
+      edgeToEdge
       headerRight={() => (
         <StackHeaderActions>
-          {isOwner ? (
-            <HeaderIconButton
-              icon={UserPlus}
-              onPress={() => router.push(`/property/members/${property.id}`)}
-              accessibilityLabel={t('members.title')}
-            />
-          ) : null}
           {canManage ? (
             <HeaderIconButton
               icon={FileText}
@@ -532,26 +488,44 @@ export default function PropertyDetailScreen() {
         </StackHeaderActions>
       )}
     >
-      {parentProperty ? (
-        <View
-          style={styles.parentBanner}
-          className={isDark ? 'bg-secondary' : 'bg-accent'}
-        >
-          <Text
-            className="text-primary"
-            onPress={() => router.push(`/property/${parentProperty.id}`)}
-          >
-            {t('properties.linkedTo', { name: parentProperty.name })}
-          </Text>
-        </View>
-      ) : null}
+      {/* Keeps glass refracting color on every tab — not only Overview's hero photo. */}
+      <PropertyChromeBackdrop photoUrl={property.photo_url} height={chromeBackdropHeight} />
 
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}
         onIndexChange={setIndex}
         initialLayout={{ width: layout.width }}
-        renderTabBar={(props) => <PropertyTabBar {...props} icons={TAB_ICONS} />}
+        style={styles.tabView}
+        renderTabBar={(props) => (
+          <View
+            pointerEvents="box-none"
+            style={[styles.tabOverlay, { top: overlayTop }]}
+          >
+            <View style={styles.pageTitle}>
+              <Text
+                className="text-foreground text-2xl leading-8 font-bold"
+                numberOfLines={2}
+                accessibilityRole="header"
+              >
+                {property.name}
+              </Text>
+            </View>
+            {parentProperty ? (
+              <View className="px-4 pb-1">
+                <GlassSurface shape="pill" interactive contentStyle={styles.parentBanner}>
+                  <Text
+                    className="text-primary text-center text-sm font-medium"
+                    onPress={() => router.push(`/property/${parentProperty.id}`)}
+                  >
+                    {t('properties.linkedTo', { name: parentProperty.name })}
+                  </Text>
+                </GlassSurface>
+              </View>
+            ) : null}
+            <PropertyTabBar {...props} />
+          </View>
+        )}
       />
 
       <UsageHistorySheet
@@ -559,15 +533,6 @@ export default function PropertyDetailScreen() {
         onDismiss={() => setHistoryVisible(false)}
         propertyId={property.id}
         language={language}
-      />
-
-      <QuickAddExpenseSheet
-        visible={quickAddVisible}
-        onDismiss={() => setQuickAddVisible(false)}
-        propertyId={property.id}
-        categories={categories}
-        onSubmit={handleQuickAddExpense}
-        isSubmitting={isSavingExpense}
       />
 
       <StatementSheet
@@ -598,20 +563,32 @@ export default function PropertyDetailScreen() {
         onPartialPayment={handleRentPartialPayment}
         onAddDetails={handleRentAddDetails}
       />
-
-      {canManage ? <AppFab style={styles.fab} onPress={handleFabPress} /> : null}
     </DetailScreenScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  parentBanner: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+  tabView: {
+    flex: 1,
+    backgroundColor: 'transparent',
   },
-  fab: {
+  tabOverlay: {
     position: 'absolute',
-    right: Spacing.md,
-    bottom: Spacing.md,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  pageTitle: {
+    minHeight: PROPERTY_PAGE_TITLE_HEIGHT,
+    justifyContent: 'center',
+    paddingHorizontal: HEADER_EDGE_INSET,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.xs,
+  },
+  parentBanner: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

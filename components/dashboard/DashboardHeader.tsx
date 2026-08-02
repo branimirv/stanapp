@@ -30,7 +30,7 @@ export function DashboardHeader({ name, language = 'hr' }: DashboardHeaderProps)
   return (
     <View className="mb-4 gap-0.5">
       <Text className="text-xl font-semibold">{greeting}</Text>
-      <Text className="text-muted-foreground text-sm">{dateLabel}</Text>
+      <Text className="text-foreground text-sm">{dateLabel}</Text>
     </View>
   );
 }

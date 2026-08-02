@@ -1,8 +1,9 @@
 import { format } from 'date-fns';
-import { BarChart3, Share } from 'lucide-react-native';
-import { useCallback, useMemo, useState } from 'react';
+import { BarChart3 } from 'lucide-react-native';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import {
   FlatList,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -14,16 +15,23 @@ import * as Sharing from 'expo-sharing';
 import { ExpenseBreakdown } from '@/components/reports/ExpenseBreakdown';
 import { IncomeExpenseTrendChart } from '@/components/reports/IncomeExpenseTrendChart';
 import { NetCashFlowChart } from '@/components/reports/NetCashFlowChart';
-import { PeriodFilter } from '@/components/reports/PeriodFilter';
+import {
+  countReportActiveFilters,
+  ReportActiveFilterChips,
+  ReportFiltersSheetHost,
+  type ReportFiltersStateProps,
+} from '@/components/reports/ReportFilters';
+import { ReportScreenActions } from '@/components/reports/ReportScreenActions';
 import { PropertyIncomeShareChart } from '@/components/reports/PropertyIncomeShareChart';
 import { PropertyNetChart } from '@/components/reports/PropertyNetChart';
-import { ReportFilters } from '@/components/reports/ReportFilters';
-import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { Icon } from '@/components/ui/icon';
+import {
+  FLOATING_ACTIONS_ROW_HEIGHT,
+  useFloatingActionsInset,
+} from '@/components/ui/FloatingScreenActions';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { Text } from '@/components/ui/text';
 import { listPerformanceProps } from '@/constants/list';
@@ -43,11 +51,17 @@ export default function ReportsScreen() {
   const { profile } = useProfile();
   const { properties } = useProperties();
   const { categories } = useExpenseCategories();
+  const floatingInset = useFloatingActionsInset();
+  const contentTopPad =
+    Platform.OS === 'ios'
+      ? FLOATING_ACTIONS_ROW_HEIGHT + Spacing.md
+      : floatingInset + Spacing.md;
 
   const [period, setPeriod] = useState<ReportPeriod>(() => buildReportPeriod('all_time'));
   const [propertyFilter, setPropertyFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [categoryTypeFilter, setCategoryTypeFilter] = useState<ReportCategoryTypeFilter>('all');
+  const [filtersVisible, setFiltersVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState(false);
 
@@ -83,6 +97,26 @@ export default function ReportsScreen() {
     return report.totalIncome > 0 || report.totalExpenses > 0;
   }, [report]);
 
+  const activeFilterCount = useMemo(
+    () => countReportActiveFilters(period, propertyFilter, categoryFilter, categoryTypeFilter),
+    [categoryFilter, categoryTypeFilter, period, propertyFilter],
+  );
+
+  const downloadDisabled = !report || !hasData || exporting;
+
+  const filterStateProps: ReportFiltersStateProps = {
+    period,
+    onPeriodChange: setPeriod,
+    propertyFilter,
+    onPropertyFilterChange: setPropertyFilter,
+    categoryFilter,
+    onCategoryFilterChange: setCategoryFilter,
+    categoryTypeFilter,
+    onCategoryTypeFilterChange: setCategoryTypeFilter,
+    propertyOptions,
+    categoryOptions,
+  };
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refetch();
@@ -90,7 +124,7 @@ export default function ReportsScreen() {
   }, [refetch]);
 
   const handleExport = useCallback(async () => {
-    if (!report) return;
+    if (!report || !hasData || exporting) return;
 
     setExporting(true);
     try {
@@ -161,57 +195,65 @@ export default function ReportsScreen() {
     } finally {
       setExporting(false);
     }
-  }, [language, period.endDate, period.startDate, report, showToast, t]);
+  }, [exporting, hasData, language, report, showToast, t]);
+
+  const wrap = (children: ReactNode) => (
+    <View className="flex-1 bg-transparent" collapsable={false}>
+      <ReportScreenActions
+        activeFilterCount={activeFilterCount}
+        onFilterPress={() => setFiltersVisible(true)}
+        onDownloadPress={handleExport}
+        downloadDisabled={downloadDisabled}
+      />
+      {children}
+      <ReportFiltersSheetHost
+        sheetVisible={filtersVisible}
+        onSheetVisibleChange={setFiltersVisible}
+        {...filterStateProps}
+      />
+    </View>
+  );
 
   if (isLoading && !report) {
-    return (
-      <View style={styles.container} className="bg-background">
+    return wrap(
+      <View style={{ paddingTop: floatingInset }}>
         <SkeletonLoader count={4} height={120} style={styles.skeleton} />
-      </View>
+      </View>,
     );
   }
 
   if (error && !report) {
-    return (
-      <View style={styles.container} className="bg-background">
-        <ErrorState message={error} onRetry={refetch} />
-      </View>
-    );
+    return wrap(<ErrorState message={error} onRetry={refetch} />);
   }
 
   if (!report || !hasData) {
-    return (
+    return wrap(
       <ScrollView
         style={styles.container}
-        className="bg-background"
-        contentContainerStyle={[styles.content, styles.emptyContent]}
+        className="bg-transparent"
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={[styles.content, styles.emptyContent, { paddingTop: contentTopPad }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        <PeriodFilter value={period} onChange={setPeriod} />
-        <ReportFilters
-          propertyFilter={propertyFilter}
-          onPropertyFilterChange={setPropertyFilter}
-          categoryFilter={categoryFilter}
-          onCategoryFilterChange={setCategoryFilter}
-          categoryTypeFilter={categoryTypeFilter}
-          onCategoryTypeFilterChange={setCategoryTypeFilter}
-          propertyOptions={propertyOptions}
-          categoryOptions={categoryOptions}
-        />
+        <ReportActiveFilterChips {...filterStateProps} />
         <EmptyState
           icon={BarChart3}
           title={t('empty.noReports')}
           subtitle={t('empty.noReportsHint')}
         />
-      </ScrollView>
+      </ScrollView>,
     );
   }
 
-  return (
+  return wrap(
     <FlatList
       style={styles.container}
-      className="bg-background"
-      contentContainerStyle={[styles.content, { paddingBottom: Spacing.lg }]}
+      className="bg-transparent"
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: contentTopPad, paddingBottom: Spacing.lg },
+      ]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       data={report.propertySummaries}
       keyExtractor={(summary) => summary.propertyId}
@@ -249,17 +291,7 @@ export default function ReportsScreen() {
       )}
       ListHeaderComponent={
         <View>
-          <PeriodFilter value={period} onChange={setPeriod} />
-          <ReportFilters
-            propertyFilter={propertyFilter}
-            onPropertyFilterChange={setPropertyFilter}
-            categoryFilter={categoryFilter}
-            onCategoryFilterChange={setCategoryFilter}
-            categoryTypeFilter={categoryTypeFilter}
-            onCategoryTypeFilterChange={setCategoryTypeFilter}
-            propertyOptions={propertyOptions}
-            categoryOptions={categoryOptions}
-          />
+          <ReportActiveFilterChips {...filterStateProps} />
 
           {report.hasMixedCurrencies ? (
             <View style={styles.warningBanner}>
@@ -343,20 +375,7 @@ export default function ReportsScreen() {
           subtitle={t('empty.noReportsHint')}
         />
       }
-      ListFooterComponent={
-        <AppButton
-          mode="contained"
-          loading={exporting}
-          onPress={handleExport}
-          style={styles.exportButton}
-        >
-          <View className="flex-row items-center gap-2">
-            <Icon as={Share} size={18} className="text-primary-foreground" />
-            <Text className="text-primary-foreground">{t('reports.export')}</Text>
-          </View>
-        </AppButton>
-      }
-    />
+    />,
   );
 }
 
@@ -402,8 +421,5 @@ const styles = StyleSheet.create({
   },
   propertyStat: {
     flex: 1,
-  },
-  exportButton: {
-    marginTop: Spacing.md,
   },
 });

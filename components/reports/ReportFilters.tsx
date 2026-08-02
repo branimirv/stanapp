@@ -1,16 +1,25 @@
-import { SlidersHorizontal } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ReportFiltersSheet } from '@/components/reports/ReportFiltersSheet';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { FilterChipRow, type FilterChip } from '@/components/ui/FilterChipRow';
-import { Text } from '@/components/ui/text';
-import { useAppTheme } from '@/hooks/useAppTheme';
-import { Colors, Spacing } from '@/constants/theme';
-import type { ReportCategoryTypeFilter } from '@/types/app.types';
+import { buildReportPeriod } from '@/hooks/useReports';
+import { Spacing } from '@/constants/theme';
+import type { ReportCategoryTypeFilter, ReportPeriod, ReportPeriodPreset } from '@/types/app.types';
 
-export interface ReportFiltersProps {
+const PERIOD_LABELS: Record<ReportPeriodPreset, string> = {
+  all_time: 'reports.periodAllTime',
+  current_month: 'reports.periodThisMonth',
+  last_3_months: 'reports.period3M',
+  last_6_months: 'reports.period6M',
+  last_12_months: 'reports.period12M',
+  custom: 'reports.periodCustom',
+};
+
+export interface ReportFiltersStateProps {
+  period: ReportPeriod;
+  onPeriodChange: (period: ReportPeriod) => void;
   propertyFilter: string;
   onPropertyFilterChange: (value: string) => void;
   categoryFilter: string;
@@ -21,19 +30,37 @@ export interface ReportFiltersProps {
   categoryOptions: PickerOption[];
 }
 
+export interface ReportFiltersSheetHostProps extends ReportFiltersStateProps {
+  sheetVisible: boolean;
+  onSheetVisibleChange: (visible: boolean) => void;
+}
+
 function countActiveFilters(
+  period: ReportPeriod,
   propertyFilter: string,
   categoryFilter: string,
   categoryTypeFilter: ReportCategoryTypeFilter,
 ): number {
   let count = 0;
+  if (period.preset !== 'all_time') count += 1;
   if (propertyFilter !== 'all') count += 1;
   if (categoryFilter !== 'all') count += 1;
   if (categoryTypeFilter !== 'all') count += 1;
   return count;
 }
 
-export function ReportFilters({
+export function countReportActiveFilters(
+  period: ReportPeriod,
+  propertyFilter: string,
+  categoryFilter: string,
+  categoryTypeFilter: ReportCategoryTypeFilter,
+): number {
+  return countActiveFilters(period, propertyFilter, categoryFilter, categoryTypeFilter);
+}
+
+function useReportFilterChips({
+  period,
+  onPeriodChange,
   propertyFilter,
   onPropertyFilterChange,
   categoryFilter,
@@ -42,24 +69,19 @@ export function ReportFilters({
   onCategoryTypeFilterChange,
   propertyOptions,
   categoryOptions,
-}: ReportFiltersProps) {
-  const { isDark } = useAppTheme();
+}: ReportFiltersStateProps) {
   const { t } = useTranslation();
-  const [sheetVisible, setSheetVisible] = useState(false);
 
-  const activeFilterCount = useMemo(
-    () => countActiveFilters(propertyFilter, categoryFilter, categoryTypeFilter),
-    [categoryFilter, categoryTypeFilter, propertyFilter],
-  );
-
-  const handleClearFilters = () => {
-    onPropertyFilterChange('all');
-    onCategoryFilterChange('all');
-    onCategoryTypeFilterChange('all');
-  };
-
-  const activeFilterChips = useMemo(() => {
+  return useMemo(() => {
     const chips: FilterChip[] = [];
+
+    if (period.preset !== 'all_time') {
+      chips.push({
+        key: 'period',
+        label: t(PERIOD_LABELS[period.preset]),
+        onClear: () => onPeriodChange(buildReportPeriod('all_time')),
+      });
+    }
 
     if (propertyFilter !== 'all') {
       const label = propertyOptions.find((option) => option.value === propertyFilter)?.label;
@@ -104,57 +126,65 @@ export function ReportFilters({
     categoryTypeFilter,
     onCategoryFilterChange,
     onCategoryTypeFilterChange,
+    onPeriodChange,
     onPropertyFilterChange,
+    period.preset,
     propertyFilter,
     propertyOptions,
     t,
   ]);
+}
 
-  const filtersAccessibilityLabel =
-    activeFilterCount > 0
-      ? t('reports.filtersWithCount', { count: activeFilterCount })
-      : t('reports.filters');
+/** Active filter chips shown above report content. */
+export function ReportActiveFilterChips(props: ReportFiltersStateProps) {
+  const chips = useReportFilterChips(props);
+  if (chips.length === 0) return null;
 
   return (
     <View style={styles.container}>
-      <Pressable
-        onPress={() => setSheetVisible(true)}
-        style={({ pressed }) => [
-          styles.filtersTrigger,
-          { backgroundColor: isDark ? Colors.surfaceDark : Colors.surface },
-          { opacity: pressed ? 0.7 : 1 },
-        ]}
-        className="border-border"
-        accessibilityRole="button"
-        accessibilityLabel={filtersAccessibilityLabel}
-      >
-        <SlidersHorizontal size={16} className="text-primary" strokeWidth={2.5} />
-        <Text className="text-primary text-sm font-semibold">{t('reports.filters')}</Text>
-        {activeFilterCount > 0 ? (
-          <View style={styles.badge} className="bg-primary">
-            <Text className="text-primary-foreground text-[11px] font-bold">
-              {activeFilterCount}
-            </Text>
-          </View>
-        ) : null}
-      </Pressable>
-
-      <FilterChipRow chips={activeFilterChips} />
-
-      <ReportFiltersSheet
-        visible={sheetVisible}
-        onDismiss={() => setSheetVisible(false)}
-        propertyFilter={propertyFilter}
-        onPropertyFilterChange={onPropertyFilterChange}
-        categoryFilter={categoryFilter}
-        onCategoryFilterChange={onCategoryFilterChange}
-        categoryTypeFilter={categoryTypeFilter}
-        onCategoryTypeFilterChange={onCategoryTypeFilterChange}
-        propertyOptions={propertyOptions}
-        categoryOptions={categoryOptions}
-        onClearFilters={handleClearFilters}
-      />
+      <FilterChipRow chips={chips} />
     </View>
+  );
+}
+
+/** Filter sheet host kept outside scroll/list trees. */
+export function ReportFiltersSheetHost({
+  sheetVisible,
+  onSheetVisibleChange,
+  period,
+  onPeriodChange,
+  propertyFilter,
+  onPropertyFilterChange,
+  categoryFilter,
+  onCategoryFilterChange,
+  categoryTypeFilter,
+  onCategoryTypeFilterChange,
+  propertyOptions,
+  categoryOptions,
+}: ReportFiltersSheetHostProps) {
+  const handleClearFilters = () => {
+    onPeriodChange(buildReportPeriod('all_time'));
+    onPropertyFilterChange('all');
+    onCategoryFilterChange('all');
+    onCategoryTypeFilterChange('all');
+  };
+
+  return (
+    <ReportFiltersSheet
+      visible={sheetVisible}
+      onDismiss={() => onSheetVisibleChange(false)}
+      period={period}
+      onPeriodChange={onPeriodChange}
+      propertyFilter={propertyFilter}
+      onPropertyFilterChange={onPropertyFilterChange}
+      categoryFilter={categoryFilter}
+      onCategoryFilterChange={onCategoryFilterChange}
+      categoryTypeFilter={categoryTypeFilter}
+      onCategoryTypeFilterChange={onCategoryTypeFilterChange}
+      propertyOptions={propertyOptions}
+      categoryOptions={categoryOptions}
+      onClearFilters={handleClearFilters}
+    />
   );
 }
 
@@ -162,23 +192,5 @@ const styles = StyleSheet.create({
   container: {
     gap: Spacing.sm,
     marginBottom: Spacing.md,
-  },
-  filtersTrigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  badge: {
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
   },
 });

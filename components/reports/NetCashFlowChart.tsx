@@ -8,7 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Text } from '@/components/ui/text';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { Colors, Spacing, Typography } from '@/constants/theme';
-import { formatCurrency } from '@/utils/formatters';
+import { formatChartAxisMonths, formatCurrency, formatPeriodShort } from '@/utils/formatters';
 import type { Language, MonthlyIncomeExpense } from '@/types/app.types';
 
 export interface NetCashFlowChartProps {
@@ -18,6 +18,13 @@ export interface NetCashFlowChartProps {
   language?: Language;
   style?: StyleProp<ViewStyle>;
 }
+
+type ChartPoint = {
+  value: number;
+  label: string;
+  periodLabel: string;
+  dataPointText: string;
+};
 
 function formatDelta(value: number): string {
   const sign = value > 0 ? '+' : '';
@@ -35,15 +42,15 @@ export function NetCashFlowChart({
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
 
-  const chartData = useMemo(
-    () =>
-      data.map((item) => ({
-        value: item.net,
-        label: item.label,
-        dataPointText: String(Math.round(item.net)),
-      })),
-    [data],
-  );
+  const chartData = useMemo(() => {
+    const axisLabels = formatChartAxisMonths(data, language);
+    return data.map((item, index): ChartPoint => ({
+      value: item.net,
+      label: axisLabels[index],
+      periodLabel: formatPeriodShort(item.month, item.year, language),
+      dataPointText: String(Math.round(item.net)),
+    }));
+  }, [data, language]);
 
   const deltaPct = useMemo(() => {
     if (data.length < 2) return null;
@@ -77,7 +84,7 @@ export function NetCashFlowChart({
     );
   }
 
-  const chartWidth = Math.max(width - Spacing.md * 4, data.length * 64);
+  const chartWidth = Math.max(width - Spacing.md * 4, data.length * 52);
 
   return (
     <ChartCard style={style}>
@@ -119,6 +126,7 @@ export function NetCashFlowChart({
           yAxisThickness={0}
           yAxisTextStyle={{ color: theme.colors.onSurfaceVariant, fontSize: 10 }}
           xAxisLabelTextStyle={{ color: theme.colors.onSurfaceVariant, fontSize: 10 }}
+          xAxisTextNumberOfLines={1}
           noOfSections={4}
           maxValue={maxValue}
           mostNegativeValue={mostNegativeValue}
@@ -126,7 +134,7 @@ export function NetCashFlowChart({
           height={180}
           initialSpacing={16}
           endSpacing={16}
-          spacing={Math.max(40, chartWidth / Math.max(data.length, 1) - 20)}
+          spacing={Math.max(44, chartWidth / Math.max(data.length, 1) - 16)}
           isAnimated
           pointerConfig={{
             activatePointersOnLongPress: false,
@@ -138,7 +146,7 @@ export function NetCashFlowChart({
             pointerLabelWidth: 120,
             pointerLabelHeight: 56,
             autoAdjustPointerLabelPosition: true,
-            pointerLabelComponent: (items: Array<{ label?: string; value?: number }>) => {
+            pointerLabelComponent: (items: Array<Partial<ChartPoint>>) => {
               const item = items[0];
               if (!item) return null;
               return (
@@ -150,7 +158,7 @@ export function NetCashFlowChart({
                     },
                   ]}
                 >
-                  <Text style={styles.tooltipLabel}>{item.label}</Text>
+                  <Text style={styles.tooltipLabel}>{item.periodLabel ?? item.label}</Text>
                   <Text style={styles.tooltipValue}>
                     {formatCurrency(Number(item.value), currency, language)}
                   </Text>

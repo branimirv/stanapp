@@ -1,9 +1,10 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { TenantForm } from '@/components/tenant/TenantForm';
 import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
 import { useTenant, useTenantMutations } from '@/hooks/useTenants';
@@ -50,25 +51,22 @@ export default function EditTenantScreen() {
 
   if (isLoading) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('tenants.editTenant') }} />
+      <StackScreenChrome title={t('tenants.editTenant')}>
         <SkeletonLoader count={6} style={styles.loader} />
-      </>
+      </StackScreenChrome>
     );
   }
 
   if (error || !tenant) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('tenants.editTenant') }} />
+      <StackScreenChrome title={t('tenants.editTenant')}>
         <ErrorState message={error ?? t('tenants.notFound')} onRetry={loadTenant} />
-      </>
+      </StackScreenChrome>
     );
   }
 
   return (
-    <>
-      <Stack.Screen options={{ title: t('tenants.editTenant') }} />
+    <StackScreenChrome title={t('tenants.editTenant')}>
       <View style={[screenStyles.container, styles.container]}>
         <TenantForm
           defaultValues={{
@@ -86,7 +84,7 @@ export default function EditTenantScreen() {
           submitLabel={t('common.update')}
         />
       </View>
-    </>
+    </StackScreenChrome>
   );
 }
 

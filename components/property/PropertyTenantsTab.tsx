@@ -1,9 +1,10 @@
 import { memo, useCallback } from 'react';
-import { FlatList, RefreshControl, StyleSheet } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { TenantCard } from '@/components/tenant/TenantCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { PROPERTY_SCENE_TOP_GAP } from '@/components/property/PropertyTabBar';
 import { listPerformanceProps } from '@/constants/list';
 import { Spacing } from '@/constants/theme';
 import type { Language, Tenant } from '@/types/app.types';
@@ -18,6 +19,8 @@ export interface PropertyTenantsTabProps {
   onRefresh: () => void;
   onSelectTenant: (tenantId: string) => void;
   onAddTenant: () => void;
+  /** Clears floating header + tabs; content still peeks under glass. */
+  contentTopInset?: number;
 }
 
 function keyExtractor(tenant: Tenant) {
@@ -34,8 +37,10 @@ function PropertyTenantsTabComponent({
   onRefresh,
   onSelectTenant,
   onAddTenant,
+  contentTopInset = 0,
 }: PropertyTenantsTabProps) {
   const { t } = useTranslation();
+  const listTopPad = (contentTopInset || 0) + PROPERTY_SCENE_TOP_GAP;
 
   const renderTenant = useCallback(
     ({ item }: { item: Tenant }) => (
@@ -49,16 +54,22 @@ function PropertyTenantsTabComponent({
     [currency, language, onSelectTenant],
   );
 
-  if (isLoading) return <SkeletonLoader count={3} style={styles.content} />;
+  if (isLoading) {
+    return <SkeletonLoader count={3} style={[styles.content, { paddingTop: listTopPad }]} />;
+  }
 
   if (tenants.length === 0) {
     return (
-      <EmptyState
-        title={t('empty.noTenants')}
-        subtitle={t('empty.noTenantsHint')}
-        ctaLabel={canManage ? t('tenants.addNew') : undefined}
-        onCtaPress={canManage ? onAddTenant : undefined}
-      />
+      <View className="flex-1 px-4" style={{ paddingTop: listTopPad }}>
+        <View className="bg-muted/50 rounded-3xl px-2 py-6">
+          <EmptyState
+            title={t('empty.noTenants')}
+            subtitle={t('empty.noTenantsHint')}
+            ctaLabel={canManage ? t('tenants.addNew') : undefined}
+            onCtaPress={canManage ? onAddTenant : undefined}
+          />
+        </View>
+      </View>
     );
   }
 
@@ -67,7 +78,7 @@ function PropertyTenantsTabComponent({
       data={tenants}
       keyExtractor={keyExtractor}
       renderItem={renderTenant}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingTop: listTopPad }]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       {...listPerformanceProps}
     />
@@ -78,8 +89,7 @@ export const PropertyTenantsTab = memo(PropertyTenantsTabComponent);
 
 const styles = StyleSheet.create({
   content: {
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.xxl + 56,
-    gap: Spacing.sm,
   },
 });

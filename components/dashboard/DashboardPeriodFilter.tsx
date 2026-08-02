@@ -6,6 +6,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  StyleSheet,
   View,
   type StyleProp,
   type ViewStyle,
@@ -13,7 +14,10 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/ui/AppButton';
+import { GlassSurface } from '@/components/ui/GlassSurface';
+import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
+import { Spacing } from '@/constants/theme';
 import { cn } from '@/lib/utils';
 import { formatPeriod } from '@/utils/formatters';
 import type { DashboardPeriod, Language } from '@/types/app.types';
@@ -118,30 +122,35 @@ export function DashboardPeriodFilter({
       <View className="flex-row items-center justify-center gap-2">
         <Pressable
           onPress={handlePrev}
-          className="bg-card h-9 w-9 items-center justify-center rounded-full"
           accessibilityRole="button"
           accessibilityLabel={t('common.previous')}
         >
-          <ChevronLeft size={20} className="text-foreground" strokeWidth={2} />
+          <GlassSurface shape="circle" interactive style={{ width: 36, height: 36 }} contentStyle={styles.iconHit}>
+            <Icon as={ChevronLeft} size={20} className="text-foreground" strokeWidth={2} />
+          </GlassSurface>
         </Pressable>
 
         <Pressable
           onPress={openPicker}
-          className="bg-card border-border max-w-55 flex-1 items-center rounded-full border px-4 py-2"
+          className="max-w-55 flex-1"
           accessibilityRole="button"
           accessibilityLabel={t('dashboard.selectPeriod')}
         >
-          <Text className="text-base font-medium">{displayLabel}</Text>
+          <GlassSurface shape="pill" interactive contentStyle={styles.periodLabel}>
+            <Text className="text-foreground text-base font-medium">{displayLabel}</Text>
+          </GlassSurface>
         </Pressable>
 
         <Pressable
           onPress={handleNext}
           disabled={!canStepForward}
-          className={cn('bg-card h-9 w-9 items-center justify-center rounded-full', !canStepForward && 'opacity-35')}
+          style={!canStepForward ? { opacity: 0.35 } : undefined}
           accessibilityRole="button"
           accessibilityLabel={t('common.next')}
         >
-          <ChevronRight size={20} className="text-foreground" strokeWidth={2} />
+          <GlassSurface shape="circle" interactive style={{ width: 36, height: 36 }} contentStyle={styles.iconHit}>
+            <Icon as={ChevronRight} size={20} className="text-foreground" strokeWidth={2} />
+          </GlassSurface>
         </Pressable>
       </View>
 
@@ -162,7 +171,7 @@ export function DashboardPeriodFilter({
 
             <View className="mb-4 flex-row items-center justify-center gap-6">
               <Pressable onPress={() => handleYearStep(-1)} className="p-1" accessibilityRole="button">
-                <ChevronLeft size={22} className="text-foreground" strokeWidth={2} />
+                <Icon as={ChevronLeft} size={22} className="text-foreground" strokeWidth={2} />
               </Pressable>
               <Text className="min-w-18 text-center text-xl font-semibold">{pickerYear}</Text>
               <Pressable
@@ -171,7 +180,7 @@ export function DashboardPeriodFilter({
                 className={cn('p-1', !canStepYearForward && 'opacity-35')}
                 accessibilityRole="button"
               >
-                <ChevronRight size={22} className="text-foreground" strokeWidth={2} />
+                <Icon as={ChevronRight} size={22} className="text-foreground" strokeWidth={2} />
               </Pressable>
             </View>
 
@@ -219,3 +228,17 @@ export function DashboardPeriodFilter({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  iconHit: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  periodLabel: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+});

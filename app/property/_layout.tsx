@@ -10,13 +10,7 @@ export default function PropertyLayout() {
     <EntityStack>
       <Stack.Screen name="[id]" options={{ title: t('properties.propertyDetails') }} />
       <Stack.Screen name="new" options={{ title: t('properties.newProperty') }} />
-      <Stack.Screen
-        name="edit/[id]"
-        options={{
-          title: t('properties.editProperty'),
-          headerRight: () => null,
-        }}
-      />
+      <Stack.Screen name="edit/[id]" options={{ title: t('properties.editProperty') }} />
       <Stack.Screen name="members/[id]" options={{ title: t('members.title') }} />
     </EntityStack>
   );

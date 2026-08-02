@@ -1,8 +1,9 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { RentPaymentForm } from '@/components/rent/RentPaymentForm';
 import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
 import { useProperties } from '@/hooks/useProperties';
@@ -54,17 +55,15 @@ export default function NewRentPaymentScreen() {
 
   if (propertiesLoading || tenantsLoading) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('rent.newPayment') }} />
+      <StackScreenChrome title={t('rent.newPayment')}>
         <SkeletonLoader count={6} style={styles.loader} />
-      </>
+      </StackScreenChrome>
     );
   }
 
   return (
-    <>
-      <Stack.Screen options={{ title: t('rent.newPayment') }} />
-      <View style={[screenStyles.container, styles.container]}>
+    <StackScreenChrome title={t('rent.newPayment')} edgeToEdge>
+      <View style={screenStyles.container}>
         <RentPaymentForm
           properties={properties}
           tenants={tenants}
@@ -79,14 +78,11 @@ export default function NewRentPaymentScreen() {
           submitLabel={t('common.create')}
         />
       </View>
-    </>
+    </StackScreenChrome>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingTop: 8,
-  },
   loader: {
     padding: 16,
   },

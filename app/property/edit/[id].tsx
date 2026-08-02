@@ -1,8 +1,9 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { PropertyForm } from '@/components/property/PropertyForm';
 import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
@@ -60,27 +61,22 @@ export default function EditPropertyScreen() {
 
   if (isLoading) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('properties.editProperty') }} />
+      <StackScreenChrome title={t('properties.editProperty')}>
         <SkeletonLoader count={6} style={styles.loader} />
-      </>
+      </StackScreenChrome>
     );
   }
 
   if (error || !property) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('properties.editProperty') }} />
+      <StackScreenChrome title={t('properties.editProperty')}>
         <ErrorState message={error ?? t('properties.notFound')} onRetry={loadProperty} />
-      </>
+      </StackScreenChrome>
     );
   }
 
   return (
-    <>
-      <Stack.Screen
-        options={{ title: t('properties.editNamed', { name: property.name }) }}
-      />
+    <StackScreenChrome title={t('properties.editNamed', { name: property.name })}>
       <View style={[screenStyles.container, styles.container]}>
         <PropertyForm
           defaultValues={{
@@ -101,7 +97,7 @@ export default function EditPropertyScreen() {
           submitLabel={t('common.update')}
         />
       </View>
-    </>
+    </StackScreenChrome>
   );
 }
 

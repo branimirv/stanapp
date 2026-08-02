@@ -2,17 +2,20 @@ import { ChevronDown } from 'lucide-react-native';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { PeriodFilter } from '@/components/reports/PeriodFilter';
 import { AppButton } from '@/components/ui/AppButton';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { Text } from '@/components/ui/text';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { Colors, Spacing } from '@/constants/theme';
-import type { ReportCategoryTypeFilter } from '@/types/app.types';
+import type { ReportCategoryTypeFilter, ReportPeriod } from '@/types/app.types';
 
 export interface ReportFiltersSheetProps {
   visible: boolean;
   onDismiss: () => void;
+  period: ReportPeriod;
+  onPeriodChange: (period: ReportPeriod) => void;
   propertyFilter: string;
   onPropertyFilterChange: (value: string) => void;
   categoryFilter: string;
@@ -37,7 +40,7 @@ function InlineSelectField({
   onValueChange,
   placeholder,
 }: InlineSelectFieldProps) {
-  const { isDark } = useAppTheme();
+  const { theme, isDark } = useAppTheme();
   const [expanded, setExpanded] = useState(false);
   const selectedOption = options.find((option) => option.value === value);
 
@@ -63,7 +66,7 @@ function InlineSelectField({
         </Text>
         <ChevronDown
           size={18}
-          className="text-primary"
+          color={theme.colors.primary}
           strokeWidth={2.5}
           style={{ transform: [{ rotate: expanded ? '180deg' : '0deg' }] }}
         />
@@ -99,6 +102,8 @@ function InlineSelectField({
 export function ReportFiltersSheet({
   visible,
   onDismiss,
+  period,
+  onPeriodChange,
   propertyFilter,
   onPropertyFilterChange,
   categoryFilter,
@@ -134,6 +139,11 @@ export function ReportFiltersSheet({
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
+            <Text className="text-muted-foreground mt-1 text-sm font-semibold">
+              {t('reports.periodFilter')}
+            </Text>
+            <PeriodFilter value={period} onChange={onPeriodChange} style={styles.periodFilter} />
+
             <Text className="text-muted-foreground mt-1 text-sm font-semibold">
               {t('reports.filterProperty')}
             </Text>
@@ -215,6 +225,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     gap: Spacing.sm,
     paddingBottom: Spacing.sm,
+  },
+  periodFilter: {
+    marginBottom: 0,
   },
   selectField: {
     borderWidth: 1,

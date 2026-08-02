@@ -55,7 +55,7 @@ function TenantCardComponent({
   language = 'hr',
   onPress,
 }: TenantCardProps) {
-  const { isDark } = useAppTheme();
+  const { isDark, theme } = useAppTheme();
   const { t, i18n } = useTranslation();
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
   const contractStatus = getContractStatus(tenant);
@@ -63,6 +63,9 @@ function TenantCardComponent({
   const avatarColor = getAvatarColor(fullName);
   const initials = getInitials(tenant.first_name, tenant.last_name);
   const handlePress = onPress ? () => onPress(tenant.id) : undefined;
+  const actionIconColor = theme.colors.primary;
+  const metaIconColor = theme.colors.onSurfaceVariant;
+  const actionButtonBg = isDark ? Colors.surfaceVariantDark : Colors.surfaceVariant;
 
   return (
     <Pressable onPress={handlePress} disabled={!handlePress}>
@@ -92,38 +95,41 @@ function TenantCardComponent({
             {tenant.phone ? (
               <Pressable
                 onPress={() => openUrl(`tel:${tenant.phone}`)}
-                className="bg-secondary h-8 w-8 items-center justify-center rounded-full"
+                className="h-8 w-8 items-center justify-center rounded-full"
+                style={{ backgroundColor: actionButtonBg }}
                 accessibilityRole="button"
                 accessibilityLabel={t('tenants.callTenant')}
               >
-                <Phone size={16} className="text-primary" strokeWidth={2} />
+                <Phone size={16} color={actionIconColor} strokeWidth={2} />
               </Pressable>
             ) : null}
             {tenant.email ? (
               <Pressable
                 onPress={() => openUrl(`mailto:${tenant.email}`)}
-                className="bg-secondary h-8 w-8 items-center justify-center rounded-full"
+                className="h-8 w-8 items-center justify-center rounded-full"
+                style={{ backgroundColor: actionButtonBg }}
                 accessibilityRole="button"
                 accessibilityLabel={t('tenants.emailTenant')}
               >
-                <Mail size={16} className="text-primary" strokeWidth={2} />
+                <Mail size={16} color={actionIconColor} strokeWidth={2} />
               </Pressable>
             ) : null}
             {tenant.phone ? (
               <Pressable
                 onPress={() => openUrl(`sms:${tenant.phone}`)}
-                className="bg-secondary h-8 w-8 items-center justify-center rounded-full"
+                className="h-8 w-8 items-center justify-center rounded-full"
+                style={{ backgroundColor: actionButtonBg }}
                 accessibilityRole="button"
                 accessibilityLabel={t('tenants.messageTenant')}
               >
-                <MessageSquare size={16} className="text-primary" strokeWidth={2} />
+                <MessageSquare size={16} color={actionIconColor} strokeWidth={2} />
               </Pressable>
             ) : null}
           </View>
         </View>
 
         <View className="flex-row items-center gap-1">
-          <Calendar size={14} className="text-muted-foreground" strokeWidth={2} />
+          <Calendar size={14} color={metaIconColor} strokeWidth={2} />
           <Text className="text-muted-foreground flex-1 text-sm">
             {formatDate(tenant.contract_start, resolvedLanguage)}
             {' — '}
@@ -135,7 +141,7 @@ function TenantCardComponent({
 
         {tenant.email ? (
           <View className="flex-row items-center gap-1">
-            <Mail size={14} className="text-muted-foreground" strokeWidth={2} />
+            <Mail size={14} color={metaIconColor} strokeWidth={2} />
             <Text className="text-muted-foreground flex-1 text-sm" numberOfLines={1}>
               {tenant.email}
             </Text>
@@ -144,7 +150,7 @@ function TenantCardComponent({
 
         {tenant.phone ? (
           <View className="flex-row items-center gap-1">
-            <Phone size={14} className="text-muted-foreground" strokeWidth={2} />
+            <Phone size={14} color={metaIconColor} strokeWidth={2} />
             <Text className="text-muted-foreground flex-1 text-sm">{tenant.phone}</Text>
           </View>
         ) : null}

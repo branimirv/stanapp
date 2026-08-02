@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
+import { TabScreenBackground } from '@/components/ui/AppScreenBackground';
 import { tabRootScreenOptions } from '@/constants/header';
 import { useAppHeaderOptions } from '@/hooks/useAppHeaderOptions';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -11,8 +12,10 @@ export default function DashboardTabLayout() {
   const headerOptions = useAppHeaderOptions({ variant: 'tabRoot' });
 
   return (
-    <Stack key={isDark ? 'dark' : 'light'} screenOptions={headerOptions}>
-      <Stack.Screen name="index" options={tabRootScreenOptions(t('tabs.dashboard'))} />
-    </Stack>
+    <TabScreenBackground>
+      <Stack key={isDark ? 'dark' : 'light'} screenOptions={headerOptions}>
+        <Stack.Screen name="index" options={tabRootScreenOptions(t('tabs.dashboard'))} />
+      </Stack>
+    </TabScreenBackground>
   );
 }

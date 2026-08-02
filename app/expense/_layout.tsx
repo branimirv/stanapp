@@ -10,13 +10,7 @@ export default function ExpenseLayout() {
     <EntityStack>
       <Stack.Screen name="[id]" options={{ title: t('expenses.expenseDetails') }} />
       <Stack.Screen name="new" options={{ title: t('expenses.newExpense') }} />
-      <Stack.Screen
-        name="edit/[id]"
-        options={{
-          title: t('expenses.editExpense'),
-          headerRight: () => null,
-        }}
-      />
+      <Stack.Screen name="edit/[id]" options={{ title: t('expenses.editExpense') }} />
     </EntityStack>
   );
 }

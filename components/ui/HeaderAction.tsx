@@ -2,7 +2,6 @@ import { Plus, Search, type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
-import { useAppTheme } from '@/hooks/useAppTheme';
 
 type HeaderActionPreset = 'create' | 'search';
 
@@ -22,11 +21,8 @@ export function HeaderAction({
   onPress,
   accessibilityLabel,
   color,
-  active,
-  expanded,
 }: HeaderActionProps) {
   const { t } = useTranslation();
-  const { theme } = useAppTheme();
 
   if (preset === 'create') {
     return (
@@ -34,21 +30,18 @@ export function HeaderAction({
         icon={Plus}
         onPress={onPress!}
         accessibilityLabel={accessibilityLabel ?? t('properties.addNew')}
-        color={color ?? theme.colors.primary}
+        color={color}
       />
     );
   }
 
   if (preset === 'search') {
-    const searchColor =
-      color ?? (active || expanded ? theme.colors.primary : theme.colors.onSurface);
-
     return (
       <HeaderIconButton
         icon={Search}
         onPress={onPress!}
         accessibilityLabel={accessibilityLabel ?? t('common.search')}
-        color={searchColor}
+        color={color}
       />
     );
   }

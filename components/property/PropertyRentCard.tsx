@@ -6,6 +6,7 @@ import { AppBadge } from '@/components/ui/AppBadge';
 import { AppButton } from '@/components/ui/AppButton';
 import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import type { Language, RentPayment } from '@/types/app.types';
 import {
   formatCurrencyShort,
@@ -39,13 +40,14 @@ export function PropertyRentCard({
   onMarkPaid,
 }: PropertyRentCardProps) {
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
 
   const isPaid = payment?.status === 'paid';
   const statusLabel = payment ? t(`rent.${payment.status}`) : t('rent.monthEmpty');
   const statusVariant = payment?.status ?? 'pending';
 
   return (
-    <View className="bg-card border-border gap-0 rounded-xl border px-4 py-2">
+    <View className="bg-card border-border gap-0 rounded-3xl border px-4 py-2.5 shadow-sm shadow-black/5">
       <Pressable
         className="gap-0.5 py-2"
         style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
@@ -81,7 +83,7 @@ export function PropertyRentCard({
             accessibilityLabel={tenantName}
           >
             <View className="shrink flex-row items-center gap-2">
-              <User size={16} className="text-muted-foreground" strokeWidth={2} />
+              <User size={16} color={theme.colors.onSurfaceVariant} strokeWidth={2} />
               <Text className="text-sm" numberOfLines={1}>
                 {tenantName}
               </Text>

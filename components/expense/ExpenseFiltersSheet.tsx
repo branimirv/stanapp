@@ -2,20 +2,23 @@ import { ChevronDown } from 'lucide-react-native';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import type {
+  RecurringFilter,
+  StatusFilter,
+  TypeFilter,
+} from '@/components/expense/expenseFilterTypes';
 import { AppButton } from '@/components/ui/AppButton';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { Text } from '@/components/ui/text';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { Colors, Spacing } from '@/constants/theme';
-import type { ExpenseType } from '@/types/app.types';
 
-export type RecurringFilter = 'all' | 'recurring' | 'one_time';
-export type TypeFilter = 'all' | ExpenseType;
-
-export interface ExpenseMoreFiltersSheetProps {
+export interface ExpenseFiltersSheetProps {
   visible: boolean;
   onDismiss: () => void;
+  statusFilter: StatusFilter;
+  onStatusFilterChange: (value: StatusFilter) => void;
   propertyFilter: string;
   onPropertyFilterChange: (value: string) => void;
   categoryFilter: string;
@@ -42,7 +45,7 @@ function InlineSelectField({
   onValueChange,
   placeholder,
 }: InlineSelectFieldProps) {
-  const { isDark } = useAppTheme();
+  const { theme, isDark } = useAppTheme();
   const [expanded, setExpanded] = useState(false);
   const selectedOption = options.find((option) => option.value === value);
 
@@ -68,7 +71,7 @@ function InlineSelectField({
         </Text>
         <ChevronDown
           size={18}
-          className="text-primary"
+          color={theme.colors.primary}
           strokeWidth={2.5}
           style={{ transform: [{ rotate: expanded ? '180deg' : '0deg' }] }}
         />
@@ -101,9 +104,11 @@ function InlineSelectField({
   );
 }
 
-export function ExpenseMoreFiltersSheet({
+export function ExpenseFiltersSheet({
   visible,
   onDismiss,
+  statusFilter,
+  onStatusFilterChange,
   propertyFilter,
   onPropertyFilterChange,
   categoryFilter,
@@ -115,7 +120,7 @@ export function ExpenseMoreFiltersSheet({
   typeFilter,
   onTypeFilterChange,
   onClearFilters,
-}: ExpenseMoreFiltersSheetProps) {
+}: ExpenseFiltersSheetProps) {
   const { t } = useTranslation();
 
   const handleClear = () => {
@@ -139,7 +144,7 @@ export function ExpenseMoreFiltersSheet({
           <View style={styles.handle} className="bg-border" />
 
           <Text className="mb-2 text-center text-lg font-medium">
-            {t('expenses.moreFilters')}
+            {t('expenses.filters')}
           </Text>
 
           <ScrollView
@@ -148,6 +153,20 @@ export function ExpenseMoreFiltersSheet({
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
+            <Text className="text-muted-foreground mt-1 text-sm font-semibold">
+              {t('common.status')}
+            </Text>
+            <AppSegmentedControl
+              segments={[
+                { label: t('expenses.filterAll'), value: 'all' },
+                { label: t('expenses.filterUnpaid'), value: 'unpaid' },
+                { label: t('expenses.filterPaid'), value: 'paid' },
+                { label: t('expenses.overdue'), value: 'overdue' },
+              ]}
+              value={statusFilter}
+              onValueChange={(value) => onStatusFilterChange(value as StatusFilter)}
+            />
+
             <Text className="text-muted-foreground mt-1 text-sm font-semibold">
               {t('expenses.property')}
             </Text>

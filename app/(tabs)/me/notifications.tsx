@@ -1,9 +1,9 @@
-import { Stack } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppButton } from '@/components/ui/AppButton';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { requestNotificationPermissions } from '@/lib/notifications';
@@ -67,10 +67,9 @@ export default function NotificationSettingsScreen() {
 
   if (isLoading || !preferences) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('settings.notificationPreferences') }} />
+      <StackScreenChrome title={t('settings.notificationPreferences')}>
         <SkeletonLoader count={4} className="p-4" />
-      </>
+      </StackScreenChrome>
     );
   }
 
@@ -97,9 +96,7 @@ export default function NotificationSettingsScreen() {
   ];
 
   return (
-    <>
-      <Stack.Screen options={{ title: t('settings.notificationPreferences') }} />
-
+    <StackScreenChrome title={t('settings.notificationPreferences')}>
       <ScrollView contentContainerClassName="gap-6 p-4 pb-12">
         {items.map((item) => (
           <View key={item.key} className="flex-row items-center justify-between gap-4">
@@ -118,6 +115,6 @@ export default function NotificationSettingsScreen() {
           {t('common.save')}
         </AppButton>
       </ScrollView>
-    </>
+    </StackScreenChrome>
   );
 }

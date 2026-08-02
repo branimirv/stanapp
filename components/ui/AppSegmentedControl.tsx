@@ -6,6 +6,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { GlassSurface } from '@/components/ui/GlassSurface';
 import { Text } from '@/components/ui/text';
 import { Spacing } from '@/constants/theme';
 import { cn } from '@/lib/utils';
@@ -70,47 +71,48 @@ export function AppSegmentedControl<T extends string = string>({
   });
 
   return (
-    <View
-      className={cn(
-        'bg-muted relative min-h-11 flex-row rounded-xl p-0.5',
-        disabled && 'opacity-60',
-        className,
-      )}
+    <GlassSurface
+      shape="pill"
+      interactive
       style={style}
-      onLayout={handleLayout}
+      contentStyle={{ minHeight: 44, opacity: disabled ? 0.6 : 1 }}
     >
-      <Animated.View
-        className="bg-card absolute bottom-0.5 top-0.5 rounded-md shadow-sm"
-        style={indicatorStyle}
-      />
+      <View className={cn('relative min-h-11 flex-row p-0.5', className)} onLayout={handleLayout}>
+        <Animated.View
+          className="bg-primary/90 absolute bottom-0.5 top-0.5 rounded-full"
+          style={indicatorStyle}
+        />
 
-      {segments.map((segment) => {
-        const isSelected = segment.value === value;
+        {segments.map((segment) => {
+          const isSelected = segment.value === value;
 
-        return (
-          <Pressable
-            key={segment.value}
-            className="z-1 flex-1 items-center justify-center px-2 py-2"
-            onPress={() => {
-              if (disabled) return;
-              onValueChange(segment.value);
-            }}
-            disabled={disabled}
-            accessibilityRole="button"
-            accessibilityState={{ selected: isSelected, disabled }}
-          >
-            <Text
-              className={cn(
-                'text-center text-sm',
-                isSelected ? 'text-primary font-semibold' : 'text-muted-foreground font-medium',
-              )}
-              numberOfLines={1}
+          return (
+            <Pressable
+              key={segment.value}
+              className="z-1 flex-1 items-center justify-center px-2 py-2"
+              onPress={() => {
+                if (disabled) return;
+                onValueChange(segment.value);
+              }}
+              disabled={disabled}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected, disabled }}
             >
-              {segment.label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
+              <Text
+                className={cn(
+                  'text-center text-sm',
+                  isSelected
+                    ? 'text-primary-foreground font-semibold'
+                    : 'text-foreground/80 font-medium',
+                )}
+                numberOfLines={1}
+              >
+                {segment.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </GlassSurface>
   );
 }

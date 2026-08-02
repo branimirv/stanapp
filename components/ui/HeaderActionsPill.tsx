@@ -1,33 +1,52 @@
+import { Children, type ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { GlassSurface } from '@/components/ui/GlassSurface';
+import { HEADER_ACTION_SLOT } from '@/constants/header';
 import { Spacing } from '@/constants/theme';
 
 interface HeaderActionsPillProps {
-  children?: React.ReactNode;
+  children?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }
 
-/** Glass pill grouping header action icons (settings, search, create, etc.). */
+/** Row of separate circular glass header actions (create, search, edit, etc.). */
 export function HeaderActionsPill({ children, style }: HeaderActionsPillProps) {
-  if (!children) {
+  const actions = Children.toArray(children).filter(Boolean);
+  if (actions.length === 0) {
     return null;
   }
 
   return (
-    <GlassSurface shape="pill" style={style} contentStyle={styles.pillOverlay}>
-      <View style={styles.group}>{children}</View>
-    </GlassSurface>
+    <View style={[styles.row, style]}>
+      {actions.map((child, index) => (
+        <GlassSurface
+          key={index}
+          shape="circle"
+          interactive
+          style={styles.circle}
+          contentStyle={styles.circleOverlay}
+        >
+          {child}
+        </GlassSurface>
+      ))}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  pillOverlay: {
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: 2,
-  },
-  group: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  circle: {
+    width: HEADER_ACTION_SLOT,
+    height: HEADER_ACTION_SLOT,
+  },
+  circleOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

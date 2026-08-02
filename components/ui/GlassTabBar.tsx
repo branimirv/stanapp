@@ -33,7 +33,7 @@ export function GlassTabBar({ state, descriptors, navigation }: GlassTabBarProps
         },
       ]}
     >
-      <GlassSurface shape="pill" style={styles.bar} contentStyle={styles.barOverlay}>
+      <GlassSurface shape="pill" interactive style={styles.bar} contentStyle={styles.barOverlay}>
         <View style={styles.tabs}>
           {state.routes.map((route, index) => {
             const { options } = descriptors[route.key];

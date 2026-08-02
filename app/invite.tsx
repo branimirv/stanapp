@@ -50,7 +50,7 @@ export default function InviteAcceptScreen() {
   }, [isAuthLoading, queryClient, session, t]);
 
   return (
-    <SafeAreaView className="bg-background flex-1 items-center justify-center gap-4 p-6">
+    <SafeAreaView className="flex-1 items-center justify-center gap-4 bg-transparent p-6">
       {status === 'loading' ? (
         <>
           <ActivityIndicator />

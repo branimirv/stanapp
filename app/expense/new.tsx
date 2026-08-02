@@ -1,8 +1,9 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { ExpenseForm } from '@/components/expense/ExpenseForm';
 import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
@@ -67,17 +68,15 @@ export default function NewExpenseScreen() {
 
   if (propertiesLoading || categoriesLoading) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('expenses.newExpense') }} />
+      <StackScreenChrome title={t('expenses.newExpense')}>
         <SkeletonLoader count={6} style={styles.loader} />
-      </>
+      </StackScreenChrome>
     );
   }
 
   return (
-    <>
-      <Stack.Screen options={{ title: t('expenses.newExpense') }} />
-      <View style={[screenStyles.container, styles.container]}>
+    <StackScreenChrome title={t('expenses.newExpense')} edgeToEdge>
+      <View style={screenStyles.container}>
         <ExpenseForm
           properties={properties}
           categories={categories}
@@ -94,14 +93,11 @@ export default function NewExpenseScreen() {
           submitLabel={t('common.create')}
         />
       </View>
-    </>
+    </StackScreenChrome>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingTop: 8,
-  },
   loader: {
     padding: 16,
   },

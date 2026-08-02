@@ -4,10 +4,10 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { AppTextInput } from '@/components/ui/AppTextInput';
+import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { Text } from '@/components/ui/text';
 import { signUp } from '@/lib/auth';
 import { useUiStore } from '@/stores/uiStore';
@@ -69,7 +69,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView className="bg-background flex-1" edges={['bottom']}>
+    <StackScreenChrome title={t('auth.register')}>
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -181,6 +181,6 @@ export default function RegisterScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </StackScreenChrome>
   );
 }

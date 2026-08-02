@@ -1,9 +1,10 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { ExpenseForm } from '@/components/expense/ExpenseForm';
 import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
@@ -70,25 +71,22 @@ export default function EditExpenseScreen() {
 
   if (isLoading) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('expenses.editExpense') }} />
+      <StackScreenChrome title={t('expenses.editExpense')}>
         <SkeletonLoader count={6} style={styles.loader} />
-      </>
+      </StackScreenChrome>
     );
   }
 
   if (error || !expense) {
     return (
-      <>
-        <Stack.Screen options={{ title: t('expenses.editExpense') }} />
+      <StackScreenChrome title={t('expenses.editExpense')}>
         <ErrorState message={error ?? t('expenses.notFound')} onRetry={refetch} />
-      </>
+      </StackScreenChrome>
     );
   }
 
   return (
-    <>
-      <Stack.Screen options={{ title: t('expenses.editExpense') }} />
+    <StackScreenChrome title={t('expenses.editExpense')}>
       <View style={[screenStyles.container, styles.container]}>
         <ExpenseForm
           properties={properties}
@@ -108,7 +106,7 @@ export default function EditExpenseScreen() {
           submitLabel={t('common.update')}
         />
       </View>
-    </>
+    </StackScreenChrome>
   );
 }
 

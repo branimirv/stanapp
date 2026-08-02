@@ -74,6 +74,33 @@ export function formatPeriodShort(month: number, year: number, language: Languag
   return format(date, 'MMM yyyy', { locale: dateLocales[language] });
 }
 
+/**
+ * Compact month tick for chart axes. Keeps labels short enough to avoid
+ * ellipsis; append a 2-digit year when the series needs year context.
+ */
+export function formatChartAxisMonth(
+  month: number,
+  year: number,
+  language: Language = 'hr',
+  showYear = false,
+): string {
+  const monthLabel = formatMonthNameShort(month, year, language);
+  if (!showYear) return monthLabel;
+  return `${monthLabel} '${String(year).slice(-2)}`;
+}
+
+/** Axis labels for a monthly series: month abbr, year only on first point / year change. */
+export function formatChartAxisMonths(
+  points: Array<{ month: number; year: number }>,
+  language: Language = 'hr',
+): string[] {
+  return points.map((point, index) => {
+    const prev = points[index - 1];
+    const showYear = index === 0 || prev.year !== point.year;
+    return formatChartAxisMonth(point.month, point.year, language, showYear);
+  });
+}
+
 export function getStatusColor(status: PaymentStatus): string {
   const map: Record<PaymentStatus, string> = {
     paid: Colors.statusPaid,

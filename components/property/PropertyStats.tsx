@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/components/ui/text';
 import { Colors } from '@/constants/theme';
-import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/formatters';
 import type { Language } from '@/types/app.types';
 
@@ -48,21 +47,28 @@ export function PropertyStats({
   ] as const;
 
   return (
-    <View className="gap-1">
-      {periodLabel ? <Text className="text-muted-foreground text-xs">{periodLabel}</Text> : null}
-      <View className="bg-card border-border flex-row overflow-hidden rounded-xl border">
-        {stats.map((stat, index) => (
+    <View className="gap-2">
+      {periodLabel ? (
+        <Text className="text-muted-foreground text-xs font-medium">{periodLabel}</Text>
+      ) : null}
+      <View className="flex-row gap-2">
+        {stats.map((stat) => (
           <View
             key={stat.key}
-            className={cn(
-              'flex-1 items-center justify-center px-2 py-4',
-              index < stats.length - 1 && 'border-border border-r',
-            )}
+            className="bg-card border-border min-w-0 flex-1 gap-1 rounded-3xl border px-3 py-4"
           >
-            <Text className="text-muted-foreground mb-1 text-center text-xs font-medium">
+            <Text
+              className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase"
+              numberOfLines={1}
+            >
               {stat.label}
             </Text>
-            <Text className="text-center text-base font-medium" style={{ color: stat.color }} numberOfLines={1}>
+            <Text
+              className="text-base font-bold"
+              style={{ color: stat.color }}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
               {stat.value}
             </Text>
           </View>

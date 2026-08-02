@@ -1,11 +1,13 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, SectionList, StyleSheet, View } from 'react-native';
+import { Receipt } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { ExpenseCard } from '@/components/expense/ExpenseCard';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { Text } from '@/components/ui/text';
+import { PROPERTY_SCENE_TOP_GAP } from '@/components/property/PropertyTabBar';
 import { listPerformanceProps } from '@/constants/list';
 import { Spacing } from '@/constants/theme';
 import type { Expense, ExpenseCategory, Language } from '@/types/app.types';
@@ -34,7 +36,8 @@ export interface PropertyExpensesTabProps {
   onRefresh: () => void;
   onSelectExpense: (expenseId: string) => void;
   onMarkExpensePaid: (expenseId: string) => void;
-  onAddExpense: () => void;
+  /** Clears floating header + tabs; content still peeks under glass. */
+  contentTopInset?: number;
 }
 
 function keyExtractor(expense: Expense) {
@@ -56,10 +59,11 @@ function PropertyExpensesTabComponent({
   onRefresh,
   onSelectExpense,
   onMarkExpensePaid,
-  onAddExpense,
+  contentTopInset = 0,
 }: PropertyExpensesTabProps) {
   const { t } = useTranslation();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
+  const listTopPad = (contentTopInset || 0) + PROPERTY_SCENE_TOP_GAP;
 
   const expensesByMonth = useMemo<ExpenseMonthSection[]>(() => {
     const groups = new Map<string, Expense[]>();
@@ -109,9 +113,9 @@ function PropertyExpensesTabComponent({
 
   const renderSectionHeader = useCallback(
     ({ section }: { section: ExpenseMonthSection }) => (
-      <View style={styles.sectionHeader}>
-        <Text className="text-base font-medium">{section.title}</Text>
-        <Text className="text-muted-foreground">
+      <View className="flex-row items-end justify-between gap-2 py-3">
+        <Text className="text-foreground text-base font-bold">{section.title}</Text>
+        <Text className="text-muted-foreground text-sm font-medium">
           {formatCurrency(section.total, currency, language)}
         </Text>
       </View>
@@ -119,25 +123,29 @@ function PropertyExpensesTabComponent({
     [currency, language],
   );
 
-  if (isLoading) return <SkeletonLoader count={4} style={styles.content} />;
+  if (isLoading) {
+    return <SkeletonLoader count={4} style={[styles.content, { paddingTop: listTopPad }]} />;
+  }
 
   if (expenses.length === 0) {
     return (
-      <EmptyState
-        title={t('empty.noExpenses')}
-        subtitle={t('empty.noExpensesHint')}
-        ctaLabel={canManage ? t('expenses.addNew') : undefined}
-        onCtaPress={canManage ? onAddExpense : undefined}
-      />
+      <View className="flex-1" style={{ paddingTop: listTopPad }}>
+        <EmptyState
+          icon={Receipt}
+          title={t('empty.noExpenses')}
+          subtitle={t('empty.noExpensesHint')}
+        />
+      </View>
     );
   }
 
   const periodSwitcher = (
-    <View style={styles.periodFilter}>
+    <View className="mb-3">
       <AppSegmentedControl
         segments={segments}
         value={periodFilter}
         onValueChange={handlePeriodChange}
+        className="rounded-full"
       />
     </View>
   );
@@ -148,25 +156,31 @@ function PropertyExpensesTabComponent({
         data={monthExpenses}
         keyExtractor={keyExtractor}
         renderItem={renderExpense}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: listTopPad }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         {...listPerformanceProps}
         ListHeaderComponent={
           <>
             {periodSwitcher}
             {monthExpenses.length > 0 ? (
-              <View style={styles.sectionHeader}>
-                <Text className="text-base font-medium">
+              <View className="flex-row items-end justify-between gap-2 py-3">
+                <Text className="text-foreground text-base font-bold">
                   {formatPeriod(month, year, language)}
                 </Text>
-                <Text className="text-muted-foreground">
+                <Text className="text-muted-foreground text-sm font-medium">
                   {formatCurrency(monthExpenseTotal, currency, language)}
                 </Text>
               </View>
             ) : null}
           </>
         }
-        ListEmptyComponent={<EmptyState title={t('properties.noExpensesThisMonth')} />}
+        ListEmptyComponent={
+          <EmptyState
+            icon={Receipt}
+            title={t('properties.noExpensesThisMonth')}
+            subtitle={t('empty.noExpensesHint')}
+          />
+        }
       />
     );
   }
@@ -177,7 +191,7 @@ function PropertyExpensesTabComponent({
       keyExtractor={keyExtractor}
       renderItem={renderExpense}
       renderSectionHeader={renderSectionHeader}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingTop: listTopPad }]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       {...listPerformanceProps}
       ListHeaderComponent={periodSwitcher}
@@ -189,18 +203,7 @@ export const PropertyExpensesTab = memo(PropertyExpensesTabComponent);
 
 const styles = StyleSheet.create({
   content: {
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.xxl + 56,
-    gap: Spacing.sm,
-  },
-  periodFilter: {
-    marginBottom: Spacing.sm,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.sm,
-    backgroundColor: 'transparent',
   },
 });
