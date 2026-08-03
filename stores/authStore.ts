@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import type { Session, User } from '@supabase/supabase-js';
+import type { AuthError, Session, User } from '@supabase/supabase-js';
 import { acceptPendingInvites } from '@/services/invites';
+import { queryClient } from '@/lib/queryClient';
 import { supabase } from '@/lib/supabase';
 
 interface AuthState {
@@ -9,7 +10,7 @@ interface AuthState {
   isLoading: boolean;
   setSession: (session: Session | null) => void;
   setLoading: (loading: boolean) => void;
-  signOut: () => Promise<void>;
+  signOut: () => Promise<{ error: AuthError | null }>;
   initialize: () => Promise<void>;
 }
 
@@ -39,8 +40,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   setLoading: (isLoading) => set({ isLoading }),
 
   signOut: async () => {
-    await supabase.auth.signOut();
+    // Clear local auth first so Stack.Protected can leave the app shell
+    // immediately — waiting on the network kept users stuck on NativeTabs.
     set({ session: null, user: null, isLoading: false });
+    queryClient.clear();
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    return { error };
   },
 
   initialize: async () => {

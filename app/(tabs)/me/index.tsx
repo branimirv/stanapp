@@ -35,7 +35,6 @@ import { useMyMemberships } from '@/hooks/useMembers';
 import { useProfile } from '@/hooks/useProfile';
 import { useTabBarPreference, type TabBarLabelMode } from '@/hooks/useTabBarPreference';
 import i18n from '@/i18n';
-import { signOut } from '@/lib/auth';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import type { Language, Theme } from '@/types/app.types';
@@ -58,7 +57,8 @@ const TAB_BAR_LABELS: Record<TabBarLabelMode, string> = {
 export default function MeScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const signOut = useAuthStore((s) => s.signOut);
   const showToast = useUiStore((s) => s.showToast);
   const showConfirmDialog = useUiStore((s) => s.showConfirmDialog);
   const { preference, setPreference } = useAppTheme();
@@ -171,16 +171,18 @@ export default function MeScreen() {
       confirmLabel: t('auth.signOut'),
       destructive: true,
       onConfirm: async () => {
+        // Clearing session unmounts protected tabs via Stack.Protected and
+        // falls back to `/` (LoginScreen). Do not router.replace from here —
+        // NativeTabs swallows that navigation.
         const { error: signOutError } = await signOut();
         if (signOutError) {
           showToast({ message: signOutError.message, type: 'error' });
           return;
         }
         showToast({ message: t('auth.signOutSuccess'), type: 'success' });
-        router.replace('/(auth)/login');
       },
     });
-  }, [showConfirmDialog, showToast, t]);
+  }, [showConfirmDialog, showToast, signOut, t]);
 
   const language = profile?.language ?? 'hr';
   const currency = profile?.default_currency ?? 'EUR';

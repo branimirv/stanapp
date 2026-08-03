@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { ScreenAmbient } from '@/components/ui/ScreenAmbient';
+import { Colors } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 /**
  * Solid canvas + brand wash for the app root and native tab scenes.
@@ -15,10 +17,16 @@ export function AppScreenBackground({
   children: ReactNode;
   withAmbient?: boolean;
 }) {
+  const { isDark } = useAppTheme();
+
   return (
-    <View className="bg-background flex-1" collapsable={false}>
+    <View
+      className="flex-1"
+      collapsable={false}
+      style={{ backgroundColor: isDark ? Colors.backgroundDark : Colors.background }}
+    >
       {withAmbient ? <ScreenAmbient /> : null}
-      {children}
+      <View style={styles.content}>{children}</View>
     </View>
   );
 }
@@ -31,3 +39,9 @@ export function TabScreenBackground({ children }: { children: ReactNode }) {
 
   return <AppScreenBackground>{children}</AppScreenBackground>;
 }
+
+const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+  },
+});

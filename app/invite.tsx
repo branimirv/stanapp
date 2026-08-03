@@ -61,7 +61,7 @@ export default function InviteAcceptScreen() {
       {status === 'auth' ? (
         <>
           <Text className="text-center text-lg font-semibold">{t('members.signInToAccept')}</Text>
-          <AppButton mode="contained" onPress={() => router.replace('/(auth)/login')}>
+          <AppButton mode="contained" onPress={() => router.replace('/')}>
             {t('auth.signIn')}
           </AppButton>
         </>

@@ -2,16 +2,18 @@ import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { useAppHeaderOptions } from '@/hooks/useAppHeaderOptions';
-import { useAppTheme } from '@/hooks/useAppTheme';
+
+export const unstable_settings = {
+  initialRouteName: 'login',
+};
 
 export default function AuthLayout() {
   const { t } = useTranslation();
-  const { isDark } = useAppTheme();
   const themedScreenOptions = useAppHeaderOptions();
 
   return (
     <Stack
-      key={isDark ? 'dark' : 'light'}
+      initialRouteName="login"
       screenOptions={{
         ...themedScreenOptions,
         headerBackTitle: t('common.back'),

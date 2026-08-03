@@ -65,7 +65,7 @@ export default function RegisterScreen() {
       });
     }
 
-    router.replace('/(auth)/login');
+    router.replace('/');
   };
 
   return (
