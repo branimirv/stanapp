@@ -107,8 +107,8 @@ function PropertyOverviewTabComponent({
 
   const monthBalance = monthIncome - monthExpenseTotal;
   const periodLabel = formatPeriod(month, year, language);
+  const tenantCount = activeTenants.length;
   const primaryTenant = activeTenants[0];
-  const extraTenantCount = Math.max(0, activeTenants.length - 1);
 
   const propertyMeta = useMemo(() => {
     const parts: string[] = [];
@@ -120,12 +120,12 @@ function PropertyOverviewTabComponent({
   }, [property.area_sqm, property.floor, t]);
 
   const handleTenantCardPress = useCallback(() => {
-    if (activeTenants.length === 1 && primaryTenant) {
+    if (tenantCount === 1 && primaryTenant) {
       onSelectTenant(primaryTenant.id);
       return;
     }
     onGoToTenants();
-  }, [activeTenants.length, onGoToTenants, onSelectTenant, primaryTenant]);
+  }, [onGoToTenants, onSelectTenant, primaryTenant, tenantCount]);
 
   const renderExpense = useCallback(
     ({ item }: { item: Expense }) => (
@@ -204,17 +204,11 @@ function PropertyOverviewTabComponent({
             className="min-w-0 flex-1"
           />
           <Pressable
-            className="bg-muted/60 min-h-[140px] min-w-0 flex-1 items-center justify-between rounded-[28px] px-3 py-4"
+            className="bg-muted/60 min-h-35 min-w-0 flex-1 items-center justify-between rounded-[28px] px-3 py-4"
             style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
             onPress={handleTenantCardPress}
             accessibilityRole="button"
-            accessibilityLabel={
-              primaryTenant
-                ? `${primaryTenant.first_name} ${primaryTenant.last_name}${
-                    extraTenantCount > 0 ? ` +${extraTenantCount}` : ''
-                  }`
-                : t('properties.noTenant')
-            }
+            accessibilityLabel={`${t('tenants.title')}: ${tenantCount}`}
           >
             <Text
               className="text-muted-foreground text-center text-[10px] font-semibold tracking-wide uppercase"
@@ -224,30 +218,16 @@ function PropertyOverviewTabComponent({
             </Text>
 
             <View className="items-center justify-center py-2">
-              {primaryTenant ? (
-                <Text
-                  className="text-foreground text-center text-[18px] leading-6 font-bold"
-                  numberOfLines={2}
-                >
-                  {`${primaryTenant.first_name} ${primaryTenant.last_name}`}
-                </Text>
-              ) : (
-                <Text
-                  className="text-muted-foreground text-center text-xs font-medium"
-                  numberOfLines={2}
-                >
-                  {t('properties.noTenant')}
-                </Text>
-              )}
+              <Text
+                className="text-foreground text-center text-[22px] leading-7 font-bold"
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
+                {tenantCount}
+              </Text>
             </View>
 
-            {extraTenantCount > 0 ? (
-              <Text className="text-muted-foreground text-center text-[11px] font-medium">
-                +{extraTenantCount}
-              </Text>
-            ) : (
-              <View className="h-4" />
-            )}
+            <View className="h-4" />
           </Pressable>
         </View>
       ) : (

@@ -30,7 +30,7 @@ export default function EditTenantScreen() {
         first_name: values.first_name,
         last_name: values.last_name,
         email: values.email || null,
-        phone: values.phone ?? null,
+        phone: values.phone,
         contract_start: values.contract_start,
         contract_end: values.contract_end ?? null,
         deposit_amount: values.deposit_amount,
@@ -66,14 +66,14 @@ export default function EditTenantScreen() {
   }
 
   return (
-    <StackScreenChrome title={t('tenants.editTenant')}>
-      <View style={[screenStyles.container, styles.container]}>
+    <StackScreenChrome title={t('tenants.editTenant')} edgeToEdge>
+      <View style={screenStyles.container}>
         <TenantForm
           defaultValues={{
             first_name: tenant.first_name,
             last_name: tenant.last_name,
             email: tenant.email ?? '',
-            phone: tenant.phone,
+            phone: tenant.phone ?? '',
             contract_start: tenant.contract_start,
             contract_end: tenant.contract_end,
             deposit_amount: tenant.deposit_amount,
@@ -89,9 +89,6 @@ export default function EditTenantScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingTop: 8,
-  },
   loader: {
     padding: 16,
   },

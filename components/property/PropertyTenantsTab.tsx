@@ -90,6 +90,6 @@ export const PropertyTenantsTab = memo(PropertyTenantsTabComponent);
 const styles = StyleSheet.create({
   content: {
     paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.xxl + 56,
+    paddingBottom: Spacing.xxl + 72,
   },
 });

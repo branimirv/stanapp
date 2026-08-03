@@ -4,11 +4,13 @@ import { Pencil, FileText } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { TabView, type Route } from 'react-native-tab-view';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
 import { useFloatingStackHeaderInset } from '@/components/ui/FloatingStackHeader';
 import { GlassSurface } from '@/components/ui/GlassSurface';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import { AppButton } from '@/components/ui/AppButton';
 import { Text } from '@/components/ui/text';
 import { PropertyChromeBackdrop } from '@/components/property/PropertyChromeBackdrop';
 import { PropertyExpensesTab } from '@/components/property/PropertyExpensesTab';
@@ -22,6 +24,7 @@ import { PropertyTenantsTab } from '@/components/property/PropertyTenantsTab';
 import { UsageHistorySheet } from '@/components/property/UsageHistorySheet';
 import { StatementSheet } from '@/components/property/StatementSheet';
 import { RentMonthActionSheet } from '@/components/rent/RentMonthActionSheet';
+import { Spacing } from '@/constants/theme';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useLocale } from '@/hooks/useLocale';
 import { useMyMembership } from '@/hooks/useMembers';
@@ -50,6 +53,7 @@ export default function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const layout = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const headerInset = useFloatingStackHeaderInset();
   const showToast = useUiStore((s) => s.showToast);
 
@@ -339,6 +343,9 @@ export default function PropertyDetailScreen() {
     router.push({ pathname: '/tenant/new', params: { propertyId: id! } });
   }, [id]);
 
+  const showAddTenantButton =
+    canManage && Boolean(isRented) && routes[index]?.key === 'tenants';
+
   const handleAddRentPayment = useCallback(() => {
     router.push({ pathname: '/rent/new', params: { propertyId: id! } });
   }, [id]);
@@ -557,6 +564,25 @@ export default function PropertyDetailScreen() {
         onPartialPayment={handleRentPartialPayment}
         onAddDetails={handleRentAddDetails}
       />
+
+      {showAddTenantButton ? (
+        <View
+          pointerEvents="box-none"
+          style={[
+            styles.addTenantBar,
+            { paddingBottom: Math.max(insets.bottom, Spacing.md) + Spacing.sm },
+          ]}
+        >
+          <AppButton
+            mode="contained"
+            onPress={handleAddTenant}
+            accessibilityLabel={t('tenants.addNew')}
+            className="min-w-40 self-center px-6"
+          >
+            {t('tenants.addNew')}
+          </AppButton>
+        </View>
+      ) : null}
     </DetailScreenScaffold>
   );
 }
@@ -571,6 +597,16 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 10,
+  },
+  addTenantBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 20,
+    elevation: 20,
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
   },
   parentBanner: {
     paddingHorizontal: 16,

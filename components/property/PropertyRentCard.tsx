@@ -50,7 +50,7 @@ export function PropertyRentCard({
   return (
     <Pressable
       className={cn(
-        'bg-muted/60 min-h-[140px] flex-1 items-center justify-between rounded-[28px] px-3 py-4',
+        'bg-muted/60 min-h-35 flex-1 items-center justify-between rounded-[28px] px-3 py-4',
         className,
       )}
       style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}

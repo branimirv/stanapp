@@ -42,7 +42,7 @@ export default function NewTenantScreen() {
         first_name: values.first_name,
         last_name: values.last_name,
         email: values.email || null,
-        phone: values.phone ?? null,
+        phone: values.phone,
         contract_start: values.contract_start,
         contract_end: values.contract_end ?? null,
         deposit_amount: values.deposit_amount,
@@ -79,8 +79,8 @@ export default function NewTenantScreen() {
   }
 
   return (
-    <StackScreenChrome title={t('tenants.newTenant')}>
-      <View style={[screenStyles.container, styles.container]}>
+    <StackScreenChrome title={t('tenants.newTenant')} edgeToEdge>
+      <View style={screenStyles.container}>
         <TenantForm onSubmit={handleSubmit} isSubmitting={isSaving} submitLabel={t('common.create')} />
       </View>
     </StackScreenChrome>
@@ -88,9 +88,6 @@ export default function NewTenantScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingTop: 8,
-  },
   loader: {
     padding: 16,
   },

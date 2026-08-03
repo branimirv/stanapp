@@ -1,11 +1,13 @@
-import { createContext, useContext, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { createContext, useContext, useState, type ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import {
   FloatingStackHeader,
   useFloatingStackHeaderInset,
 } from '@/components/ui/FloatingStackHeader';
+import { GlassSurface } from '@/components/ui/GlassSurface';
 import { ScreenPageTitle } from '@/components/ui/ScreenPageTitle';
+import { Spacing } from '@/constants/theme';
 
 /** When set, scroll shells (e.g. AppFormScroll) should pad content under the floating header. */
 const StackChromeEdgeInsetContext = createContext<number | null>(null);
@@ -13,6 +15,9 @@ const StackChromeEdgeInsetContext = createContext<number | null>(null);
 export function useStackChromeEdgeInset() {
   return useContext(StackChromeEdgeInsetContext);
 }
+
+/** Fallback until sticky title `onLayout` measures — ~1 line title + padding. */
+const STICKY_TITLE_FALLBACK = 52;
 
 interface StackScreenChromeProps {
   title: string;
@@ -31,6 +36,8 @@ interface StackScreenChromeProps {
 /**
  * Edge-to-edge stack screen shell: floating back/actions over content.
  * Titles live in content by default so long strings can wrap.
+ * With `edgeToEdge`, the page title becomes a sticky liquid-glass bar so form
+ * fields can scroll underneath and stay readable.
  * Ambient brand wash comes from root / tab `AppScreenBackground`.
  */
 export function StackScreenChrome({
@@ -42,19 +49,41 @@ export function StackScreenChrome({
 }: StackScreenChromeProps) {
   const inset = useFloatingStackHeaderInset();
   const showPageTitle = !hideHeaderTitle;
-  // Page title already clears the floating header — scroll shells should not re-pad.
-  const scrollEdgeInset = edgeToEdge && !showPageTitle ? inset : null;
-  const contentPadTop = showPageTitle || !edgeToEdge ? inset : undefined;
+  const [stickyTitleHeight, setStickyTitleHeight] = useState(STICKY_TITLE_FALLBACK);
+
+  const useStickyGlassTitle = edgeToEdge && showPageTitle;
+  const scrollEdgeInset = edgeToEdge
+    ? inset + (useStickyGlassTitle ? stickyTitleHeight : 0)
+    : null;
+  const contentPadTop = edgeToEdge ? undefined : inset;
 
   return (
     <StackChromeEdgeInsetContext.Provider value={scrollEdgeInset}>
       <View className="flex-1 bg-transparent" collapsable={false}>
         <FloatingStackHeader title={title} hideTitle right={right} />
+
+        {useStickyGlassTitle ? (
+          <View
+            pointerEvents="box-none"
+            style={[styles.stickyTitle, { top: inset }]}
+            onLayout={(event) => {
+              const next = Math.ceil(event.nativeEvent.layout.height);
+              if (next > 0 && next !== stickyTitleHeight) {
+                setStickyTitleHeight(next);
+              }
+            }}
+          >
+            <GlassSurface shape="rect" style={styles.stickyGlass} contentStyle={styles.stickyGlassContent}>
+              <ScreenPageTitle>{title}</ScreenPageTitle>
+            </GlassSurface>
+          </View>
+        ) : null}
+
         <View
           className="flex-1"
           style={contentPadTop != null ? { paddingTop: contentPadTop } : undefined}
         >
-          {showPageTitle ? (
+          {showPageTitle && !useStickyGlassTitle ? (
             <View className="px-4 pt-3 pb-0.5">
               <ScreenPageTitle>{title}</ScreenPageTitle>
             </View>
@@ -65,3 +94,22 @@ export function StackScreenChrome({
     </StackChromeEdgeInsetContext.Provider>
   );
 }
+
+const styles = StyleSheet.create({
+  stickyTitle: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 15,
+    elevation: 15,
+    paddingHorizontal: Spacing.md,
+  },
+  stickyGlass: {
+    // Keep a real radius — full-bleed radius 0 can mute / crash liquid glass.
+  },
+  stickyGlassContent: {
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.sm,
+  },
+});

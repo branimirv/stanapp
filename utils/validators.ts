@@ -26,7 +26,7 @@ export const tenantSchema = z.object({
   first_name: z.string().min(1, 'validation.required').max(100),
   last_name: z.string().min(1, 'validation.required').max(100),
   email: z.string().email('validation.invalidEmail').optional().or(z.literal('')),
-  phone: z.string().max(20).optional().nullable(),
+  phone: z.string().min(1, 'validation.required').max(20),
   contract_start: z.string().min(1, 'validation.required'),
   contract_end: z.string().optional().nullable(),
   deposit_amount: z.number().min(0),

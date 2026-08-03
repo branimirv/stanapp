@@ -18,7 +18,7 @@ const defaultFormValues: TenantFormValues = {
   first_name: '',
   last_name: '',
   email: '',
-  phone: null,
+  phone: '',
   contract_start: '',
   contract_end: null,
   deposit_amount: 0,
