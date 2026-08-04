@@ -104,6 +104,9 @@ export interface ReportPeriod {
 
 export type ReportCategoryTypeFilter = 'all' | ExpenseType;
 
+/** Cash-flow definition: which booked expenses count toward net. */
+export type ReportExpensePaymentStatus = 'all' | 'paid' | 'unpaid';
+
 export interface MonthlyIncomeExpense {
   month: number;
   year: number;
@@ -132,15 +135,28 @@ export interface PropertyReportSummary {
   currency: string;
 }
 
+export interface ReportPeriodComparison {
+  previousNet: number;
+  deltaAbsolute: number;
+  /** Null when previous net is 0 and current is not — avoid fake percentages. */
+  deltaPercent: number | null;
+  previousPeriod: {
+    startDate: string;
+    endDate: string;
+  };
+}
+
 export interface ReportData {
   period: ReportPeriod;
   currency: string;
   hasMixedCurrencies: boolean;
   currenciesFound: string[];
+  expensePaymentStatus: ReportExpensePaymentStatus;
   monthlyIncomeExpense: MonthlyIncomeExpense[];
   categoryBreakdown: CategoryBreakdown[];
   propertySummaries: PropertyReportSummary[];
   totalIncome: number;
   totalExpenses: number;
   netIncome: number;
+  comparison: ReportPeriodComparison | null;
 }

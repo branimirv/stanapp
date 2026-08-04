@@ -1,8 +1,10 @@
 import {
+  differenceInCalendarDays,
   eachMonthOfInterval,
   endOfMonth,
   format,
   startOfMonth,
+  subDays,
   subMonths,
 } from 'date-fns';
 import { supabase } from '@/lib/supabase';
@@ -16,11 +18,133 @@ import type {
   PropertyReportSummary,
   ReportCategoryTypeFilter,
   ReportData,
+  ReportExpensePaymentStatus,
   ReportPeriod,
+  ReportPeriodComparison,
   ReportPeriodPreset,
 } from '@/types/app.types';
 
 const ALL_TIME_START = '1970-01-01';
+
+/** True when a custom "Od" can be shown in the date picker (not empty / all-time sentinel). */
+export function isUsableCustomStartDate(value: string | null | undefined): boolean {
+  if (!value) return false;
+  if (value <= ALL_TIME_START) return false;
+  const date = new Date(value);
+  return !Number.isNaN(date.getTime());
+}
+
+function currentMonthBounds(now = new Date()): { startDate: string; endDate: string } {
+  return {
+    startDate: format(startOfMonth(now), 'yyyy-MM-dd'),
+    endDate: format(endOfMonth(now), 'yyyy-MM-dd'),
+  };
+}
+
+/**
+ * Resolve Custom period dates per ADR 002: carry forward when possible,
+ * otherwise seed Od from first financial activity (or current month).
+ */
+export function resolveCustomReportPeriod(options: {
+  carryStart?: string;
+  carryEnd?: string;
+  fromPreset?: ReportPeriodPreset;
+  earliestActivityDate?: string | null;
+  forceReseedStart?: boolean;
+}): ReportPeriod {
+  const now = new Date();
+  const month = currentMonthBounds(now);
+  const fallbackStart = options.earliestActivityDate ?? month.startDate;
+
+  const canCarryStart =
+    !options.forceReseedStart &&
+    options.fromPreset !== 'all_time' &&
+    isUsableCustomStartDate(options.carryStart);
+
+  let startDate = canCarryStart ? options.carryStart! : fallbackStart;
+  let endDate =
+    options.carryEnd && isUsableCustomStartDate(options.carryEnd)
+      ? options.carryEnd
+      : month.endDate;
+
+  if (endDate < startDate) {
+    endDate = month.endDate < startDate ? startDate : month.endDate;
+  }
+
+  return {
+    preset: 'custom',
+    startDate,
+    endDate,
+  };
+}
+
+/**
+ * Earliest cash-flow date for the portfolio or one property:
+ * min(paid rent month-start, expense billing_date).
+ */
+export async function fetchEarliestReportActivityDate(
+  propertyId?: string,
+): Promise<string | null> {
+  const resolvedPropertyId =
+    propertyId && propertyId !== 'all' ? propertyId : undefined;
+
+  let expensesQuery = supabase
+    .from('expenses')
+    .select('billing_date')
+    .order('billing_date', { ascending: true })
+    .limit(1);
+  let rentQuery = supabase
+    .from('rent_payments')
+    .select('period_year, period_month')
+    .eq('status', 'paid')
+    .order('period_year', { ascending: true })
+    .order('period_month', { ascending: true })
+    .limit(1);
+
+  if (resolvedPropertyId) {
+    expensesQuery = expensesQuery.eq('property_id', resolvedPropertyId);
+    rentQuery = rentQuery.eq('property_id', resolvedPropertyId);
+  }
+
+  const [expensesResult, rentResult] = await Promise.all([expensesQuery, rentQuery]);
+  if (expensesResult.error) throw expensesResult.error;
+  if (rentResult.error) throw rentResult.error;
+
+  const timestamps: number[] = [];
+
+  const earliestExpense = expensesResult.data?.[0]?.billing_date;
+  if (earliestExpense) {
+    timestamps.push(new Date(earliestExpense).getTime());
+  }
+
+  const earliestRent = rentResult.data?.[0];
+  if (earliestRent) {
+    timestamps.push(
+      new Date(earliestRent.period_year, earliestRent.period_month - 1, 1).getTime(),
+    );
+  }
+
+  if (timestamps.length === 0) return null;
+  return format(startOfMonth(new Date(Math.min(...timestamps))), 'yyyy-MM-dd');
+}
+
+type RentRow = {
+  amount: number | string;
+  currency: string | null;
+  property_id: string;
+  period_month: number;
+  period_year: number;
+  status: string;
+};
+
+type ExpenseRow = {
+  amount: number | string;
+  currency: string | null;
+  property_id: string;
+  category_id: string;
+  billing_date: string;
+  paid_at: string | null;
+};
 
 export function buildDefaultReportPeriod(): ReportPeriod {
   const now = new Date();
@@ -78,6 +202,28 @@ export function buildReportPeriod(
   }
 }
 
+/** Equal-length window ending the day before the selected period starts. */
+export function buildPreviousReportPeriod(
+  period: ReportPeriod,
+): { startDate: string; endDate: string } | null {
+  if (period.preset === 'all_time') return null;
+
+  const start = new Date(period.startDate);
+  const end = new Date(period.endDate);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+    return null;
+  }
+
+  const daySpan = differenceInCalendarDays(end, start);
+  const prevEnd = subDays(start, 1);
+  const prevStart = subDays(prevEnd, daySpan);
+
+  return {
+    startDate: format(prevStart, 'yyyy-MM-dd'),
+    endDate: format(prevEnd, 'yyyy-MM-dd'),
+  };
+}
+
 function collectCurrencies(
   rows: Array<{ currency: string | null }>,
   properties: Property[],
@@ -103,12 +249,60 @@ function resolveFilterId(value?: string): string | undefined {
   return value;
 }
 
+function matchesPaymentStatus(
+  expense: Pick<ExpenseRow, 'paid_at'>,
+  status: ReportExpensePaymentStatus,
+): boolean {
+  if (status === 'all') return true;
+  if (status === 'paid') return expense.paid_at != null;
+  return expense.paid_at == null;
+}
+
+function inBillingRange(billingDate: string, startDate: string, endDate: string): boolean {
+  return billingDate >= startDate && billingDate <= endDate;
+}
+
+function rentInRange(payments: RentRow[], start: Date, end: Date): RentRow[] {
+  const rangeStart = startOfMonth(start);
+  const rangeEnd = endOfMonth(end);
+  return payments.filter((payment) => {
+    const paymentDate = new Date(payment.period_year, payment.period_month - 1, 1);
+    return paymentDate >= rangeStart && paymentDate <= rangeEnd;
+  });
+}
+
+function sumAmounts(rows: Array<{ amount: number | string }>): number {
+  return rows.reduce((sum, row) => sum + Number(row.amount), 0);
+}
+
+function buildComparison(
+  currentNet: number,
+  previousNet: number,
+  previousPeriod: { startDate: string; endDate: string },
+): ReportPeriodComparison {
+  const deltaAbsolute = currentNet - previousNet;
+  let deltaPercent: number | null;
+  if (previousNet === 0) {
+    deltaPercent = currentNet === 0 ? 0 : null;
+  } else {
+    deltaPercent = (deltaAbsolute / Math.abs(previousNet)) * 100;
+  }
+
+  return {
+    previousNet,
+    deltaAbsolute,
+    deltaPercent,
+    previousPeriod,
+  };
+}
+
 export interface FetchReportDataParams {
   userId: string;
   period: ReportPeriod;
   propertyId?: string;
   categoryId?: string;
   categoryType?: ReportCategoryTypeFilter;
+  expensePaymentStatus?: ReportExpensePaymentStatus;
 }
 
 export async function fetchReportData({
@@ -117,14 +311,18 @@ export async function fetchReportData({
   propertyId: rawPropertyId,
   categoryId: rawCategoryId,
   categoryType = 'all',
+  expensePaymentStatus = 'all',
 }: FetchReportDataParams): Promise<ReportData> {
   const propertyId = resolveFilterId(rawPropertyId);
   const categoryId = resolveFilterId(rawCategoryId);
+  const previousPeriod = buildPreviousReportPeriod(period);
 
-  const startDate = period.startDate;
   const endDate = period.endDate;
-  let start = new Date(startDate);
+  let start = new Date(period.startDate);
   const end = new Date(endDate);
+
+  const fetchStartDate = previousPeriod?.startDate ?? period.startDate;
+  const fetchStart = new Date(fetchStartDate);
 
   const [profileResult, propertiesResult, categoriesResult, rentResult, expensesResult] =
     await Promise.all([
@@ -135,12 +333,12 @@ export async function fetchReportData({
         .from('rent_payments')
         .select('*')
         .eq('status', 'paid')
-        .gte('period_year', start.getFullYear())
+        .gte('period_year', fetchStart.getFullYear())
         .lte('period_year', end.getFullYear()),
       supabase
         .from('expenses')
         .select('*')
-        .gte('billing_date', startDate)
+        .gte('billing_date', fetchStartDate)
         .lte('billing_date', endDate),
     ]);
 
@@ -154,57 +352,41 @@ export async function fetchReportData({
   if (queryError) throw queryError;
 
   const profile = profileResult.data;
-  const categories = categoriesResult.data ?? [];
+  const categories = (categoriesResult.data ?? []) as ExpenseCategory[];
   const categoryMap = new Map<string, ExpenseCategory>(
     categories.map((category) => [category.id, category]),
   );
 
   const defaultCurrency = profile?.default_currency ?? 'EUR';
 
-  let properties = propertiesResult.data ?? [];
+  let properties = (propertiesResult.data ?? []) as Property[];
   if (propertyId) {
     properties = properties.filter((property) => property.id === propertyId);
   }
 
-  let rentInPeriod = (rentResult.data ?? []).filter((payment) => {
-    const paymentDate = new Date(payment.period_year, payment.period_month - 1, 1);
-    return paymentDate >= startOfMonth(start) && paymentDate <= endOfMonth(end);
-  });
-
+  let allRent = (rentResult.data ?? []) as RentRow[];
   if (propertyId) {
-    rentInPeriod = rentInPeriod.filter((payment) => payment.property_id === propertyId);
+    allRent = allRent.filter((payment) => payment.property_id === propertyId);
   }
 
-  let expensesInPeriod = expensesResult.data ?? [];
-
+  let allExpenses = (expensesResult.data ?? []) as ExpenseRow[];
   if (propertyId) {
-    expensesInPeriod = expensesInPeriod.filter((expense) => expense.property_id === propertyId);
+    allExpenses = allExpenses.filter((expense) => expense.property_id === propertyId);
   }
 
-  if (categoryId) {
-    expensesInPeriod = expensesInPeriod.filter((expense) => expense.category_id === categoryId);
-  }
-
-  if (categoryType !== 'all') {
-    expensesInPeriod = expensesInPeriod.filter((expense) => {
-      const category = categoryMap.get(expense.category_id);
-      return category ? getCategoryEffectiveType(category) === categoryType : false;
-    });
-  }
-
-  const allCurrencyRows = [
-    ...rentInPeriod.map((row) => ({ currency: row.currency })),
-    ...expensesInPeriod.map((row) => ({ currency: row.currency })),
-  ];
-  const currenciesFound = collectCurrencies(allCurrencyRows, properties, defaultCurrency);
-  const hasMixedCurrencies = currenciesFound.length > 1;
+  // Cash-flow expenses: payment status only (not category / type).
+  const cashFlowExpensesAllFetched = allExpenses.filter((expense) =>
+    matchesPaymentStatus(expense, expensePaymentStatus),
+  );
 
   if (period.preset === 'all_time') {
     const earliestTimestamps: number[] = [];
-    for (const expense of expensesInPeriod) {
-      earliestTimestamps.push(new Date(expense.billing_date).getTime());
+    for (const expense of cashFlowExpensesAllFetched) {
+      if (inBillingRange(expense.billing_date, period.startDate, endDate)) {
+        earliestTimestamps.push(new Date(expense.billing_date).getTime());
+      }
     }
-    for (const payment of rentInPeriod) {
+    for (const payment of rentInRange(allRent, start, end)) {
       earliestTimestamps.push(new Date(payment.period_year, payment.period_month - 1, 1).getTime());
     }
     start = earliestTimestamps.length
@@ -213,6 +395,32 @@ export async function fetchReportData({
   }
 
   const effectiveStartDate = format(start, 'yyyy-MM-dd');
+  const effectiveEndDate = endDate;
+
+  const rentInPeriod = rentInRange(allRent, start, end);
+  const cashFlowExpenses = cashFlowExpensesAllFetched.filter((expense) =>
+    inBillingRange(expense.billing_date, effectiveStartDate, effectiveEndDate),
+  );
+
+  // Analysis expenses: cash-flow set + category / type filters.
+  let analysisExpenses = cashFlowExpenses;
+  if (categoryId) {
+    analysisExpenses = analysisExpenses.filter((expense) => expense.category_id === categoryId);
+  }
+  if (categoryType !== 'all') {
+    analysisExpenses = analysisExpenses.filter((expense) => {
+      const category = categoryMap.get(expense.category_id);
+      return category ? getCategoryEffectiveType(category) === categoryType : false;
+    });
+  }
+
+  const allCurrencyRows = [
+    ...rentInPeriod.map((row) => ({ currency: row.currency })),
+    ...cashFlowExpenses.map((row) => ({ currency: row.currency })),
+  ];
+  const currenciesFound = collectCurrencies(allCurrencyRows, properties, defaultCurrency);
+  const hasMixedCurrencies = currenciesFound.length > 1;
+
   const months = eachMonthOfInterval({ start, end });
   const monthlyIncomeExpense: MonthlyIncomeExpense[] = months.map((monthDate) => {
     const month = monthDate.getMonth() + 1;
@@ -225,7 +433,7 @@ export async function fetchReportData({
     const monthStart = format(startOfMonth(monthDate), 'yyyy-MM-dd');
     const monthEnd = format(endOfMonth(monthDate), 'yyyy-MM-dd');
 
-    const expenses = expensesInPeriod
+    const expenses = cashFlowExpenses
       .filter((expense) => expense.billing_date >= monthStart && expense.billing_date <= monthEnd)
       .reduce((sum, expense) => sum + Number(expense.amount), 0);
 
@@ -240,12 +448,12 @@ export async function fetchReportData({
   });
 
   const categoryTotals = new Map<string, number>();
-  for (const expense of expensesInPeriod) {
+  for (const expense of analysisExpenses) {
     const current = categoryTotals.get(expense.category_id) ?? 0;
     categoryTotals.set(expense.category_id, current + Number(expense.amount));
   }
 
-  const totalExpenses = expensesInPeriod.reduce((sum, expense) => sum + Number(expense.amount), 0);
+  const analysisExpensesTotal = sumAmounts(analysisExpenses);
   const categoryBreakdown: CategoryBreakdown[] = [...categoryTotals.entries()]
     .map(([categoryIdKey, amount]) => {
       const category = categoryMap.get(categoryIdKey);
@@ -256,7 +464,7 @@ export async function fetchReportData({
         icon: category?.icon ?? 'MoreHorizontal',
         color: category?.color ?? '#6B7280',
         amount,
-        percentage: totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0,
+        percentage: analysisExpensesTotal > 0 ? (amount / analysisExpensesTotal) * 100 : 0,
       };
     })
     .sort((a, b) => b.amount - a.amount);
@@ -267,8 +475,8 @@ export async function fetchReportData({
       .filter((payment) => payment.property_id === property.id)
       .reduce((sum, payment) => sum + Number(payment.amount), 0);
 
-    const totalExpensesPaid = expensesInPeriod
-      .filter((expense) => expense.property_id === property.id && expense.paid_at !== null)
+    const totalExpensesPaid = cashFlowExpenses
+      .filter((expense) => expense.property_id === property.id)
       .reduce((sum, expense) => sum + Number(expense.amount), 0);
 
     return {
@@ -281,18 +489,34 @@ export async function fetchReportData({
     };
   });
 
-  const totalIncome = rentInPeriod.reduce((sum, payment) => sum + Number(payment.amount), 0);
+  const totalIncome = sumAmounts(rentInPeriod);
+  const totalExpenses = sumAmounts(cashFlowExpenses);
+  const netIncome = totalIncome - totalExpenses;
+
+  let comparison: ReportPeriodComparison | null = null;
+  if (previousPeriod) {
+    const prevStart = new Date(previousPeriod.startDate);
+    const prevEnd = new Date(previousPeriod.endDate);
+    const prevRent = rentInRange(allRent, prevStart, prevEnd);
+    const prevExpenses = cashFlowExpensesAllFetched.filter((expense) =>
+      inBillingRange(expense.billing_date, previousPeriod.startDate, previousPeriod.endDate),
+    );
+    const previousNet = sumAmounts(prevRent) - sumAmounts(prevExpenses);
+    comparison = buildComparison(netIncome, previousNet, previousPeriod);
+  }
 
   return {
     period: { ...period, startDate: effectiveStartDate },
     currency: defaultCurrency,
     hasMixedCurrencies,
     currenciesFound,
+    expensePaymentStatus,
     monthlyIncomeExpense,
     categoryBreakdown,
     propertySummaries,
     totalIncome,
     totalExpenses,
-    netIncome: totalIncome - totalExpenses,
+    netIncome,
+    comparison,
   };
 }

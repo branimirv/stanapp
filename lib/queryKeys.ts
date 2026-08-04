@@ -19,6 +19,7 @@ export interface ReportFilters {
   propertyId?: string;
   categoryId?: string;
   categoryType?: string;
+  expensePaymentStatus?: string;
 }
 
 export const queryKeys = {
@@ -74,6 +75,7 @@ export const queryKeys = {
         filters.propertyId ?? 'all',
         filters.categoryId ?? 'all',
         filters.categoryType ?? 'all',
+        filters.expensePaymentStatus ?? 'all',
       ] as const,
   },
 

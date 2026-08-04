@@ -22,6 +22,18 @@ function buildCsvSection(title: string, headers: string[], rows: string[][]): st
   return lines.join('\n');
 }
 
+function formatExportDeltaAbsolute(value: number, currency: string, language: 'en' | 'hr'): string {
+  const formatted = formatCurrency(Math.abs(value), currency, language);
+  if (value > 0) return `+${formatted}`;
+  if (value < 0) return `-${formatted}`;
+  return formatted;
+}
+
+function formatExportDeltaPercent(value: number): string {
+  const sign = value > 0 ? '+' : '';
+  return `${sign}${value.toFixed(1)}%`;
+}
+
 function generateReportHTML(data: ReportData, t: TFunction, language: 'en' | 'hr'): string {
   const monthlyRows = data.monthlyIncomeExpense
     .map(
@@ -43,6 +55,21 @@ function generateReportHTML(data: ReportData, t: TFunction, language: 'en' | 'hr
         `<tr><td>${row.propertyName}</td><td>${formatCurrency(row.totalRentCollected, row.currency, language)}</td><td>${formatCurrency(row.totalExpensesPaid, row.currency, language)}</td><td>${formatCurrency(row.net, row.currency, language)}</td></tr>`,
     )
     .join('');
+
+  const paymentStatusLabel =
+    data.expensePaymentStatus === 'paid'
+      ? t('reports.netPaidExpensesOnly')
+      : data.expensePaymentStatus === 'unpaid'
+        ? t('reports.netUnpaidExpensesOnly')
+        : null;
+
+  const comparisonHtml = data.comparison
+    ? `<p>${formatExportDeltaAbsolute(data.comparison.deltaAbsolute, data.currency, language)}${
+        data.comparison.deltaPercent !== null
+          ? ` · ${formatExportDeltaPercent(data.comparison.deltaPercent)}`
+          : ''
+      } ${t('reports.vsPrevious')}</p>`
+    : '';
 
   return `<!DOCTYPE html>
 <html>
@@ -69,6 +96,7 @@ function generateReportHTML(data: ReportData, t: TFunction, language: 'en' | 'hr
     <h1>${t('reports.title')} — StanApp</h1>
     <p>${t('reports.generatedAt', { date: format(new Date(), 'dd.MM.yyyy HH:mm') })}</p>
     <p>${data.period.startDate} — ${data.period.endDate}</p>
+    ${paymentStatusLabel ? `<p>${paymentStatusLabel}</p>` : ''}
 
     <div class="summary">
       <div class="summary-card">
@@ -84,6 +112,7 @@ function generateReportHTML(data: ReportData, t: TFunction, language: 'en' | 'hr
         <div class="summary-value net">${formatCurrency(data.netIncome, data.currency, language)}</div>
       </div>
     </div>
+    ${comparisonHtml}
 
     <h2>${t('reports.incomeVsExpenses')}</h2>
     <table>
