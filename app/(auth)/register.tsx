@@ -5,6 +5,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppTextInput } from '@/components/ui/AppTextInput';
 import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
@@ -84,6 +85,8 @@ export default function RegisterScreen() {
           </View>
 
           <View className="gap-4">
+            <GoogleSignInButton disabled={isSubmitting} />
+
             <Controller
               control={control}
               name="full_name"

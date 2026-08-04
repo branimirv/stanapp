@@ -1,4 +1,12 @@
 import type { AuthError } from '@supabase/supabase-js';
+import { Platform } from 'react-native';
+import {
+  GoogleSignin,
+  isErrorWithCode,
+  isSuccessResponse,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
+
 import { supabase } from '@/lib/supabase';
 
 export interface AuthResult {
@@ -7,6 +15,29 @@ export interface AuthResult {
 
 export interface SignUpResult extends AuthResult {
   needsEmailConfirmation: boolean;
+}
+
+export interface GoogleSignInResult extends AuthResult {
+  cancelled?: boolean;
+}
+
+let googleConfigured = false;
+
+function ensureGoogleConfigured() {
+  if (googleConfigured) return;
+
+  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  if (!webClientId) {
+    throw new Error(
+      'Missing EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID. Add it to .env (Google Web OAuth client ID).',
+    );
+  }
+
+  GoogleSignin.configure({
+    webClientId,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || undefined,
+  });
+  googleConfigured = true;
 }
 
 export async function signIn(email: string, password: string): Promise<AuthResult> {
@@ -32,7 +63,77 @@ export async function signUp(
   return { error, needsEmailConfirmation };
 }
 
+export async function signInWithGoogle(): Promise<GoogleSignInResult> {
+  if (Platform.OS === 'web') {
+    return {
+      error: {
+        name: 'AuthError',
+        message: 'Google sign-in is not available on web.',
+      } as AuthError,
+    };
+  }
+
+  try {
+    ensureGoogleConfigured();
+
+    if (Platform.OS === 'android') {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    }
+
+    const response = await GoogleSignin.signIn();
+
+    if (!isSuccessResponse(response)) {
+      return { error: null, cancelled: true };
+    }
+
+    const idToken = response.data.idToken;
+    if (!idToken) {
+      return {
+        error: {
+          name: 'AuthError',
+          message: 'Google sign-in did not return an ID token.',
+        } as AuthError,
+      };
+    }
+
+    const { error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token: idToken,
+    });
+
+    return { error };
+  } catch (error) {
+    if (isErrorWithCode(error) && error.code === statusCodes.SIGN_IN_CANCELLED) {
+      return { error: null, cancelled: true };
+    }
+
+    if (isErrorWithCode(error) && error.code === statusCodes.IN_PROGRESS) {
+      return { error: null, cancelled: true };
+    }
+
+    return {
+      error: {
+        name: 'AuthError',
+        message: error instanceof Error ? error.message : 'Google sign-in failed.',
+      } as AuthError,
+    };
+  }
+}
+
+export async function signOutGoogle(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+    if (!webClientId && !googleConfigured) return;
+    ensureGoogleConfigured();
+    await GoogleSignin.signOut();
+  } catch {
+    // Best-effort — local Supabase sign-out should still proceed.
+  }
+}
+
 export async function signOut(): Promise<AuthResult> {
+  await signOutGoogle();
   const { error } = await supabase.auth.signOut();
   return { error };
 }

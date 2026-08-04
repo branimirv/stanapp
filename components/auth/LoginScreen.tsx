@@ -6,6 +6,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCheckbox } from '@/components/ui/AppCheckbox';
 import { AppTextInput } from '@/components/ui/AppTextInput';
@@ -111,6 +112,8 @@ export function LoginScreen() {
           </View>
 
           <View style={styles.form}>
+            <GoogleSignInButton disabled={isSubmitting} />
+
             <Controller
               control={control}
               name="email"

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { AuthError, Session, User } from '@supabase/supabase-js';
+import { signOutGoogle } from '@/lib/auth';
 import { acceptPendingInvites } from '@/services/invites';
 import { queryClient } from '@/lib/queryClient';
 import { supabase } from '@/lib/supabase';
@@ -44,6 +45,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     // immediately — waiting on the network kept users stuck on NativeTabs.
     set({ session: null, user: null, isLoading: false });
     queryClient.clear();
+    void signOutGoogle();
     const { error } = await supabase.auth.signOut({ scope: 'local' });
     return { error };
   },

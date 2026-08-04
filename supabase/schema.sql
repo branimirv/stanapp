@@ -24,6 +24,7 @@ BEGIN
     NEW.id,
     COALESCE(
       NULLIF(trim(NEW.raw_user_meta_data->>'full_name'), ''),
+      NULLIF(trim(NEW.raw_user_meta_data->>'name'), ''),
       NULLIF(split_part(NEW.email, '@', 1), ''),
       'User'
     )
