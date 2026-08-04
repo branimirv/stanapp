@@ -91,10 +91,11 @@ export function useRentPayment(id: string | undefined) {
     initialData: () => {
       if (!id) return undefined;
       const lists = queryClient.getQueriesData<RentPayment[]>({
-        queryKey: queryKeys.rentPayments.all,
+        queryKey: [...queryKeys.rentPayments.all, 'list'],
       });
       for (const [, data] of lists) {
-        const found = data?.find((payment) => payment.id === id);
+        if (!Array.isArray(data)) continue;
+        const found = data.find((payment) => payment.id === id);
         if (found) return found;
       }
       return undefined;

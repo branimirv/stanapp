@@ -80,9 +80,12 @@ export function useTenant(id: string | undefined) {
     enabled: Boolean(user && id),
     initialData: () => {
       if (!id) return undefined;
-      const lists = queryClient.getQueriesData<Tenant[]>({ queryKey: queryKeys.tenants.all });
+      const lists = queryClient.getQueriesData<Tenant[]>({
+        queryKey: [...queryKeys.tenants.all, 'list'],
+      });
       for (const [, data] of lists) {
-        const found = data?.find((tenant) => tenant.id === id);
+        if (!Array.isArray(data)) continue;
+        const found = data.find((tenant) => tenant.id === id);
         if (found) return found;
       }
       return undefined;

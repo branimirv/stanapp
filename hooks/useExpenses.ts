@@ -85,9 +85,13 @@ export function useExpense(id: string | undefined) {
     enabled: Boolean(user && id),
     initialData: () => {
       if (!id) return undefined;
-      const lists = queryClient.getQueriesData<Expense[]>({ queryKey: queryKeys.expenses.all });
+      // Only list caches are Expense[]; detail caches are a single Expense.
+      const lists = queryClient.getQueriesData<Expense[]>({
+        queryKey: [...queryKeys.expenses.all, 'list'],
+      });
       for (const [, data] of lists) {
-        const found = data?.find((e) => e.id === id);
+        if (!Array.isArray(data)) continue;
+        const found = data.find((e) => e.id === id);
         if (found) return found;
       }
       return undefined;
