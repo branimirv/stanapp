@@ -1,4 +1,4 @@
-import { ChevronDown } from 'lucide-react-native';
+import { Check, ChevronDown } from 'lucide-react-native';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -8,8 +8,13 @@ import type { PickerOption } from '@/components/ui/AppPicker';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { Text } from '@/components/ui/text';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useEarliestReportActivity } from '@/hooks/useEarliestReportActivity';
 import { Colors, Spacing } from '@/constants/theme';
-import type { ReportCategoryTypeFilter, ReportPeriod } from '@/types/app.types';
+import type {
+  ReportCategoryTypeFilter,
+  ReportExpensePaymentStatus,
+  ReportPeriod,
+} from '@/types/app.types';
 
 export interface ReportFiltersSheetProps {
   visible: boolean;
@@ -22,6 +27,8 @@ export interface ReportFiltersSheetProps {
   onCategoryFilterChange: (value: string) => void;
   categoryTypeFilter: ReportCategoryTypeFilter;
   onCategoryTypeFilterChange: (value: ReportCategoryTypeFilter) => void;
+  expensePaymentStatus: ReportExpensePaymentStatus;
+  onExpensePaymentStatusChange: (value: ReportExpensePaymentStatus) => void;
   propertyOptions: PickerOption[];
   categoryOptions: PickerOption[];
   onClearFilters: () => void;
@@ -51,7 +58,10 @@ function InlineSelectField({
 
   return (
     <View
-      style={[styles.selectField, { backgroundColor: isDark ? Colors.surfaceVariantDark : Colors.surface }]}
+      style={[
+        styles.selectField,
+        { backgroundColor: isDark ? Colors.surfaceVariantDark : Colors.surface },
+      ]}
       className="border-border"
     >
       <Pressable
@@ -61,12 +71,12 @@ function InlineSelectField({
         accessibilityLabel={selectedOption?.label ?? placeholder}
         accessibilityState={{ expanded }}
       >
-        <Text className="text-primary shrink text-base font-semibold" numberOfLines={1}>
+        <Text className="text-foreground shrink text-base font-medium" numberOfLines={1}>
           {selectedOption?.label ?? placeholder}
         </Text>
         <ChevronDown
           size={18}
-          color={theme.colors.primary}
+          color={theme.colors.onSurfaceVariant}
           strokeWidth={2.5}
           style={{ transform: [{ rotate: expanded ? '180deg' : '0deg' }] }}
         />
@@ -80,16 +90,35 @@ function InlineSelectField({
               <Pressable
                 key={option.value}
                 onPress={() => handleSelect(option.value)}
-                style={({ pressed }) => [styles.optionRow, { opacity: pressed ? 0.7 : 1 }]}
-                className={isSelected ? (isDark ? 'bg-secondary' : 'bg-accent') : undefined}
+                style={({ pressed }) => [
+                  styles.optionRow,
+                  {
+                    opacity: pressed ? 0.7 : 1,
+                    backgroundColor: isSelected
+                      ? isDark
+                        ? Colors.surfaceDark
+                        : Colors.primaryLight
+                      : 'transparent',
+                  },
+                ]}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isSelected }}
               >
                 <Text
-                  className={isSelected ? 'text-primary text-base font-semibold' : 'text-foreground text-base'}
+                  className={
+                    isSelected
+                      ? 'text-foreground shrink flex-1 text-base font-medium'
+                      : 'text-foreground shrink flex-1 text-base'
+                  }
+                  numberOfLines={1}
                 >
                   {option.label}
                 </Text>
+                {isSelected ? (
+                  <Check size={18} color={theme.colors.primary} strokeWidth={2.5} />
+                ) : (
+                  <View style={styles.optionCheckSpacer} />
+                )}
               </Pressable>
             );
           })}
@@ -110,11 +139,15 @@ export function ReportFiltersSheet({
   onCategoryFilterChange,
   categoryTypeFilter,
   onCategoryTypeFilterChange,
+  expensePaymentStatus,
+  onExpensePaymentStatusChange,
   propertyOptions,
   categoryOptions,
   onClearFilters,
 }: ReportFiltersSheetProps) {
   const { t } = useTranslation();
+  const { earliestActivityDate, isLoading: earliestActivityLoading } =
+    useEarliestReportActivity(propertyFilter);
 
   const handleClear = () => {
     onClearFilters();
@@ -142,7 +175,14 @@ export function ReportFiltersSheet({
             <Text className="text-muted-foreground mt-1 text-sm font-semibold">
               {t('reports.periodFilter')}
             </Text>
-            <PeriodFilter value={period} onChange={onPeriodChange} style={styles.periodFilter} />
+            <PeriodFilter
+              value={period}
+              onChange={onPeriodChange}
+              propertyFilter={propertyFilter}
+              earliestActivityDate={earliestActivityDate}
+              earliestActivityLoading={earliestActivityLoading}
+              style={styles.periodFilter}
+            />
 
             <Text className="text-muted-foreground mt-1 text-sm font-semibold">
               {t('reports.filterProperty')}
@@ -152,6 +192,21 @@ export function ReportFiltersSheet({
               value={propertyFilter}
               onValueChange={onPropertyFilterChange}
               placeholder={t('reports.allProperties')}
+            />
+
+            <Text className="text-muted-foreground mt-1 text-sm font-semibold">
+              {t('reports.filterPaymentStatus')}
+            </Text>
+            <AppSegmentedControl
+              segments={[
+                { label: t('reports.paymentStatusAll'), value: 'all' },
+                { label: t('reports.paymentStatusPaid'), value: 'paid' },
+                { label: t('reports.paymentStatusUnpaid'), value: 'unpaid' },
+              ]}
+              value={expensePaymentStatus}
+              onValueChange={(value) =>
+                onExpensePaymentStatusChange(value as ReportExpensePaymentStatus)
+              }
             />
 
             <Text className="text-muted-foreground mt-1 text-sm font-semibold">
@@ -246,8 +301,16 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
+  },
+  optionCheckSpacer: {
+    width: 18,
+    height: 18,
   },
   actions: {
     flexDirection: 'row',

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -14,6 +14,10 @@ import { buildReportPeriod } from '@/hooks/useReports';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { cn } from '@/lib/utils';
 import { Colors, Spacing } from '@/constants/theme';
+import {
+  isUsableCustomStartDate,
+  resolveCustomReportPeriod,
+} from '@/services/reports';
 import type { ReportPeriod, ReportPeriodPreset } from '@/types/app.types';
 
 const PRESET_OPTIONS: ReportPeriodPreset[] = [
@@ -37,10 +41,15 @@ const PRESET_LABELS: Record<ReportPeriodPreset, string> = {
 export interface PeriodFilterProps {
   value: ReportPeriod;
   onChange: (period: ReportPeriod) => void;
+  /** Current property filter (`all` or id) — used to re-seed Custom Od. */
+  propertyFilter?: string;
+  /** First financial activity (yyyy-MM-dd) for the current property scope. */
+  earliestActivityDate?: string | null;
   style?: StyleProp<ViewStyle>;
 }
 
 function parseDateValue(value: string): Date | null {
+  if (!isUsableCustomStartDate(value)) return null;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
 }
@@ -53,11 +62,18 @@ function formatDateValue(date: Date | null): string {
   return `${year}-${month}-${day}`;
 }
 
-export function PeriodFilter({ value, onChange, style }: PeriodFilterProps) {
+export function PeriodFilter({
+  value,
+  onChange,
+  propertyFilter = 'all',
+  earliestActivityDate = null,
+  style,
+}: PeriodFilterProps) {
   const { isDark } = useAppTheme();
   const { t } = useTranslation();
   const [customStart, setCustomStart] = useState(value.startDate);
   const [customEnd, setCustomEnd] = useState(value.endDate);
+  const previousPropertyRef = useRef(propertyFilter);
 
   const pills = useMemo(
     () =>
@@ -68,9 +84,40 @@ export function PeriodFilter({ value, onChange, style }: PeriodFilterProps) {
     [t],
   );
 
+  useEffect(() => {
+    if (value.preset !== 'custom') return;
+    setCustomStart(value.startDate);
+    setCustomEnd(value.endDate);
+  }, [value.preset, value.startDate, value.endDate]);
+
+  // ADR 002: property change while Custom is active → re-seed Od.
+  useEffect(() => {
+    if (previousPropertyRef.current === propertyFilter) return;
+    previousPropertyRef.current = propertyFilter;
+
+    if (value.preset !== 'custom') return;
+
+    const next = resolveCustomReportPeriod({
+      carryEnd: value.endDate,
+      earliestActivityDate,
+      forceReseedStart: true,
+    });
+    setCustomStart(next.startDate);
+    setCustomEnd(next.endDate);
+    onChange(next);
+  }, [propertyFilter, earliestActivityDate, value.preset, value.endDate, onChange]);
+
   const handlePresetChange = (preset: ReportPeriodPreset) => {
     if (preset === 'custom') {
-      onChange(buildReportPeriod('custom', customStart, customEnd));
+      const next = resolveCustomReportPeriod({
+        carryStart: value.startDate,
+        carryEnd: value.endDate,
+        fromPreset: value.preset,
+        earliestActivityDate,
+      });
+      setCustomStart(next.startDate);
+      setCustomEnd(next.endDate);
+      onChange(next);
       return;
     }
     onChange(buildReportPeriod(preset));
@@ -78,14 +125,38 @@ export function PeriodFilter({ value, onChange, style }: PeriodFilterProps) {
 
   const handleCustomStartChange = (date: Date | null) => {
     const nextStart = formatDateValue(date);
+    if (!nextStart) return;
+    let nextEnd = customEnd;
+    if (!isUsableCustomStartDate(nextEnd) || nextEnd < nextStart) {
+      nextEnd = resolveCustomReportPeriod({
+        carryStart: nextStart,
+        earliestActivityDate,
+        forceReseedStart: true,
+      }).endDate;
+      if (nextEnd < nextStart) nextEnd = nextStart;
+    }
     setCustomStart(nextStart);
-    onChange(buildReportPeriod('custom', nextStart, customEnd));
+    setCustomEnd(nextEnd);
+    onChange(buildReportPeriod('custom', nextStart, nextEnd));
   };
 
   const handleCustomEndChange = (date: Date | null) => {
     const nextEnd = formatDateValue(date);
+    if (!nextEnd) return;
+    let nextStart = customStart;
+    if (!isUsableCustomStartDate(nextStart) || nextEnd < nextStart) {
+      nextStart = resolveCustomReportPeriod({
+        earliestActivityDate,
+        forceReseedStart: true,
+      }).startDate;
+      if (nextEnd < nextStart) {
+        // Keep user's end; clamp start down only if needed via end as both.
+        nextStart = nextEnd;
+      }
+    }
+    setCustomStart(nextStart);
     setCustomEnd(nextEnd);
-    onChange(buildReportPeriod('custom', customStart, nextEnd));
+    onChange(buildReportPeriod('custom', nextStart, nextEnd));
   };
 
   return (
@@ -103,7 +174,9 @@ export function PeriodFilter({ value, onChange, style }: PeriodFilterProps) {
               onPress={() => handlePresetChange(pill.value)}
               style={({ pressed }) => [
                 styles.pill,
-                !isSelected && { backgroundColor: isDark ? Colors.surfaceVariantDark : Colors.surfaceVariant },
+                !isSelected && {
+                  backgroundColor: isDark ? Colors.surfaceVariantDark : Colors.surfaceVariant,
+                },
                 { opacity: pressed ? 0.85 : 1 },
               ]}
               className={isSelected ? 'bg-primary' : undefined}
@@ -113,7 +186,9 @@ export function PeriodFilter({ value, onChange, style }: PeriodFilterProps) {
               <Text
                 className={cn(
                   'text-center text-sm',
-                  isSelected ? 'text-primary-foreground font-bold' : 'text-muted-foreground font-medium',
+                  isSelected
+                    ? 'text-primary-foreground font-bold'
+                    : 'text-muted-foreground font-medium',
                 )}
                 numberOfLines={1}
               >
@@ -130,12 +205,14 @@ export function PeriodFilter({ value, onChange, style }: PeriodFilterProps) {
             label={t('common.from')}
             value={parseDateValue(customStart)}
             onChange={handleCustomStartChange}
+            maximumDate={parseDateValue(customEnd) ?? undefined}
             style={styles.dateField}
           />
           <AppDatePicker
             label={t('common.to')}
             value={parseDateValue(customEnd)}
             onChange={handleCustomEndChange}
+            minimumDate={parseDateValue(customStart) ?? undefined}
             style={styles.dateField}
           />
         </View>

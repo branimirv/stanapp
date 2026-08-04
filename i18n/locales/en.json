@@ -549,7 +549,16 @@
     "typeRegular": "Regular",
     "typeIrregular": "Irregular",
     "vsPrevious": "vs previous period",
-    "expenseFilterHint": "Category and type filters apply to expenses only. Income is always shown in full."
+    "thisPeriod": "This period",
+    "previousPeriod": "Previous period",
+    "singlePeriodHint": "Choose a longer range to see the monthly trend.",
+    "expenseFilterHint": "Payment status changes net cash flow everywhere. Category and type only affect the expense breakdown — income and headline net stay based on the full period.",
+    "filterPaymentStatus": "Expense payment",
+    "paymentStatusAll": "All",
+    "paymentStatusPaid": "Paid",
+    "paymentStatusUnpaid": "Unpaid",
+    "netPaidExpensesOnly": "Net · paid expenses only",
+    "netUnpaidExpensesOnly": "Net · unpaid expenses only"
   },
   "settings": {
     "title": "Settings",

@@ -1,4 +1,3 @@
-import { format } from 'date-fns';
 import { BarChart3 } from 'lucide-react-native';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import {
@@ -10,8 +9,6 @@ import {
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
 import { ExpenseBreakdown } from '@/components/reports/ExpenseBreakdown';
 import { IncomeExpenseTrendChart } from '@/components/reports/IncomeExpenseTrendChart';
 import { NetCashFlowChart } from '@/components/reports/NetCashFlowChart';
@@ -22,8 +19,6 @@ import {
   type ReportFiltersStateProps,
 } from '@/components/reports/ReportFilters';
 import { ReportScreenActions } from '@/components/reports/ReportScreenActions';
-import { PropertyIncomeShareChart } from '@/components/reports/PropertyIncomeShareChart';
-import { PropertyNetChart } from '@/components/reports/PropertyNetChart';
 import { AppCard } from '@/components/ui/AppCard';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -42,8 +37,14 @@ import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
 import { useUiStore } from '@/stores/uiStore';
 import { getCategoryLabel } from '@/utils/expense';
+import { exportReportAsPDF } from '@/utils/export';
 import { formatCurrency } from '@/utils/formatters';
-import type { Language, ReportCategoryTypeFilter, ReportPeriod } from '@/types/app.types';
+import type {
+  Language,
+  ReportCategoryTypeFilter,
+  ReportExpensePaymentStatus,
+  ReportPeriod,
+} from '@/types/app.types';
 
 export default function ReportsScreen() {
   const { t, i18n } = useTranslation();
@@ -61,6 +62,8 @@ export default function ReportsScreen() {
   const [propertyFilter, setPropertyFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [categoryTypeFilter, setCategoryTypeFilter] = useState<ReportCategoryTypeFilter>('all');
+  const [expensePaymentStatus, setExpensePaymentStatus] =
+    useState<ReportExpensePaymentStatus>('all');
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -70,6 +73,7 @@ export default function ReportsScreen() {
     propertyId: propertyFilter,
     categoryId: categoryFilter,
     categoryType: categoryTypeFilter,
+    expensePaymentStatus,
   });
   const language = (profile?.language ?? i18n.language ?? 'hr') as Language;
 
@@ -98,8 +102,15 @@ export default function ReportsScreen() {
   }, [report]);
 
   const activeFilterCount = useMemo(
-    () => countReportActiveFilters(period, propertyFilter, categoryFilter, categoryTypeFilter),
-    [categoryFilter, categoryTypeFilter, period, propertyFilter],
+    () =>
+      countReportActiveFilters(
+        period,
+        propertyFilter,
+        categoryFilter,
+        categoryTypeFilter,
+        expensePaymentStatus,
+      ),
+    [categoryFilter, categoryTypeFilter, expensePaymentStatus, period, propertyFilter],
   );
 
   const downloadDisabled = !report || !hasData || exporting;
@@ -113,6 +124,8 @@ export default function ReportsScreen() {
     onCategoryFilterChange: setCategoryFilter,
     categoryTypeFilter,
     onCategoryTypeFilterChange: setCategoryTypeFilter,
+    expensePaymentStatus,
+    onExpensePaymentStatusChange: setExpensePaymentStatus,
     propertyOptions,
     categoryOptions,
   };
@@ -128,64 +141,7 @@ export default function ReportsScreen() {
 
     setExporting(true);
     try {
-      const generatedAt = format(new Date(), 'dd.MM.yyyy HH:mm');
-      const propertyRows = report.propertySummaries
-        .map(
-          (item) => `
-            <tr>
-              <td>${item.propertyName}</td>
-              <td>${formatCurrency(item.totalRentCollected, item.currency, language)}</td>
-              <td>${formatCurrency(item.totalExpensesPaid, item.currency, language)}</td>
-              <td>${formatCurrency(item.net, item.currency, language)}</td>
-            </tr>
-          `,
-        )
-        .join('');
-
-      const html = `
-        <html>
-          <head>
-            <meta charset="utf-8" />
-            <style>
-              body { font-family: sans-serif; padding: 24px; color: #0F172A; }
-              h1 { font-size: 22px; margin-bottom: 8px; }
-              h2 { font-size: 16px; margin-top: 24px; }
-              table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-              th, td { border: 1px solid #E2E8F0; padding: 8px; text-align: left; font-size: 12px; }
-              th { background: #F8FAFC; }
-              .summary { display: flex; gap: 16px; margin-top: 16px; }
-              .card { flex: 1; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; }
-            </style>
-          </head>
-          <body>
-            <h1>${t('reports.title')}</h1>
-            <p>${t('reports.generatedAt', { date: generatedAt })}</p>
-            <p>${report.period.startDate} – ${report.period.endDate}</p>
-            <div class="summary">
-              <div class="card"><strong>${t('reports.totalIncome')}</strong><br/>${formatCurrency(report.totalIncome, report.currency, language)}</div>
-              <div class="card"><strong>${t('reports.totalExpenses')}</strong><br/>${formatCurrency(report.totalExpenses, report.currency, language)}</div>
-              <div class="card"><strong>${t('reports.netTotal')}</strong><br/>${formatCurrency(report.netIncome, report.currency, language)}</div>
-            </div>
-            <h2>${t('reports.perProperty')}</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>${t('properties.property')}</th>
-                  <th>${t('reports.collected')}</th>
-                  <th>${t('reports.spent')}</th>
-                  <th>${t('reports.net')}</th>
-                </tr>
-              </thead>
-              <tbody>${propertyRows}</tbody>
-            </table>
-          </body>
-        </html>
-      `;
-
-      const { uri } = await Print.printToFileAsync({ html });
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri);
-      }
+      await exportReportAsPDF(report, t, language);
       showToast({ message: t('reports.exportSuccess'), type: 'success' });
     } catch (err) {
       showToast({
@@ -307,6 +263,8 @@ export default function ReportsScreen() {
               netTotal={report.netIncome}
               currency={report.currency}
               language={language}
+              comparison={report.comparison}
+              expensePaymentStatus={report.expensePaymentStatus}
             />
           </View>
 
@@ -348,18 +306,6 @@ export default function ReportsScreen() {
           <View style={styles.section}>
             <ExpenseBreakdown
               data={report.categoryBreakdown}
-              currency={report.currency}
-              language={language}
-            />
-          </View>
-
-          <View style={styles.section}>
-            <PropertyNetChart data={report.propertySummaries} language={language} />
-          </View>
-
-          <View style={styles.section}>
-            <PropertyIncomeShareChart
-              data={report.propertySummaries}
               currency={report.currency}
               language={language}
             />

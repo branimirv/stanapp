@@ -6,7 +6,12 @@ import type { PickerOption } from '@/components/ui/AppPicker';
 import { FilterChipRow, type FilterChip } from '@/components/ui/FilterChipRow';
 import { buildReportPeriod } from '@/hooks/useReports';
 import { Spacing } from '@/constants/theme';
-import type { ReportCategoryTypeFilter, ReportPeriod, ReportPeriodPreset } from '@/types/app.types';
+import type {
+  ReportCategoryTypeFilter,
+  ReportExpensePaymentStatus,
+  ReportPeriod,
+  ReportPeriodPreset,
+} from '@/types/app.types';
 
 const PERIOD_LABELS: Record<ReportPeriodPreset, string> = {
   all_time: 'reports.periodAllTime',
@@ -15,6 +20,12 @@ const PERIOD_LABELS: Record<ReportPeriodPreset, string> = {
   last_6_months: 'reports.period6M',
   last_12_months: 'reports.period12M',
   custom: 'reports.periodCustom',
+};
+
+const PAYMENT_STATUS_LABELS: Record<ReportExpensePaymentStatus, string> = {
+  all: 'reports.paymentStatusAll',
+  paid: 'reports.paymentStatusPaid',
+  unpaid: 'reports.paymentStatusUnpaid',
 };
 
 export interface ReportFiltersStateProps {
@@ -26,6 +37,8 @@ export interface ReportFiltersStateProps {
   onCategoryFilterChange: (value: string) => void;
   categoryTypeFilter: ReportCategoryTypeFilter;
   onCategoryTypeFilterChange: (value: ReportCategoryTypeFilter) => void;
+  expensePaymentStatus: ReportExpensePaymentStatus;
+  onExpensePaymentStatusChange: (value: ReportExpensePaymentStatus) => void;
   propertyOptions: PickerOption[];
   categoryOptions: PickerOption[];
 }
@@ -40,12 +53,14 @@ function countActiveFilters(
   propertyFilter: string,
   categoryFilter: string,
   categoryTypeFilter: ReportCategoryTypeFilter,
+  expensePaymentStatus: ReportExpensePaymentStatus,
 ): number {
   let count = 0;
   if (period.preset !== 'all_time') count += 1;
   if (propertyFilter !== 'all') count += 1;
   if (categoryFilter !== 'all') count += 1;
   if (categoryTypeFilter !== 'all') count += 1;
+  if (expensePaymentStatus !== 'all') count += 1;
   return count;
 }
 
@@ -54,8 +69,15 @@ export function countReportActiveFilters(
   propertyFilter: string,
   categoryFilter: string,
   categoryTypeFilter: ReportCategoryTypeFilter,
+  expensePaymentStatus: ReportExpensePaymentStatus = 'all',
 ): number {
-  return countActiveFilters(period, propertyFilter, categoryFilter, categoryTypeFilter);
+  return countActiveFilters(
+    period,
+    propertyFilter,
+    categoryFilter,
+    categoryTypeFilter,
+    expensePaymentStatus,
+  );
 }
 
 function useReportFilterChips({
@@ -67,6 +89,8 @@ function useReportFilterChips({
   onCategoryFilterChange,
   categoryTypeFilter,
   onCategoryTypeFilterChange,
+  expensePaymentStatus,
+  onExpensePaymentStatusChange,
   propertyOptions,
   categoryOptions,
 }: ReportFiltersStateProps) {
@@ -92,6 +116,14 @@ function useReportFilterChips({
           onClear: () => onPropertyFilterChange('all'),
         });
       }
+    }
+
+    if (expensePaymentStatus !== 'all') {
+      chips.push({
+        key: 'paymentStatus',
+        label: t(PAYMENT_STATUS_LABELS[expensePaymentStatus]),
+        onClear: () => onExpensePaymentStatusChange('all'),
+      });
     }
 
     if (categoryFilter !== 'all') {
@@ -124,8 +156,10 @@ function useReportFilterChips({
     categoryFilter,
     categoryOptions,
     categoryTypeFilter,
+    expensePaymentStatus,
     onCategoryFilterChange,
     onCategoryTypeFilterChange,
+    onExpensePaymentStatusChange,
     onPeriodChange,
     onPropertyFilterChange,
     period.preset,
@@ -159,6 +193,8 @@ export function ReportFiltersSheetHost({
   onCategoryFilterChange,
   categoryTypeFilter,
   onCategoryTypeFilterChange,
+  expensePaymentStatus,
+  onExpensePaymentStatusChange,
   propertyOptions,
   categoryOptions,
 }: ReportFiltersSheetHostProps) {
@@ -167,6 +203,7 @@ export function ReportFiltersSheetHost({
     onPropertyFilterChange('all');
     onCategoryFilterChange('all');
     onCategoryTypeFilterChange('all');
+    onExpensePaymentStatusChange('all');
   };
 
   return (
@@ -181,6 +218,8 @@ export function ReportFiltersSheetHost({
       onCategoryFilterChange={onCategoryFilterChange}
       categoryTypeFilter={categoryTypeFilter}
       onCategoryTypeFilterChange={onCategoryTypeFilterChange}
+      expensePaymentStatus={expensePaymentStatus}
+      onExpensePaymentStatusChange={onExpensePaymentStatusChange}
       propertyOptions={propertyOptions}
       categoryOptions={categoryOptions}
       onClearFilters={handleClearFilters}
