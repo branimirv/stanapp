@@ -1,15 +1,17 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
+import { Lock, Mail } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { AuthFooter, AuthScreen, AuthTitleBlock } from '@/components/auth/AuthScreen';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
+import { PasswordVisibilityToggle } from '@/components/auth/PasswordVisibilityToggle';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppTextInput } from '@/components/ui/AppTextInput';
-import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
-import { Text } from '@/components/ui/text';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { signUp } from '@/lib/auth';
 import { useUiStore } from '@/stores/uiStore';
 import { translateFieldError } from '@/utils/formHelpers';
@@ -17,8 +19,11 @@ import { registerSchema, type RegisterFormValues } from '@/utils/validators';
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
   const showToast = useUiStore((state) => state.showToast);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false);
 
   const {
     control,
@@ -37,152 +42,153 @@ export default function RegisterScreen() {
 
   const onSubmit = async (values: RegisterFormValues) => {
     setIsSubmitting(true);
-
     const { error, needsEmailConfirmation } = await signUp(
       values.email.trim(),
       values.password,
       values.full_name.trim(),
     );
-
     setIsSubmitting(false);
 
     if (error) {
-      showToast({
-        message: t('auth.registerFailed'),
-        type: 'error',
-      });
+      showToast({ message: t('auth.registerFailed'), type: 'error' });
       return;
     }
 
     if (needsEmailConfirmation) {
-      showToast({
-        message: t('auth.emailConfirmationNotice'),
-        type: 'info',
-      });
+      showToast({ message: t('auth.emailConfirmationNotice'), type: 'info' });
     } else {
-      showToast({
-        message: t('auth.registerSuccess'),
-        type: 'success',
-      });
+      showToast({ message: t('auth.registerSuccess'), type: 'success' });
     }
 
     router.replace('/');
   };
 
+  const { colors } = theme;
+
   return (
-    <StackScreenChrome title={t('auth.registerTitle')}>
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AuthScreen showBack>
+      <AuthTitleBlock title={t('auth.registerTitle')} subtitle={t('auth.registerSubtitle')} />
+
+      <GoogleSignInButton disabled={isSubmitting} />
+
+      <Controller
+        control={control}
+        name="full_name"
+        render={({ field: { onChange, onBlur, value, ref }, fieldState }) => (
+          <AppTextInput
+            ref={ref}
+            label={t('auth.fullName')}
+            value={value}
+            onChangeText={onChange}
+            onBlur={onBlur}
+            error={translateFieldError(t, fieldState.error?.message)}
+            autoCapitalize="words"
+            autoComplete="name"
+            returnKeyType="next"
+            placeholder={t('auth.fullName')}
+          />
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="email"
+        render={({ field: { onChange, onBlur, value, ref }, fieldState }) => (
+          <AppTextInput
+            ref={ref}
+            label={t('auth.email')}
+            value={value}
+            onChangeText={onChange}
+            onBlur={onBlur}
+            error={translateFieldError(t, fieldState.error?.message)}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            autoCorrect={false}
+            returnKeyType="next"
+            placeholder="ime@example.com"
+            left={<Mail size={16} color={colors.primary} strokeWidth={2} />}
+          />
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="password"
+        render={({ field: { onChange, onBlur, value, ref }, fieldState }) => (
+          <AppTextInput
+            ref={ref}
+            label={t('auth.password')}
+            value={value}
+            onChangeText={onChange}
+            onBlur={onBlur}
+            error={translateFieldError(t, fieldState.error?.message)}
+            secureTextEntry={!passwordVisible}
+            autoCapitalize="none"
+            autoComplete="new-password"
+            returnKeyType="next"
+            placeholder="••••••••"
+            left={<Lock size={16} color={colors.primary} strokeWidth={2} />}
+            right={
+              <PasswordVisibilityToggle
+                visible={passwordVisible}
+                onToggle={() => setPasswordVisible((v) => !v)}
+              />
+            }
+          />
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="confirm_password"
+        render={({ field: { onChange, onBlur, value, ref }, fieldState }) => (
+          <AppTextInput
+            ref={ref}
+            label={t('auth.confirmPassword')}
+            value={value}
+            onChangeText={onChange}
+            onBlur={onBlur}
+            error={translateFieldError(t, fieldState.error?.message)}
+            secureTextEntry={!confirmVisible}
+            autoCapitalize="none"
+            autoComplete="new-password"
+            returnKeyType="done"
+            placeholder="••••••••"
+            onSubmitEditing={handleSubmit(onSubmit)}
+            containerStyle={styles.lastField}
+            left={<Lock size={16} color={colors.primary} strokeWidth={2} />}
+            right={
+              <PasswordVisibilityToggle
+                visible={confirmVisible}
+                onToggle={() => setConfirmVisible((v) => !v)}
+              />
+            }
+          />
+        )}
+      />
+
+      <AppButton
+        mode="contained"
+        loading={isSubmitting}
+        disabled={!isValid}
+        onPress={handleSubmit(onSubmit)}
+        className="h-11 w-full rounded-full"
       >
-        <ScrollView
-          contentContainerClassName="flex-grow px-6 py-6"
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View className="mb-8">
-            <Text className="text-muted-foreground text-base">{t('auth.registerSubtitle')}</Text>
-          </View>
+        {t('auth.createAccount')}
+      </AppButton>
 
-          <View className="gap-4">
-            <GoogleSignInButton disabled={isSubmitting} />
-
-            <Controller
-              control={control}
-              name="full_name"
-              render={({ field: { onChange, onBlur, value, ref }, fieldState }) => (
-                <AppTextInput
-                  ref={ref}
-                  label={t('auth.fullName')}
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  error={translateFieldError(t, fieldState.error?.message)}
-                  autoCapitalize="words"
-                  autoComplete="name"
-                  returnKeyType="next"
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="email"
-              render={({ field: { onChange, onBlur, value, ref }, fieldState }) => (
-                <AppTextInput
-                  ref={ref}
-                  label={t('auth.email')}
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  error={translateFieldError(t, fieldState.error?.message)}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  autoCorrect={false}
-                  returnKeyType="next"
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="password"
-              render={({ field: { onChange, onBlur, value, ref }, fieldState }) => (
-                <AppTextInput
-                  ref={ref}
-                  label={t('auth.password')}
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  error={translateFieldError(t, fieldState.error?.message)}
-                  secureTextEntry
-                  autoCapitalize="none"
-                  autoComplete="new-password"
-                  returnKeyType="next"
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="confirm_password"
-              render={({ field: { onChange, onBlur, value, ref }, fieldState }) => (
-                <AppTextInput
-                  ref={ref}
-                  label={t('auth.confirmPassword')}
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  error={translateFieldError(t, fieldState.error?.message)}
-                  secureTextEntry
-                  autoCapitalize="none"
-                  autoComplete="new-password"
-                  returnKeyType="done"
-                  onSubmitEditing={handleSubmit(onSubmit)}
-                />
-              )}
-            />
-
-            <AppButton
-              mode="contained"
-              loading={isSubmitting}
-              disabled={!isValid}
-              onPress={handleSubmit(onSubmit)}
-              className="mt-2"
-            >
-              {t('auth.createAccount')}
-            </AppButton>
-          </View>
-
-          <View className="mt-8 flex-row items-center justify-center gap-1">
-            <Text className="text-muted-foreground text-sm">{t('auth.haveAccount')}</Text>
-            <Link href="/(auth)/login">
-              <Text className="text-primary text-sm font-medium">{t('auth.signIn')}</Text>
-            </Link>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </StackScreenChrome>
+      <AuthFooter
+        prompt={t('auth.haveAccount')}
+        actionLabel={t('auth.signInLink')}
+        href="/(auth)/login"
+      />
+    </AuthScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  lastField: {
+    marginBottom: 24,
+  },
+});

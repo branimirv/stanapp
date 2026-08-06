@@ -1,20 +1,24 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Mail } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { AuthScreen, AuthTitleBlock } from '@/components/auth/AuthScreen';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppTextInput } from '@/components/ui/AppTextInput';
-import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { Text } from '@/components/ui/text';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { resetPassword } from '@/lib/auth';
+import { Fonts } from '@/lib/fonts';
 import { useUiStore } from '@/stores/uiStore';
 import { translateFieldError } from '@/utils/formHelpers';
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from '@/utils/validators';
 
 export default function ForgotPasswordScreen() {
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
   const showToast = useUiStore((state) => state.showToast);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -25,91 +29,98 @@ export default function ForgotPasswordScreen() {
     formState: { isValid },
   } = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema as never),
-    defaultValues: {
-      email: '',
-    },
+    defaultValues: { email: '' },
     mode: 'onChange',
   });
 
   const onSubmit = async (values: ForgotPasswordFormValues) => {
     setIsSubmitting(true);
-
     const { error } = await resetPassword(values.email.trim());
-
     setIsSubmitting(false);
 
     if (error) {
-      showToast({
-        message: t('auth.resetLinkFailed'),
-        type: 'error',
-      });
+      showToast({ message: t('auth.resetLinkFailed'), type: 'error' });
       return;
     }
 
     setIsSubmitted(true);
-    showToast({
-      message: t('auth.resetLinkSent'),
-      type: 'success',
-    });
+    showToast({ message: t('auth.resetLinkSent'), type: 'success' });
   };
 
+  const { colors } = theme;
+
   return (
-    <StackScreenChrome title={t('auth.forgotPasswordTitle')}>
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView
-          contentContainerClassName="flex-grow px-6 py-6"
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+    <AuthScreen showBack>
+      <AuthTitleBlock
+        title={t('auth.forgotPasswordTitle')}
+        subtitle={t('auth.forgotPasswordSubtitle')}
+      />
+
+      {isSubmitted ? (
+        <View
+          style={[
+            styles.success,
+            { backgroundColor: colors.primaryTint, borderRadius: theme.radius.xl },
+          ]}
         >
-          <View className="mb-8">
-            <Text className="text-muted-foreground text-base">
-              {t('auth.forgotPasswordSubtitle')}
-            </Text>
-          </View>
-
-          {isSubmitted ? (
-            <View className="bg-primary/10 rounded-xl p-6">
-              <Text className="text-center text-base">{t('auth.resetLinkSent')}</Text>
-            </View>
-          ) : (
-            <View className="gap-4">
-              <Controller
-                control={control}
-                name="email"
-                render={({ field: { onChange, onBlur, value, ref }, fieldState }) => (
-                  <AppTextInput
-                    ref={ref}
-                    label={t('auth.email')}
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    error={translateFieldError(t, fieldState.error?.message)}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                    autoCorrect={false}
-                    returnKeyType="done"
-                    onSubmitEditing={handleSubmit(onSubmit)}
-                  />
-                )}
+          <Text
+            style={{
+              fontFamily: Fonts.sans.regular,
+              fontSize: 14,
+              lineHeight: 21,
+              color: colors.fg,
+              textAlign: 'center',
+            }}
+          >
+            {t('auth.resetLinkSent')}
+          </Text>
+        </View>
+      ) : (
+        <>
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, onBlur, value, ref }, fieldState }) => (
+              <AppTextInput
+                ref={ref}
+                label={t('auth.email')}
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                error={translateFieldError(t, fieldState.error?.message)}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                autoCorrect={false}
+                returnKeyType="done"
+                placeholder="ime@example.com"
+                onSubmitEditing={handleSubmit(onSubmit)}
+                containerStyle={styles.lastField}
+                left={<Mail size={16} color={colors.primary} strokeWidth={2} />}
               />
+            )}
+          />
 
-              <AppButton
-                mode="contained"
-                loading={isSubmitting}
-                disabled={!isValid}
-                onPress={handleSubmit(onSubmit)}
-                className="mt-2"
-              >
-                {t('auth.sendResetLink')}
-              </AppButton>
-            </View>
-          )}
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </StackScreenChrome>
+          <AppButton
+            mode="contained"
+            loading={isSubmitting}
+            disabled={!isValid}
+            onPress={handleSubmit(onSubmit)}
+            className="h-11 w-full rounded-full"
+          >
+            {t('auth.sendResetLink')}
+          </AppButton>
+        </>
+      )}
+    </AuthScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  lastField: {
+    marginBottom: 24,
+  },
+  success: {
+    padding: 24,
+  },
+});

@@ -1,42 +1,26 @@
 import { Stack } from 'expo-router';
-import { useTranslation } from 'react-i18next';
 
-import { useAppHeaderOptions } from '@/hooks/useAppHeaderOptions';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 export const unstable_settings = {
   initialRouteName: 'login',
 };
 
 export default function AuthLayout() {
-  const { t } = useTranslation();
-  const themedScreenOptions = useAppHeaderOptions();
+  const { theme } = useAppTheme();
 
   return (
     <Stack
       initialRouteName="login"
       screenOptions={{
-        ...themedScreenOptions,
-        headerBackTitle: t('common.back'),
+        headerShown: false,
+        // Solid canvas — auth is flat --bg in naslov-theme.html (no ambient wash).
+        contentStyle: { backgroundColor: theme.colors.bg },
       }}
     >
-      <Stack.Screen
-        name="login"
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen
-        name="register"
-        options={{
-          title: t('auth.register'),
-        }}
-      />
-      <Stack.Screen
-        name="forgot-password"
-        options={{
-          title: t('auth.forgotPasswordTitle'),
-        }}
-      />
+      <Stack.Screen name="login" />
+      <Stack.Screen name="register" />
+      <Stack.Screen name="forgot-password" />
     </Stack>
   );
 }

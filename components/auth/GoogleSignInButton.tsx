@@ -1,32 +1,34 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Svg, { Path } from 'react-native-svg';
 
 import { AppButton } from '@/components/ui/AppButton';
-import { Text } from '@/components/ui/text';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { signInWithGoogle } from '@/lib/auth';
+import { Fonts } from '@/lib/fonts';
 import { useUiStore } from '@/stores/uiStore';
 
+/** Official multi-colour Google G — brand requirement, not a Lucide glyph. */
 function GoogleMark({ size = 18 }: { size?: number }) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 48 48">
+    <Svg width={size} height={size} viewBox="0 0 24 24">
       <Path
-        fill="#FFC107"
-        d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"
+        fill="#4285F4"
+        d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"
       />
       <Path
-        fill="#FF3D00"
-        d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"
+        fill="#34A853"
+        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z"
       />
       <Path
-        fill="#4CAF50"
-        d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"
+        fill="#FBBC05"
+        d="M5.27 14.28A7.2 7.2 0 0 1 4.89 12c0-.79.14-1.56.38-2.28V6.63H1.29A11.98 11.98 0 0 0 0 12c0 1.93.46 3.76 1.29 5.37z"
       />
       <Path
-        fill="#1976D2"
-        d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"
+        fill="#EA4335"
+        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.63l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75z"
       />
     </Svg>
   );
@@ -38,6 +40,7 @@ interface GoogleSignInButtonProps {
 
 export function GoogleSignInButton({ disabled = false }: GoogleSignInButtonProps) {
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
   const showToast = useUiStore((state) => state.showToast);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -53,41 +56,76 @@ export function GoogleSignInButton({ disabled = false }: GoogleSignInButtonProps
         console.error('[GoogleSignIn]', error.message);
       }
       showToast({
-        message: __DEV__ && error.message
-          ? error.message
-          : t('auth.googleSignInFailed'),
+        message: __DEV__ && error.message ? error.message : t('auth.googleSignInFailed'),
         type: 'error',
       });
       return;
     }
 
-    showToast({
-      message: t('auth.loginSuccess'),
-      type: 'success',
-    });
+    showToast({ message: t('auth.loginSuccess'), type: 'success' });
     router.replace('/(tabs)/(dashboard)');
   };
 
   return (
-    <View className="gap-4">
+    <View>
       <AppButton
         mode="outlined"
         loading={isSubmitting}
         disabled={disabled || isSubmitting}
         onPress={handlePress}
         accessibilityLabel={t('auth.continueWithGoogle')}
+        className="bg-surface-2 border-bd h-11 w-full rounded-full border"
       >
-        <View className="flex-row items-center gap-2">
+        <View style={styles.row}>
           {!isSubmitting ? <GoogleMark /> : null}
-          <Text className="text-foreground text-sm font-medium">{t('auth.continueWithGoogle')}</Text>
+          <Text
+            style={{
+              fontFamily: Fonts.sans.semibold,
+              fontSize: 15,
+              letterSpacing: -0.15,
+              color: theme.colors.fg,
+            }}
+            numberOfLines={1}
+          >
+            {t('auth.continueWithGoogle')}
+          </Text>
         </View>
       </AppButton>
 
-      <View className="flex-row items-center gap-3">
-        <View className="bg-border h-px flex-1" />
-        <Text className="text-muted-foreground text-sm">{t('auth.orContinueWith')}</Text>
-        <View className="bg-border h-px flex-1" />
+      <View style={styles.divider}>
+        <View style={[styles.hair, { backgroundColor: theme.colors.bd }]} />
+        <Text
+          style={{
+            fontFamily: Fonts.sans.regular,
+            fontSize: 13,
+            color: theme.colors.muted,
+          }}
+          numberOfLines={1}
+        >
+          {t('auth.orContinueWith')}
+        </Text>
+        <View style={[styles.hair, { backgroundColor: theme.colors.bd }]} />
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginVertical: 24,
+  },
+  hair: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth > 0 ? StyleSheet.hairlineWidth : 1,
+    minHeight: 1,
+  },
+});

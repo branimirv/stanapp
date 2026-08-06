@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { LoginScreen } from '@/components/auth/LoginScreen';
 import { Text } from '@/components/ui/text';
-import { Colors } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAuthStore } from '@/stores/authStore';
 
 /**
@@ -13,14 +13,15 @@ import { useAuthStore } from '@/stores/authStore';
  */
 export default function Index() {
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
   const session = useAuthStore((state) => state.session);
   const isLoading = useAuthStore((state) => state.isLoading);
 
   if (isLoading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text className="text-muted-foreground text-sm">{t('common.loading')}</Text>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text className="text-muted text-sm">{t('common.loading')}</Text>
       </View>
     );
   }
