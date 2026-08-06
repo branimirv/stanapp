@@ -13,13 +13,17 @@ function isTabBarLabelMode(value: string | null): value is TabBarLabelMode {
 interface TabBarState {
   labelMode: TabBarLabelMode;
   isHydrated: boolean;
+  /** Hide NativeTabs chrome (e.g. while a full-screen sheet/modal is open). */
+  chromeHidden: boolean;
   hydrate: () => Promise<void>;
   setLabelMode: (mode: TabBarLabelMode) => Promise<void>;
+  setChromeHidden: (hidden: boolean) => void;
 }
 
 export const useTabBarStore = create<TabBarState>((set, get) => ({
   labelMode: DEFAULT_MODE,
   isHydrated: false,
+  chromeHidden: false,
 
   hydrate: async () => {
     if (get().isHydrated) return;
@@ -40,5 +44,9 @@ export const useTabBarStore = create<TabBarState>((set, get) => ({
   setLabelMode: async (mode) => {
     set({ labelMode: mode });
     await AsyncStorage.setItem(TAB_BAR_LABEL_MODE_KEY, mode);
+  },
+
+  setChromeHidden: (hidden) => {
+    set({ chromeHidden: hidden });
   },
 }));

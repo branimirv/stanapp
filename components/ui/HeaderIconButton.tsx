@@ -1,7 +1,6 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
-import { Icon } from '@/components/ui/icon';
 import { HEADER_ACTION_SLOT, HEADER_ICON_SIZE } from '@/constants/header';
 import { useAppTheme } from '@/hooks/useAppTheme';
 
@@ -13,6 +12,7 @@ interface HeaderIconButtonProps {
   style?: StyleProp<ViewStyle>;
 }
 
+/** Icon press for Naslov `btn-ico` circles (wrap with StackHeaderActions / HeaderActionsPill). */
 export function HeaderIconButton({
   icon: IconComponent,
   onPress,
@@ -21,7 +21,7 @@ export function HeaderIconButton({
   style,
 }: HeaderIconButtonProps) {
   const { theme } = useAppTheme();
-  const iconColor = color ?? theme.colors.onSurface;
+  const iconColor = color ?? theme.colors.fg;
 
   return (
     <Pressable
@@ -29,10 +29,10 @@ export function HeaderIconButton({
       style={StyleSheet.flatten([styles.slot, style])}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      hitSlop={4}
     >
       {({ pressed }) => (
-        <Icon
-          as={IconComponent}
+        <IconComponent
           size={HEADER_ICON_SIZE}
           color={iconColor}
           strokeWidth={2}

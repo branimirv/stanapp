@@ -1,6 +1,9 @@
 import { forwardRef, type ComponentRef, type ReactElement } from 'react';
 import { Controller, type Control, type FieldPath, type FieldValues } from 'react-hook-form';
 import {
+  Platform,
+  StyleSheet,
+  Text,
   TextInput,
   View,
   type StyleProp,
@@ -9,7 +12,9 @@ import {
 } from 'react-native';
 
 import { Input } from '@/components/ui/input';
-import { Text } from '@/components/ui/text';
+import { Typography } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { Fonts } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
 
 type BaseAppTextInputProps = Omit<
@@ -43,27 +48,100 @@ const AppTextInputInner = forwardRef<ComponentRef<typeof TextInput>, BaseAppText
       label,
       className,
       style,
-      left: _left,
-      right: _right,
+      left,
+      right,
       mode: _mode,
       dense: _dense,
+      multiline,
       ...rest
     },
     ref,
   ) {
+    const { theme } = useAppTheme();
     const hasError = Boolean(error);
+    const hasLeft = Boolean(left);
+    const hasRight = Boolean(right);
+    const isMultiline = Boolean(multiline);
 
     return (
-      <View className="w-full gap-1.5" style={containerStyle}>
-        {label ? <Text className="text-muted-foreground text-sm font-medium">{label}</Text> : null}
-        <Input
-          ref={ref}
-          className={cn('min-h-11 rounded-xl', hasError && 'border-destructive', className)}
-          style={style}
-          aria-invalid={hasError}
-          {...rest}
-        />
-        {hasError ? <Text className="text-destructive text-sm">{error}</Text> : null}
+      <View style={[{ marginBottom: 18, width: '100%' }, containerStyle]}>
+        {label ? (
+          <Text
+            style={{
+              fontFamily: Fonts.sans.semibold,
+              fontSize: Typography.text.fieldLabel.size,
+              lineHeight: 17,
+              color: theme.colors.fg,
+              marginBottom: 8,
+            }}
+          >
+            {label}
+          </Text>
+        ) : null}
+        <View style={styles.fieldWrap}>
+          {hasLeft ? (
+            <View
+              pointerEvents="none"
+              style={[styles.leftAdorn, isMultiline && styles.leftAdornMultiline]}
+            >
+              {left}
+            </View>
+          ) : null}
+          <Input
+            ref={ref}
+            multiline={multiline}
+            className={cn(
+              'bg-surface-2 border-bd text-fg w-full rounded-[14px] border px-3.5 shadow-none',
+              isMultiline
+                ? 'h-auto min-h-21 py-3'
+                : 'h-[48px] min-h-[48px] py-0',
+              hasLeft && 'pl-11',
+              hasRight && 'pr-11',
+              hasError && 'border-neg',
+              className,
+            )}
+            style={[
+              {
+                fontFamily: Fonts.sans.regular,
+                fontSize: Typography.text.input.size,
+                ...(isMultiline
+                  ? {
+                      paddingTop: 12,
+                      paddingBottom: 12,
+                      ...(Platform.OS === 'android'
+                        ? { textAlignVertical: 'top' as const }
+                        : null),
+                    }
+                  : {
+                      // lineHeight on iOS TextInput shifts glyphs below center vs adornments
+                      paddingVertical: 0,
+                      ...(Platform.OS === 'android'
+                        ? { textAlignVertical: 'center' as const }
+                        : null),
+                    }),
+              },
+              style,
+            ]}
+            placeholderClassName="text-muted"
+            placeholderTextColor={theme.colors.muted}
+            aria-invalid={hasError}
+            {...rest}
+          />
+          {hasRight ? <View style={styles.rightAdorn}>{right}</View> : null}
+        </View>
+        {hasError ? (
+          <Text
+            style={{
+              fontFamily: Fonts.sans.regular,
+              fontSize: 14,
+              lineHeight: 18,
+              color: theme.colors.neg,
+              marginTop: 6,
+            }}
+          >
+            {error}
+          </Text>
+        ) : null}
       </View>
     );
   },
@@ -109,3 +187,33 @@ export const AppTextInput = forwardRef(function AppTextInput<
     ref?: React.Ref<ComponentRef<typeof TextInput>>;
   },
 ) => ReactElement | null;
+
+const styles = StyleSheet.create({
+  fieldWrap: {
+    position: 'relative',
+    width: '100%',
+  },
+  leftAdorn: {
+    position: 'absolute',
+    left: 14,
+    top: 0,
+    bottom: 0,
+    zIndex: 10,
+    justifyContent: 'center',
+  },
+  leftAdornMultiline: {
+    top: 12,
+    bottom: undefined,
+    justifyContent: 'flex-start',
+  },
+  rightAdorn: {
+    position: 'absolute',
+    right: 4,
+    top: 0,
+    bottom: 0,
+    zIndex: 10,
+    width: 34,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

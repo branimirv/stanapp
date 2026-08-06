@@ -1,36 +1,67 @@
 import type { LucideIcon } from 'lucide-react-native';
 import { ChevronRight } from 'lucide-react-native';
 import { Children, isValidElement, type ReactNode } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { AppButton } from '@/components/ui/AppButton';
-import { Icon } from '@/components/ui/icon';
-import { Separator } from '@/components/ui/separator';
-import { Text } from '@/components/ui/text';
-import { cn } from '@/lib/utils';
+import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
+import { Typography } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { displayFontFamily, Fonts } from '@/lib/fonts';
 
 interface SettingsGroupProps {
   title?: string;
   children: ReactNode;
-  className?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
-export function SettingsGroup({ title, children, className }: SettingsGroupProps) {
+/** Naslov settings card: Fraunces sechead + surface card of `.lrow.stgrow` rows. */
+export function SettingsGroup({ title, children, style }: SettingsGroupProps) {
+  const { theme } = useAppTheme();
+  const { colors, elevation, radius } = theme;
   const items = Children.toArray(children).filter((child) => isValidElement(child));
 
   return (
-    <View className={cn('gap-2', className)}>
+    <View style={[styles.group, style]}>
       {title ? (
-        <Text className="text-muted-foreground px-1 text-[11px] font-semibold uppercase tracking-wider">
+        <Text
+          style={{
+            fontFamily: displayFontFamily(theme.name),
+            fontSize: 20,
+            lineHeight: 24,
+            letterSpacing: -0.4,
+            color: colors.fg,
+            marginBottom: 11,
+          }}
+        >
           {title}
         </Text>
       ) : null}
-      <View className="bg-card overflow-hidden rounded-3xl shadow-sm shadow-black/5">
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.cardBd,
+            borderRadius: radius.xl,
+            ...elevation.card,
+          },
+        ]}
+      >
         {items.map((child, index) => (
           <View key={index}>
+            {index > 0 ? (
+              <View style={[styles.divider, { backgroundColor: colors.bd }]} />
+            ) : null}
             {child}
-            {index < items.length - 1 ? <View className="bg-border ml-13 h-px" /> : null}
           </View>
         ))}
       </View>
@@ -44,7 +75,7 @@ interface SettingsRowProps {
   subtitle?: string;
   value?: string;
   badge?: string;
-  badgeTone?: 'accent' | 'muted';
+  badgeTone?: 'accent' | 'muted' | 'primary';
   showChevron?: boolean;
   trailing?: ReactNode;
   loading?: boolean;
@@ -54,7 +85,7 @@ interface SettingsRowProps {
 }
 
 export function SettingsRow({
-  icon,
+  icon: Icon,
   label,
   subtitle,
   value,
@@ -67,51 +98,74 @@ export function SettingsRow({
   disabled = false,
   onPress,
 }: SettingsRowProps) {
+  const { theme } = useAppTheme();
+  const { colors } = theme;
   const chevronVisible = showChevron ?? Boolean(onPress);
   const isInteractive = Boolean(onPress) && !disabled && !loading;
 
+  const badgeBg =
+    badgeTone === 'primary'
+      ? colors.primaryTint
+      : badgeTone === 'accent'
+        ? colors.posTint
+        : colors.surface2;
+  const badgeFg =
+    badgeTone === 'primary'
+      ? colors.primary
+      : badgeTone === 'accent'
+        ? colors.pos
+        : colors.muted;
+
   const content = (
-    <View className="min-h-14 flex-row items-center gap-3 px-4 py-3.5">
-      <View className="h-6 w-6 items-center justify-center">
+    <View style={styles.row}>
+      <View style={[styles.iconWell, { backgroundColor: colors.surface2 }]}>
         <Icon
-          as={icon}
-          size={20}
-          className={destructive ? 'text-destructive' : 'text-muted-foreground'}
-          strokeWidth={1.75}
+          size={15}
+          color={destructive ? colors.neg : colors.muted}
+          strokeWidth={2}
         />
       </View>
 
-      <View className="min-w-0 flex-1 gap-0.5">
+      <View style={styles.rowBody}>
         <Text
-          className={cn(
-            'text-[15px] font-semibold',
-            destructive ? 'text-destructive' : 'text-foreground',
-          )}
+          style={{
+            fontFamily: Fonts.sans.medium,
+            fontSize: Typography.text.settingsRow.size,
+            letterSpacing: -0.15,
+            color: destructive ? colors.neg : colors.fg,
+          }}
           numberOfLines={1}
         >
           {label}
         </Text>
         {subtitle ? (
-          <Text className="text-muted-foreground text-xs" numberOfLines={1}>
+          <Text
+            style={{
+              fontFamily: Fonts.sans.regular,
+              fontSize: Typography.text.caption.size,
+              lineHeight: 16,
+              color: colors.muted,
+              marginTop: 2,
+            }}
+            numberOfLines={2}
+          >
             {subtitle}
           </Text>
         ) : null}
       </View>
 
-      {loading ? <ActivityIndicator size="small" /> : null}
+      {loading ? <ActivityIndicator size="small" color={colors.muted} /> : null}
 
       {!loading && badge ? (
-        <View
-          className={cn(
-            'rounded-full px-2.5 py-1',
-            badgeTone === 'accent' ? 'bg-success/15' : 'bg-secondary',
-          )}
-        >
+        <View style={[styles.chip, { backgroundColor: badgeBg }]}>
           <Text
-            className={cn(
-              'text-[11px] font-bold uppercase tracking-wide',
-              badgeTone === 'accent' ? 'text-success' : 'text-muted-foreground',
-            )}
+            style={{
+              fontFamily: Fonts.sans.semibold,
+              fontSize: Typography.text.chipSm.size,
+              letterSpacing: -0.05,
+              color: badgeFg,
+            }}
+            numberOfLines={1}
           >
             {badge}
           </Text>
@@ -119,7 +173,16 @@ export function SettingsRow({
       ) : null}
 
       {!loading && value && !badge ? (
-        <Text className="text-muted-foreground text-sm" numberOfLines={1}>
+        <Text
+          style={{
+            fontFamily: Fonts.sans.semibold,
+            fontSize: Typography.text.chipSm.size,
+            letterSpacing: 0.8,
+            textTransform: 'uppercase',
+            color: colors.muted,
+          }}
+          numberOfLines={1}
+        >
           {value}
         </Text>
       ) : null}
@@ -127,7 +190,7 @@ export function SettingsRow({
       {!loading && trailing ? trailing : null}
 
       {!loading && chevronVisible ? (
-        <Icon as={ChevronRight} size={18} className="text-muted-foreground/60" strokeWidth={2} />
+        <ChevronRight size={16} color={colors.muted} strokeWidth={2} />
       ) : null}
     </View>
   );
@@ -142,7 +205,7 @@ export function SettingsRow({
       disabled={disabled || loading}
       accessibilityRole="button"
       accessibilityLabel={label}
-      className="active:bg-muted/60"
+      style={({ pressed }) => ({ opacity: pressed ? 0.72 : 1 })}
     >
       {content}
     </Pressable>
@@ -163,6 +226,7 @@ interface SettingsOptionSheetProps<T extends string = string> {
   onClose: () => void;
 }
 
+/** Naslov option sheet — host must render BlurOverlay as a sibling (see docs/blur). */
 export function SettingsOptionSheet<T extends string = string>({
   visible,
   title,
@@ -172,49 +236,116 @@ export function SettingsOptionSheet<T extends string = string>({
   onClose,
 }: SettingsOptionSheetProps<T>) {
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
+  const { colors } = theme;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable className="flex-1 justify-end bg-black/45" onPress={onClose}>
-        <Pressable
-          className="bg-card max-h-[70%] rounded-t-[20px] px-6 pb-8 pt-6"
-          onPress={(event) => event.stopPropagation()}
+    <AppBottomSheet visible={visible} onDismiss={onClose} title={title}>
+      <View style={styles.optionList}>
+        {options.map((option) => {
+          const selected = option.value === value;
+          return (
+            <Pressable
+              key={option.value}
+              onPress={() => {
+                onSelect(option.value);
+                onClose();
+              }}
+              style={[
+                styles.optionRow,
+                {
+                  backgroundColor: selected ? colors.primaryTint : 'transparent',
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+            >
+              <Text
+                style={{
+                  fontFamily: selected ? Fonts.sans.semibold : Fonts.sans.medium,
+                  fontSize: 15,
+                  letterSpacing: -0.15,
+                  color: selected ? colors.primary : colors.fg,
+                }}
+              >
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <Pressable
+        onPress={onClose}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.cancel')}
+        style={[styles.cancelBtn, { backgroundColor: colors.surface2 }]}
+      >
+        <Text
+          style={{
+            fontFamily: Fonts.sans.semibold,
+            fontSize: 14,
+            letterSpacing: -0.14,
+            color: colors.fg,
+          }}
         >
-          <Text className="mb-3 text-center text-lg font-semibold">{title}</Text>
-          <ScrollView>
-            {options.map((option, index) => {
-              const selected = option.value === value;
-              return (
-                <View key={option.value}>
-                  <Pressable
-                    onPress={() => {
-                      onSelect(option.value);
-                      onClose();
-                    }}
-                    className={cn(
-                      'rounded-xl px-3 py-3.5',
-                      selected && 'bg-accent',
-                    )}
-                  >
-                    <Text
-                      className={cn(
-                        'text-base',
-                        selected ? 'text-accent-foreground font-semibold' : 'text-foreground',
-                      )}
-                    >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                  {index < options.length - 1 ? <Separator className="my-0.5" /> : null}
-                </View>
-              );
-            })}
-          </ScrollView>
-          <AppButton mode="text" onPress={onClose} className="mt-2">
-            {t('common.cancel')}
-          </AppButton>
-        </Pressable>
+          {t('common.cancel')}
+        </Text>
       </Pressable>
-    </Modal>
+    </AppBottomSheet>
   );
 }
+
+const styles = StyleSheet.create({
+  group: {
+    marginBottom: 22,
+  },
+  card: {
+    paddingHorizontal: 18,
+    paddingTop: 4,
+    paddingBottom: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: 44,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    paddingVertical: 13,
+  },
+  iconWell: {
+    width: 33,
+    height: 33,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowBody: {
+    flex: 1,
+    minWidth: 0,
+  },
+  chip: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  optionList: {
+    gap: 4,
+    marginBottom: 12,
+  },
+  optionRow: {
+    minHeight: 48,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+  },
+  cancelBtn: {
+    height: 44,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

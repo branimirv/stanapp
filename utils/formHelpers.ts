@@ -26,3 +26,15 @@ export function parseOptionalNumber(value: string): number | null {
   const num = Number(trimmed.replace(',', '.'));
   return Number.isNaN(num) ? null : num;
 }
+
+/** Split "Ime Prezime …" into first + last (remaining tokens). */
+export function splitPersonName(fullName: string): { first_name: string; last_name: string } {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return { first_name: '', last_name: '' };
+  if (parts.length === 1) return { first_name: parts[0], last_name: parts[0] };
+  return { first_name: parts[0], last_name: parts.slice(1).join(' ') };
+}
+
+export function joinPersonName(firstName?: string | null, lastName?: string | null): string {
+  return [firstName, lastName].filter(Boolean).join(' ').trim();
+}

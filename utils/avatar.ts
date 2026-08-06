@@ -7,6 +7,15 @@ export function getInitials(firstName: string, lastName: string): string {
   return (first || last || '?').toUpperCase();
 }
 
+/** Initials from a single display name ("Branimir Valentin" → "BV"). */
+export function getInitialsFromFullName(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return getInitials(parts[0], parts[parts.length - 1]);
+  }
+  return getInitials(parts[0] ?? '', '');
+}
+
 export function getAvatarColor(name: string): string {
   let hash = 0;
   for (let i = 0; i < name.length; i++) {

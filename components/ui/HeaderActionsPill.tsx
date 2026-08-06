@@ -1,17 +1,21 @@
 import { Children, type ReactNode } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { GlassSurface } from '@/components/ui/GlassSurface';
-import { HEADER_ACTION_SLOT } from '@/constants/header';
 import { Spacing } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 interface HeaderActionsPillProps {
   children?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }
 
-/** Row of separate circular glass header actions (create, search, edit, etc.). */
+/**
+ * Row of Naslov `btn-ico` circles (docs, edit, etc.).
+ * Children should be icon presses (e.g. HeaderIconButton) — this wraps each in surface2.
+ */
 export function HeaderActionsPill({ children, style }: HeaderActionsPillProps) {
+  const { theme } = useAppTheme();
+  const { colors } = theme;
   const actions = Children.toArray(children).filter(Boolean);
   if (actions.length === 0) {
     return null;
@@ -20,17 +24,40 @@ export function HeaderActionsPill({ children, style }: HeaderActionsPillProps) {
   return (
     <View style={[styles.row, style]}>
       {actions.map((child, index) => (
-        <GlassSurface
+        <View
           key={index}
-          shape="circle"
-          interactive
-          style={styles.circle}
-          contentStyle={styles.circleOverlay}
+          style={[styles.btnIco, { backgroundColor: colors.surface2 }]}
         >
           {child}
-        </GlassSurface>
+        </View>
       ))}
     </View>
+  );
+}
+
+/** Standalone Naslov btn-ico for one-off header actions. */
+export function HeaderBtnIco({
+  children,
+  onPress,
+  accessibilityLabel,
+  style,
+}: {
+  children: ReactNode;
+  onPress: () => void;
+  accessibilityLabel: string;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const { theme } = useAppTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      style={[styles.btnIco, { backgroundColor: theme.colors.surface2 }, style]}
+      hitSlop={4}
+    >
+      {children}
+    </Pressable>
   );
 }
 
@@ -38,15 +65,14 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
+    gap: Spacing.sm,
   },
-  circle: {
-    width: HEADER_ACTION_SLOT,
-    height: HEADER_ACTION_SLOT,
-  },
-  circleOverlay: {
-    flex: 1,
+  btnIco: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
 });

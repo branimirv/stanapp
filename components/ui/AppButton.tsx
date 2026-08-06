@@ -1,7 +1,8 @@
-import { ActivityIndicator, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Text, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { Text } from '@/components/ui/text';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { Fonts } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
 
 type PaperMode = 'contained' | 'outlined' | 'text' | 'elevated' | 'contained-tonal';
@@ -50,8 +51,13 @@ export function AppButton({
   className,
   accessibilityLabel,
 }: AppButtonProps) {
+  const { theme } = useAppTheme();
   const isDisabled = disabled || loading;
   const variant = mapModeToVariant(mode, textColor);
+  const spinnerColor =
+    variant === 'default' || variant === 'destructive'
+      ? theme.colors.onPrimary
+      : theme.colors.primary;
 
   return (
     <Button
@@ -59,16 +65,29 @@ export function AppButton({
       disabled={isDisabled}
       onPress={onPress}
       accessibilityLabel={accessibilityLabel}
-      className={cn('min-h-11 rounded-xl', className)}
+      className={cn('h-11 min-h-11 rounded-full px-4', className)}
       style={style}
     >
       {loading ? (
-        <ActivityIndicator
-          size="small"
-          color={variant === 'default' || variant === 'destructive' ? '#FFFFFF' : '#2563EB'}
-        />
+        <ActivityIndicator size="small" color={spinnerColor} />
       ) : typeof children === 'string' || typeof children === 'number' ? (
-        <Text>{children}</Text>
+        <Text
+          style={{
+            fontFamily: Fonts.sans.semibold,
+            fontSize: 15,
+            letterSpacing: -0.15,
+            color:
+              textColor ??
+              (variant === 'default'
+                ? theme.colors.onPrimary
+                : variant === 'destructive'
+                  ? theme.colors.onNeg
+                  : theme.colors.fg),
+          }}
+          numberOfLines={1}
+        >
+          {children}
+        </Text>
       ) : (
         children
       )}

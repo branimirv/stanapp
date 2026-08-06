@@ -1,48 +1,46 @@
-import { router } from 'expo-router';
-import { StyleSheet } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { Pressable, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { GlassSurface } from '@/components/ui/GlassSurface';
-import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
-import { HEADER_ACTION_SLOT } from '@/constants/header';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 /**
- * Back button for screens that sit at the root of a nested stack (details, `new`,
- * settings). React Navigation only renders its native back button on pushed
- * screens, so those first-route screens would otherwise have no way back to the
- * tab or group that opened them. Renders nothing when there is no history to pop.
+ * Back button for stack screens. Always visible — if there is no history
+ * (deep link / cold open), falls back to the main tabs.
+ * Naslov `btn-ico` — 38×38 surface2 circle.
  */
 export function HeaderBackButton() {
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
+  const { colors } = theme;
 
-  if (!router.canGoBack()) {
-    return null;
-  }
+  const handlePress = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(tabs)');
+  };
 
   return (
-    <GlassSurface
-      shape="circle"
-      interactive
-      style={styles.circle}
-      contentStyle={styles.circleOverlay}
+    <Pressable
+      onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={t('common.back')}
+      style={[styles.btnIco, { backgroundColor: colors.surface2 }]}
+      hitSlop={4}
     >
-      <HeaderIconButton
-        icon={ChevronLeft}
-        onPress={() => router.back()}
-        accessibilityLabel={t('common.back')}
-      />
-    </GlassSurface>
+      <ChevronLeft size={17} color={colors.fg} strokeWidth={2} />
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  circle: {
-    width: HEADER_ACTION_SLOT,
-    height: HEADER_ACTION_SLOT,
-  },
-  circleOverlay: {
-    flex: 1,
+  btnIco: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
   },

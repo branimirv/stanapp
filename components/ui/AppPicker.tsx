@@ -1,24 +1,24 @@
-import { ChevronDown } from 'lucide-react-native';
+import { ChevronDown, type LucideIcon } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import {
-  Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Colors, Spacing } from '@/constants/theme';
-import { useAppTheme } from '@/hooks/useAppTheme';
-import { AppButton } from '@/components/ui/AppButton';
-import { Separator } from '@/components/ui/separator';
+
+import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
 import { Text } from '@/components/ui/text';
+import { Spacing, Typography } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { Fonts } from '@/lib/fonts';
 
 export interface PickerOption<T extends string = string> {
   label: string;
   value: T;
+  icon?: LucideIcon;
 }
 
 export interface AppPickerProps<T extends string = string> {
@@ -30,6 +30,8 @@ export interface AppPickerProps<T extends string = string> {
   error?: string;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  /** Notify host when the option sheet opens/closes (for BlurOverlay sibling). */
+  onVisibilityChange?: (open: boolean) => void;
 }
 
 export function AppPicker<T extends string = string>({
@@ -41,10 +43,12 @@ export function AppPicker<T extends string = string>({
   error,
   disabled = false,
   style,
+  onVisibilityChange,
 }: AppPickerProps<T>) {
-  const { theme, isDark } = useAppTheme();
+  const { theme } = useAppTheme();
+  const { colors } = theme;
   const { t } = useTranslation();
-  const [modalVisible, setModalVisible] = useState(false);
+  const [sheetVisible, setSheetVisible] = useState(false);
 
   const displayPlaceholder = placeholder ?? t('ui.selectOption');
   const selectedOption = useMemo(
@@ -54,91 +58,131 @@ export function AppPicker<T extends string = string>({
 
   const openPicker = useCallback(() => {
     if (disabled || options.length === 0) return;
-    setModalVisible(true);
-  }, [disabled, options.length]);
+    setSheetVisible(true);
+    onVisibilityChange?.(true);
+  }, [disabled, options.length, onVisibilityChange]);
+
+  const dismissSheet = useCallback(() => {
+    setSheetVisible(false);
+    onVisibilityChange?.(false);
+  }, [onVisibilityChange]);
 
   const handleSelect = useCallback(
     (nextValue: T) => {
       onValueChange(nextValue);
-      setModalVisible(false);
+      dismissSheet();
     },
-    [onValueChange],
+    [dismissSheet, onValueChange],
   );
 
-  const borderColor = error ? theme.colors.error : theme.colors.outline;
-
-  const trigger = (
-    <Pressable
-      onPress={openPicker}
-      disabled={disabled}
-      style={[styles.field, { borderColor, opacity: disabled ? 0.6 : 1 }]}
-      className="bg-background"
-      accessibilityRole="button"
-      accessibilityLabel={label ?? t('common.select')}
-    >
-      <Text
-        className={selectedOption ? 'flex-1 text-base' : 'text-muted-foreground flex-1 text-base'}
-        numberOfLines={1}
-      >
-        {selectedOption?.label ?? displayPlaceholder}
-      </Text>
-      <ChevronDown size={20} color={theme.colors.onSurface} strokeWidth={2} />
-    </Pressable>
-  );
+  const borderColor = error ? colors.neg : colors.bd;
 
   return (
     <View style={[styles.container, style]}>
-      {label ? <Text className="mb-1 text-sm font-semibold">{label}</Text> : null}
-
-      {trigger}
-
-      {error ? <Text className="text-destructive mt-1 text-sm">{error}</Text> : null}
-
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
-        <Pressable
-          style={styles.modalContent}
-          className="bg-card"
-          onPress={(event) => event.stopPropagation()}
+      {label ? (
+        <Text
+          style={{
+            fontFamily: Fonts.sans.semibold,
+            fontSize: Typography.text.fieldLabel.size,
+            lineHeight: 17,
+            color: colors.fg,
+            marginBottom: 8,
+          }}
         >
-          <Text className="mb-2 text-center text-lg font-medium">
-            {label ?? t('common.select')}
-          </Text>
+          {label}
+        </Text>
+      ) : null}
 
-          <ScrollView style={styles.optionsList}>
-            {options.map((option, index) => (
-              <View key={option.value}>
-                <Pressable
-                  onPress={() => handleSelect(option.value)}
+      <Pressable
+        onPress={openPicker}
+        disabled={disabled}
+        style={[
+          styles.field,
+          {
+            backgroundColor: colors.surface2,
+            borderColor,
+            opacity: disabled ? 0.6 : 1,
+          },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={label ?? t('common.select')}
+      >
+        <Text
+          className={selectedOption ? 'text-fg flex-1 text-base' : 'text-muted flex-1 text-base'}
+          numberOfLines={1}
+        >
+          {selectedOption?.label ?? displayPlaceholder}
+        </Text>
+        <ChevronDown size={18} color={colors.muted} strokeWidth={2} />
+      </Pressable>
+
+      {error ? (
+        <Text
+          style={{
+            fontFamily: Fonts.sans.regular,
+            fontSize: 14,
+            color: colors.neg,
+            marginTop: 6,
+          }}
+        >
+          {error}
+        </Text>
+      ) : null}
+
+      <AppBottomSheet
+        visible={sheetVisible}
+        onDismiss={dismissSheet}
+        title={label ?? t('common.select')}
+        scrollable
+        contentStyle={styles.options}
+      >
+        {options.map((option) => {
+          const selected = option.value === value;
+          const Icon = option.icon;
+          return (
+            <Pressable
+              key={option.value}
+              onPress={() => handleSelect(option.value)}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              style={[
+                styles.optionRow,
+                {
+                  backgroundColor: selected ? colors.primaryTint : colors.surface2,
+                },
+              ]}
+            >
+              {Icon ? (
+                <View
                   style={[
-                    styles.optionRow,
-                    option.value === value && {
-                      backgroundColor: isDark ? Colors.surfaceVariantDark : Colors.primaryLight,
+                    styles.iconWell,
+                    {
+                      backgroundColor: selected ? colors.surface : colors.surface3,
                     },
                   ]}
                 >
-                  <Text
-                    className={option.value === value ? 'text-primary text-base' : 'text-base'}
-                  >
-                    {option.label}
-                  </Text>
-                </Pressable>
-                {index < options.length - 1 ? <Separator /> : null}
-              </View>
-            ))}
-          </ScrollView>
-
-          <AppButton mode="text" onPress={() => setModalVisible(false)}>
-            {t('common.cancel')}
-          </AppButton>
-        </Pressable>
-        </Pressable>
-      </Modal>
+                  <Icon
+                    size={18}
+                    color={selected ? colors.primary : colors.muted}
+                    strokeWidth={2}
+                  />
+                </View>
+              ) : null}
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.semibold,
+                  fontSize: 15,
+                  letterSpacing: -0.15,
+                  color: selected ? colors.primary : colors.fg,
+                  flex: 1,
+                }}
+              >
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </AppBottomSheet>
     </View>
   );
 }
@@ -148,34 +192,32 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   field: {
-    minHeight: 56,
+    minHeight: 48,
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: Spacing.md,
+    borderRadius: 14,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.sm,
   },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-  },
-  modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: Spacing.lg,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xl,
-    maxHeight: '70%',
-  },
-  optionsList: {
-    marginBottom: Spacing.md,
+  options: {
+    gap: 10,
+    paddingBottom: 4,
   },
   optionRow: {
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 52,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+  },
+  iconWell: {
+    width: 36,
+    height: 36,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

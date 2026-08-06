@@ -7,34 +7,36 @@ import { useTranslation } from 'react-i18next';
 
 import { Text } from '@/components/ui/text';
 import { NATIVE_TAB_BAR_OFFSET } from '@/constants/tabBar';
-import { Colors, Spacing } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import type { AppTheme } from '@/lib/theme';
 import { useUiStore, type ToastType } from '@/stores/uiStore';
 
-function getToastColors(type: ToastType) {
+function getToastColors(type: ToastType, colors: AppTheme['colors']) {
   switch (type) {
     case 'success':
       return {
-        background: Colors.accent,
-        foreground: Colors.textInverse,
+        background: colors.pos,
+        foreground: colors.onPrimary,
         icon: CheckCircle2,
       };
     case 'error':
       return {
-        background: Colors.danger,
-        foreground: Colors.textInverse,
+        background: colors.neg,
+        foreground: colors.onNeg,
         icon: AlertCircle,
       };
     case 'warning':
+      // No dedicated warning token in Naslov — chart slot 4 (gold) is the stand-in.
       return {
-        background: Colors.warning,
-        foreground: Colors.textPrimary,
+        background: colors.chart[4],
+        foreground: colors.fg,
         icon: AlertTriangle,
       };
     case 'info':
     default:
       return {
-        background: Colors.primary,
-        foreground: Colors.textInverse,
+        background: colors.primary,
+        foreground: colors.onPrimary,
         icon: Info,
       };
   }
@@ -43,6 +45,7 @@ function getToastColors(type: ToastType) {
 export function Toast() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
   const toast = useUiStore((state) => state.toast);
   const hideToast = useUiStore((state) => state.hideToast);
 
@@ -58,13 +61,13 @@ export function Toast() {
 
   if (!toast) return null;
 
-  const { background, foreground, icon: Icon } = getToastColors(toast.type);
+  const { background, foreground, icon: Icon } = getToastColors(toast.type, theme.colors);
 
   return (
     <View
       pointerEvents="box-none"
       className="absolute left-4 right-4 z-9999"
-      style={{ bottom: insets.bottom + NATIVE_TAB_BAR_OFFSET + Spacing.sm }}
+      style={{ bottom: insets.bottom + NATIVE_TAB_BAR_OFFSET + 8 }}
     >
       <Animated.View
         entering={FadeInDown.duration(250)}

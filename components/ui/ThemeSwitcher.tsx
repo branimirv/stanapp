@@ -66,7 +66,7 @@ interface ThemeToggleButtonProps {
 }
 
 export function ThemeToggleButton({ onPersist }: ThemeToggleButtonProps) {
-  const { isDark, setPreference } = useAppTheme();
+  const { isDark, setPreference, theme } = useAppTheme();
 
   const toggle = async () => {
     const next: Theme = isDark ? 'light' : 'dark';
@@ -77,15 +77,15 @@ export function ThemeToggleButton({ onPersist }: ThemeToggleButtonProps) {
   return (
     <Pressable
       onPress={toggle}
-      className="p-2"
+      className="bg-surface-2 size-[38px] items-center justify-center rounded-full"
       accessibilityRole="button"
       accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       {({ pressed }) =>
         isDark ? (
-          <Sun size={22} color="#FFFFFF" strokeWidth={2} opacity={pressed ? 0.5 : 1} />
+          <Sun size={17} color={theme.colors.fg} strokeWidth={2} opacity={pressed ? 0.5 : 1} />
         ) : (
-          <Moon size={22} color="#0F172A" strokeWidth={2} opacity={pressed ? 0.5 : 1} />
+          <Moon size={17} color={theme.colors.fg} strokeWidth={2} opacity={pressed ? 0.5 : 1} />
         )
       }
     </Pressable>

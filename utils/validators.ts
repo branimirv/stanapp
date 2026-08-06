@@ -33,6 +33,24 @@ export const tenantSchema = z.object({
   notes: z.string().max(1000).optional().nullable(),
 });
 
+/** UI form — single full-name field (same pattern as registration), split on submit. */
+export const tenantFormSchema = z.object({
+  full_name: z
+    .string()
+    .min(1, 'validation.required')
+    .max(200)
+    .refine(
+      (value) => value.trim().split(/\s+/).filter(Boolean).length >= 2,
+      'validation.fullNameRequired',
+    ),
+  email: z.string().email('validation.invalidEmail').optional().or(z.literal('')),
+  phone: z.string().min(1, 'validation.required').max(20),
+  contract_start: z.string().min(1, 'validation.required'),
+  contract_end: z.string().optional().nullable(),
+  deposit_amount: z.number().min(0),
+  notes: z.string().max(1000).optional().nullable(),
+});
+
 export const expenseSchema = z.object({
   property_id: z.string().uuid('validation.required'),
   category_id: z.string().uuid('validation.required'),
@@ -92,6 +110,7 @@ export const forgotPasswordSchema = z.object({
 
 export type PropertyFormValues = z.infer<typeof propertySchema>;
 export type TenantFormValues = z.infer<typeof tenantSchema>;
+export type TenantFormUiValues = z.infer<typeof tenantFormSchema>;
 export type ExpenseFormValues = z.infer<typeof expenseSchema>;
 export type RentPaymentFormValues = z.infer<typeof rentPaymentSchema>;
 export type ProfileFormValues = z.infer<typeof profileSchema>;

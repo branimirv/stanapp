@@ -3,6 +3,8 @@ import { TOAST_DURATION_MS } from '@/constants/config';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
+export type ConfirmDialogIcon = 'logOut' | 'userMinus' | 'trash' | 'alert' | 'check';
+
 export interface Toast {
   id: string;
   message: string;
@@ -17,6 +19,7 @@ interface ConfirmDialogState {
   confirmLabel: string;
   cancelLabel: string;
   destructive: boolean;
+  icon?: ConfirmDialogIcon;
   onConfirm: (() => void) | null;
 }
 
@@ -38,6 +41,7 @@ interface UiState {
     confirmLabel?: string;
     cancelLabel?: string;
     destructive?: boolean;
+    icon?: ConfirmDialogIcon;
     onConfirm: () => void;
   }) => void;
   hideConfirmDialog: () => void;
@@ -50,6 +54,7 @@ const defaultConfirmDialog: ConfirmDialogState = {
   confirmLabel: 'common.confirm',
   cancelLabel: 'common.cancel',
   destructive: false,
+  icon: undefined,
   onConfirm: null,
 };
 
@@ -96,6 +101,7 @@ export const useUiStore = create<UiState>((set, get) => ({
     confirmLabel = 'common.confirm',
     cancelLabel = 'common.cancel',
     destructive = false,
+    icon,
     onConfirm,
   }) =>
     set({
@@ -106,6 +112,7 @@ export const useUiStore = create<UiState>((set, get) => ({
         confirmLabel,
         cancelLabel,
         destructive,
+        icon,
         onConfirm,
       },
     }),

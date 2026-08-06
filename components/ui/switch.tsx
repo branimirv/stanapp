@@ -1,36 +1,74 @@
-import { cn } from '@/lib/utils';
 import * as SwitchPrimitives from '@rn-primitives/switch';
-import { Platform } from 'react-native';
+import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
-function Switch({
-  className,
-  ...props
-}: React.ComponentProps<typeof SwitchPrimitives.Root>) {
+import { useAppTheme } from '@/hooks/useAppTheme';
+
+const TRACK_W = 51;
+const TRACK_H = 31;
+const THUMB = 27;
+const PAD = 2;
+const THUMB_TRAVEL = TRACK_W - THUMB - PAD * 2;
+
+export type SwitchProps = React.ComponentProps<typeof SwitchPrimitives.Root> & {
+  style?: StyleProp<ViewStyle>;
+};
+
+/**
+ * Naslov toggle — primary track + white thumb (always visible).
+ * Avoids Uniwind token mismatches that made the thumb disappear on dark.
+ */
+function Switch({ className: _className, style, disabled, checked, ...props }: SwitchProps) {
+  const { theme } = useAppTheme();
+  const { colors } = theme;
+  const on = Boolean(checked);
+
   return (
     <SwitchPrimitives.Root
-      className={cn(
-        'flex h-[1.15rem] w-8 shrink-0 flex-row items-center rounded-full border border-transparent shadow-sm shadow-black/5',
-        Platform.select({
-          web: 'focus-visible:border-ring focus-visible:ring-ring/50 peer inline-flex outline-none transition-all focus-visible:ring-[3px] disabled:cursor-not-allowed',
-        }),
-        props.checked ? 'bg-primary' : 'bg-input dark:bg-input/80',
-        props.disabled && 'opacity-50',
-        className
-      )}
-      {...props}>
+      checked={checked}
+      disabled={disabled}
+      style={[
+        styles.track,
+        {
+          backgroundColor: on ? colors.primary : colors.track,
+          opacity: disabled ? 0.5 : 1,
+          borderColor: on ? colors.primary : colors.bd,
+        },
+        style,
+      ]}
+      {...props}
+    >
       <SwitchPrimitives.Thumb
-        className={cn(
-          'bg-background size-4 rounded-full transition-transform',
-          Platform.select({
-            web: 'pointer-events-none block ring-0',
-          }),
-          props.checked
-            ? 'dark:bg-primary-foreground translate-x-3.5'
-            : 'dark:bg-foreground translate-x-0'
-        )}
+        style={[
+          styles.thumb,
+          {
+            backgroundColor: '#FFFFFF',
+            transform: [{ translateX: on ? THUMB_TRAVEL : 0 }],
+          },
+        ]}
       />
     </SwitchPrimitives.Root>
   );
 }
+
+const styles = StyleSheet.create({
+  track: {
+    width: TRACK_W,
+    height: TRACK_H,
+    borderRadius: TRACK_H / 2,
+    padding: PAD,
+    borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: 'center',
+  },
+  thumb: {
+    width: THUMB,
+    height: THUMB,
+    borderRadius: THUMB / 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 2.5,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
+  },
+});
 
 export { Switch };

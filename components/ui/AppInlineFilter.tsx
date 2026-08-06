@@ -1,22 +1,13 @@
 import { ChevronDown } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { AppButton } from '@/components/ui/AppButton';
+import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
 import type { PickerOption } from '@/components/ui/AppPicker';
-import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
-import { Colors } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { cn } from '@/lib/utils';
+import { Fonts } from '@/lib/fonts';
 
 export interface AppInlineFilterProps<T extends string = string> {
   options: PickerOption<T>[];
@@ -24,11 +15,14 @@ export interface AppInlineFilterProps<T extends string = string> {
   onValueChange: (value: T) => void;
   title?: string;
   prefixLabel?: string;
+  /** When true, pill uses primary tint (Naslov `.fpill.on`). */
   accent?: boolean;
   showChevron?: boolean;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   onOpen?: () => void;
+  /** Notify host when the option sheet opens/closes (for blur + tab chrome). */
+  onVisibilityChange?: (open: boolean) => void;
 }
 
 export function AppInlineFilter<T extends string = string>({
@@ -38,34 +32,43 @@ export function AppInlineFilter<T extends string = string>({
   title,
   prefixLabel,
   accent = false,
-  showChevron = false,
+  showChevron = true,
   disabled = false,
   style,
   onOpen,
+  onVisibilityChange,
 }: AppInlineFilterProps<T>) {
-  const { theme, isDark } = useAppTheme();
+  const { theme } = useAppTheme();
+  const { colors } = theme;
   const { t } = useTranslation();
-  const [modalVisible, setModalVisible] = useState(false);
+  const [sheetVisible, setSheetVisible] = useState(false);
 
   const selectedOption = useMemo(
     () => options.find((option) => option.value === value),
     [options, value],
   );
 
-  const labelColor = accent ? theme.colors.primary : theme.colors.onSurface;
+  const labelColor = accent ? colors.primary : colors.fg;
+  const chevronColor = accent ? colors.primary : colors.muted;
 
   const openPicker = useCallback(() => {
     if (disabled) return;
     onOpen?.();
-    setModalVisible(true);
-  }, [disabled, onOpen]);
+    setSheetVisible(true);
+    onVisibilityChange?.(true);
+  }, [disabled, onOpen, onVisibilityChange]);
+
+  const dismissSheet = useCallback(() => {
+    setSheetVisible(false);
+    onVisibilityChange?.(false);
+  }, [onVisibilityChange]);
 
   const handleSelect = useCallback(
     (nextValue: T) => {
       onValueChange(nextValue);
-      setModalVisible(false);
+      dismissSheet();
     },
-    [onValueChange],
+    [dismissSheet, onValueChange],
   );
 
   const displayLabel = selectedOption?.label ?? t('ui.selectOption');
@@ -78,81 +81,117 @@ export function AppInlineFilter<T extends string = string>({
       <Pressable
         onPress={openPicker}
         disabled={disabled}
-        className={cn('shrink-0 flex-row items-center gap-1 py-1', disabled && 'opacity-50')}
-        style={style}
+        style={[
+          styles.fpill,
+          {
+            backgroundColor: accent ? colors.primaryTint : colors.surface2,
+            opacity: disabled ? 0.5 : 1,
+          },
+          style,
+        ]}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
       >
         <Text
-          className={cn('text-base', accent ? 'font-semibold' : 'font-medium')}
-          style={{ color: labelColor }}
+          style={{
+            fontFamily: Fonts.sans.semibold,
+            fontSize: 12.5,
+            letterSpacing: -0.125,
+            color: labelColor,
+          }}
           numberOfLines={1}
         >
-          {prefixLabel ? (
-            <>
-              <Text className="text-muted-foreground">{prefixLabel} · </Text>
-              {displayLabel}
-            </>
-          ) : (
-            displayLabel
-          )}
+          {prefixLabel ? `${prefixLabel} · ${displayLabel}` : displayLabel}
         </Text>
-        {showChevron ? (
-          <ChevronDown size={16} color={labelColor} strokeWidth={2.5} />
-        ) : null}
+        {showChevron ? <ChevronDown size={14} color={chevronColor} strokeWidth={2.5} /> : null}
       </Pressable>
 
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
+      <AppBottomSheet
+        visible={sheetVisible}
+        onDismiss={dismissSheet}
+        title={title ?? t('common.select')}
+        scrollable
+        contentStyle={styles.options}
       >
-        <View className="flex-1 justify-end bg-black/45">
-          <View className="bg-card max-h-[70%] rounded-t-[20px] px-6 pb-8 pt-6">
-            <Text className="mb-4 text-center text-base font-medium">
-              {title ?? t('common.select')}
-            </Text>
-
-            <ScrollView className="mb-4">
-              {options.map((option, index) => (
-                <View key={option.value}>
-                  <Pressable
-                    onPress={() => handleSelect(option.value)}
-                    className="rounded-lg px-2 py-4"
-                    style={
-                      option.value === value
-                        ? {
-                            backgroundColor: isDark
-                              ? Colors.surfaceVariantDark
-                              : Colors.primaryLight,
-                          }
-                        : undefined
-                    }
-                  >
-                    <Text
-                      className="text-base"
-                      style={{
-                        color:
-                          option.value === value
-                            ? theme.colors.primary
-                            : theme.colors.onSurface,
-                      }}
-                    >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                  {index < options.length - 1 ? <Separator /> : null}
+        {options.map((option) => {
+          const selected = option.value === value;
+          const Icon = option.icon;
+          return (
+            <Pressable
+              key={option.value}
+              onPress={() => handleSelect(option.value)}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              style={[
+                styles.optionRow,
+                {
+                  backgroundColor: selected ? colors.primaryTint : colors.surface2,
+                },
+              ]}
+            >
+              {Icon ? (
+                <View
+                  style={[
+                    styles.iconWell,
+                    {
+                      backgroundColor: selected ? colors.surface : colors.surface3,
+                    },
+                  ]}
+                >
+                  <Icon
+                    size={18}
+                    color={selected ? colors.primary : colors.muted}
+                    strokeWidth={2}
+                  />
                 </View>
-              ))}
-            </ScrollView>
-
-            <AppButton mode="text" onPress={() => setModalVisible(false)}>
-              {t('common.cancel')}
-            </AppButton>
-          </View>
-        </View>
-      </Modal>
+              ) : null}
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.semibold,
+                  fontSize: 15,
+                  letterSpacing: -0.15,
+                  color: selected ? colors.primary : colors.fg,
+                  flex: 1,
+                }}
+              >
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </AppBottomSheet>
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  fpill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 36,
+    paddingLeft: 14,
+    paddingRight: 12,
+    borderRadius: 999,
+    flexShrink: 0,
+  },
+  options: {
+    gap: 10,
+    paddingBottom: 4,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    height: 56,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+  },
+  iconWell: {
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

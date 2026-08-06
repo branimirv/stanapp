@@ -7,7 +7,6 @@ import {
 } from '@/components/ui/FloatingStackHeader';
 import { GlassSurface } from '@/components/ui/GlassSurface';
 import { ScreenPageTitle } from '@/components/ui/ScreenPageTitle';
-import { Spacing } from '@/constants/theme';
 
 /** When set, scroll shells (e.g. AppFormScroll) should pad content under the floating header. */
 const StackChromeEdgeInsetContext = createContext<number | null>(null);
@@ -102,14 +101,14 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 15,
     elevation: 15,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: 16,
   },
   stickyGlass: {
     // Keep a real radius — full-bleed radius 0 can mute / crash liquid glass.
   },
   stickyGlassContent: {
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.sm,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
 });

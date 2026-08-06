@@ -48,14 +48,17 @@ function AlertDialogOverlay({
 
 function AlertDialogContent({
   className,
+  overlayClassName,
   portalHost,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
     portalHost?: string;
+    /** Overrides default dimmed overlay (e.g. `bg-transparent` when BlurOverlay is a sibling). */
+    overlayClassName?: string;
   }) {
   return (
     <AlertDialogPortal hostName={portalHost}>
-      <AlertDialogOverlay>
+      <AlertDialogOverlay className={overlayClassName}>
         <AlertDialogPrimitive.Content
           className={cn(
             'bg-background border-border z-50 flex flex-col gap-4 rounded-lg border p-6 shadow-lg shadow-black/5 sm:max-w-lg',

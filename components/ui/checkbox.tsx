@@ -20,12 +20,12 @@ function Checkbox({
   return (
     <CheckboxPrimitive.Root
       className={cn(
-        'border-input dark:bg-input/30 size-4 shrink-0 rounded-[4px] border shadow-sm shadow-black/5',
+        'border-bd-strong bg-transparent size-4 shrink-0 rounded-[4px] border',
         Platform.select({
-          web: 'focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive peer cursor-default outline-none transition-shadow focus-visible:ring-[3px] disabled:cursor-not-allowed',
+          web: 'focus-visible:border-primary focus-visible:ring-primary/50 aria-invalid:ring-neg/20 aria-invalid:border-neg peer cursor-default outline-none transition-shadow focus-visible:ring-[3px] disabled:cursor-not-allowed',
           native: 'overflow-hidden',
         }),
-        props.checked && cn('border-primary', checkedClassName),
+        props.checked && cn('border-primary bg-primary', checkedClassName),
         props.disabled && 'opacity-50',
         className
       )}
@@ -36,8 +36,8 @@ function Checkbox({
         <Icon
           as={Check}
           size={12}
-          strokeWidth={Platform.OS === 'web' ? 2.5 : 3.5}
-          className={cn('text-primary-foreground', iconClassName)}
+          strokeWidth={Platform.OS === 'web' ? 2.5 : 3}
+          className={cn('text-on-primary', iconClassName)}
         />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>

@@ -15,8 +15,8 @@ export function ScreenAmbient() {
       <LinearGradient
         colors={
           isDark
-            ? ['rgba(37, 99, 235, 0.22)', 'rgba(37, 99, 235, 0.08)', 'transparent']
-            : ['rgba(147, 197, 253, 0.5)', 'rgba(219, 234, 254, 0.22)', 'transparent']
+            ? ['rgba(91, 143, 232, 0.22)', 'rgba(91, 143, 232, 0.08)', 'transparent']
+            : ['rgba(42, 94, 192, 0.18)', 'rgba(42, 94, 192, 0.08)', 'transparent']
         }
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}

@@ -6,7 +6,6 @@ import { enUS, hr } from 'date-fns/locale';
 import { Calendar } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import {
-  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -15,10 +14,13 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Spacing } from '@/constants/theme';
-import { useAppTheme } from '@/hooks/useAppTheme';
+
+import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
 import { AppButton } from '@/components/ui/AppButton';
 import { Text } from '@/components/ui/text';
+import { Spacing, Typography } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { Fonts } from '@/lib/fonts';
 
 const dateLocales = { en: enUS, hr } as const;
 
@@ -32,6 +34,8 @@ export interface AppDatePickerProps {
   error?: string;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  /** Notify host when the sheet opens/closes (for BlurOverlay sibling). */
+  onVisibilityChange?: (open: boolean) => void;
 }
 
 export function AppDatePicker({
@@ -44,10 +48,12 @@ export function AppDatePicker({
   error,
   disabled = false,
   style,
+  onVisibilityChange,
 }: AppDatePickerProps) {
   const { theme } = useAppTheme();
+  const { colors } = theme;
   const { t, i18n } = useTranslation();
-  const [showPicker, setShowPicker] = useState(false);
+  const [sheetVisible, setSheetVisible] = useState(false);
   const [tempDate, setTempDate] = useState<Date>(value ?? new Date());
 
   const locale = i18n.language === 'hr' ? dateLocales.hr : dateLocales.en;
@@ -62,59 +68,87 @@ export function AppDatePicker({
   const openPicker = useCallback(() => {
     if (disabled) return;
     setTempDate(value ?? new Date());
-    setShowPicker(true);
-  }, [disabled, value]);
+    setSheetVisible(true);
+    onVisibilityChange?.(true);
+  }, [disabled, onVisibilityChange, value]);
 
-  const closePicker = useCallback(() => {
-    setShowPicker(false);
-  }, []);
+  const dismissSheet = useCallback(() => {
+    setSheetVisible(false);
+    onVisibilityChange?.(false);
+  }, [onVisibilityChange]);
 
   const handleAndroidChange = useCallback(
     (event: DateTimePickerEvent, selectedDate?: Date) => {
-      setShowPicker(false);
+      setSheetVisible(false);
+      onVisibilityChange?.(false);
       if (event.type === 'set' && selectedDate) {
         onChange(selectedDate);
       }
     },
-    [onChange],
+    [onChange, onVisibilityChange],
   );
 
-  const handleIosConfirm = useCallback(() => {
+  const handleConfirm = useCallback(() => {
     onChange(tempDate);
-    closePicker();
-  }, [closePicker, onChange, tempDate]);
+    dismissSheet();
+  }, [dismissSheet, onChange, tempDate]);
 
   const handleClear = useCallback(() => {
     onChange(null);
-    closePicker();
-  }, [closePicker, onChange]);
+    dismissSheet();
+  }, [dismissSheet, onChange]);
 
-  const borderColor = error
-    ? theme.colors.error
-    : theme.colors.outline;
+  const borderColor = error ? colors.neg : colors.bd;
 
   return (
     <View style={[styles.container, style]}>
-      <Text className="mb-1 text-sm font-semibold">{displayLabel}</Text>
+      <Text
+        style={{
+          fontFamily: Fonts.sans.semibold,
+          fontSize: Typography.text.fieldLabel.size,
+          lineHeight: 17,
+          color: colors.fg,
+          marginBottom: 8,
+        }}
+      >
+        {displayLabel}
+      </Text>
 
       <Pressable
         onPress={openPicker}
         disabled={disabled}
-        style={[styles.field, { borderColor, opacity: disabled ? 0.6 : 1 }]}
-        className="bg-background"
+        style={[
+          styles.field,
+          {
+            backgroundColor: colors.surface2,
+            borderColor,
+            opacity: disabled ? 0.6 : 1,
+          },
+        ]}
         accessibilityRole="button"
         accessibilityLabel={displayLabel}
         accessibilityHint={t('ui.selectDate')}
       >
-        <Calendar size={20} color={theme.colors.primary} strokeWidth={2} />
-        <Text className={value ? 'flex-1 text-base' : 'text-muted-foreground flex-1 text-base'}>
+        <Calendar size={16} color={colors.primary} strokeWidth={2} />
+        <Text className={value ? 'text-fg flex-1 text-base' : 'text-muted flex-1 text-base'}>
           {formattedValue}
         </Text>
       </Pressable>
 
-      {error ? <Text className="text-destructive mt-1 text-sm">{error}</Text> : null}
+      {error ? (
+        <Text
+          style={{
+            fontFamily: Fonts.sans.regular,
+            fontSize: 14,
+            color: colors.neg,
+            marginTop: 6,
+          }}
+        >
+          {error}
+        </Text>
+      ) : null}
 
-      {Platform.OS === 'android' && showPicker ? (
+      {Platform.OS === 'android' && sheetVisible ? (
         <DateTimePicker
           value={tempDate}
           mode="date"
@@ -125,48 +159,35 @@ export function AppDatePicker({
         />
       ) : null}
 
-      {Platform.OS === 'ios' || Platform.OS === 'web' ? (
-        <Modal
-          visible={showPicker}
-          transparent
-          animationType="slide"
-          onRequestClose={closePicker}
+      {Platform.OS !== 'android' ? (
+        <AppBottomSheet
+          visible={sheetVisible}
+          onDismiss={dismissSheet}
+          title={t('ui.selectDate')}
+          contentStyle={styles.sheetBody}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent} className="bg-card">
-              <Text className="mb-2 text-center text-lg font-medium">
-                {t('ui.selectDate')}
-              </Text>
+          <DateTimePicker
+            value={tempDate}
+            mode="date"
+            display="spinner"
+            onChange={(_, selectedDate) => {
+              if (selectedDate) setTempDate(selectedDate);
+            }}
+            minimumDate={minimumDate}
+            maximumDate={maximumDate}
+            locale={i18n.language}
+            style={styles.picker}
+          />
 
-              <DateTimePicker
-                value={tempDate}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={(_, selectedDate) => {
-                  if (selectedDate) setTempDate(selectedDate);
-                }}
-                minimumDate={minimumDate}
-                maximumDate={maximumDate}
-                locale={i18n.language}
-                style={styles.picker}
-              />
-
-              <View style={styles.modalActions}>
-                <AppButton mode="text" onPress={handleClear}>
-                  {t('common.clear')}
-                </AppButton>
-                <View style={styles.modalActionsRight}>
-                  <AppButton mode="text" onPress={closePicker}>
-                    {t('common.cancel')}
-                  </AppButton>
-                  <AppButton mode="contained" onPress={handleIosConfirm}>
-                    {t('common.done')}
-                  </AppButton>
-                </View>
-              </View>
-            </View>
+          <View style={styles.actions}>
+            <AppButton mode="text" onPress={handleClear} className="flex-1">
+              {t('common.clear')}
+            </AppButton>
+            <AppButton mode="contained" onPress={handleConfirm} className="flex-1">
+              {t('common.done')}
+            </AppButton>
           </View>
-        </Modal>
+        </AppBottomSheet>
       ) : null}
     </View>
   );
@@ -177,38 +198,24 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   field: {
-    minHeight: 56,
+    minHeight: 48,
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: Spacing.md,
+    borderRadius: 14,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
   },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-  },
-  modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: Spacing.lg,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xl,
+  sheetBody: {
+    alignItems: 'stretch',
   },
   picker: {
     alignSelf: 'center',
   },
-  modalActions: {
+  actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 10,
     marginTop: Spacing.md,
-  },
-  modalActionsRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
   },
 });

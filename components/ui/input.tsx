@@ -4,6 +4,7 @@ import { Platform, TextInput } from 'react-native';
 function Input({
   className,
   placeholderClassName: _placeholderClassName,
+  multiline,
   ...props
 }: React.ComponentProps<typeof TextInput> &
   React.RefAttributes<TextInput> & {
@@ -11,8 +12,12 @@ function Input({
   }) {
   return (
     <TextInput
+      multiline={multiline}
       className={cn(
-        'dark:bg-input/30 border-input bg-background text-foreground flex h-10 w-full min-w-0 flex-row items-center rounded-md border px-3 py-1 text-base leading-5 shadow-sm shadow-black/5 sm:h-9',
+        'bg-surface-2 border-bd text-fg w-full min-w-0 rounded-[14px] border px-3.5 shadow-none',
+        multiline
+          ? 'h-auto min-h-21 py-3'
+          : 'h-[46px] flex-row items-center py-0',
         props.editable === false &&
           cn(
             'opacity-50',
@@ -20,11 +25,11 @@ function Input({
           ),
         Platform.select({
           web: cn(
-            'placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground outline-none transition-[color,box-shadow] md:text-sm',
-            'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',
-            'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
+            'placeholder:text-muted selection:bg-primary selection:text-on-primary outline-none transition-[color,box-shadow]',
+            'focus-visible:border-primary focus-visible:ring-primary/30 focus-visible:ring-[3px]',
+            'aria-invalid:ring-neg/20 aria-invalid:border-neg',
           ),
-          native: 'placeholder:text-muted-foreground/50',
+          native: 'placeholder:text-muted',
         }),
         className,
       )}

@@ -1,5 +1,12 @@
 import { useEffect } from 'react';
-import { LayoutChangeEvent, Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  LayoutChangeEvent,
+  Pressable,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -9,6 +16,8 @@ import Animated, {
 import { GlassSurface } from '@/components/ui/GlassSurface';
 import { Text } from '@/components/ui/text';
 import { Spacing } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { Fonts } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
 
 export interface SegmentedOption<T extends string = string> {
@@ -23,6 +32,11 @@ export interface AppSegmentedControlProps<T extends string = string> {
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
   className?: string;
+  /**
+   * `nav` — glass track + sliding indicator (detail tabs).
+   * `picker` — Naslov `.segs.picker`: solid primary fill on selection.
+   */
+  variant?: 'nav' | 'picker';
 }
 
 const INDICATOR_INSET = Spacing.xs / 2;
@@ -34,7 +48,10 @@ export function AppSegmentedControl<T extends string = string>({
   style,
   disabled = false,
   className,
+  variant = 'nav',
 }: AppSegmentedControlProps<T>) {
+  const { theme } = useAppTheme();
+  const { colors } = theme;
   const segmentCount = Math.max(segments.length, 1);
   const selectedIndex = Math.max(
     0,
@@ -69,6 +86,55 @@ export function AppSegmentedControl<T extends string = string>({
       transform: [{ translateX: indexProgress.value * width + INDICATOR_INSET }],
     };
   });
+
+  if (variant === 'picker') {
+    return (
+      <View
+        style={[
+          styles.pickerTrack,
+          {
+            backgroundColor: colors.surface2,
+            opacity: disabled ? 0.6 : 1,
+          },
+          style,
+        ]}
+        className={className}
+      >
+        {segments.map((segment) => {
+          const isSelected = segment.value === value;
+          return (
+            <Pressable
+              key={segment.value}
+              style={[
+                styles.pickerSeg,
+                isSelected ? { backgroundColor: colors.primary } : null,
+              ]}
+              onPress={() => {
+                if (disabled) return;
+                onValueChange(segment.value);
+              }}
+              disabled={disabled}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected, disabled }}
+            >
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.semibold,
+                  fontSize: 12,
+                  letterSpacing: -0.12,
+                  color: isSelected ? colors.onPrimary : colors.muted,
+                  textAlign: 'center',
+                }}
+                numberOfLines={1}
+              >
+                {segment.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    );
+  }
 
   return (
     <GlassSurface
@@ -116,3 +182,21 @@ export function AppSegmentedControl<T extends string = string>({
     </GlassSurface>
   );
 }
+
+const styles = StyleSheet.create({
+  pickerTrack: {
+    flexDirection: 'row',
+    gap: 5,
+    padding: 4,
+    borderRadius: 999,
+    minHeight: 40,
+  },
+  pickerSeg: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 999,
+  },
+});

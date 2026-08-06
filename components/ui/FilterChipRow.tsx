@@ -1,10 +1,9 @@
 import { X } from 'lucide-react-native';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { Text } from '@/components/ui/text';
-import { Colors } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { Fonts } from '@/lib/fonts';
 
 export interface FilterChip {
   key: string;
@@ -16,29 +15,41 @@ interface FilterChipRowProps {
   chips: FilterChip[];
 }
 
+/**
+ * Naslov `.fchip` row — applied filters with primary outline + clear.
+ * Wraps to multiple rows so chips never clip off-screen.
+ * See Analitika · filtrirano in naslov-theme.html.
+ */
 export function FilterChipRow({ chips }: FilterChipRowProps) {
-  const { isDark } = useAppTheme();
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
+  const { colors } = theme;
 
   if (chips.length === 0) return null;
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerClassName="flex-row gap-1 py-1"
-      keyboardShouldPersistTaps="handled"
-    >
+    <View style={styles.row}>
       {chips.map((chip) => (
         <View
           key={chip.key}
-          className="max-w-50 flex-row items-center gap-1 rounded-2xl border px-1 py-1 pl-2"
-          style={{
-            backgroundColor: isDark ? Colors.surfaceVariantDark : Colors.primaryLight,
-            borderColor: Colors.primary,
-          }}
+          style={[
+            styles.fchip,
+            {
+              backgroundColor: colors.primaryTint,
+              borderColor: colors.primary,
+            },
+          ]}
         >
-          <Text className="shrink text-xs font-medium" style={{ color: Colors.primary }} numberOfLines={1}>
+          <Text
+            style={{
+              fontFamily: Fonts.sans.semibold,
+              fontSize: 12,
+              letterSpacing: -0.12,
+              color: colors.primary,
+              flexShrink: 1,
+            }}
+            numberOfLines={1}
+          >
             {chip.label}
           </Text>
           <Pressable
@@ -46,11 +57,36 @@ export function FilterChipRow({ chips }: FilterChipRowProps) {
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel={t('expenses.removeFilter', { filter: chip.label })}
+            style={styles.clearHit}
           >
-            <X size={14} color={Colors.primary} strokeWidth={2.5} />
+            <X size={15} color={colors.primary} strokeWidth={2.5} />
           </Pressable>
         </View>
       ))}
-    </ScrollView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+  },
+  fchip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    height: 30,
+    paddingLeft: 12,
+    paddingRight: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    flexShrink: 0,
+    maxWidth: '100%',
+  },
+  clearHit: {
+    padding: 2,
+  },
+});
