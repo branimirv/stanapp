@@ -1,30 +1,31 @@
 import { router } from 'expo-router';
-import { Banknote, Building2, TrendingDown, TrendingUp } from 'lucide-react-native';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import { Platform, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { AlertBanner } from '@/components/dashboard/AlertBanner';
+
+import { DashboardAlertCard } from '@/components/dashboard/DashboardAlertCard';
+import { DashboardEmptyState } from '@/components/dashboard/DashboardEmptyState';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { DashboardPeriodFilter } from '@/components/dashboard/DashboardPeriodFilter';
+import { DashboardQuickActions } from '@/components/dashboard/DashboardQuickActions';
 import { OccupancyCard } from '@/components/dashboard/OccupancyCard';
 import { QuickCreateSheet } from '@/components/dashboard/QuickCreateSheet';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
-import { RecentProperties } from '@/components/dashboard/RecentProperties';
 import { RentCollectionCard } from '@/components/dashboard/RentCollectionCard';
-import { SummaryCard } from '@/components/dashboard/SummaryCard';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { ErrorState } from '@/components/ui/ErrorState';
 import {
-  FLOATING_ACTIONS_ROW_HEIGHT,
-  useFloatingActionsInset,
-} from '@/components/ui/FloatingScreenActions';
+  IncomeExpenseBays,
+  NetIncomeCard,
+  previousFromDelta,
+} from '@/components/dashboard/SummaryCard';
+import { APP_BOTTOM_SHEET_CLOSE_MS } from '@/components/ui/AppBottomSheet';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
-import { Colors, Spacing } from '@/constants/theme';
-import { DashboardCreateActions } from '@/hooks/useDashboardCreateHeader';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
-import { formatCurrency } from '@/utils/formatters';
+import { useTabBarStore } from '@/stores/tabBarStore';
 import type { DashboardPeriod, Language } from '@/types/app.types';
 
 function getInitialPeriod(): DashboardPeriod {
@@ -34,33 +35,27 @@ function getInitialPeriod(): DashboardPeriod {
 
 export default function DashboardScreen() {
   const { t, i18n } = useTranslation();
+  const { theme } = useAppTheme();
   const [period, setPeriod] = useState<DashboardPeriod>(getInitialPeriod);
   const { stats, isLoading, error, refetch } = useDashboardStats(period);
-  const { properties } = useProperties();
+  const { properties, isLoading: propertiesLoading } = useProperties();
   const { profile } = useProfile();
   const [refreshing, setRefreshing] = useState(false);
   const [createSheetVisible, setCreateSheetVisible] = useState(false);
+  const setChromeHidden = useTabBarStore((s) => s.setChromeHidden);
   const language = (profile?.language ?? i18n.language ?? 'hr') as Language;
 
-  const recentProperties = useMemo(() => properties.slice(0, 3), [properties]);
-  const hasNoProperties = !isLoading && properties.length === 0;
+  const hasNoProperties = !isLoading && !propertiesLoading && properties.length === 0;
 
   const openCreateSheet = useCallback(() => {
+    setChromeHidden(true);
     setCreateSheetVisible(true);
-  }, []);
+  }, [setChromeHidden]);
 
   const closeCreateSheet = useCallback(() => {
     setCreateSheetVisible(false);
-  }, []);
-
-  // iOS ScrollView automatic inset already covers the status bar; only reserve
-  // space for the floating create button (+ a little breathing room). Android
-  // needs the full safe-area inset.
-  const floatingInset = useFloatingActionsInset();
-  const contentTopPad =
-    Platform.OS === 'ios'
-      ? FLOATING_ACTIONS_ROW_HEIGHT + Spacing.md
-      : floatingInset + Spacing.md;
+    setChromeHidden(false);
+  }, [setChromeHidden]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -68,90 +63,115 @@ export default function DashboardScreen() {
     setRefreshing(false);
   }, [refetch]);
 
+  const previousNet = useMemo(() => {
+    if (!stats) return null;
+    return previousFromDelta(stats.netIncome, stats.netDeltaPct);
+  }, [stats]);
+
   const wrap = (children: ReactNode) => (
-    // collapsable={false}: keep ScrollView discoverable for NativeTabs
-    // liquid-glass scroll-edge / content-inset behavior.
-    <View className="flex-1 bg-transparent" collapsable={false}>
-      <DashboardCreateActions onCreatePress={openCreateSheet} />
-      {children}
+    <View style={styles.shell} collapsable={false}>
+      <View style={styles.content} collapsable={false}>
+        {children}
+      </View>
+      {/* Blur sibling of content — never inside the Modal (see docs/blur). */}
+      <BlurOverlay
+        visible={createSheetVisible}
+        intensity="strong"
+        tint="dark"
+        duration={APP_BOTTOM_SHEET_CLOSE_MS}
+        zIndex={5}
+      />
       <QuickCreateSheet visible={createSheetVisible} onDismiss={closeCreateSheet} />
     </View>
   );
 
-  if (isLoading && !stats) {
+  const contentPad = {
+    paddingHorizontal: theme.spacing.gutter,
+    paddingBottom: theme.spacing.scrollBottom,
+  };
+
+  if ((isLoading || propertiesLoading) && !stats && !hasNoProperties) {
     return wrap(
-      // Non-scroll shell has no automatic inset — use full floating safe-area pad.
-      <View style={{ paddingTop: floatingInset }}>
+      <View style={[contentPad, { paddingTop: 16 }]}>
         <SkeletonLoader count={1} height={56} style={styles.skeleton} />
         <SkeletonLoader count={1} height={48} style={styles.skeleton} />
         <SkeletonLoader count={1} height={120} style={styles.skeleton} />
         <SkeletonLoader count={2} height={100} style={styles.skeleton} />
-        <SkeletonLoader count={3} height={72} />
       </View>,
     );
   }
 
-  if (error && !stats) {
+  if (error && !stats && !hasNoProperties) {
     return wrap(<ErrorState message={error} onRetry={refetch} />);
   }
 
   if (hasNoProperties) {
     return wrap(
-      <EmptyState
-        icon={Building2}
-        title={t('empty.noProperties')}
-        subtitle={t('empty.noPropertiesHint')}
-        ctaLabel={t('properties.addNew')}
-        onCtaPress={() => router.push('/property/new')}
-      />,
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={contentPad}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        <DashboardHeader name={profile?.full_name} language={language} showAdd={false} />
+        <DashboardEmptyState />
+      </ScrollView>,
     );
   }
 
   if (!stats) {
     return wrap(
-      <EmptyState title={t('empty.noActivity')} subtitle={t('empty.noActivityHint')} />,
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={contentPad}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        <DashboardHeader
+          name={profile?.full_name}
+          language={language}
+          showAdd
+          onAddPress={openCreateSheet}
+        />
+        <DashboardEmptyState />
+      </ScrollView>,
     );
   }
 
   return wrap(
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
-      contentContainerStyle={[
-        styles.content,
-        { paddingTop: contentTopPad, paddingBottom: Spacing.lg },
-      ]}
+      contentContainerStyle={contentPad}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
-      <DashboardHeader name={profile?.full_name} language={language} />
+      <DashboardHeader
+        name={profile?.full_name}
+        language={language}
+        showAdd
+        onAddPress={openCreateSheet}
+      />
 
       <DashboardPeriodFilter value={period} onChange={setPeriod} language={language} />
 
-      <SummaryCard
+      <NetIncomeCard
         title={t('dashboard.netIncome')}
-        value={formatCurrency(stats.netIncome, stats.currency, language)}
-        icon={Banknote}
-        accentColor={Colors.primary}
-        delta={stats.netDeltaPct}
-        hero
+        amount={stats.netIncome}
+        currency={stats.currency}
+        language={language}
+        deltaPct={stats.netDeltaPct}
+        previousAmount={previousNet}
       />
 
-      <View style={styles.summaryRow}>
-        <SummaryCard
-          title={t('dashboard.income')}
-          value={formatCurrency(stats.totalRentIncome, stats.currency, language)}
-          icon={TrendingUp}
-          accentColor={Colors.accent}
-          delta={stats.incomeDeltaPct}
-        />
-        <SummaryCard
-          title={t('dashboard.expensesBilled')}
-          value={formatCurrency(stats.totalExpenses, stats.currency, language)}
-          icon={TrendingDown}
-          accentColor={Colors.danger}
-          delta={stats.expensesDeltaPct}
-          invertDelta
-        />
-      </View>
+      <IncomeExpenseBays
+        incomeLabel={t('dashboard.income')}
+        incomeAmount={stats.totalRentIncome}
+        incomeDeltaPct={stats.incomeDeltaPct}
+        expenseLabel={t('dashboard.expenses')}
+        expenseAmount={stats.totalExpenses}
+        expenseDeltaPct={stats.expensesDeltaPct}
+        currency={stats.currency}
+        language={language}
+      />
+
+      <DashboardQuickActions />
 
       {stats.expectedRent > 0 ? (
         <RentCollectionCard
@@ -164,21 +184,19 @@ export default function DashboardScreen() {
       ) : null}
 
       {stats.unpaidRentCount > 0 ? (
-        <AlertBanner
-          variant="danger"
+        <DashboardAlertCard
+          tone="neg"
           title={t('dashboard.unpaidRentCount', { count: stats.unpaidRentCount })}
-          message={t('dashboard.unpaidRentAlert')}
-          actionLabel={t('dashboard.viewUnpaidRent')}
+          subtitle={t('dashboard.unpaidRentAlert')}
           onPress={() => router.push('/(tabs)/properties')}
         />
       ) : null}
 
       {stats.overdueExpensesCount > 0 ? (
-        <AlertBanner
-          variant="danger"
+        <DashboardAlertCard
+          tone="neg"
           title={t('dashboard.overdueCount', { count: stats.overdueExpensesCount })}
-          message={t('dashboard.overdueAlert')}
-          actionLabel={t('dashboard.viewOverdue')}
+          subtitle={t('dashboard.overdueAlert')}
           onPress={() =>
             router.push({ pathname: '/(tabs)/expenses', params: { filter: 'overdue' } })
           }
@@ -186,11 +204,10 @@ export default function DashboardScreen() {
       ) : null}
 
       {stats.upcomingDueCount > 0 ? (
-        <AlertBanner
-          variant="warning"
+        <DashboardAlertCard
+          tone="warn"
           title={t('dashboard.upcomingDueCount', { count: stats.upcomingDueCount })}
-          message={t('dashboard.upcomingDueAlert')}
-          actionLabel={t('dashboard.viewUpcoming')}
+          subtitle={t('dashboard.upcomingDueAlert')}
           onPress={() =>
             router.push({ pathname: '/(tabs)/expenses', params: { filter: 'unpaid' } })
           }
@@ -198,10 +215,10 @@ export default function DashboardScreen() {
       ) : null}
 
       {stats.contractsExpiringCount > 0 ? (
-        <AlertBanner
-          variant="info"
+        <DashboardAlertCard
+          tone="primary"
           title={t('dashboard.contractsExpiringCount', { count: stats.contractsExpiringCount })}
-          message={t('dashboard.contractsExpiringAlert')}
+          subtitle={t('dashboard.contractsExpiringAlert')}
           onPress={() => router.push('/(tabs)/properties')}
         />
       ) : null}
@@ -213,31 +230,30 @@ export default function DashboardScreen() {
         onPress={() => router.push('/(tabs)/properties')}
       />
 
-      <RecentActivity items={stats.recentActivity} language={language} />
-
-      <RecentProperties
-        properties={recentProperties}
-        currency={stats.currency}
+      <RecentActivity
+        items={stats.recentActivity}
         language={language}
-        onPropertyPress={(property) => router.push(`/property/${property.id}`)}
-        onViewAll={() => router.push('/(tabs)/properties')}
+        onItemPress={(item) => {
+          if (item.type === 'rent_payment') {
+            router.push(`/rent/${item.id}`);
+          } else {
+            router.push(`/expense/${item.id}`);
+          }
+        }}
       />
     </ScrollView>,
   );
 }
 
 const styles = StyleSheet.create({
+  shell: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
   content: {
-    padding: Spacing.md,
+    flex: 1,
   },
   skeleton: {
-    marginBottom: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
+    marginBottom: 16,
   },
 });

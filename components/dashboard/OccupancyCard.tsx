@@ -1,9 +1,10 @@
-import { Building2, ChevronRight } from 'lucide-react-native';
-import { Pressable, View } from 'react-native';
+import { ChevronRight } from 'lucide-react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { Text } from '@/components/ui/text';
-import { Colors } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { Typography } from '@/constants/theme';
+import { displayFontFamily, Fonts } from '@/lib/fonts';
 
 export interface OccupancyCardProps {
   rentedCount: number;
@@ -12,6 +13,7 @@ export interface OccupancyCardProps {
   onPress?: () => void;
 }
 
+/** Naslov occupancy — sechead + % · 3-bay strip (rented / vacant / total). */
 export function OccupancyCard({
   rentedCount,
   vacantCount,
@@ -19,66 +21,140 @@ export function OccupancyCard({
   onPress,
 }: OccupancyCardProps) {
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
+  const { colors } = theme;
 
   const occupancyPct = totalCount > 0 ? Math.round((rentedCount / totalCount) * 100) : 0;
 
-  const content = (
-    <View className="bg-card border-border gap-4 rounded-xl border p-4">
-      <View className="flex-row items-center gap-2">
-        <View
-          className="h-9 w-9 items-center justify-center rounded-full"
-          style={{ backgroundColor: `${Colors.primary}22` }}
-        >
-          <Building2 size={20} color={Colors.primary} strokeWidth={2} />
-        </View>
-        <View className="flex-1 gap-0.5">
-          <Text className="text-base font-medium">{t('dashboard.occupancy')}</Text>
-          <Text className="text-muted-foreground text-xs">
-            {t('dashboard.occupancyRate', { percent: occupancyPct })}
-          </Text>
-        </View>
-        {onPress ? <ChevronRight size={20} className="text-muted-foreground" strokeWidth={2} /> : null}
-      </View>
-
-      <View className="flex-row items-center justify-around">
-        <View className="flex-1 items-center gap-0.5">
-          <Text className="text-xl font-semibold" style={{ color: Colors.accent }}>
-            {rentedCount}
-          </Text>
-          <Text className="text-muted-foreground text-[11px] font-medium">
-            {t('dashboard.rented')}
-          </Text>
-        </View>
-        <View className="bg-border h-8 w-px" />
-        <View className="flex-1 items-center gap-0.5">
+  return (
+    <View style={{ marginBottom: 16 }}>
+      <Pressable
+        onPress={onPress}
+        disabled={!onPress}
+        accessibilityRole={onPress ? 'button' : undefined}
+      >
+        <View style={styles.secheadRow}>
           <Text
-            className="text-xl font-semibold"
-            style={vacantCount > 0 ? { color: Colors.warning } : undefined}
+            style={{
+              fontFamily: displayFontFamily(theme.name),
+              fontSize: Typography.display.sectionHead.size,
+              lineHeight: Typography.display.sectionHead.lineHeight,
+              letterSpacing: Typography.display.sectionHead.letterSpacing,
+              color: colors.fg,
+              flex: 1,
+            }}
           >
-            {vacantCount}
+            {t('dashboard.occupancy')}
           </Text>
-          <Text className="text-muted-foreground text-[11px] font-medium">
-            {t('dashboard.vacant')}
+          <Text
+            style={{
+              fontFamily: displayFontFamily(theme.name),
+              fontSize: Typography.display.rowFigure.size,
+              letterSpacing: Typography.display.rowFigure.letterSpacing,
+              color: colors.primary,
+            }}
+          >
+            {occupancyPct} %
           </Text>
+          {onPress ? (
+            <ChevronRight size={16} color={colors.muted} strokeWidth={2} style={{ marginLeft: 4 }} />
+          ) : null}
         </View>
-        <View className="bg-border h-8 w-px" />
-        <View className="flex-1 items-center gap-0.5">
-          <Text className="text-xl font-semibold">{totalCount}</Text>
-          <Text className="text-muted-foreground text-[11px] font-medium">
-            {t('dashboard.total')}
-          </Text>
-        </View>
-      </View>
+      </Pressable>
+
+      <Pressable
+        onPress={onPress}
+        disabled={!onPress}
+        style={[
+          styles.bays,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.cardBd,
+            borderRadius: theme.radius.xl,
+            ...theme.elevation.card,
+          },
+        ]}
+      >
+        <Bay
+          value={rentedCount}
+          label={t('dashboard.rented')}
+          valueColor={colors.pos}
+        />
+        <View style={[styles.divider, { backgroundColor: colors.bd }]} />
+        <Bay
+          value={vacantCount}
+          label={t('dashboard.vacant')}
+          valueColor={vacantCount > 0 ? colors.chart[4] : colors.fg}
+        />
+        <View style={[styles.divider, { backgroundColor: colors.bd }]} />
+        <Bay value={totalCount} label={t('dashboard.total')} valueColor={colors.fg} />
+      </Pressable>
     </View>
   );
-
-  if (onPress) {
-    return (
-      <Pressable onPress={onPress} accessibilityRole="button" className="mb-4">
-        {content}
-      </Pressable>
-    );
-  }
-
-  return <View className="mb-4">{content}</View>;
 }
+
+function Bay({
+  value,
+  label,
+  valueColor,
+}: {
+  value: number;
+  label: string;
+  valueColor: string;
+}) {
+  const { theme } = useAppTheme();
+  const { colors } = theme;
+
+  return (
+    <View style={styles.bay}>
+      <Text
+        style={{
+          fontFamily: Fonts.sans.semibold,
+          fontSize: 10,
+          letterSpacing: 0.8,
+          textTransform: 'uppercase',
+          color: colors.muted,
+          marginBottom: 8,
+        }}
+      >
+        {label}
+      </Text>
+      <Text
+        style={{
+          fontFamily: displayFontFamily(theme.name),
+          fontSize: 23,
+          letterSpacing: -0.46,
+          color: valueColor,
+          fontVariant: ['tabular-nums', 'lining-nums'],
+        }}
+      >
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  secheadRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 11,
+    gap: 8,
+  },
+  bays: {
+    flexDirection: 'row',
+    overflow: 'hidden',
+    borderWidth: 1,
+  },
+  bay: {
+    flex: 1,
+    paddingTop: 16,
+    paddingHorizontal: 12,
+    paddingBottom: 15,
+    alignItems: 'center',
+  },
+  divider: {
+    width: 1,
+    alignSelf: 'stretch',
+  },
+});

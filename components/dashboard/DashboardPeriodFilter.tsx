@@ -7,6 +7,7 @@ import {
   Platform,
   Pressable,
   StyleSheet,
+  Text,
   View,
   type StyleProp,
   type ViewStyle,
@@ -14,10 +15,8 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/ui/AppButton';
-import { GlassSurface } from '@/components/ui/GlassSurface';
-import { Icon } from '@/components/ui/icon';
-import { Text } from '@/components/ui/text';
-import { Spacing } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { displayFontFamily, Fonts } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
 import { formatPeriod } from '@/utils/formatters';
 import type { DashboardPeriod, Language } from '@/types/app.types';
@@ -56,6 +55,8 @@ export function DashboardPeriodFilter({
   className,
 }: DashboardPeriodFilterProps) {
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
+  const { colors } = theme;
   const [showPicker, setShowPicker] = useState(false);
 
   const current = getCurrentMonthYear();
@@ -65,10 +66,7 @@ export function DashboardPeriodFilter({
   const locale = dateLocales[language];
 
   const monthLabels = useMemo(
-    () =>
-      MONTHS.map((month) =>
-        format(new Date(2024, month - 1, 1), 'MMM', { locale }),
-      ),
+    () => MONTHS.map((month) => format(new Date(2024, month - 1, 1), 'MMM', { locale })),
     [locale],
   );
 
@@ -90,8 +88,7 @@ export function DashboardPeriodFilter({
   }, []);
 
   const handlePrev = useCallback(() => {
-    const next = stepMonth(value.month, value.year, -1);
-    onChange(next);
+    onChange(stepMonth(value.month, value.year, -1));
   }, [onChange, value]);
 
   const handleNext = useCallback(() => {
@@ -109,78 +106,110 @@ export function DashboardPeriodFilter({
     setPickerYear((prev) => prev + delta);
   }, []);
 
-  const handleMonthSelect = useCallback((month: number) => {
-    if (isFutureMonth(month, pickerYear)) return;
-    setPickerMonth(month);
-  }, [pickerYear]);
+  const handleMonthSelect = useCallback(
+    (month: number) => {
+      if (isFutureMonth(month, pickerYear)) return;
+      setPickerMonth(month);
+    },
+    [pickerYear],
+  );
 
   const canStepYearForward = pickerYear < current.year;
   const canConfirmMonth = !isFutureMonth(pickerMonth, pickerYear);
 
   return (
-    <View className={cn('mb-4', className)} style={style}>
-      <View className="flex-row items-center justify-center gap-2">
+    <View className={className} style={[{ marginBottom: 14 }, style]}>
+      <View style={styles.mrow}>
         <Pressable
           onPress={handlePrev}
           accessibilityRole="button"
           accessibilityLabel={t('common.previous')}
+          style={[styles.mb, { backgroundColor: colors.surface2 }]}
         >
-          <GlassSurface shape="circle" interactive style={{ width: 36, height: 36 }} contentStyle={styles.iconHit}>
-            <Icon as={ChevronLeft} size={20} className="text-foreground" strokeWidth={2} />
-          </GlassSurface>
+          <ChevronLeft size={15} color={colors.muted} strokeWidth={2} />
         </Pressable>
 
         <Pressable
           onPress={openPicker}
-          className="max-w-55 flex-1"
+          style={[styles.ml, { backgroundColor: colors.surface2 }]}
           accessibilityRole="button"
           accessibilityLabel={t('dashboard.selectPeriod')}
         >
-          <GlassSurface shape="pill" interactive contentStyle={styles.periodLabel}>
-            <Text className="text-foreground text-base font-medium">{displayLabel}</Text>
-          </GlassSurface>
+          <Text
+            style={{
+              fontFamily: displayFontFamily(theme.name),
+              fontSize: 15,
+              letterSpacing: -0.3,
+              color: colors.fg,
+              textAlign: 'center',
+            }}
+            numberOfLines={1}
+          >
+            {displayLabel}
+          </Text>
         </Pressable>
 
         <Pressable
           onPress={handleNext}
           disabled={!canStepForward}
-          style={!canStepForward ? { opacity: 0.35 } : undefined}
+          style={[
+            styles.mb,
+            { backgroundColor: colors.surface2 },
+            !canStepForward && { opacity: 0.35 },
+          ]}
           accessibilityRole="button"
           accessibilityLabel={t('common.next')}
         >
-          <GlassSurface shape="circle" interactive style={{ width: 36, height: 36 }} contentStyle={styles.iconHit}>
-            <Icon as={ChevronRight} size={20} className="text-foreground" strokeWidth={2} />
-          </GlassSurface>
+          <ChevronRight size={15} color={colors.muted} strokeWidth={2} />
         </Pressable>
       </View>
 
-      <Modal
-        visible={showPicker}
-        transparent
-        animationType="slide"
-        onRequestClose={closePicker}
-      >
+      <Modal visible={showPicker} transparent animationType="slide" onRequestClose={closePicker}>
         <View className="flex-1 justify-end bg-black/45">
           <View
-            className="bg-card rounded-t-[20px] px-6 pt-6"
-            style={{ paddingBottom: Platform.OS === 'ios' ? 40 : 32 }}
+            style={{
+              backgroundColor: colors.surface,
+              borderTopLeftRadius: 26,
+              borderTopRightRadius: 26,
+              paddingHorizontal: 24,
+              paddingTop: 24,
+              paddingBottom: Platform.OS === 'ios' ? 40 : 32,
+            }}
           >
-            <Text className="mb-4 text-center text-base font-medium">
+            <Text
+              style={{
+                fontFamily: Fonts.sans.semibold,
+                fontSize: 16,
+                textAlign: 'center',
+                color: colors.fg,
+                marginBottom: 16,
+              }}
+            >
               {t('dashboard.selectPeriod')}
             </Text>
 
             <View className="mb-4 flex-row items-center justify-center gap-6">
               <Pressable onPress={() => handleYearStep(-1)} className="p-1" accessibilityRole="button">
-                <Icon as={ChevronLeft} size={22} className="text-foreground" strokeWidth={2} />
+                <ChevronLeft size={22} color={colors.fg} strokeWidth={2} />
               </Pressable>
-              <Text className="min-w-18 text-center text-xl font-semibold">{pickerYear}</Text>
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.semibold,
+                  fontSize: 20,
+                  minWidth: 72,
+                  textAlign: 'center',
+                  color: colors.fg,
+                }}
+              >
+                {pickerYear}
+              </Text>
               <Pressable
                 onPress={() => handleYearStep(1)}
                 disabled={!canStepYearForward}
                 className={cn('p-1', !canStepYearForward && 'opacity-35')}
                 accessibilityRole="button"
               >
-                <Icon as={ChevronRight} size={22} className="text-foreground" strokeWidth={2} />
+                <ChevronRight size={22} color={colors.fg} strokeWidth={2} />
               </Pressable>
             </View>
 
@@ -194,18 +223,18 @@ export function DashboardPeriodFilter({
                     key={month}
                     onPress={() => handleMonthSelect(month)}
                     disabled={isDisabled}
-                    className={cn(
-                      'grow items-center rounded-md py-2',
-                      isSelected ? 'bg-primary' : 'bg-muted',
-                      isDisabled && 'opacity-35',
-                    )}
-                    style={{ width: '30%' }}
+                    className={cn('grow items-center rounded-md py-2', isDisabled && 'opacity-35')}
+                    style={{
+                      width: '30%',
+                      backgroundColor: isSelected ? colors.primary : colors.surface2,
+                    }}
                   >
                     <Text
-                      className={cn(
-                        'text-sm font-medium',
-                        isSelected && 'text-primary-foreground',
-                      )}
+                      style={{
+                        fontFamily: Fonts.sans.medium,
+                        fontSize: 14,
+                        color: isSelected ? colors.onPrimary : colors.fg,
+                      }}
                     >
                       {monthLabels[index]}
                     </Text>
@@ -230,15 +259,23 @@ export function DashboardPeriodFilter({
 }
 
 const styles = StyleSheet.create({
-  iconHit: {
-    flex: 1,
+  mrow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  mb: {
+    width: 36,
+    height: 36,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  periodLabel: {
+  ml: {
+    flex: 1,
+    paddingVertical: 9,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
   },
 });
