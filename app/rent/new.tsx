@@ -1,15 +1,20 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
+import { RentPaymentForm } from '@/components/rent/RentPaymentForm';
+import {
+  APP_BOTTOM_SHEET_CLOSE_MS,
+} from '@/components/ui/AppBottomSheet';
+import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
-import { RentPaymentForm } from '@/components/rent/RentPaymentForm';
-import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
 import { useProperties } from '@/hooks/useProperties';
 import { useRentPaymentMutations } from '@/hooks/useRentPayments';
 import { useTenants } from '@/hooks/useTenants';
 import { useUiStore } from '@/stores/uiStore';
+import { toDateString } from '@/utils/formHelpers';
 import type { RentPaymentFormValues } from '@/utils/validators';
 
 export default function NewRentPaymentScreen() {
@@ -25,7 +30,13 @@ export default function NewRentPaymentScreen() {
   const { create } = useRentPaymentMutations();
   const showToast = useUiStore((s) => s.showToast);
   const [isSaving, setIsSaving] = useState(false);
-  const screenStyles = useThemedScreenStyles();
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const lockedProperty = useMemo(
+    () => (propertyId ? properties.find((property) => property.id === propertyId) : undefined),
+    [properties, propertyId],
+  );
+  const hidePropertyField = Boolean(propertyId && lockedProperty);
 
   const handleSubmit = async (values: RentPaymentFormValues) => {
     setIsSaving(true);
@@ -55,16 +66,19 @@ export default function NewRentPaymentScreen() {
 
   if (propertiesLoading || tenantsLoading) {
     return (
-      <StackScreenChrome title={t('rent.newPayment')}>
+      <StackScreenChrome title={t('rent.newPayment')} hideHeaderTitle edgeToEdge>
         <SkeletonLoader count={6} style={styles.loader} />
       </StackScreenChrome>
     );
   }
 
   return (
-    <StackScreenChrome title={t('rent.newPayment')} edgeToEdge>
-      <View style={screenStyles.container}>
+    <StackScreenChrome title={t('rent.newPayment')} hideHeaderTitle edgeToEdge>
+      <View className="flex-1 bg-transparent">
         <RentPaymentForm
+          title={t('rent.newPayment')}
+          eyebrow={lockedProperty?.name}
+          hidePropertyField={hidePropertyField}
           properties={properties}
           tenants={tenants}
           defaultValues={{
@@ -72,10 +86,21 @@ export default function NewRentPaymentScreen() {
             ...(tenantId ? { tenant_id: tenantId } : {}),
             ...(periodMonth ? { period_month: Number(periodMonth) } : {}),
             ...(periodYear ? { period_year: Number(periodYear) } : {}),
+            status: 'paid',
+            payment_date: toDateString(new Date()),
           }}
           onSubmit={handleSubmit}
           isSubmitting={isSaving}
-          submitLabel={t('common.create')}
+          submitLabel={t('properties.recordPayment')}
+          onSheetVisibilityChange={setSheetOpen}
+        />
+        {/* Blur sibling of form — never inside the Modal (see docs/blur). */}
+        <BlurOverlay
+          visible={sheetOpen}
+          intensity="strong"
+          tint="dark"
+          duration={APP_BOTTOM_SHEET_CLOSE_MS}
+          zIndex={5}
         />
       </View>
     </StackScreenChrome>

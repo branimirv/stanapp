@@ -2,11 +2,13 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
+import { TenantForm } from '@/components/tenant/TenantForm';
+import { APP_BOTTOM_SHEET_CLOSE_MS } from '@/components/ui/AppBottomSheet';
+import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
-import { TenantForm } from '@/components/tenant/TenantForm';
-import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
 import { useProperty } from '@/hooks/useProperties';
 import { useTenantMutations } from '@/hooks/useTenants';
 import { useUiStore } from '@/stores/uiStore';
@@ -25,7 +27,7 @@ export default function NewTenantScreen() {
     refetch: loadProperty,
   } = useProperty(propertyId);
   const [isSaving, setIsSaving] = useState(false);
-  const screenStyles = useThemedScreenStyles();
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const error = !propertyId
     ? t('validation.selectProperty')
@@ -64,7 +66,7 @@ export default function NewTenantScreen() {
 
   if (isLoading) {
     return (
-      <StackScreenChrome title={t('tenants.newTenant')}>
+      <StackScreenChrome title={t('tenants.newTenant')} hideHeaderTitle edgeToEdge>
         <SkeletonLoader count={6} style={styles.loader} />
       </StackScreenChrome>
     );
@@ -72,16 +74,29 @@ export default function NewTenantScreen() {
 
   if (error || !canAddTenant) {
     return (
-      <StackScreenChrome title={t('tenants.newTenant')}>
+      <StackScreenChrome title={t('tenants.newTenant')} hideHeaderTitle edgeToEdge>
         <ErrorState message={error ?? t('properties.notFound')} onRetry={loadProperty} />
       </StackScreenChrome>
     );
   }
 
   return (
-    <StackScreenChrome title={t('tenants.newTenant')} edgeToEdge>
-      <View style={screenStyles.container}>
-        <TenantForm onSubmit={handleSubmit} isSubmitting={isSaving} submitLabel={t('common.create')} />
+    <StackScreenChrome title={t('tenants.newTenant')} hideHeaderTitle edgeToEdge>
+      <View className="flex-1 bg-transparent">
+        <TenantForm
+          title={t('tenants.newTenant')}
+          onSubmit={handleSubmit}
+          isSubmitting={isSaving}
+          submitLabel={t('tenants.addNew')}
+          onSheetVisibilityChange={setSheetOpen}
+        />
+        <BlurOverlay
+          visible={sheetOpen}
+          intensity="strong"
+          tint="dark"
+          duration={APP_BOTTOM_SHEET_CLOSE_MS}
+          zIndex={5}
+        />
       </View>
     </StackScreenChrome>
   );

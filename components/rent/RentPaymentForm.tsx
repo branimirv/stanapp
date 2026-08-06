@@ -1,26 +1,39 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+
+import { AppButton } from '@/components/ui/AppButton';
 import { AppDatePicker } from '@/components/ui/AppDatePicker';
-import { AppFormScroll, AppFormSubmit } from '@/components/ui/AppFormScroll';
 import { AppPicker } from '@/components/ui/AppPicker';
+import { useStackChromeEdgeInset } from '@/components/ui/StackScreenChrome';
 import { AppTextInput } from '@/components/ui/AppTextInput';
-import { Text } from '@/components/ui/text';
 import { PAYMENT_STATUSES } from '@/constants/config';
 import { Spacing } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocale } from '@/hooks/useLocale';
+import { displayFontFamily, Fonts } from '@/lib/fonts';
 import type { PaymentStatus, Property, Tenant } from '@/types/app.types';
 import { parseDateString, toDateString, translateFieldError } from '@/utils/formHelpers';
+import { formatMonthName } from '@/utils/formatters';
 import { rentPaymentSchema, type RentPaymentFormValues } from '@/utils/validators';
 
 export interface RentPaymentFormProps {
+  title?: string;
+  /** Eyebrow above title — property context (Naslov: no property field when set). */
+  eyebrow?: string;
+  /** When true, hide the property picker (context from eyebrow / locked id). */
+  hidePropertyField?: boolean;
   defaultValues?: Partial<RentPaymentFormValues>;
   properties: Property[];
   tenants: Tenant[];
   isSubmitting?: boolean;
   submitLabel?: string;
   onSubmit: (values: RentPaymentFormValues) => void | Promise<void>;
+  /** Host BlurOverlay sibling — fire when any picker/date sheet opens or closes. */
+  onSheetVisibilityChange?: (open: boolean) => void;
 }
 
 const defaultFormValues: RentPaymentFormValues = {
@@ -29,25 +42,29 @@ const defaultFormValues: RentPaymentFormValues = {
   amount: 0,
   period_month: new Date().getMonth() + 1,
   period_year: new Date().getFullYear(),
-  status: 'pending',
-  payment_date: null,
+  status: 'paid',
+  payment_date: toDateString(new Date()),
   notes: null,
 };
 
-const MONTH_OPTIONS = Array.from({ length: 12 }, (_, index) => ({
-  value: String(index + 1),
-  label: String(index + 1).padStart(2, '0'),
-}));
-
 export function RentPaymentForm({
+  title,
+  eyebrow,
+  hidePropertyField = false,
   defaultValues,
   properties,
   tenants,
   isSubmitting = false,
   submitLabel,
   onSubmit,
+  onSheetVisibilityChange,
 }: RentPaymentFormProps) {
   const { t } = useTranslation();
+  const { language } = useLocale();
+  const { theme } = useAppTheme();
+  const { colors } = theme;
+  const insets = useSafeAreaInsets();
+  const edgeInset = useStackChromeEdgeInset();
 
   const {
     control,
@@ -62,6 +79,18 @@ export function RentPaymentForm({
 
   const selectedPropertyId = watch('property_id');
   const selectedProperty = properties.find((property) => property.id === selectedPropertyId);
+
+  const monthOptions = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, index) => {
+        const month = index + 1;
+        const name = formatMonthName(month, 2026, language).replace(/\.$/, '');
+        const label =
+          name.charAt(0).toLocaleUpperCase(language === 'en' ? 'en' : 'hr') + name.slice(1);
+        return { value: String(month), label };
+      }),
+    [language],
+  );
 
   useEffect(() => {
     if (selectedProperty && Number(selectedProperty.rent_amount) > 0) {
@@ -91,157 +120,258 @@ export function RentPaymentForm({
   const fieldError = (message?: string) => translateFieldError(t, message);
 
   return (
-    <AppFormScroll>
-      <Controller
-        control={control}
-        name="property_id"
-        render={({ field: { value, onChange }, fieldState }) => (
-          <AppPicker
-            label={t('rent.property')}
-            placeholder={t('rent.selectProperty')}
-            options={propertyOptions}
-            value={value || null}
-            onValueChange={(next) => {
-              onChange(next);
-              setValue('tenant_id', '');
-            }}
-            error={fieldError(fieldState.error?.message)}
-          />
-        )}
-      />
+    <View style={styles.shell}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingHorizontal: theme.spacing.gutter,
+            paddingTop: (edgeInset ?? 0) + 8,
+            paddingBottom: 24,
+          },
+        ]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {title ? (
+          <View style={styles.titleBlk}>
+            {eyebrow ? (
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.semibold,
+                  fontSize: 11,
+                  letterSpacing: 1.54,
+                  textTransform: 'uppercase',
+                  color: colors.muted,
+                  marginBottom: 10,
+                }}
+              >
+                {eyebrow}
+              </Text>
+            ) : null}
+            <Text
+              style={{
+                fontFamily: displayFontFamily(theme.name),
+                fontSize: 32,
+                lineHeight: 32,
+                letterSpacing: -0.8,
+                color: colors.fg,
+              }}
+              accessibilityRole="header"
+            >
+              {title}
+            </Text>
+          </View>
+        ) : null}
 
-      <Controller
-        control={control}
-        name="tenant_id"
-        render={({ field: { value, onChange }, fieldState }) => (
-          <AppPicker
-            label={t('rent.tenant')}
-            placeholder={t('rent.selectTenant')}
-            options={tenantOptions}
-            value={value || null}
-            onValueChange={onChange}
-            disabled={!selectedPropertyId}
-            error={fieldError(fieldState.error?.message)}
-          />
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="amount"
-        render={({ field: { value, onChange, onBlur }, fieldState }) => (
-          <AppTextInput
-            label={t('rent.amount')}
-            value={String(value ?? 0)}
-            onChangeText={(text) => {
-              const parsed = Number.parseFloat(text.replace(',', '.'));
-              onChange(Number.isNaN(parsed) ? 0 : parsed);
-            }}
-            onBlur={onBlur}
-            keyboardType="decimal-pad"
-            error={fieldError(fieldState.error?.message)}
-          />
-        )}
-      />
-
-      <View style={styles.periodRow}>
-        <View style={styles.periodField}>
+        {!hidePropertyField ? (
           <Controller
             control={control}
-            name="period_month"
+            name="property_id"
             render={({ field: { value, onChange }, fieldState }) => (
               <AppPicker
-                label={t('rent.periodMonth')}
-                options={MONTH_OPTIONS.map((option) => ({
-                  label: option.label,
-                  value: option.value,
-                }))}
-                value={String(value)}
-                onValueChange={(next) => onChange(Number.parseInt(next, 10))}
-                error={fieldError(fieldState.error?.message)}
-              />
-            )}
-          />
-        </View>
-
-        <View style={styles.periodField}>
-          <Text className="mb-1 text-sm font-semibold">{t('rent.periodYear')}</Text>
-          <Controller
-            control={control}
-            name="period_year"
-            render={({ field: { value, onChange, onBlur }, fieldState }) => (
-              <AppTextInput
-                value={value != null ? String(value) : String(new Date().getFullYear())}
-                onChangeText={(text) => {
-                  const parsed = Number.parseInt(text, 10);
-                  onChange(Number.isNaN(parsed) ? new Date().getFullYear() : parsed);
+                label={t('rent.property')}
+                placeholder={t('rent.selectProperty')}
+                options={propertyOptions}
+                value={value || null}
+                onValueChange={(next) => {
+                  onChange(next);
+                  setValue('tenant_id', '');
                 }}
-                onBlur={onBlur}
-                keyboardType="number-pad"
-                placeholder={String(new Date().getFullYear())}
-                style={styles.periodInput}
                 error={fieldError(fieldState.error?.message)}
+                style={styles.field}
+                onVisibilityChange={onSheetVisibilityChange}
               />
             )}
           />
+        ) : null}
+
+        <Controller
+          control={control}
+          name="tenant_id"
+          render={({ field: { value, onChange }, fieldState }) => (
+            <AppPicker
+              label={t('rent.tenant')}
+              placeholder={t('rent.selectTenant')}
+              options={tenantOptions}
+              value={value || null}
+              onValueChange={onChange}
+              disabled={!selectedPropertyId}
+              error={fieldError(fieldState.error?.message)}
+              style={styles.field}
+              onVisibilityChange={onSheetVisibilityChange}
+            />
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="amount"
+          render={({ field: { value, onChange, onBlur }, fieldState }) => (
+            <AppTextInput
+              label={t('rent.amount')}
+              value={value ? String(value) : ''}
+              onChangeText={(text) => {
+                const parsed = Number.parseFloat(text.replace(',', '.'));
+                onChange(Number.isNaN(parsed) ? 0 : parsed);
+              }}
+              onBlur={onBlur}
+              keyboardType="decimal-pad"
+              error={fieldError(fieldState.error?.message)}
+              containerStyle={styles.inputGap}
+              className="pl-[52px]"
+              left={
+                <Text
+                  style={{
+                    fontFamily: Fonts.sans.medium,
+                    fontSize: 14,
+                    color: colors.muted,
+                  }}
+                >
+                  EUR
+                </Text>
+              }
+            />
+          )}
+        />
+
+        <View style={styles.fieldRow}>
+          <View style={styles.fieldRowItem}>
+            <Controller
+              control={control}
+              name="period_month"
+              render={({ field: { value, onChange }, fieldState }) => (
+                <AppPicker
+                  label={t('rent.periodMonth')}
+                  options={monthOptions}
+                  value={String(value)}
+                  onValueChange={(next) => onChange(Number.parseInt(next, 10))}
+                  error={fieldError(fieldState.error?.message)}
+                  onVisibilityChange={onSheetVisibilityChange}
+                />
+              )}
+            />
+          </View>
+
+          <View style={styles.fieldRowItem}>
+            <Controller
+              control={control}
+              name="period_year"
+              render={({ field: { value, onChange, onBlur }, fieldState }) => (
+                <AppTextInput
+                  label={t('rent.periodYear')}
+                  value={value != null ? String(value) : String(new Date().getFullYear())}
+                  onChangeText={(text) => {
+                    const parsed = Number.parseInt(text, 10);
+                    onChange(Number.isNaN(parsed) ? new Date().getFullYear() : parsed);
+                  }}
+                  onBlur={onBlur}
+                  keyboardType="number-pad"
+                  placeholder={String(new Date().getFullYear())}
+                  error={fieldError(fieldState.error?.message)}
+                  containerStyle={{ marginBottom: 0 }}
+                />
+              )}
+            />
+          </View>
         </View>
+
+        <Controller
+          control={control}
+          name="status"
+          render={({ field: { value, onChange }, fieldState }) => (
+            <AppPicker
+              label={t('rent.status')}
+              options={statusOptions}
+              value={value}
+              onValueChange={(next) => onChange(next as PaymentStatus)}
+              error={fieldError(fieldState.error?.message)}
+              style={styles.field}
+              onVisibilityChange={onSheetVisibilityChange}
+            />
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="payment_date"
+          render={({ field: { value, onChange }, fieldState }) => (
+            <AppDatePicker
+              label={t('rent.paymentDate')}
+              value={parseDateString(value)}
+              onChange={(date) => onChange(date ? toDateString(date) : null)}
+              error={fieldError(fieldState.error?.message)}
+              style={styles.field}
+              onVisibilityChange={onSheetVisibilityChange}
+            />
+          )}
+        />
+
+        <AppTextInput
+          control={control}
+          name="notes"
+          label={t('rent.notes')}
+          placeholder={t('rent.notesPlaceholder')}
+          multiline
+          numberOfLines={4}
+          error={fieldError(errors.notes?.message)}
+          containerStyle={[styles.inputGap, { marginBottom: 0 }]}
+        />
+      </ScrollView>
+
+      <View
+        style={[
+          styles.formFoot,
+          {
+            paddingBottom: Math.max(insets.bottom, 14) + 8,
+            backgroundColor: colors.bg,
+          },
+        ]}
+      >
+        <AppButton
+          mode="contained"
+          loading={isSubmitting}
+          onPress={handleSubmit(onSubmit)}
+          className="h-11 w-full"
+          accessibilityLabel={submitLabel ?? t('properties.recordPayment')}
+        >
+          {submitLabel ?? t('properties.recordPayment')}
+        </AppButton>
       </View>
-
-      <Controller
-        control={control}
-        name="status"
-        render={({ field: { value, onChange }, fieldState }) => (
-          <AppPicker
-            label={t('rent.status')}
-            options={statusOptions}
-            value={value}
-            onValueChange={(next) => onChange(next as PaymentStatus)}
-            error={fieldError(fieldState.error?.message)}
-          />
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="payment_date"
-        render={({ field: { value, onChange }, fieldState }) => (
-          <AppDatePicker
-            label={t('rent.paymentDate')}
-            value={parseDateString(value)}
-            onChange={(date) => onChange(date ? toDateString(date) : null)}
-            error={fieldError(fieldState.error?.message)}
-          />
-        )}
-      />
-
-      <AppTextInput
-        control={control}
-        name="notes"
-        label={t('rent.notes')}
-        placeholder={t('rent.notesPlaceholder')}
-        multiline
-        numberOfLines={4}
-        error={fieldError(errors.notes?.message)}
-      />
-
-      <AppFormSubmit
-        label={submitLabel ?? t('common.save')}
-        loading={isSubmitting}
-        onPress={handleSubmit(onSubmit)}
-      />
-    </AppFormScroll>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  periodRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-  },
-  periodField: {
+  shell: {
     flex: 1,
   },
-  periodInput: {
-    height: 56,
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  titleBlk: {
+    marginBottom: 22,
+  },
+  field: {
+    marginBottom: 18,
+  },
+  fieldRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 18,
+  },
+  fieldRowItem: {
+    flex: 1,
+  },
+  inputGap: {
+    marginBottom: 18,
+  },
+  formFoot: {
+    paddingHorizontal: Spacing.gutter,
+    paddingTop: 14,
   },
 });

@@ -1,49 +1,165 @@
+import { differenceInDays, parseISO } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
-import { FlatList, Linking, Pressable, StyleSheet, View } from 'react-native';
-import { Mail, MessageSquare, Pencil, Phone } from 'lucide-react-native';
+import {
+  ArrowDownToLine,
+  ChevronRight,
+  Mail,
+  MessageCircle,
+  Pencil,
+  Phone,
+  Plus,
+  type LucideIcon,
+} from 'lucide-react-native';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  FlatList,
+  Linking,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { AppBadge } from '@/components/ui/AppBadge';
-import { AppButton } from '@/components/ui/AppButton';
+
+import { RentPaymentCard } from '@/components/rent/RentPaymentCard';
 import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
-import { ScreenPageTitle } from '@/components/ui/ScreenPageTitle';
-import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { Separator } from '@/components/ui/separator';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
-import { Text } from '@/components/ui/text';
-import { RentPaymentCard } from '@/components/rent/RentPaymentCard';
+import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { listPerformanceProps } from '@/constants/list';
-import { Spacing } from '@/constants/theme';
 import { CONTRACT_EXPIRING_DAYS } from '@/constants/config';
+import { Spacing } from '@/constants/theme';
 import { useLocale } from '@/hooks/useLocale';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperty } from '@/hooks/useProperties';
 import { useRentPayments } from '@/hooks/useRentPayments';
 import { useTenant, useTenantMutations } from '@/hooks/useTenants';
+import { displayFontFamily, Fonts } from '@/lib/fonts';
 import { useUiStore } from '@/stores/uiStore';
-import type { Tenant } from '@/types/app.types';
+import type { Language, Tenant } from '@/types/app.types';
+import { getInitials } from '@/utils/avatar';
 import { resolveCurrency } from '@/utils/currency';
-import { formatCurrency, formatDate } from '@/utils/formatters';
-import { differenceInDays, parseISO } from 'date-fns';
+import { formatCurrencyShort, formatDate } from '@/utils/formatters';
 
-function getContractBadge(tenant: Tenant, t: (key: string, opts?: Record<string, unknown>) => string) {
-  if (!tenant.is_active) return { label: t('tenants.expired'), variant: 'error' as const };
-  if (!tenant.contract_end) return { label: t('tenants.active'), variant: 'success' as const };
+const PREVIEW_COUNT = 3;
+
+type ContractStatus = 'active' | 'expiring_soon' | 'expired';
+
+function getContractStatus(tenant: Tenant): ContractStatus {
+  if (!tenant.is_active) return 'expired';
+  if (!tenant.contract_end) return 'active';
 
   const daysLeft = differenceInDays(parseISO(tenant.contract_end), new Date());
-  if (daysLeft < 0) return { label: t('tenants.expired'), variant: 'error' as const };
-  if (daysLeft <= CONTRACT_EXPIRING_DAYS) {
-    return { label: t('tenants.expiringSoon'), variant: 'warning' as const };
-  }
-  return { label: t('tenants.active'), variant: 'success' as const };
+  if (daysLeft < 0) return 'expired';
+  if (daysLeft <= CONTRACT_EXPIRING_DAYS) return 'expiring_soon';
+  return 'active';
+}
+
+const STATUS_LABELS = {
+  active: 'tenants.active',
+  expiring_soon: 'tenants.expiringSoon',
+  expired: 'tenants.expired',
+} as const;
+
+function openUrl(url: string) {
+  Linking.openURL(url).catch(() => undefined);
+}
+
+function ContractRow({
+  label,
+  value,
+  isLast,
+}: {
+  label: string;
+  value: string;
+  isLast?: boolean;
+}) {
+  const { theme } = useAppTheme();
+  const { colors } = theme;
+
+  return (
+    <View
+      style={[
+        styles.lrow,
+        !isLast ? { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.bd } : null,
+      ]}
+    >
+      <Text
+        style={{
+          flex: 1,
+          fontFamily: Fonts.sans.regular,
+          fontSize: 13,
+          color: colors.muted,
+        }}
+      >
+        {label}
+      </Text>
+      <Text
+        style={{
+          fontFamily: Fonts.sans.semibold,
+          fontSize: 13,
+          color: colors.fg,
+          textAlign: 'right',
+          maxWidth: '55%',
+        }}
+        numberOfLines={2}
+      >
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+function QuickAction({
+  icon: Icon,
+  label,
+  onPress,
+  accessibilityLabel,
+}: {
+  icon: LucideIcon;
+  label: string;
+  onPress: () => void;
+  accessibilityLabel: string;
+}) {
+  const { theme } = useAppTheme();
+  const { colors } = theme;
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={styles.qa}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+    >
+      <View style={[styles.qaCircle, { backgroundColor: colors.surface2 }]}>
+        <Icon size={20} color={colors.primary} strokeWidth={2} />
+      </View>
+      <Text
+        style={{
+          fontFamily: Fonts.sans.semibold,
+          fontSize: 10,
+          letterSpacing: 0.8,
+          textTransform: 'uppercase',
+          color: colors.muted,
+          textAlign: 'center',
+        }}
+        numberOfLines={1}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
 }
 
 export default function TenantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
+  const { colors, elevation, radius } = theme;
   const showToast = useUiStore((s) => s.showToast);
   const showConfirmDialog = useUiStore((s) => s.showConfirmDialog);
+  const [paymentsExpanded, setPaymentsExpanded] = useState(false);
 
   const { tenant, isLoading, error, refetch: loadTenant } = useTenant(id);
   const { property } = useProperty(tenant?.property_id ?? undefined);
@@ -57,7 +173,23 @@ export default function TenantDetailScreen() {
     tenantId: id,
   });
 
-  const handleDeactivate = () => {
+  const sortedPayments = useMemo(() => {
+    return [...rentPayments].sort((a, b) => {
+      if (a.period_year !== b.period_year) return b.period_year - a.period_year;
+      return b.period_month - a.period_month;
+    });
+  }, [rentPayments]);
+
+  const visiblePayments = useMemo(() => {
+    if (paymentsExpanded || sortedPayments.length <= PREVIEW_COUNT) {
+      return sortedPayments;
+    }
+    return sortedPayments.slice(0, PREVIEW_COUNT);
+  }, [paymentsExpanded, sortedPayments]);
+
+  const hasMorePayments = sortedPayments.length > PREVIEW_COUNT;
+
+  const handleDeactivate = useCallback(() => {
     if (!tenant) return;
 
     showConfirmDialog({
@@ -78,16 +210,17 @@ export default function TenantDetailScreen() {
         }
       },
     });
-  };
+  }, [loadTenant, showConfirmDialog, showToast, t, tenant, update]);
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     if (!tenant) return;
 
     showConfirmDialog({
       title: t('confirm.deleteTenantTitle'),
       message: t('confirm.deleteTenantMessage'),
-      confirmLabel: t('common.delete'),
+      confirmLabel: t('common.remove'),
       destructive: true,
+      icon: 'userMinus',
       onConfirm: async () => {
         try {
           await remove(tenant.id);
@@ -101,7 +234,7 @@ export default function TenantDetailScreen() {
         }
       },
     });
-  };
+  }, [remove, showConfirmDialog, showToast, t, tenant]);
 
   if (isLoading || error || !tenant) {
     return (
@@ -118,8 +251,61 @@ export default function TenantDetailScreen() {
     );
   }
 
-  const badge = getContractBadge(tenant, t);
   const fullName = `${tenant.first_name} ${tenant.last_name}`;
+  const initials = getInitials(tenant.first_name, tenant.last_name);
+  const contractStatus = getContractStatus(tenant);
+  const propertyLabel =
+    property == null
+      ? null
+      : property.floor != null
+        ? `${property.name} · ${t('properties.floor')} ${property.floor}`
+        : property.name;
+
+  let chipBg = colors.posTint;
+  let chipFg = colors.pos;
+  if (contractStatus === 'expiring_soon') {
+    chipBg = colors.chartTint[4];
+    chipFg = colors.chart[4];
+  } else if (contractStatus === 'expired') {
+    chipBg = colors.negTint;
+    chipFg = colors.neg;
+  }
+
+  const quickActions = [
+    tenant.phone
+      ? {
+          key: 'call',
+          icon: Phone,
+          label: t('tenants.qaCall'),
+          accessibilityLabel: t('tenants.callTenant'),
+          onPress: () => openUrl(`tel:${tenant.phone}`),
+        }
+      : null,
+    tenant.phone
+      ? {
+          key: 'message',
+          icon: MessageCircle,
+          label: t('tenants.qaMessage'),
+          accessibilityLabel: t('tenants.messageTenant'),
+          onPress: () => openUrl(`sms:${tenant.phone}`),
+        }
+      : null,
+    tenant.email
+      ? {
+          key: 'email',
+          icon: Mail,
+          label: t('tenants.qaEmail'),
+          accessibilityLabel: t('tenants.emailTenant'),
+          onPress: () => openUrl(`mailto:${tenant.email}`),
+        }
+      : null,
+  ].filter(Boolean) as {
+    key: string;
+    icon: LucideIcon;
+    label: string;
+    accessibilityLabel: string;
+    onPress: () => void;
+  }[];
 
   return (
     <DetailScreenScaffold
@@ -141,99 +327,157 @@ export default function TenantDetailScreen() {
       )}
     >
       <FlatList
-        data={paymentsLoading ? [] : rentPayments}
+        data={paymentsLoading ? [] : visiblePayments}
         keyExtractor={(payment) => payment.id}
         {...listPerformanceProps}
         renderItem={({ item: payment }) => (
           <RentPaymentCard
             payment={payment}
-            propertyName={property?.name}
             currency={currency}
-            language={language}
+            language={language as Language}
           />
         )}
         ListHeaderComponent={
           <View style={styles.headerContent}>
-            <View style={styles.header}>
-              <ScreenPageTitle className="flex-1">{fullName}</ScreenPageTitle>
-              <AppBadge label={badge.label} variant={badge.variant} />
+            <View style={styles.hero}>
+              <View style={[styles.avatar, { backgroundColor: colors.primaryTint }]}>
+                <Text
+                  style={{
+                    fontFamily: displayFontFamily(theme.name),
+                    fontSize: 21,
+                    fontWeight: theme.typography.displayWeight,
+                    color: colors.primary,
+                  }}
+                >
+                  {initials}
+                </Text>
+              </View>
+              <View style={styles.heroBody}>
+                <Text
+                  style={{
+                    fontFamily: displayFontFamily(theme.name),
+                    fontSize: 26,
+                    lineHeight: 30,
+                    letterSpacing: -0.55,
+                    color: colors.fg,
+                  }}
+                  numberOfLines={2}
+                >
+                  {fullName}
+                </Text>
+                <View style={styles.heroMeta}>
+                  <View style={[styles.chip, { backgroundColor: chipBg }]}>
+                    <Text
+                      style={{
+                        fontFamily: Fonts.sans.semibold,
+                        fontSize: 11,
+                        letterSpacing: -0.05,
+                        color: chipFg,
+                      }}
+                    >
+                      {t(STATUS_LABELS[contractStatus])}
+                    </Text>
+                  </View>
+                  {propertyLabel ? (
+                    <Pressable
+                      onPress={() => router.push(`/property/${property!.id}`)}
+                      hitSlop={6}
+                      accessibilityRole="link"
+                      accessibilityLabel={propertyLabel}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: Fonts.sans.regular,
+                          fontSize: 12,
+                          color: colors.muted,
+                        }}
+                        numberOfLines={1}
+                      >
+                        {propertyLabel}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              </View>
             </View>
 
-            {property ? (
-              <Text
-                className="text-primary text-base"
-                onPress={() => router.push(`/property/${property.id}`)}
-              >
-                {property.name}
-              </Text>
+            {quickActions.length > 0 ? (
+              <View style={styles.qaRow}>
+                {quickActions.map((action) => (
+                  <QuickAction
+                    key={action.key}
+                    icon={action.icon}
+                    label={action.label}
+                    onPress={action.onPress}
+                    accessibilityLabel={action.accessibilityLabel}
+                  />
+                ))}
+              </View>
             ) : null}
 
-            <Separator style={styles.divider} />
-
-            <Text className="text-foreground mt-2 text-lg font-medium">
-              {t('tenants.contactInfo')}
+            <Text
+              style={{
+                fontFamily: displayFontFamily(theme.name),
+                fontSize: 22,
+                letterSpacing: -0.55,
+                color: colors.fg,
+                marginBottom: 11,
+              }}
+            >
+              {t('tenants.contract')}
             </Text>
-            {tenant.email ? (
-              <Pressable
-                style={styles.contactRow}
-                onPress={() => Linking.openURL(`mailto:${tenant.email}`)}
-                accessibilityRole="button"
-                accessibilityLabel={t('tenants.emailTenant')}
-              >
-                <Mail size={16} className="text-primary" strokeWidth={2} />
-                <Text className="text-primary text-base">{tenant.email}</Text>
-              </Pressable>
-            ) : null}
+            <View
+              style={[
+                styles.card,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.cardBd,
+                  borderRadius: radius.xl,
+                  ...elevation.card,
+                },
+              ]}
+            >
+              <ContractRow
+                label={t('tenants.contractStart')}
+                value={formatDate(tenant.contract_start, language)}
+              />
+              <ContractRow
+                label={t('tenants.contractEnd')}
+                value={
+                  tenant.contract_end
+                    ? formatDate(tenant.contract_end, language)
+                    : t('tenants.noContractEnd')
+                }
+              />
+              <ContractRow
+                label={t('properties.monthlyRent')}
+                value={formatCurrencyShort(
+                  Number(property?.rent_amount ?? 0),
+                  currency,
+                  language,
+                )}
+              />
+              <ContractRow
+                label={t('tenants.depositAmount')}
+                value={formatCurrencyShort(Number(tenant.deposit_amount), currency, language)}
+                isLast={!tenant.notes}
+              />
+              {tenant.notes ? (
+                <ContractRow label={t('common.notes')} value={tenant.notes} isLast />
+              ) : null}
+            </View>
 
-            {tenant.phone ? (
-              <>
-                <Pressable
-                  style={styles.contactRow}
-                  onPress={() => Linking.openURL(`tel:${tenant.phone}`)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('tenants.callTenant')}
-                >
-                  <Phone size={16} className="text-primary" strokeWidth={2} />
-                  <Text className="text-primary text-base">{tenant.phone}</Text>
-                </Pressable>
-                <Pressable
-                  style={styles.contactRow}
-                  onPress={() => Linking.openURL(`sms:${tenant.phone}`)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('tenants.messageTenant')}
-                >
-                  <MessageSquare size={16} className="text-primary" strokeWidth={2} />
-                  <Text className="text-primary text-base">{t('tenants.sendMessage')}</Text>
-                </Pressable>
-              </>
-            ) : null}
-
-            <Text className="text-foreground mt-2 text-lg font-medium">
-              {t('tenants.contractPeriod')}
-            </Text>
-            <Text className="text-muted-foreground text-base">
-              {formatDate(tenant.contract_start, language)}
-              {' — '}
-              {tenant.contract_end
-                ? formatDate(tenant.contract_end, language)
-                : t('tenants.noContractEnd')}
-            </Text>
-
-            <Text className="text-muted-foreground text-base">
-              {t('tenants.deposit')}: {formatCurrency(tenant.deposit_amount, currency, language)}
-            </Text>
-
-            {tenant.notes ? (
-              <>
-                <Text className="text-foreground mt-2 text-lg font-medium">
-                  {t('common.notes')}
-                </Text>
-                <Text className="text-muted-foreground">{tenant.notes}</Text>
-              </>
-            ) : null}
-
-            <Text className="text-foreground mt-2 text-lg font-medium">
-              {t('tenants.rentPayments')}
+            <Text
+              style={{
+                fontFamily: displayFontFamily(theme.name),
+                fontSize: 22,
+                letterSpacing: -0.55,
+                color: colors.fg,
+                marginTop: 8,
+                marginBottom: 11,
+              }}
+            >
+              {t('tenants.recentPayments')}
             </Text>
 
             {paymentsLoading ? <SkeletonLoader count={2} /> : null}
@@ -241,28 +485,130 @@ export default function TenantDetailScreen() {
         }
         ListEmptyComponent={
           paymentsLoading ? null : (
-            <EmptyState
-              title={t('tenants.noRentPayments')}
-              ctaLabel={t('rent.addPayment')}
-              onCtaPress={() =>
-                router.push({
-                  pathname: '/rent/new',
-                  params: { propertyId: tenant.property_id, tenantId: tenant.id },
-                })
-              }
-            />
+            <View
+              style={[
+                styles.emptyCard,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.cardBd,
+                  borderRadius: radius.xl,
+                  ...elevation.card,
+                },
+              ]}
+            >
+              <View style={[styles.emptyIc, { backgroundColor: colors.primaryTint }]}>
+                <ArrowDownToLine size={25} color={colors.primary} strokeWidth={2} />
+              </View>
+              <Text
+                style={{
+                  fontFamily: displayFontFamily(theme.name),
+                  fontSize: 23,
+                  letterSpacing: -0.46,
+                  color: colors.fg,
+                  textAlign: 'center',
+                  marginBottom: 8,
+                }}
+              >
+                {t('empty.noRentPayments')}
+              </Text>
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.regular,
+                  fontSize: 12.5,
+                  lineHeight: 20,
+                  color: colors.muted,
+                  textAlign: 'center',
+                  maxWidth: 230,
+                  marginBottom: 22,
+                }}
+              >
+                {t('empty.noRentPaymentsHint')}
+              </Text>
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: '/rent/new',
+                    params: { propertyId: tenant.property_id, tenantId: tenant.id },
+                  })
+                }
+                accessibilityRole="button"
+                accessibilityLabel={t('rent.addPayment')}
+                style={[styles.emptyCta, { backgroundColor: colors.primary }]}
+              >
+                <Plus size={18} color={colors.onPrimary} strokeWidth={2} />
+                <Text
+                  style={{
+                    fontFamily: Fonts.sans.semibold,
+                    fontSize: 14,
+                    letterSpacing: -0.14,
+                    color: colors.onPrimary,
+                  }}
+                >
+                  {t('rent.addPayment')}
+                </Text>
+              </Pressable>
+            </View>
           )
         }
         ListFooterComponent={
-          <View style={styles.actions}>
-            {tenant.is_active ? (
-              <AppButton mode="outlined" onPress={handleDeactivate}>
-                {t('tenants.deactivate')}
-              </AppButton>
+          <View style={styles.footer}>
+            {hasMorePayments ? (
+              <Pressable
+                onPress={() => setPaymentsExpanded((current) => !current)}
+                style={[styles.ghostBtn, { backgroundColor: colors.surface2 }]}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: paymentsExpanded }}
+              >
+                <Text
+                  style={{
+                    fontFamily: Fonts.sans.semibold,
+                    fontSize: 14,
+                    color: colors.fg,
+                  }}
+                >
+                  {paymentsExpanded ? t('common.showLess') : t('tenants.seeAllPayments')}
+                </Text>
+                {!paymentsExpanded ? (
+                  <ChevronRight size={16} color={colors.fg} strokeWidth={2} />
+                ) : null}
+              </Pressable>
             ) : null}
-            <AppButton mode="outlined" textColor="destructive" onPress={handleDelete}>
-              {t('common.delete')}
-            </AppButton>
+
+            {tenant.is_active ? (
+              <Pressable
+                onPress={handleDeactivate}
+                style={[styles.ghostBtn, { backgroundColor: colors.surface2 }]}
+                accessibilityRole="button"
+                accessibilityLabel={t('tenants.deactivate')}
+              >
+                <Text
+                  style={{
+                    fontFamily: Fonts.sans.semibold,
+                    fontSize: 14,
+                    color: colors.fg,
+                  }}
+                >
+                  {t('tenants.deactivate')}
+                </Text>
+              </Pressable>
+            ) : null}
+
+            <Pressable
+              onPress={handleDelete}
+              style={[styles.ghostBtn, { backgroundColor: colors.surface2 }]}
+              accessibilityRole="button"
+              accessibilityLabel={t('tenants.removeTenant')}
+            >
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.semibold,
+                  fontSize: 14,
+                  color: colors.neg,
+                }}
+              >
+                {t('tenants.removeTenant')}
+              </Text>
+            </Pressable>
           </View>
         }
         contentContainerStyle={styles.content}
@@ -273,30 +619,107 @@ export default function TenantDetailScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.gutter,
     paddingBottom: Spacing.xxl,
-    gap: Spacing.sm,
   },
   headerContent: {
-    gap: Spacing.sm,
+    marginBottom: 4,
   },
-  header: {
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 14,
+    marginBottom: 18,
+  },
+  avatar: {
+    width: 58,
+    height: 58,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroBody: {
+    flex: 1,
+    minWidth: 0,
+  },
+  heroMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  chip: {
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  qaRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 22,
+  },
+  qa: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 9,
+  },
+  qaCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  card: {
+    borderWidth: 1,
+    paddingHorizontal: 18,
+    paddingTop: 4,
+    paddingBottom: 6,
+    marginBottom: 20,
+  },
+  lrow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: Spacing.sm,
+    gap: 13,
+    paddingVertical: 13,
   },
-  divider: {
-    marginVertical: Spacing.sm,
+  emptyCard: {
+    paddingTop: 44,
+    paddingHorizontal: 22,
+    paddingBottom: 38,
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
   },
-  contactRow: {
+  emptyIc: {
+    width: 60,
+    height: 60,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  emptyCta: {
+    height: 44,
+    paddingHorizontal: 18,
+    borderRadius: 999,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    gap: 8,
   },
-  actions: {
-    marginTop: Spacing.lg,
-    gap: Spacing.sm,
+  footer: {
+    marginTop: 8,
+    gap: 10,
+  },
+  ghostBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    minHeight: 48,
+    borderRadius: 999,
+    paddingHorizontal: 18,
   },
 });

@@ -1,23 +1,15 @@
 import { Calendar, CheckCircle, Trash2 } from 'lucide-react-native';
 import { memo, useRef } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 
-import { AppBadge } from '@/components/ui/AppBadge';
-import { Card } from '@/components/ui/card';
-import { Text } from '@/components/ui/text';
-import { Colors } from '@/constants/theme';
+import { DisplayAmount } from '@/components/ui/DisplayAmount';
+import { Colors, Typography } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { formatCurrency, formatDate, formatPeriod } from '@/utils/formatters';
+import { Fonts } from '@/lib/fonts';
+import { formatDate, formatPeriod } from '@/utils/formatters';
 import type { Language, PaymentStatus, RentPayment } from '@/types/app.types';
-
-const STATUS_VARIANTS: Record<PaymentStatus, 'paid' | 'pending' | 'late' | 'partial'> = {
-  paid: 'paid',
-  pending: 'pending',
-  late: 'late',
-  partial: 'partial',
-};
 
 export interface RentPaymentCardProps {
   payment: RentPayment;
@@ -30,6 +22,47 @@ export interface RentPaymentCardProps {
   onDelete?: (paymentId: string) => void;
 }
 
+function StatusChip({ status, label }: { status: PaymentStatus; label: string }) {
+  const { theme } = useAppTheme();
+  const { colors } = theme;
+
+  let backgroundColor = colors.surface2;
+  let color = colors.muted;
+
+  if (status === 'paid') {
+    backgroundColor = colors.posTint;
+    color = colors.pos;
+  } else if (status === 'late') {
+    backgroundColor = colors.negTint;
+    color = colors.neg;
+  } else if (status === 'pending') {
+    backgroundColor = colors.primaryTint;
+    color = colors.primary;
+  } else if (status === 'partial') {
+    backgroundColor = colors.primaryTint;
+    color = colors.primary;
+  }
+
+  return (
+    <View style={[styles.chip, { backgroundColor }]}>
+      {status === 'paid' ? (
+        <CheckCircle size={12} color={color} strokeWidth={2} />
+      ) : null}
+      <Text
+        style={{
+          fontFamily: Fonts.sans.semibold,
+          fontSize: 11,
+          letterSpacing: -0.05,
+          color,
+        }}
+        numberOfLines={1}
+      >
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 function RentPaymentCardComponent({
   payment,
   tenantName,
@@ -40,19 +73,29 @@ function RentPaymentCardComponent({
   onMarkPaid,
   onDelete,
 }: RentPaymentCardProps) {
-  const { isDark } = useAppTheme();
+  const { theme } = useAppTheme();
+  const { colors, elevation, radius } = theme;
   const { t, i18n } = useTranslation();
   const swipeableRef = useRef<Swipeable>(null);
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
   const isPaid = payment.status === 'paid';
+  const isLate = payment.status === 'late';
   const handlePress = onPress ? () => onPress(payment) : undefined;
 
+  const dateLine = (() => {
+    if (!payment.payment_date) return null;
+    const date = formatDate(payment.payment_date, resolvedLanguage);
+    if (isLate) {
+      return t('rent.paidLateDate', { date });
+    }
+    return `${t('rent.paymentDate')}: ${date}`;
+  })();
+
   const renderRightActions = () => (
-    <View className="mb-2 flex-row">
+    <View style={styles.swipeActions}>
       {!isPaid && onMarkPaid ? (
         <Pressable
-          className="ml-1 w-22 items-center justify-center gap-1 rounded-xl px-2"
-          style={{ backgroundColor: Colors.accent }}
+          style={[styles.swipeBtn, { backgroundColor: Colors.accent }]}
           onPress={() => {
             swipeableRef.current?.close();
             onMarkPaid(payment.id);
@@ -61,18 +104,14 @@ function RentPaymentCardComponent({
           accessibilityLabel={t('rent.markPaid')}
         >
           <CheckCircle size={20} color={Colors.textInverse} strokeWidth={2} />
-          <Text
-            className="text-center text-[11px] font-medium"
-            style={{ color: Colors.textInverse }}
-          >
+          <Text style={[styles.swipeLabel, { color: Colors.textInverse }]}>
             {t('rent.markPaid')}
           </Text>
         </Pressable>
       ) : null}
       {onDelete ? (
         <Pressable
-          className="ml-1 w-22 items-center justify-center gap-1 rounded-xl px-2"
-          style={{ backgroundColor: Colors.danger }}
+          style={[styles.swipeBtn, { backgroundColor: Colors.danger }]}
           onPress={() => {
             swipeableRef.current?.close();
             onDelete(payment.id);
@@ -81,10 +120,7 @@ function RentPaymentCardComponent({
           accessibilityLabel={t('common.delete')}
         >
           <Trash2 size={20} color={Colors.textInverse} strokeWidth={2} />
-          <Text
-            className="text-center text-[11px] font-medium"
-            style={{ color: Colors.textInverse }}
-          >
+          <Text style={[styles.swipeLabel, { color: Colors.textInverse }]}>
             {t('common.delete')}
           </Text>
         </Pressable>
@@ -93,42 +129,89 @@ function RentPaymentCardComponent({
   );
 
   const card = (
-    <Pressable onPress={handlePress} disabled={!handlePress}>
-      <Card
-        className="mb-2 gap-1 rounded-xl p-4"
-        style={{ backgroundColor: isDark ? Colors.surfaceDark : Colors.surface }}
-      >
-        <View className="flex-row items-center justify-between gap-2">
-          <Text className="flex-1 text-lg font-medium">
-            {formatPeriod(payment.period_month, payment.period_year, resolvedLanguage)}
-          </Text>
-          <AppBadge
-            label={t(`rent.${payment.status}`)}
-            variant={STATUS_VARIANTS[payment.status]}
-          />
-        </View>
-
-        {propertyName ? (
-          <Text className="text-muted-foreground text-sm">{propertyName}</Text>
-        ) : null}
-
-        {tenantName ? (
-          <Text className="text-muted-foreground text-sm">{tenantName}</Text>
-        ) : null}
-
-        <Text className="text-primary mt-1 text-2xl font-semibold">
-          {formatCurrency(Number(payment.amount), payment.currency ?? currency, resolvedLanguage)}
+    <Pressable
+      onPress={handlePress}
+      disabled={!handlePress}
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.cardBd,
+          borderRadius: radius.xl,
+          ...elevation.card,
+        },
+      ]}
+    >
+      <View style={styles.top}>
+        <Text
+          style={{
+            flex: 1,
+            fontFamily: Fonts.sans.semibold,
+            fontSize: Typography.text.rowTitle.size,
+            color: colors.fg,
+          }}
+          numberOfLines={1}
+        >
+          {formatPeriod(payment.period_month, payment.period_year, resolvedLanguage).replace(
+            /^./,
+            (ch) => ch.toLocaleUpperCase(resolvedLanguage === 'en' ? 'en' : 'hr'),
+          )}
         </Text>
+        <StatusChip status={payment.status} label={t(`rent.${payment.status}`)} />
+      </View>
 
-        {payment.payment_date ? (
-          <View className="mt-1 flex-row items-center gap-1">
-            <Calendar size={14} className="text-muted-foreground" strokeWidth={2} />
-            <Text className="text-muted-foreground text-xs">
-              {t('rent.paymentDate')}: {formatDate(payment.payment_date, resolvedLanguage)}
-            </Text>
-          </View>
-        ) : null}
-      </Card>
+      {propertyName ? (
+        <Text
+          style={{
+            fontFamily: Fonts.sans.regular,
+            fontSize: Typography.text.caption.size,
+            color: colors.muted,
+            marginTop: 4,
+          }}
+          numberOfLines={1}
+        >
+          {propertyName}
+        </Text>
+      ) : null}
+
+      {tenantName ? (
+        <Text
+          style={{
+            fontFamily: Fonts.sans.regular,
+            fontSize: 12.5,
+            color: colors.muted,
+            marginTop: propertyName ? 2 : 4,
+          }}
+          numberOfLines={1}
+        >
+          {tenantName}
+        </Text>
+      ) : null}
+
+      <DisplayAmount
+        amount={Number(payment.amount)}
+        currency={payment.currency ?? currency}
+        language={resolvedLanguage}
+        size={28}
+        style={{ marginTop: 12 }}
+      />
+
+      {dateLine ? (
+        <View style={styles.dateRow}>
+          <Calendar size={13} color={colors.muted} strokeWidth={2} />
+          <Text
+            style={{
+              flex: 1,
+              fontFamily: Fonts.sans.regular,
+              fontSize: 11.5,
+              color: colors.muted,
+            }}
+            numberOfLines={1}
+          >
+            {dateLine}
+          </Text>
+        </View>
+      ) : null}
     </Pressable>
   );
 
@@ -144,3 +227,52 @@ function RentPaymentCardComponent({
 }
 
 export const RentPaymentCard = memo(RentPaymentCardComponent);
+
+const styles = StyleSheet.create({
+  card: {
+    borderWidth: 1,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 16,
+    marginBottom: 12,
+  },
+  top: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 11,
+    borderRadius: 999,
+    flexShrink: 0,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 12,
+  },
+  swipeActions: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  swipeBtn: {
+    marginLeft: 4,
+    width: 88,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+  },
+  swipeLabel: {
+    fontFamily: Fonts.sans.medium,
+    fontSize: 11,
+    textAlign: 'center',
+  },
+});

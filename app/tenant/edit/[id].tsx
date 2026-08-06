@@ -2,11 +2,13 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
+import { TenantForm } from '@/components/tenant/TenantForm';
+import { APP_BOTTOM_SHEET_CLOSE_MS } from '@/components/ui/AppBottomSheet';
+import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
-import { TenantForm } from '@/components/tenant/TenantForm';
-import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
 import { useTenant, useTenantMutations } from '@/hooks/useTenants';
 import { useUiStore } from '@/stores/uiStore';
 import type { TenantFormValues } from '@/utils/validators';
@@ -19,7 +21,7 @@ export default function EditTenantScreen() {
   const showToast = useUiStore((s) => s.showToast);
 
   const [isSaving, setIsSaving] = useState(false);
-  const screenStyles = useThemedScreenStyles();
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const handleSubmit = async (values: TenantFormValues) => {
     if (!id) return;
@@ -51,7 +53,7 @@ export default function EditTenantScreen() {
 
   if (isLoading) {
     return (
-      <StackScreenChrome title={t('tenants.editTenant')}>
+      <StackScreenChrome title={t('tenants.editTenant')} hideHeaderTitle edgeToEdge>
         <SkeletonLoader count={6} style={styles.loader} />
       </StackScreenChrome>
     );
@@ -59,16 +61,17 @@ export default function EditTenantScreen() {
 
   if (error || !tenant) {
     return (
-      <StackScreenChrome title={t('tenants.editTenant')}>
+      <StackScreenChrome title={t('tenants.editTenant')} hideHeaderTitle edgeToEdge>
         <ErrorState message={error ?? t('tenants.notFound')} onRetry={loadTenant} />
       </StackScreenChrome>
     );
   }
 
   return (
-    <StackScreenChrome title={t('tenants.editTenant')} edgeToEdge>
-      <View style={screenStyles.container}>
+    <StackScreenChrome title={t('tenants.editTenant')} hideHeaderTitle edgeToEdge>
+      <View className="flex-1 bg-transparent">
         <TenantForm
+          title={t('tenants.editTenant')}
           defaultValues={{
             first_name: tenant.first_name,
             last_name: tenant.last_name,
@@ -82,6 +85,14 @@ export default function EditTenantScreen() {
           onSubmit={handleSubmit}
           isSubmitting={isSaving}
           submitLabel={t('common.update')}
+          onSheetVisibilityChange={setSheetOpen}
+        />
+        <BlurOverlay
+          visible={sheetOpen}
+          intensity="strong"
+          tint="dark"
+          duration={APP_BOTTOM_SHEET_CLOSE_MS}
+          zIndex={5}
         />
       </View>
     </StackScreenChrome>
