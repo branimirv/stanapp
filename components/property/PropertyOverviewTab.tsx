@@ -109,15 +109,6 @@ function PropertyOverviewTabComponent({
     return parts.join(' · ');
   }, [property.area_sqm, property.floor, t, typeLabel]);
 
-  const metaChip = useMemo(() => {
-    const parts = [typeLabel];
-    if (property.floor != null) parts.push(t('properties.floorShort', { floor: property.floor }));
-    if (property.area_sqm != null) {
-      parts.push(t('properties.areaShort', { area: property.area_sqm }));
-    }
-    return parts.join(' · ');
-  }, [property.area_sqm, property.floor, t, typeLabel]);
-
   const usageChipStyle =
     property.usage_status === 'rented'
       ? { bg: colors.posTint, fg: colors.pos }
@@ -137,18 +128,37 @@ function PropertyOverviewTabComponent({
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.titleBlk}>
-        <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: 11,
-            letterSpacing: 1.54,
-            textTransform: 'uppercase',
-            color: colors.muted,
-            marginBottom: 10,
-          }}
-        >
-          {eyebrow}
-        </Text>
+        <View style={styles.eyebrowRow}>
+          <Text
+            style={{
+              flex: 1,
+              fontFamily: Fonts.sans.semibold,
+              fontSize: 11,
+              letterSpacing: 1.54,
+              textTransform: 'uppercase',
+              color: colors.muted,
+            }}
+            numberOfLines={1}
+          >
+            {eyebrow}
+          </Text>
+          <Pressable
+            onPress={onShowUsageHistory}
+            style={[styles.chip, { backgroundColor: usageChipStyle.bg }]}
+            accessibilityRole="button"
+            accessibilityLabel={t('properties.usageHistory')}
+          >
+            <Text
+              style={{
+                fontFamily: Fonts.sans.semibold,
+                fontSize: 11,
+                color: usageChipStyle.fg,
+              }}
+            >
+              {t(`usageStatus.${property.usage_status}`)}
+            </Text>
+          </Pressable>
+        </View>
         <Text
           style={{
             fontFamily: displayFontFamily(theme.name),
@@ -182,36 +192,6 @@ function PropertyOverviewTabComponent({
           {property.address}
         </Text>
       </Pressable>
-
-      <View style={styles.chips}>
-        <View style={[styles.chip, { backgroundColor: colors.surface2 }]}>
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 11,
-              color: colors.muted,
-            }}
-          >
-            {metaChip}
-          </Text>
-        </View>
-        <Pressable
-          onPress={onShowUsageHistory}
-          style={[styles.chip, { backgroundColor: usageChipStyle.bg }]}
-          accessibilityRole="button"
-          accessibilityLabel={t('properties.usageHistory')}
-        >
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 11,
-              color: usageChipStyle.fg,
-            }}
-          >
-            {t(`usageStatus.${property.usage_status}`)}
-          </Text>
-        </Pressable>
-      </View>
 
       {isRented ? (
         <PropertyRentCard
@@ -440,16 +420,16 @@ const styles = StyleSheet.create({
   titleBlk: {
     marginBottom: 12,
   },
+  eyebrowRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
+  },
   addr: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 12,
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 7,
     marginBottom: 16,
   },
   chip: {

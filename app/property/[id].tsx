@@ -20,6 +20,8 @@ import { PropertyTenantsTab } from '@/components/property/PropertyTenantsTab';
 import { UsageHistorySheet } from '@/components/property/UsageHistorySheet';
 import { StatementSheet } from '@/components/property/StatementSheet';
 import { RentMonthActionSheet } from '@/components/rent/RentMonthActionSheet';
+import { APP_BOTTOM_SHEET_CLOSE_MS } from '@/components/ui/AppBottomSheet';
+import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useLocale } from '@/hooks/useLocale';
 import { useMyMembership } from '@/hooks/useMembers';
@@ -72,6 +74,9 @@ export default function PropertyDetailScreen() {
     year: number;
     payment?: RentPayment;
   }>({ visible: false, month: new Date().getMonth() + 1, year: new Date().getFullYear() });
+
+  const chromeHidden =
+    rentSheet.visible || statementVisible || historyVisible;
 
   const { profile } = useProfile();
   const { language } = useLocale();
@@ -486,6 +491,7 @@ export default function PropertyDetailScreen() {
       notFoundMessage={t('properties.notFound')}
       onRetry={refetchProperty}
       edgeToEdge
+      chromeHidden={chromeHidden}
       headerRight={() => (
         <StackHeaderActions>
           {canManage ? (
@@ -511,7 +517,10 @@ export default function PropertyDetailScreen() {
         onIndexChange={setIndex}
         initialLayout={{ width: layout.width }}
         style={styles.tabView}
-        renderTabBar={(props) => (
+        renderTabBar={(props) =>
+          chromeHidden ? (
+            <View />
+          ) : (
           <View
             pointerEvents="box-none"
             style={[styles.tabOverlay, { top: overlayTop }]}
@@ -548,7 +557,8 @@ export default function PropertyDetailScreen() {
             ) : null}
             <PropertyTabBar {...props} />
           </View>
-        )}
+          )
+        }
       />
 
       <UsageHistorySheet
@@ -571,6 +581,14 @@ export default function PropertyDetailScreen() {
         language={language}
         onExportSuccess={() => showToast({ message: t('statement.exportSuccess'), type: 'success' })}
         onExportError={(message) => showToast({ message, type: 'error' })}
+      />
+
+      <BlurOverlay
+        visible={rentSheet.visible}
+        intensity="strong"
+        tint="dark"
+        duration={APP_BOTTOM_SHEET_CLOSE_MS}
+        zIndex={30}
       />
 
       <RentMonthActionSheet
