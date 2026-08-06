@@ -1,18 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Pencil, FileText } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { TabView, type Route } from 'react-native-tab-view';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
 import { useFloatingStackHeaderInset } from '@/components/ui/FloatingStackHeader';
-import { GlassSurface } from '@/components/ui/GlassSurface';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
-import { AppButton } from '@/components/ui/AppButton';
 import { Text } from '@/components/ui/text';
-import { PropertyChromeBackdrop } from '@/components/property/PropertyChromeBackdrop';
 import { PropertyExpensesTab } from '@/components/property/PropertyExpensesTab';
 import { PropertyOverviewTab } from '@/components/property/PropertyOverviewTab';
 import { PropertyRentTab } from '@/components/property/PropertyRentTab';
@@ -24,10 +20,10 @@ import { PropertyTenantsTab } from '@/components/property/PropertyTenantsTab';
 import { UsageHistorySheet } from '@/components/property/UsageHistorySheet';
 import { StatementSheet } from '@/components/property/StatementSheet';
 import { RentMonthActionSheet } from '@/components/rent/RentMonthActionSheet';
-import { Spacing } from '@/constants/theme';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useLocale } from '@/hooks/useLocale';
 import { useMyMembership } from '@/hooks/useMembers';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperty, useChildProperties } from '@/hooks/useProperties';
 import { useRefetchOnFocus } from '@/hooks/useRefetchOnFocus';
@@ -39,11 +35,10 @@ import type { RentPayment } from '@/types/app.types';
 import { resolveCurrency } from '@/utils/currency';
 import { getCurrentMonthRange, isDateInRange } from '@/utils/dateRange';
 import { openAddressInMaps } from '@/utils/maps';
+import { Fonts } from '@/lib/fonts';
 import { formatDateOnly } from '@/utils/formatters';
 
 const PARENT_BANNER_HEIGHT = 44;
-/** Extra backdrop below tab pills so glass always refracts something colorful. */
-const CHROME_BACKDROP_BLEED = 140;
 
 type TabKey = 'overview' | 'tenants' | 'expenses' | 'rent';
 
@@ -53,8 +48,9 @@ export default function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const layout = useWindowDimensions();
-  const insets = useSafeAreaInsets();
   const headerInset = useFloatingStackHeaderInset();
+  const { theme } = useAppTheme();
+  const { colors } = theme;
   const showToast = useUiStore((s) => s.showToast);
 
   const {
@@ -343,9 +339,6 @@ export default function PropertyDetailScreen() {
     router.push({ pathname: '/tenant/new', params: { propertyId: id! } });
   }, [id]);
 
-  const showAddTenantButton =
-    canManage && Boolean(isRented) && routes[index]?.key === 'tenants';
-
   const handleAddRentPayment = useCallback(() => {
     router.push({ pathname: '/rent/new', params: { propertyId: id! } });
   }, [id]);
@@ -354,12 +347,23 @@ export default function PropertyDetailScreen() {
     setHistoryVisible(true);
   }, []);
 
+  const handleRecordPayment = useCallback(() => {
+    openRentSheet(
+      currentMonthRange.month,
+      currentMonthRange.year,
+      currentMonthRentPayment,
+    );
+  }, [currentMonthRange.month, currentMonthRange.year, currentMonthRentPayment, openRentSheet]);
+
+  const handleAddExpense = useCallback(() => {
+    router.push({ pathname: '/expense/new', params: { propertyId: id! } });
+  }, [id]);
+
   const overlayTop = headerInset;
   const sceneTopInset =
     headerInset +
     PROPERTY_TAB_BAR_HEIGHT +
     (parentProperty ? PARENT_BANNER_HEIGHT : 0);
-  const chromeBackdropHeight = sceneTopInset + CHROME_BACKDROP_BLEED;
 
   const renderScene = ({ route }: { route: Route }) => {
     switch (route.key as TabKey) {
@@ -393,6 +397,8 @@ export default function PropertyDetailScreen() {
             onSelectTenant={handleSelectTenant}
             onSelectExpense={handleSelectExpense}
             onMarkExpensePaid={handleMarkExpensePaid}
+            onRecordPayment={handleRecordPayment}
+            onAddExpense={handleAddExpense}
             contentTopInset={sceneTopInset}
           />
         );
@@ -428,6 +434,7 @@ export default function PropertyDetailScreen() {
             onRefresh={onRefresh}
             onSelectExpense={handleSelectExpense}
             onMarkExpensePaid={handleMarkExpensePaid}
+            onAddExpense={handleAddExpense}
             contentTopInset={sceneTopInset}
           />
         );
@@ -498,9 +505,6 @@ export default function PropertyDetailScreen() {
         </StackHeaderActions>
       )}
     >
-      {/* Keeps glass refracting color on every tab — not only Overview's hero photo. */}
-      <PropertyChromeBackdrop photoUrl={property.photo_url} height={chromeBackdropHeight} />
-
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}
@@ -513,15 +517,33 @@ export default function PropertyDetailScreen() {
             style={[styles.tabOverlay, { top: overlayTop }]}
           >
             {parentProperty ? (
-              <View className="px-4 pb-1">
-                <GlassSurface shape="pill" interactive contentStyle={styles.parentBanner}>
+              <View style={styles.parentWrap}>
+                <Pressable
+                  onPress={() => router.push(`/property/${parentProperty.id}`)}
+                  accessibilityRole="link"
+                  accessibilityLabel={t('properties.linkedTo', {
+                    name: parentProperty.name,
+                  })}
+                  style={[
+                    styles.parentBanner,
+                    {
+                      backgroundColor: colors.surface2,
+                      borderRadius: 999,
+                    },
+                  ]}
+                >
                   <Text
-                    className="text-primary text-center text-sm font-medium"
-                    onPress={() => router.push(`/property/${parentProperty.id}`)}
+                    style={{
+                      fontFamily: Fonts.sans.medium,
+                      fontSize: 13,
+                      color: colors.primary,
+                      textAlign: 'center',
+                    }}
+                    numberOfLines={1}
                   >
                     {t('properties.linkedTo', { name: parentProperty.name })}
                   </Text>
-                </GlassSurface>
+                </Pressable>
               </View>
             ) : null}
             <PropertyTabBar {...props} />
@@ -565,24 +587,6 @@ export default function PropertyDetailScreen() {
         onAddDetails={handleRentAddDetails}
       />
 
-      {showAddTenantButton ? (
-        <View
-          pointerEvents="box-none"
-          style={[
-            styles.addTenantBar,
-            { paddingBottom: Math.max(insets.bottom, Spacing.md) + Spacing.sm },
-          ]}
-        >
-          <AppButton
-            mode="contained"
-            onPress={handleAddTenant}
-            accessibilityLabel={t('tenants.addNew')}
-            className="min-w-40 self-center px-6"
-          >
-            {t('tenants.addNew')}
-          </AppButton>
-        </View>
-      ) : null}
     </DetailScreenScaffold>
   );
 }
@@ -598,15 +602,9 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 10,
   },
-  addTenantBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 20,
-    elevation: 20,
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
+  parentWrap: {
+    paddingHorizontal: 16,
+    paddingBottom: 4,
   },
   parentBanner: {
     paddingHorizontal: 16,

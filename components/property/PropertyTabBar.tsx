@@ -1,98 +1,81 @@
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import type { NavigationState, SceneRendererProps } from 'react-native-tab-view';
 
-import { GlassSurface } from '@/components/ui/GlassSurface';
 import { Text } from '@/components/ui/text';
 import { Spacing } from '@/constants/theme';
-import { cn } from '@/lib/utils';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { Fonts } from '@/lib/fonts';
 
 export interface PropertyTabBarProps extends SceneRendererProps {
   navigationState: NavigationState<{ key: string; title?: string }>;
 }
 
-/** Height of the floating pill row (padding + pill). */
-export const PROPERTY_TAB_BAR_HEIGHT = 38 + Spacing.sm * 2 + Spacing.xs;
+/** Height of the floating segs row (padding + track). */
+export const PROPERTY_TAB_BAR_HEIGHT = 40 + Spacing.sm * 2 + Spacing.xs;
 
 /** Extra space between floating tabs and scene content. */
 export const PROPERTY_SCENE_TOP_GAP = Spacing.md;
 
+/** Naslov `.segs` nav — surface2 track, surface3 selected (not picker primary). */
 export function PropertyTabBar({ navigationState, jumpTo }: PropertyTabBarProps) {
+  const { theme } = useAppTheme();
+  const { colors } = theme;
   const { routes, index: selectedIndex } = navigationState;
 
   return (
-    <View pointerEvents="box-none" className="bg-transparent">
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.pillRow}
-      >
+    <View pointerEvents="box-none" style={styles.wrap}>
+      <View style={[styles.track, { backgroundColor: colors.surface2 }]}>
         {routes.map((route, routeIndex) => {
           const isFocused = selectedIndex === routeIndex;
-
-          if (isFocused) {
-            return (
-              <Pressable
-                key={route.key}
-                onPress={() => jumpTo(route.key)}
-                style={({ pressed }) => [styles.pill, { opacity: pressed ? 0.9 : 1 }]}
-                className="bg-primary"
-                accessibilityRole="tab"
-                accessibilityState={{ selected: true }}
-              >
-                <Text
-                  className="text-primary-foreground text-center text-sm font-bold"
-                  numberOfLines={1}
-                >
-                  {route.title}
-                </Text>
-              </Pressable>
-            );
-          }
-
           return (
             <Pressable
               key={route.key}
               onPress={() => jumpTo(route.key)}
+              style={[
+                styles.seg,
+                isFocused ? { backgroundColor: colors.surface3 } : null,
+              ]}
               accessibilityRole="tab"
-              accessibilityState={{ selected: false }}
+              accessibilityState={{ selected: isFocused }}
             >
-              {/* Avoid opacity on press — it kills native liquid glass rendering. */}
-              <GlassSurface shape="pill" interactive contentStyle={styles.glassPill}>
-                <Text
-                  className={cn('text-center text-sm font-medium text-foreground')}
-                  numberOfLines={1}
-                >
-                  {route.title}
-                </Text>
-              </GlassSurface>
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.semibold,
+                  fontSize: 12,
+                  letterSpacing: -0.12,
+                  color: isFocused ? colors.fg : colors.muted,
+                  textAlign: 'center',
+                }}
+                numberOfLines={1}
+              >
+                {route.title}
+              </Text>
             </Pressable>
           );
         })}
-      </ScrollView>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  pillRow: {
+  wrap: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  track: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-  },
-  pill: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    gap: 5,
+    padding: 4,
     borderRadius: 999,
-    minHeight: 38,
-    justifyContent: 'center',
+    minHeight: 40,
   },
-  glassPill: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    minHeight: 38,
-    justifyContent: 'center',
+  seg: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 999,
   },
 });

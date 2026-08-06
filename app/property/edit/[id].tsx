@@ -2,11 +2,11 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { ErrorState } from '@/components/ui/ErrorState';
-import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
-import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+
 import { PropertyForm } from '@/components/property/PropertyForm';
-import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { useProperties, useProperty } from '@/hooks/useProperties';
 import { useUiStore } from '@/stores/uiStore';
 import type { UsageStatus } from '@/types/app.types';
@@ -20,7 +20,6 @@ export default function EditPropertyScreen() {
   const showToast = useUiStore((s) => s.showToast);
 
   const [isSaving, setIsSaving] = useState(false);
-  const screenStyles = useThemedScreenStyles();
 
   const handleUsageStatusChange = (_from: UsageStatus, _to: UsageStatus) =>
     new Promise<boolean>((resolve) => {
@@ -59,9 +58,13 @@ export default function EditPropertyScreen() {
     }
   };
 
+  const pageTitle = property
+    ? t('properties.editNamed', { name: property.name })
+    : t('properties.editProperty');
+
   if (isLoading) {
     return (
-      <StackScreenChrome title={t('properties.editProperty')}>
+      <StackScreenChrome title={pageTitle} hideHeaderTitle edgeToEdge>
         <SkeletonLoader count={6} style={styles.loader} />
       </StackScreenChrome>
     );
@@ -69,16 +72,17 @@ export default function EditPropertyScreen() {
 
   if (error || !property) {
     return (
-      <StackScreenChrome title={t('properties.editProperty')}>
+      <StackScreenChrome title={pageTitle} hideHeaderTitle edgeToEdge>
         <ErrorState message={error ?? t('properties.notFound')} onRetry={loadProperty} />
       </StackScreenChrome>
     );
   }
 
   return (
-    <StackScreenChrome title={t('properties.editNamed', { name: property.name })}>
-      <View style={[screenStyles.container, styles.container]}>
+    <StackScreenChrome title={pageTitle} hideHeaderTitle edgeToEdge>
+      <View className="flex-1 bg-transparent">
         <PropertyForm
+          title={pageTitle}
           defaultValues={{
             type: property.type,
             usage_status: property.usage_status,
@@ -94,7 +98,7 @@ export default function EditPropertyScreen() {
           onSubmit={handleSubmit}
           onUsageStatusChange={handleUsageStatusChange}
           isSubmitting={isSaving}
-          submitLabel={t('common.update')}
+          submitLabel={t('properties.saveChangesCta')}
         />
       </View>
     </StackScreenChrome>
@@ -102,10 +106,8 @@ export default function EditPropertyScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingTop: 8,
-  },
   loader: {
     padding: 16,
+    marginTop: 80,
   },
 });

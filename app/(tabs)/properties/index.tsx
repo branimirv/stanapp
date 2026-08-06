@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
+  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -10,25 +11,28 @@ import {
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
-import { Building2 } from 'lucide-react-native';
+import { Building2, Plus, Search } from 'lucide-react-native';
+
 import { PropertyCard } from '@/components/property/PropertyCard';
 import { PropertyFilters } from '@/components/property/PropertyFilters';
+import { APP_BOTTOM_SHEET_CLOSE_MS } from '@/components/ui/AppBottomSheet';
 import { AppExpandableSearch } from '@/components/ui/AppExpandableSearch';
+import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { listPerformanceProps } from '@/constants/list';
 import { Colors, Spacing, Typography } from '@/constants/theme';
-import { useExpenses } from '@/hooks/useExpenses';
 import { useMyMemberships } from '@/hooks/useMembers';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
 import { useExpandableSearchState } from '@/hooks/useExpandableSearch';
-import { useFloatingActionsInset } from '@/components/ui/FloatingScreenActions';
-import { SearchableTabActions } from '@/hooks/useSearchableTabHeader';
 import { useRefetchOnFocus } from '@/hooks/useRefetchOnFocus';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useTenants } from '@/hooks/useTenants';
+import { displayFontFamily, Fonts } from '@/lib/fonts';
 import { useAuthStore } from '@/stores/authStore';
+import { useTabBarStore } from '@/stores/tabBarStore';
 import { useUiStore } from '@/stores/uiStore';
 import type { Language, Property, PropertyType, UsageStatus } from '@/types/app.types';
 
@@ -37,6 +41,8 @@ type UsageFilter = 'all' | UsageStatus;
 
 export default function PropertiesScreen() {
   const { t, i18n } = useTranslation();
+  const { theme } = useAppTheme();
+  const { colors } = theme;
   const showConfirmDialog = useUiStore((state) => state.showConfirmDialog);
   const showToast = useUiStore((state) => state.showToast);
 
@@ -44,7 +50,6 @@ export default function PropertiesScreen() {
   const { memberships } = useMyMemberships();
   const user = useAuthStore((state) => state.user);
   const { tenants, refetch: refetchTenants } = useTenants();
-  const { expenses: overdueExpenses } = useExpenses({ status: 'overdue' });
 
   useRefetchOnFocus(refetchTenants);
   const { profile } = useProfile();
@@ -71,10 +76,19 @@ export default function PropertiesScreen() {
     listKeyboardProps,
   } = useExpandableSearchState();
 
-  const floatingInset = useFloatingActionsInset();
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [usageFilter, setUsageFilter] = useState<UsageFilter>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const setChromeHidden = useTabBarStore((s) => s.setChromeHidden);
+
+  const handleFilterVisibilityChange = useCallback(
+    (open: boolean) => {
+      setFilterSheetOpen(open);
+      setChromeHidden(open);
+    },
+    [setChromeHidden],
+  );
 
   const language = (profile?.language ?? i18n.language ?? 'hr') as Language;
   const currency = profile?.default_currency ?? 'EUR';
@@ -89,13 +103,15 @@ export default function PropertiesScreen() {
     return map;
   }, [tenants]);
 
-  const overdueByProperty = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const expense of overdueExpenses) {
-      map.set(expense.property_id, (map.get(expense.property_id) ?? 0) + 1);
-    }
-    return map;
-  }, [overdueExpenses]);
+  const objectCount = useMemo(
+    () => properties.filter((p) => p.parent_property_id == null).length,
+    [properties],
+  );
+
+  const renovationCount = useMemo(
+    () => properties.filter((p) => p.usage_status === 'in_renovation').length,
+    [properties],
+  );
 
   const filteredProperties = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -209,7 +225,6 @@ export default function PropertiesScreen() {
           <PropertyCard
             property={item}
             tenantName={tenantByProperty.get(item.id)}
-            overdueCount={overdueByProperty.get(item.id) ?? 0}
             currency={currency}
             language={language}
             onPress={handlePropertyPress}
@@ -222,34 +237,124 @@ export default function PropertiesScreen() {
       handlePropertyPress,
       language,
       membershipByProperty,
-      overdueByProperty,
       renderRightActions,
       tenantByProperty,
       user?.id,
     ],
   );
 
-  const listFiltersHeader = (
-    <>
+  const searchActive = searchExpanded || searchHasText;
+
+  const listHeader = (
+    <View>
+      <View style={styles.topRow}>
+        <View style={styles.topSpacer} />
+        <View style={styles.actions}>
+          <Pressable
+            onPress={handleSearchPress}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.search')}
+            style={[
+              styles.btnIco,
+              {
+                backgroundColor: searchActive ? colors.primaryTint : colors.surface2,
+              },
+            ]}
+            hitSlop={4}
+          >
+            <Search
+              size={17}
+              color={searchActive ? colors.primary : colors.fg}
+              strokeWidth={2}
+            />
+          </Pressable>
+          <Pressable
+            onPress={handleCreatePress}
+            accessibilityRole="button"
+            accessibilityLabel={t('properties.addNew')}
+            style={[styles.btnIco, { backgroundColor: colors.surface2 }]}
+            hitSlop={4}
+          >
+            <Plus size={17} color={colors.fg} strokeWidth={2} />
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={styles.titleBlk}>
+        <Text
+          style={{
+            fontFamily: Fonts.sans.semibold,
+            fontSize: 11,
+            lineHeight: 14,
+            letterSpacing: 1.54,
+            textTransform: 'uppercase',
+            color: colors.muted,
+            marginBottom: 10,
+          }}
+        >
+          {t('properties.objectsUnits', {
+            objects: objectCount,
+            units: properties.length,
+          })}
+        </Text>
+        <Text
+          style={{
+            fontFamily: displayFontFamily(theme.name),
+            fontSize: 34,
+            lineHeight: 34,
+            letterSpacing: -0.85,
+            color: colors.fg,
+          }}
+        >
+          {t('properties.title')}
+        </Text>
+      </View>
+
       <AppExpandableSearch
         {...searchBarControlProps}
         placeholder={t('properties.searchPlaceholder')}
         style={styles.searchBar}
       />
+
       <PropertyFilters
         typeFilter={typeFilter}
         onTypeFilterChange={setTypeFilter}
         usageFilter={usageFilter}
         onUsageFilterChange={setUsageFilter}
         onInteraction={dismissSearchIfEmpty}
+        onVisibilityChange={handleFilterVisibilityChange}
       />
-    </>
+    </View>
   );
+
+  const listFooter =
+    filteredProperties.length > 0 ? (
+      <Text
+        style={{
+          fontFamily: Fonts.sans.semibold,
+          fontSize: 10,
+          letterSpacing: 0.8,
+          textTransform: 'uppercase',
+          color: colors.muted,
+          textAlign: 'center',
+          marginTop: 18,
+          marginBottom: 8,
+        }}
+      >
+        {t('properties.showingOf', {
+          shown: filteredProperties.length,
+          total: properties.length,
+        })}
+        {renovationCount > 0
+          ? ` · ${t('properties.inPreparation', { count: renovationCount })}`
+          : ''}
+      </Text>
+    ) : null;
 
   if (isLoading && properties.length === 0) {
     return (
-      <View className="flex-1 bg-transparent">
-        <SkeletonLoader count={5} height={140} style={styles.skeleton} />
+      <View className="flex-1 bg-transparent" style={styles.pad}>
+        <SkeletonLoader count={5} height={160} style={styles.skeleton} />
       </View>
     );
   }
@@ -264,41 +369,48 @@ export default function PropertiesScreen() {
 
   return (
     <View className="flex-1 bg-transparent" collapsable={false}>
-      <SearchableTabActions
-        showCreate
-        onCreatePress={handleCreatePress}
-        searchActive={searchHasText}
-        searchExpanded={searchExpanded}
-        onSearchPress={handleSearchPress}
-      />
-      <View style={[styles.listHeader, { paddingTop: floatingInset }]}>{listFiltersHeader}</View>
-      <FlatList
-        style={styles.list}
-        contentInsetAdjustmentBehavior="automatic"
-        data={filteredProperties}
-        keyExtractor={(item) => item.id}
-        {...listKeyboardProps}
-        {...listPerformanceProps}
-        contentContainerStyle={[
-          styles.listContent,
-          filteredProperties.length === 0 && styles.listEmpty,
-          { paddingBottom: Spacing.lg },
-        ]}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        renderItem={renderProperty}
-        ListEmptyComponent={
-          <EmptyState
-            icon={Building2}
-            title={t('empty.noProperties')}
-            subtitle={
-              search || typeFilter !== 'all' || usageFilter !== 'all'
-                ? t('empty.noResultsHint')
-                : t('empty.noPropertiesHint')
-            }
-            ctaLabel={t('properties.addNew')}
-            onCtaPress={handleCreatePress}
-          />
-        }
+      <View style={styles.list} collapsable={false}>
+        <FlatList
+          style={styles.list}
+          contentInsetAdjustmentBehavior="automatic"
+          data={filteredProperties}
+          keyExtractor={(item) => item.id}
+          {...listKeyboardProps}
+          {...listPerformanceProps}
+          contentContainerStyle={[
+            styles.listContent,
+            {
+              paddingHorizontal: theme.spacing.gutter,
+              paddingBottom: theme.spacing.scrollBottom,
+            },
+            filteredProperties.length === 0 && styles.listEmpty,
+          ]}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          ListHeaderComponent={listHeader}
+          ListFooterComponent={listFooter}
+          renderItem={renderProperty}
+          ListEmptyComponent={
+            <EmptyState
+              icon={Building2}
+              title={t('empty.noProperties')}
+              subtitle={
+                search || typeFilter !== 'all' || usageFilter !== 'all'
+                  ? t('empty.noResultsHint')
+                  : t('empty.noPropertiesHint')
+              }
+              ctaLabel={t('properties.addNew')}
+              onCtaPress={handleCreatePress}
+            />
+          }
+        />
+      </View>
+      {/* Blur sibling of list — never inside the Modal (see docs/blur). */}
+      <BlurOverlay
+        visible={filterSheetOpen}
+        intensity="strong"
+        tint="dark"
+        duration={APP_BOTTOM_SHEET_CLOSE_MS}
+        zIndex={5}
       />
     </View>
   );
@@ -308,27 +420,51 @@ const styles = StyleSheet.create({
   list: {
     flex: 1,
   },
-  skeleton: {
-    padding: Spacing.md,
-  },
-  listHeader: {
+  pad: {
     paddingHorizontal: Spacing.md,
+  },
+  skeleton: {
+    marginBottom: Spacing.md,
   },
   listContent: {
-    paddingHorizontal: Spacing.md,
     paddingTop: 0,
-  },
-  searchBar: {
-    paddingTop: Spacing.md,
   },
   listEmpty: {
     flexGrow: 1,
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingVertical: 16,
+    gap: 8,
+  },
+  topSpacer: {
+    flex: 1,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  btnIco: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titleBlk: {
+    marginBottom: 16,
+  },
+  searchBar: {
+    marginBottom: 12,
   },
   swipeActions: {
     flexDirection: 'row',
     alignItems: 'stretch',
     paddingLeft: Spacing.sm,
-    marginBottom: Spacing.sm,
+    marginBottom: 12,
   },
   swipeButton: {
     justifyContent: 'center',

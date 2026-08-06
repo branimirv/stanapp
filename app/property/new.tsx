@@ -2,9 +2,9 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
 import { PropertyForm } from '@/components/property/PropertyForm';
 import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
-import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
 import { useProperties } from '@/hooks/useProperties';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
@@ -17,7 +17,6 @@ export default function NewPropertyScreen() {
   const { properties, create } = useProperties();
   const showToast = useUiStore((s) => s.showToast);
   const [isSaving, setIsSaving] = useState(false);
-  const screenStyles = useThemedScreenStyles();
 
   const handleUsageStatusChange = (_from: UsageStatus, _to: UsageStatus) =>
     new Promise<boolean>((resolve) => {
@@ -58,14 +57,15 @@ export default function NewPropertyScreen() {
   };
 
   return (
-    <StackScreenChrome title={t('properties.newProperty')} edgeToEdge>
-      <View style={screenStyles.container}>
+    <StackScreenChrome title={t('properties.newProperty')} hideHeaderTitle edgeToEdge>
+      <View className="flex-1 bg-transparent">
         <PropertyForm
+          title={t('properties.newProperty')}
           parentProperties={properties}
           onSubmit={handleSubmit}
           onUsageStatusChange={handleUsageStatusChange}
           isSubmitting={isSaving}
-          submitLabel={t('common.create')}
+          submitLabel={t('properties.createCta')}
         />
       </View>
     </StackScreenChrome>

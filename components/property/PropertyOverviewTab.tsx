@@ -1,22 +1,28 @@
-import { Image } from 'expo-image';
-import { ChevronRight, MapPin, Receipt, Users } from 'lucide-react-native';
-import { memo, useCallback, useMemo } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import {
+  ArrowDownToLine,
+  MapPin,
+  Plus,
+  Users,
+} from 'lucide-react-native';
+import { memo, useMemo } from 'react';
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { ExpenseCard } from '@/components/expense/ExpenseCard';
-import { PropertyExpensesCard } from '@/components/property/PropertyExpensesCard';
+
 import { PropertyRentCard } from '@/components/property/PropertyRentCard';
 import { PropertyStats } from '@/components/property/PropertyStats';
-import { PropertyTypeBadge } from '@/components/property/PropertyTypeBadge';
 import { SubPropertyList } from '@/components/property/SubPropertyList';
-import { UsageStatusBadge } from '@/components/property/UsageStatusBadge';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { Icon } from '@/components/ui/icon';
-import { ScreenPageTitle } from '@/components/ui/ScreenPageTitle';
-import { Text } from '@/components/ui/text';
 import { PROPERTY_SCENE_TOP_GAP } from '@/components/property/PropertyTabBar';
-import { listPerformanceProps } from '@/constants/list';
-import { Colors, Spacing } from '@/constants/theme';
+import { AppButton } from '@/components/ui/AppButton';
+import { Typography } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { displayFontFamily, Fonts } from '@/lib/fonts';
 import type {
   Expense,
   ExpenseCategory,
@@ -25,11 +31,7 @@ import type {
   RentPayment,
   Tenant,
 } from '@/types/app.types';
-import {
-  formatCurrency,
-  formatCurrencyShort,
-  formatPeriod,
-} from '@/utils/formatters';
+import { formatDate } from '@/utils/formatters';
 
 export interface PropertyOverviewTabProps {
   property: Property;
@@ -59,12 +61,9 @@ export interface PropertyOverviewTabProps {
   onSelectTenant: (tenantId: string) => void;
   onSelectExpense: (expenseId: string) => void;
   onMarkExpensePaid: (expenseId: string) => void;
-  /** Top inset so list content clears floating header + tabs; photo bleeds under. */
+  onRecordPayment: () => void;
+  onAddExpense: () => void;
   contentTopInset?: number;
-}
-
-function keyExtractor(expense: Expense) {
-  return expense.id;
 }
 
 function PropertyOverviewTabComponent({
@@ -77,252 +76,358 @@ function PropertyOverviewTabComponent({
   language,
   month,
   year,
-  monthExpenses,
   monthExpenseTotal,
   monthIncome,
-  categoryMap,
   rentPayment,
   activeTenants,
-  hasAnyExpenses,
   refreshing,
   onRefresh,
   onOpenAddress,
   onShowUsageHistory,
   onGoToRent,
   onGoToTenants,
-  onViewAllExpenses,
   onOpenMembers,
   onSelectTenant,
-  onSelectExpense,
-  onMarkExpensePaid,
+  onRecordPayment,
+  onAddExpense,
   contentTopInset = 0,
 }: PropertyOverviewTabProps) {
   const { t } = useTranslation();
-  const hasPhoto = Boolean(property.photo_url);
-  const photoHeight = 200 + contentTopInset;
-  // Photo bleeds under chrome; otherwise clear the floating tabs with a bit of air.
-  const listTopPad = hasPhoto
-    ? contentTopInset || Spacing.sm
-    : (contentTopInset || 0) + PROPERTY_SCENE_TOP_GAP;
-
-  const monthBalance = monthIncome - monthExpenseTotal;
-  const periodLabel = formatPeriod(month, year, language);
+  const { theme } = useAppTheme();
+  const { colors, elevation, radius } = theme;
+  const listTopPad = (contentTopInset || 0) + PROPERTY_SCENE_TOP_GAP;
   const tenantCount = activeTenants.length;
-  const primaryTenant = activeTenants[0];
 
-  const propertyMeta = useMemo(() => {
-    const parts: string[] = [];
+  const typeLabel = t(`propertyTypes.${property.type}`);
+
+  const eyebrow = useMemo(() => {
+    const parts = [typeLabel];
     if (property.floor != null) parts.push(t('properties.floorShort', { floor: property.floor }));
     if (property.area_sqm != null) {
       parts.push(t('properties.areaShort', { area: property.area_sqm }));
     }
     return parts.join(' · ');
-  }, [property.area_sqm, property.floor, t]);
+  }, [property.area_sqm, property.floor, t, typeLabel]);
 
-  const handleTenantCardPress = useCallback(() => {
-    if (tenantCount === 1 && primaryTenant) {
-      onSelectTenant(primaryTenant.id);
-      return;
+  const metaChip = useMemo(() => {
+    const parts = [typeLabel];
+    if (property.floor != null) parts.push(t('properties.floorShort', { floor: property.floor }));
+    if (property.area_sqm != null) {
+      parts.push(t('properties.areaShort', { area: property.area_sqm }));
     }
-    onGoToTenants();
-  }, [onGoToTenants, onSelectTenant, primaryTenant, tenantCount]);
+    return parts.join(' · ');
+  }, [property.area_sqm, property.floor, t, typeLabel]);
 
-  const renderExpense = useCallback(
-    ({ item }: { item: Expense }) => (
-      <ExpenseCard
-        expense={item}
-        category={categoryMap.get(item.category_id)}
-        currency={currency}
-        language={language}
-        onPress={onSelectExpense}
-        onMarkPaid={canManage && !item.paid_at ? onMarkExpensePaid : undefined}
-      />
-    ),
-    [canManage, categoryMap, currency, language, onMarkExpensePaid, onSelectExpense],
-  );
+  const usageChipStyle =
+    property.usage_status === 'rented'
+      ? { bg: colors.posTint, fg: colors.pos }
+      : { bg: colors.surface2, fg: colors.muted };
 
-  const header = (
-    <View className="gap-5">
-      {hasPhoto ? (
-        <Image
-          source={{ uri: property.photo_url! }}
-          style={[
-            styles.photo,
-            {
-              height: photoHeight,
-              marginTop: -contentTopInset,
-            },
-          ]}
-          contentFit="cover"
-        />
-      ) : null}
-
-      <View className="gap-2">
-        <ScreenPageTitle>{property.name}</ScreenPageTitle>
-
-        <Pressable
-          className="min-h-10 flex-row items-center gap-2"
-          style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
-          onPress={onOpenAddress}
-          accessibilityRole="button"
-          accessibilityLabel={t('properties.openInMaps')}
+  return (
+    <ScrollView
+      contentContainerStyle={[
+        styles.content,
+        {
+          paddingTop: listTopPad,
+          paddingHorizontal: theme.spacing.gutter,
+          paddingBottom: theme.spacing.scrollBottom,
+        },
+      ]}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.titleBlk}>
+        <Text
+          style={{
+            fontFamily: Fonts.sans.semibold,
+            fontSize: 11,
+            letterSpacing: 1.54,
+            textTransform: 'uppercase',
+            color: colors.muted,
+            marginBottom: 10,
+          }}
         >
-          <Icon as={MapPin} size={18} className="text-foreground" strokeWidth={2} />
-          <Text className="text-foreground flex-1 text-base font-semibold" numberOfLines={2}>
-            {property.address}
+          {eyebrow}
+        </Text>
+        <Text
+          style={{
+            fontFamily: displayFontFamily(theme.name),
+            fontSize: 40,
+            lineHeight: 40,
+            letterSpacing: -1,
+            color: colors.fg,
+          }}
+          accessibilityRole="header"
+        >
+          {property.name}
+        </Text>
+      </View>
+
+      <Pressable
+        style={styles.addr}
+        onPress={onOpenAddress}
+        accessibilityRole="button"
+        accessibilityLabel={t('properties.openInMaps')}
+      >
+        <MapPin size={14} color={colors.muted} strokeWidth={2} />
+        <Text
+          style={{
+            flex: 1,
+            fontFamily: Fonts.sans.regular,
+            fontSize: Typography.text.body.size,
+            color: colors.muted,
+          }}
+          numberOfLines={2}
+        >
+          {property.address}
+        </Text>
+      </Pressable>
+
+      <View style={styles.chips}>
+        <View style={[styles.chip, { backgroundColor: colors.surface2 }]}>
+          <Text
+            style={{
+              fontFamily: Fonts.sans.semibold,
+              fontSize: 11,
+              color: colors.muted,
+            }}
+          >
+            {metaChip}
+          </Text>
+        </View>
+        <Pressable
+          onPress={onShowUsageHistory}
+          style={[styles.chip, { backgroundColor: usageChipStyle.bg }]}
+          accessibilityRole="button"
+          accessibilityLabel={t('properties.usageHistory')}
+        >
+          <Text
+            style={{
+              fontFamily: Fonts.sans.semibold,
+              fontSize: 11,
+              color: usageChipStyle.fg,
+            }}
+          >
+            {t(`usageStatus.${property.usage_status}`)}
           </Text>
         </Pressable>
-
-        {propertyMeta ? (
-          <Text className="text-muted-foreground text-xs">{propertyMeta}</Text>
-        ) : null}
-
-        <View className="flex-row flex-wrap gap-2">
-          <PropertyTypeBadge type={property.type} />
-          <UsageStatusBadge status={property.usage_status} onPress={onShowUsageHistory} />
-        </View>
       </View>
 
       {isRented ? (
-        <View className="flex-row items-stretch gap-2">
-          <PropertyRentCard
-            rentAmount={property.rent_amount}
-            currency={currency}
-            language={language}
-            month={month}
-            year={year}
-            payment={rentPayment}
-            onStatusPress={onGoToRent}
-            className="min-w-0 flex-1"
-          />
-          <PropertyExpensesCard
-            total={monthExpenseTotal}
-            currency={currency}
-            language={language}
-            expenseCount={monthExpenses.length}
-            onPress={onViewAllExpenses}
-            className="min-w-0 flex-1"
-          />
-          <Pressable
-            className="bg-muted/60 min-h-35 min-w-0 flex-1 items-center justify-between rounded-[28px] px-3 py-4"
-            style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
-            onPress={handleTenantCardPress}
-            accessibilityRole="button"
-            accessibilityLabel={`${t('tenants.title')}: ${tenantCount}`}
-          >
-            <Text
-              className="text-muted-foreground text-center text-[10px] font-semibold tracking-wide uppercase"
-              numberOfLines={1}
-            >
-              {t('tenants.title')}
-            </Text>
-
-            <View className="items-center justify-center py-2">
-              <Text
-                className="text-foreground text-center text-[22px] leading-7 font-bold"
-                numberOfLines={1}
-                adjustsFontSizeToFit
-              >
-                {tenantCount}
-              </Text>
-            </View>
-
-            <View className="h-4" />
-          </Pressable>
-        </View>
-      ) : (
-        <View className="bg-muted/60 gap-2 rounded-3xl px-5 py-5">
-          <Text className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-            {t('properties.statsNet')}
-          </Text>
-          <Text
-            className="text-4xl leading-10 font-bold"
-            style={{ color: monthBalance >= 0 ? Colors.accent : Colors.danger }}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-          >
-            {formatCurrencyShort(monthBalance, currency, language)}
-          </Text>
-        </View>
-      )}
+        <PropertyRentCard
+          rentAmount={Number(property.rent_amount)}
+          currency={currency}
+          language={language}
+          month={month}
+          year={year}
+          payment={rentPayment}
+          onStatusPress={onGoToRent}
+        />
+      ) : null}
 
       <PropertyStats
         totalIncome={monthIncome}
         totalExpenses={monthExpenseTotal}
+        tenantCount={tenantCount}
         currency={currency}
         language={language}
-        periodLabel={periodLabel}
       />
 
-      {property.notes ? (
-        <View className="bg-muted/60 rounded-3xl px-4 py-3">
-          <Text className="text-muted-foreground text-sm">{property.notes}</Text>
+      {isRented && canManage ? (
+        <View style={styles.ctaRow}>
+          <AppButton
+            mode="contained"
+            onPress={onRecordPayment}
+            className="h-11 flex-1"
+            accessibilityLabel={t('properties.recordPayment')}
+          >
+            <View style={styles.ctaInner}>
+              <ArrowDownToLine size={18} color={colors.onPrimary} strokeWidth={2} />
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.semibold,
+                  fontSize: 14,
+                  color: colors.onPrimary,
+                }}
+              >
+                {t('properties.recordPayment')}
+              </Text>
+            </View>
+          </AppButton>
+          <Pressable
+            onPress={onAddExpense}
+            accessibilityRole="button"
+            accessibilityLabel={t('expenses.addNew')}
+            style={[styles.plusBtn, { backgroundColor: colors.surface2 }]}
+            hitSlop={4}
+          >
+            <Plus size={20} color={colors.fg} strokeWidth={2} />
+          </Pressable>
+        </View>
+      ) : canManage ? (
+        <View style={styles.ctaRow}>
+          <AppButton
+            mode="contained"
+            onPress={onAddExpense}
+            className="h-11 flex-1"
+            accessibilityLabel={t('expenses.addNew')}
+          >
+            {t('expenses.addNew')}
+          </AppButton>
         </View>
       ) : null}
 
-      <View className="mt-1 flex-row items-end justify-between gap-2">
-        <Text className="text-foreground flex-1 text-base font-bold">
-          {t('properties.statsExpenses')}
-        </Text>
-        <Text className="text-muted-foreground text-sm font-medium">
-          {formatCurrency(monthExpenseTotal, currency, language)}
-        </Text>
-      </View>
-    </View>
-  );
+      {isRented ? (
+        <View style={styles.tenantsSec}>
+          <Pressable onPress={onGoToTenants} accessibilityRole="button">
+            <Text
+              style={{
+                fontFamily: displayFontFamily(theme.name),
+                fontSize: 22,
+                letterSpacing: -0.55,
+                color: colors.fg,
+                marginBottom: 11,
+              }}
+            >
+              {t('tenants.title')}
+            </Text>
+          </Pressable>
 
-  const footer = (
-    <View className="gap-4 pt-2">
-      {hasAnyExpenses ? (
-        <Text
-          className="text-primary text-center text-sm font-semibold"
-          onPress={onViewAllExpenses}
+          {activeTenants.length === 0 ? (
+            <Text
+              style={{
+                fontFamily: Fonts.sans.regular,
+                fontSize: 13,
+                color: colors.muted,
+              }}
+            >
+              {t('empty.noTenantsHint')}
+            </Text>
+          ) : (
+            <View
+              style={[
+                styles.tenantCard,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.cardBd,
+                  borderRadius: radius.xl,
+                  ...elevation.card,
+                },
+              ]}
+            >
+              {activeTenants.map((tenant, index) => (
+                <Pressable
+                  key={tenant.id}
+                  onPress={() => onSelectTenant(tenant.id)}
+                  style={[
+                    styles.lrow,
+                    index > 0 ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.bd } : null,
+                  ]}
+                  accessibilityRole="button"
+                >
+                  <View style={[styles.lw, { backgroundColor: colors.surface2 }]}>
+                    <Users size={18} color={colors.muted} strokeWidth={2} />
+                  </View>
+                  <View style={styles.lrowBody}>
+                    <Text
+                      style={{
+                        fontFamily: Fonts.sans.semibold,
+                        fontSize: Typography.text.listRow.size,
+                        color: colors.fg,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {`${tenant.first_name} ${tenant.last_name}`.trim()}
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: Fonts.sans.semibold,
+                        fontSize: Typography.text.chipSm.size,
+                        letterSpacing: 0.8,
+                        textTransform: 'uppercase',
+                        color: colors.muted,
+                        marginTop: 3,
+                      }}
+                    >
+                      {t('properties.tenantSince', {
+                        date: formatDate(tenant.contract_start, language),
+                      })}
+                    </Text>
+                  </View>
+                  <View style={[styles.chip, { backgroundColor: colors.posTint }]}>
+                    <Text
+                      style={{
+                        fontFamily: Fonts.sans.semibold,
+                        fontSize: 11,
+                        color: colors.pos,
+                      }}
+                    >
+                      {t('tenants.statusOk')}
+                    </Text>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          )}
+        </View>
+      ) : null}
+
+      {property.notes ? (
+        <View
+          style={[
+            styles.notes,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.cardBd,
+              borderRadius: radius.xl,
+            },
+          ]}
         >
-          {t('properties.viewAllExpenses')}
-        </Text>
+          <Text style={{ fontFamily: Fonts.sans.regular, fontSize: 13, color: colors.muted }}>
+            {property.notes}
+          </Text>
+        </View>
       ) : null}
 
       {childProperties.length > 0 ? <SubPropertyList properties={childProperties} /> : null}
 
       {isOwner ? (
         <Pressable
-          className="bg-muted/60 min-h-14 flex-row items-center gap-3 rounded-3xl px-4 py-3.5"
-          style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
           onPress={onOpenMembers}
+          style={[
+            styles.membersRow,
+            { backgroundColor: colors.surface2, borderRadius: radius.xl },
+          ]}
           accessibilityRole="button"
           accessibilityLabel={t('members.title')}
         >
-          <View className="bg-card h-10 w-10 items-center justify-center rounded-full">
-            <Icon as={Users} size={18} className="text-muted-foreground" strokeWidth={1.75} />
+          <View style={[styles.lw, { backgroundColor: colors.surface3 }]}>
+            <Users size={18} color={colors.muted} strokeWidth={2} />
           </View>
-          <View className="min-w-0 flex-1 gap-0.5">
-            <Text className="text-foreground text-[15px] font-semibold">{t('members.title')}</Text>
-            <Text className="text-muted-foreground text-xs">{t('members.overviewHint')}</Text>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontFamily: Fonts.sans.semibold,
+                fontSize: 15,
+                color: colors.fg,
+              }}
+            >
+              {t('members.title')}
+            </Text>
+            <Text
+              style={{
+                fontFamily: Fonts.sans.regular,
+                fontSize: 12,
+                color: colors.muted,
+                marginTop: 2,
+              }}
+            >
+              {t('members.overviewHint')}
+            </Text>
           </View>
-          <Icon as={ChevronRight} size={18} className="text-muted-foreground" strokeWidth={2} />
         </Pressable>
       ) : null}
-    </View>
-  );
-
-  return (
-    <FlatList
-      data={monthExpenses}
-      keyExtractor={keyExtractor}
-      renderItem={renderExpense}
-      contentContainerStyle={[styles.content, { paddingTop: listTopPad }]}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      {...listPerformanceProps}
-      ListHeaderComponent={header}
-      ListFooterComponent={footer}
-      ListEmptyComponent={
-        <EmptyState
-          icon={Receipt}
-          title={t('properties.noExpensesThisMonth')}
-          subtitle={t('empty.noExpensesHint')}
-        />
-      }
-    />
+    </ScrollView>
   );
 }
 
@@ -330,14 +435,82 @@ export const PropertyOverviewTab = memo(PropertyOverviewTabComponent);
 
 const styles = StyleSheet.create({
   content: {
-    paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.xxl + 56,
-    gap: Spacing.md,
+    gap: 0,
   },
-  photo: {
-    width: '100%',
-    marginHorizontal: -Spacing.md,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+  titleBlk: {
+    marginBottom: 12,
+  },
+  addr: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+  },
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 7,
+    marginBottom: 16,
+  },
+  chip: {
+    paddingVertical: 5,
+    paddingHorizontal: 11,
+    borderRadius: 999,
+  },
+  ctaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    marginBottom: 22,
+  },
+  ctaInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  plusBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tenantsSec: {
+    marginBottom: 18,
+  },
+  tenantCard: {
+    paddingHorizontal: 18,
+    paddingVertical: 4,
+    borderWidth: 1,
+  },
+  lrow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 13,
+    paddingVertical: 13,
+  },
+  lrowBody: {
+    flex: 1,
+    minWidth: 0,
+  },
+  lw: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notes: {
+    padding: 16,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  membersRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    marginTop: 8,
   },
 });

@@ -1,25 +1,31 @@
+import { ChevronRight, Plus, Receipt } from 'lucide-react-native';
 import { memo, useCallback, useMemo, useState } from 'react';
-import { FlatList, RefreshControl, SectionList, StyleSheet, View } from 'react-native';
-import { Receipt } from 'lucide-react-native';
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { ExpenseCard } from '@/components/expense/ExpenseCard';
-import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
+
+import { ExpenseListRow } from '@/components/expense/ExpenseListRow';
+import { PROPERTY_SCENE_TOP_GAP } from '@/components/property/PropertyTabBar';
+import { AppButton } from '@/components/ui/AppButton';
+import { DisplayAmount } from '@/components/ui/DisplayAmount';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
-import { Text } from '@/components/ui/text';
-import { PROPERTY_SCENE_TOP_GAP } from '@/components/property/PropertyTabBar';
-import { listPerformanceProps } from '@/constants/list';
 import { Spacing } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { displayFontFamily, Fonts } from '@/lib/fonts';
 import type { Expense, ExpenseCategory, Language } from '@/types/app.types';
-import { formatCurrency, formatPeriod } from '@/utils/formatters';
+import { formatPeriod } from '@/utils/formatters';
 
 type PeriodFilter = 'current_month' | 'all';
 
-interface ExpenseMonthSection {
-  title: string;
-  total: number;
-  data: Expense[];
-}
+const PREVIEW_COUNT = 3;
 
 export interface PropertyExpensesTabProps {
   expenses: Expense[];
@@ -36,12 +42,15 @@ export interface PropertyExpensesTabProps {
   onRefresh: () => void;
   onSelectExpense: (expenseId: string) => void;
   onMarkExpensePaid: (expenseId: string) => void;
+  onAddExpense: () => void;
   /** Clears floating header + tabs; content still peeks under glass. */
   contentTopInset?: number;
 }
 
-function keyExtractor(expense: Expense) {
-  return expense.id;
+function capitalizePeriod(label: string, language: Language): string {
+  return label.replace(/^./, (ch) =>
+    ch.toLocaleUpperCase(language === 'en' ? 'en' : 'hr'),
+  );
 }
 
 function PropertyExpensesTabComponent({
@@ -58,152 +67,288 @@ function PropertyExpensesTabComponent({
   refreshing,
   onRefresh,
   onSelectExpense,
-  onMarkExpensePaid,
+  onAddExpense,
   contentTopInset = 0,
 }: PropertyExpensesTabProps) {
   const { t } = useTranslation();
-  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
+  const { theme } = useAppTheme();
+  const { colors, elevation, radius } = theme;
+  const insets = useSafeAreaInsets();
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('current_month');
+  const [expanded, setExpanded] = useState(false);
+
   const listTopPad = (contentTopInset || 0) + PROPERTY_SCENE_TOP_GAP;
+  const ctaBottom = Math.max(insets.bottom, 12) + 10;
+  const listBottomPad = canManage ? 72 + ctaBottom : Spacing.xxl;
 
-  const expensesByMonth = useMemo<ExpenseMonthSection[]>(() => {
-    const groups = new Map<string, Expense[]>();
-    for (const expense of expenses) {
-      const key = expense.billing_date.slice(0, 7);
-      const list = groups.get(key) ?? [];
-      list.push(expense);
-      groups.set(key, list);
-    }
-    return Array.from(groups.entries())
-      .sort(([a], [b]) => b.localeCompare(a))
-      .map(([key, items]) => {
-        const [groupYear, groupMonth] = key.split('-').map(Number);
-        return {
-          title: formatPeriod(groupMonth ?? 1, groupYear ?? 2000, language),
-          data: items,
-          total: items.reduce((sum, expense) => sum + expense.amount, 0),
-        };
-      });
-  }, [expenses, language]);
+  const sortedAll = useMemo(() => {
+    return [...expenses].sort((a, b) => b.billing_date.localeCompare(a.billing_date));
+  }, [expenses]);
 
-  const segments = useMemo(
-    () => [
-      { label: t('properties.expensePeriodThisMonth'), value: 'current_month' },
-      { label: t('properties.expensePeriodAll'), value: 'all' },
-    ],
-    [t],
-  );
+  const sourceList = periodFilter === 'current_month' ? monthExpenses : sortedAll;
 
-  const handlePeriodChange = useCallback((value: string) => {
-    setPeriodFilter(value as PeriodFilter);
+  const visibleExpenses = useMemo(() => {
+    if (expanded || sourceList.length <= PREVIEW_COUNT) return sourceList;
+    return sourceList.slice(0, PREVIEW_COUNT);
+  }, [expanded, sourceList]);
+
+  const hasMore = sourceList.length > PREVIEW_COUNT;
+  const headerTotal =
+    periodFilter === 'current_month'
+      ? monthExpenseTotal
+      : sourceList.reduce((sum, item) => sum + Number(item.amount), 0);
+  const headerTitle =
+    periodFilter === 'current_month'
+      ? capitalizePeriod(formatPeriod(month, year, language), language)
+      : t('properties.expensePeriodAll');
+
+  const handlePeriodChange = useCallback((next: PeriodFilter) => {
+    setPeriodFilter(next);
+    setExpanded(false);
   }, []);
-
-  const renderExpense = useCallback(
-    ({ item }: { item: Expense }) => (
-      <ExpenseCard
-        expense={item}
-        category={categoryMap.get(item.category_id)}
-        currency={currency}
-        language={language}
-        onPress={onSelectExpense}
-        onMarkPaid={canManage && !item.paid_at ? onMarkExpensePaid : undefined}
-      />
-    ),
-    [canManage, categoryMap, currency, language, onMarkExpensePaid, onSelectExpense],
-  );
-
-  const renderSectionHeader = useCallback(
-    ({ section }: { section: ExpenseMonthSection }) => (
-      <View className="flex-row items-end justify-between gap-2 py-3">
-        <Text className="text-foreground text-base font-bold">{section.title}</Text>
-        <Text className="text-muted-foreground text-sm font-medium">
-          {formatCurrency(section.total, currency, language)}
-        </Text>
-      </View>
-    ),
-    [currency, language],
-  );
 
   if (isLoading) {
     return <SkeletonLoader count={4} style={[styles.content, { paddingTop: listTopPad }]} />;
   }
 
-  if (expenses.length === 0) {
-    return (
-      <View className="flex-1" style={{ paddingTop: listTopPad }}>
-        <EmptyState
-          icon={Receipt}
-          title={t('empty.noExpenses')}
-          subtitle={t('empty.noExpensesHint')}
-        />
-      </View>
-    );
-  }
-
-  const periodSwitcher = (
-    <View className="mb-3">
-      <AppSegmentedControl
-        segments={segments}
-        value={periodFilter}
-        onValueChange={handlePeriodChange}
-        className="rounded-full"
-      />
-    </View>
-  );
-
-  if (periodFilter === 'current_month') {
-    return (
-      <FlatList
-        data={monthExpenses}
-        keyExtractor={keyExtractor}
-        renderItem={renderExpense}
-        contentContainerStyle={[styles.content, { paddingTop: listTopPad }]}
+  return (
+    <View style={styles.shell}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: listTopPad, paddingBottom: listBottomPad },
+        ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        {...listPerformanceProps}
-        ListHeaderComponent={
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[styles.segsTrack, { backgroundColor: colors.surface2 }]}>
+          {(
+            [
+              { value: 'current_month' as const, label: t('properties.expensePeriodThisMonth') },
+              { value: 'all' as const, label: t('properties.expensePeriodAll') },
+            ] as const
+          ).map((seg) => {
+            const on = periodFilter === seg.value;
+            return (
+              <Pressable
+                key={seg.value}
+                onPress={() => handlePeriodChange(seg.value)}
+                style={[styles.seg, on ? { backgroundColor: colors.surface3 } : null]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+              >
+                <Text
+                  style={{
+                    fontFamily: Fonts.sans.semibold,
+                    fontSize: 12,
+                    letterSpacing: -0.12,
+                    color: on ? colors.fg : colors.muted,
+                    textAlign: 'center',
+                  }}
+                >
+                  {seg.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {sourceList.length === 0 ? (
+          <View
+            style={[
+              styles.empty,
+              {
+                backgroundColor: colors.surface2,
+                borderRadius: radius.xl,
+              },
+            ]}
+          >
+            <EmptyState
+              icon={Receipt}
+              title={
+                periodFilter === 'current_month'
+                  ? t('properties.noExpensesThisMonth')
+                  : t('empty.noExpenses')
+              }
+              subtitle={t('empty.noExpensesHint')}
+            />
+          </View>
+        ) : (
           <>
-            {periodSwitcher}
-            {monthExpenses.length > 0 ? (
-              <View className="flex-row items-end justify-between gap-2 py-3">
-                <Text className="text-foreground text-base font-bold">
-                  {formatPeriod(month, year, language)}
+            <View style={styles.secHead}>
+              <Text
+                style={{
+                  flex: 1,
+                  fontFamily: displayFontFamily(theme.name),
+                  fontSize: 19,
+                  letterSpacing: -0.4,
+                  color: colors.fg,
+                }}
+                numberOfLines={1}
+              >
+                {headerTitle}
+              </Text>
+              <DisplayAmount
+                amount={headerTotal}
+                currency={currency}
+                language={language}
+                size={22}
+              />
+            </View>
+
+            <View
+              style={[
+                styles.card,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.cardBd,
+                  borderRadius: radius.xl,
+                  ...elevation.card,
+                },
+              ]}
+            >
+              {visibleExpenses.map((expense, index) => (
+                <ExpenseListRow
+                  key={expense.id}
+                  expense={expense}
+                  category={categoryMap.get(expense.category_id)}
+                  currency={currency}
+                  language={language}
+                  showDivider={index > 0}
+                  onPress={onSelectExpense}
+                />
+              ))}
+            </View>
+
+            {hasMore ? (
+              <Pressable
+                onPress={() => setExpanded((current) => !current)}
+                style={[styles.ghostBtn, { backgroundColor: colors.surface2 }]}
+                accessibilityRole="button"
+                accessibilityState={{ expanded }}
+              >
+                <Text
+                  style={{
+                    fontFamily: Fonts.sans.semibold,
+                    fontSize: 14,
+                    color: colors.fg,
+                  }}
+                >
+                  {expanded ? t('common.showLess') : t('properties.seeAllExpenses')}
                 </Text>
-                <Text className="text-muted-foreground text-sm font-medium">
-                  {formatCurrency(monthExpenseTotal, currency, language)}
-                </Text>
-              </View>
+                {!expanded ? (
+                  <ChevronRight size={16} color={colors.fg} strokeWidth={2} />
+                ) : null}
+              </Pressable>
             ) : null}
           </>
-        }
-        ListEmptyComponent={
-          <EmptyState
-            icon={Receipt}
-            title={t('properties.noExpensesThisMonth')}
-            subtitle={t('empty.noExpensesHint')}
-          />
-        }
-      />
-    );
-  }
+        )}
+      </ScrollView>
 
-  return (
-    <SectionList
-      sections={expensesByMonth}
-      keyExtractor={keyExtractor}
-      renderItem={renderExpense}
-      renderSectionHeader={renderSectionHeader}
-      contentContainerStyle={[styles.content, { paddingTop: listTopPad }]}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      {...listPerformanceProps}
-      ListHeaderComponent={periodSwitcher}
-    />
+      {canManage ? (
+        <View
+          pointerEvents="box-none"
+          style={[styles.ctaWrap, { paddingBottom: ctaBottom }]}
+        >
+          <AppButton
+            mode="contained"
+            onPress={onAddExpense}
+            className="h-12 w-full"
+            accessibilityLabel={t('dashboard.addExpense')}
+            style={styles.ctaShadow}
+          >
+            <View style={styles.ctaInner}>
+              <Plus size={18} color={colors.onPrimary} strokeWidth={2.5} />
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.semibold,
+                  fontSize: 15,
+                  letterSpacing: -0.15,
+                  color: colors.onPrimary,
+                }}
+              >
+                {t('dashboard.addExpense')}
+              </Text>
+            </View>
+          </AppButton>
+        </View>
+      ) : null}
+    </View>
   );
 }
 
 export const PropertyExpensesTab = memo(PropertyExpensesTabComponent);
 
 const styles = StyleSheet.create({
+  shell: {
+    flex: 1,
+  },
   content: {
-    paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.xxl + 56,
+    paddingHorizontal: Spacing.gutter,
+  },
+  segsTrack: {
+    flexDirection: 'row',
+    gap: 5,
+    padding: 4,
+    borderRadius: 999,
+    minHeight: 40,
+    marginBottom: 18,
+  },
+  seg: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 999,
+  },
+  secHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 12,
+  },
+  card: {
+    borderWidth: 1,
+    paddingHorizontal: 18,
+    paddingTop: 4,
+    paddingBottom: 6,
+    marginBottom: 14,
+  },
+  empty: {
+    paddingHorizontal: 8,
+    paddingVertical: 16,
+  },
+  ghostBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    minHeight: 48,
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    marginBottom: 8,
+  },
+  ctaWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: Spacing.gutter,
+  },
+  ctaShadow: {
+    width: '100%',
+    shadowColor: '#000',
+    shadowOpacity: 0.28,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  ctaInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
 });
