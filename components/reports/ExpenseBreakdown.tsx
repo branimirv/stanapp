@@ -1,15 +1,12 @@
-import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { PieChart } from 'react-native-gifted-charts';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
 import { CategoryBadge } from '@/components/expense/CategoryBadge';
-import { ChartCard } from '@/components/reports/ChartCard';
+import { DisplayAmount } from '@/components/ui/DisplayAmount';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Text } from '@/components/ui/text';
+import { Typography } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { Colors, Spacing } from '@/constants/theme';
-import { getCategoryLabel } from '@/utils/expense';
-import { formatCurrency } from '@/utils/formatters';
+import { displayFontFamily, Fonts } from '@/lib/fonts';
 import type { CategoryBreakdown, Language } from '@/types/app.types';
 
 export interface ExpenseBreakdownProps {
@@ -19,31 +16,18 @@ export interface ExpenseBreakdownProps {
   style?: StyleProp<ViewStyle>;
 }
 
+/** Naslov “Troškovi po kategorijama” — total + segbar + category rows. */
 export function ExpenseBreakdown({
   data,
   currency = 'EUR',
   language = 'hr',
   style,
 }: ExpenseBreakdownProps) {
-  const { isDark } = useAppTheme();
   const { t, i18n } = useTranslation();
+  const { theme } = useAppTheme();
+  const { colors, elevation, radius } = theme;
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
-  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
-
   const total = data.reduce((sum, item) => sum + item.amount, 0);
-
-  const pieData = useMemo(
-    () =>
-      data.map((item, index) => ({
-        value: item.amount,
-        color: item.color,
-        text: `${Math.round(item.percentage)}%`,
-        onPress: () => setFocusedIndex(index),
-      })),
-    [data],
-  );
-
-  const focusedItem = focusedIndex !== null && data[focusedIndex] ? data[focusedIndex] : null;
 
   if (data.length === 0 || total <= 0) {
     return (
@@ -56,154 +40,127 @@ export function ExpenseBreakdown({
   }
 
   return (
-    <ChartCard style={style}>
-      <Text className="text-lg font-medium">{t('reports.expenseBreakdown')}</Text>
+    <View style={style}>
+      <Text
+        style={{
+          fontFamily: displayFontFamily(theme.name),
+          fontSize: Typography.display.sectionHead.size,
+          lineHeight: Typography.display.sectionHead.lineHeight,
+          letterSpacing: Typography.display.sectionHead.letterSpacing,
+          color: colors.fg,
+          marginBottom: 11,
+        }}
+      >
+        {t('reports.expenseBreakdown')}
+      </Text>
 
-      <View style={styles.chartWrap}>
-        <PieChart
-          data={pieData}
-          donut
-          radius={100}
-          innerRadius={62}
-          innerCircleColor={isDark ? Colors.surfaceDark : Colors.surface}
-          centerLabelComponent={() => (
-            <View style={styles.centerLabel}>
-              {focusedItem ? (
-                <>
-                  <Text className="text-muted-foreground text-center text-xs font-medium">
-                    {getCategoryLabel(
-                      { key: focusedItem.categoryKey, name: focusedItem.categoryName },
-                      t,
-                    )}
-                  </Text>
-                  <Text className="text-center text-lg font-medium">
-                    {formatCurrency(focusedItem.amount, currency, resolvedLanguage)}
-                  </Text>
-                  <Text className="text-muted-foreground text-center text-xs">
-                    {focusedItem.percentage.toFixed(1)}%
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Text className="text-muted-foreground text-center text-xs font-medium">
-                    {t('common.total')}
-                  </Text>
-                  <Text className="text-center text-lg font-medium">
-                    {formatCurrency(total, currency, resolvedLanguage)}
-                  </Text>
-                </>
-              )}
-            </View>
-          )}
-          showText
-          textColor={Colors.textInverse}
-          textSize={11}
-          focusOnPress
-          isAnimated
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.cardBd,
+            borderRadius: radius.xl,
+            ...elevation.card,
+          },
+        ]}
+      >
+        <Text
+          style={{
+            fontFamily: Fonts.sans.semibold,
+            fontSize: Typography.eyebrow.sm.size,
+            letterSpacing: Typography.eyebrow.sm.letterSpacing,
+            textTransform: 'uppercase',
+            color: colors.muted,
+            marginBottom: 9,
+          }}
+        >
+          {t('common.total')}
+        </Text>
+        <DisplayAmount
+          amount={total}
+          currency={currency}
+          language={resolvedLanguage}
+          size={Typography.display.amountMd.size}
+          lineHeight={Typography.display.amountMd.lineHeight}
+          letterSpacing={Typography.display.amountMd.letterSpacing}
+          style={styles.total}
         />
-      </View>
 
-      <View style={styles.list}>
-        {data.map((item, index) => (
-          <PressableRow
-            key={item.categoryId}
-            item={item}
-            index={index}
-            focusedIndex={focusedIndex}
-            onFocus={setFocusedIndex}
-            currency={currency}
-            language={resolvedLanguage}
-          />
+        <View style={styles.segbar}>
+          {data.map((item) => (
+            <View
+              key={item.categoryId}
+              style={{
+                width: `${Math.max(item.percentage, 0.5)}%`,
+                backgroundColor: item.color,
+                height: '100%',
+              }}
+            />
+          ))}
+        </View>
+
+        {data.map((item) => (
+          <View key={item.categoryId} style={styles.catrow}>
+            <CategoryBadge
+              categoryKey={item.categoryKey}
+              categoryName={item.categoryName}
+              icon={item.icon}
+              color={item.color}
+            />
+            <View style={styles.camt}>
+              <DisplayAmount
+                amount={item.amount}
+                currency={currency}
+                language={resolvedLanguage}
+                size={Typography.display.listFigure.size}
+                lineHeight={Typography.display.listFigure.lineHeight}
+                letterSpacing={Typography.display.listFigure.letterSpacing}
+              />
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.regular,
+                  fontSize: Typography.text.catShare.size,
+                  color: colors.muted,
+                  marginTop: 2,
+                }}
+              >
+                {t('reports.categoryShare')}: {item.percentage.toFixed(1)}%
+              </Text>
+            </View>
+          </View>
         ))}
       </View>
-    </ChartCard>
-  );
-}
-
-interface PressableRowProps {
-  item: CategoryBreakdown;
-  index: number;
-  focusedIndex: number | null;
-  onFocus: (index: number) => void;
-  currency: string;
-  language: Language;
-}
-
-function PressableRow({
-  item,
-  index,
-  focusedIndex,
-  onFocus,
-  currency,
-  language,
-}: PressableRowProps) {
-  const { isDark } = useAppTheme();
-  const { t } = useTranslation();
-  const isFocused = focusedIndex === index;
-
-  return (
-    <Pressable
-      onPress={() => onFocus(index)}
-      style={[
-        styles.listRow,
-        {
-          backgroundColor: isFocused
-            ? isDark
-              ? Colors.surfaceVariantDark
-              : Colors.primaryLight
-            : 'transparent',
-        },
-      ]}
-      className="border-border"
-    >
-      <CategoryBadge
-        categoryKey={item.categoryKey}
-        categoryName={item.categoryName}
-        icon={item.icon}
-        color={item.color}
-      />
-      <View style={styles.listMeta}>
-        <Text className="text-lg font-medium">
-          {formatCurrency(item.amount, currency, language)}
-        </Text>
-        <Text className="text-muted-foreground text-xs">
-          {t('reports.categoryShare')}: {item.percentage.toFixed(1)}%
-        </Text>
-      </View>
-    </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  chartWrap: {
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
+  card: {
+    padding: 18,
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  centerLabel: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-    maxWidth: 110,
+  total: {
+    marginBottom: 14,
   },
-  list: {
-    gap: Spacing.sm,
+  segbar: {
+    flexDirection: 'row',
+    height: 10,
+    borderRadius: 999,
+    overflow: 'hidden',
+    marginBottom: 8,
   },
-  listRow: {
+  catrow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: Spacing.sm,
-    paddingBottom: Spacing.sm,
-    paddingTop: Spacing.xs,
-    paddingHorizontal: Spacing.xs,
-    borderRadius: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: 12,
+    paddingVertical: 12,
   },
-  listMeta: {
+  camt: {
     alignItems: 'flex-end',
-    gap: 2,
   },
   empty: {
-    paddingVertical: Spacing.lg,
+    paddingVertical: 24,
   },
 });

@@ -1,321 +1,298 @@
-import { Check, ChevronDown } from 'lucide-react-native';
-import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useMemo, type ReactNode } from 'react';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
+
 import { PeriodFilter } from '@/components/reports/PeriodFilter';
-import { AppButton } from '@/components/ui/AppButton';
-import type { PickerOption } from '@/components/ui/AppPicker';
-import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
-import { Text } from '@/components/ui/text';
-import { useAppTheme } from '@/hooks/useAppTheme';
+import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
+import { AppPicker, type PickerOption } from '@/components/ui/AppPicker';
 import { useEarliestReportActivity } from '@/hooks/useEarliestReportActivity';
-import { Colors, Spacing } from '@/constants/theme';
-import type {
-  ReportCategoryTypeFilter,
-  ReportExpensePaymentStatus,
-  ReportPeriod,
-} from '@/types/app.types';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { Fonts } from '@/lib/fonts';
+import type { ReportCategoryTypeFilter, ReportPeriod } from '@/types/app.types';
 
 export interface ReportFiltersSheetProps {
   visible: boolean;
   onDismiss: () => void;
   period: ReportPeriod;
   onPeriodChange: (period: ReportPeriod) => void;
+  /** Used to re-seed custom period Od when property pills change. */
   propertyFilter: string;
-  onPropertyFilterChange: (value: string) => void;
   categoryFilter: string;
   onCategoryFilterChange: (value: string) => void;
   categoryTypeFilter: ReportCategoryTypeFilter;
   onCategoryTypeFilterChange: (value: ReportCategoryTypeFilter) => void;
-  expensePaymentStatus: ReportExpensePaymentStatus;
-  onExpensePaymentStatusChange: (value: ReportExpensePaymentStatus) => void;
-  propertyOptions: PickerOption[];
   categoryOptions: PickerOption[];
   onClearFilters: () => void;
 }
 
-interface InlineSelectFieldProps {
-  options: PickerOption[];
-  value: string;
-  onValueChange: (value: string) => void;
-  placeholder: string;
+interface FilterChipOption<T extends string> {
+  label: string;
+  value: T;
 }
 
-function InlineSelectField({
+function FilterChipRow<T extends string>({
   options,
   value,
-  onValueChange,
-  placeholder,
-}: InlineSelectFieldProps) {
-  const { theme, isDark } = useAppTheme();
-  const [expanded, setExpanded] = useState(false);
-  const selectedOption = options.find((option) => option.value === value);
-
-  const handleSelect = (nextValue: string) => {
-    onValueChange(nextValue);
-    setExpanded(false);
-  };
+  onChange,
+  style,
+}: {
+  options: FilterChipOption<T>[];
+  value: T;
+  onChange: (value: T) => void;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const { theme } = useAppTheme();
+  const { colors } = theme;
 
   return (
-    <View
-      style={[
-        styles.selectField,
-        { backgroundColor: isDark ? Colors.surfaceVariantDark : Colors.surface },
-      ]}
-      className="border-border"
-    >
-      <Pressable
-        onPress={() => setExpanded((current) => !current)}
-        style={({ pressed }) => [styles.selectTrigger, { opacity: pressed ? 0.7 : 1 }]}
-        accessibilityRole="button"
-        accessibilityLabel={selectedOption?.label ?? placeholder}
-        accessibilityState={{ expanded }}
-      >
-        <Text className="text-foreground shrink text-base font-medium" numberOfLines={1}>
-          {selectedOption?.label ?? placeholder}
-        </Text>
-        <ChevronDown
-          size={18}
-          color={theme.colors.onSurfaceVariant}
-          strokeWidth={2.5}
-          style={{ transform: [{ rotate: expanded ? '180deg' : '0deg' }] }}
-        />
-      </Pressable>
-
-      {expanded ? (
-        <View style={styles.selectOptions} className="border-border">
-          {options.map((option) => {
-            const isSelected = option.value === value;
-            return (
-              <Pressable
-                key={option.value}
-                onPress={() => handleSelect(option.value)}
-                style={({ pressed }) => [
-                  styles.optionRow,
-                  {
-                    opacity: pressed ? 0.7 : 1,
-                    backgroundColor: isSelected
-                      ? isDark
-                        ? Colors.surfaceDark
-                        : Colors.primaryLight
-                      : 'transparent',
-                  },
-                ]}
-                accessibilityRole="button"
-                accessibilityState={{ selected: isSelected }}
-              >
-                <Text
-                  className={
-                    isSelected
-                      ? 'text-foreground shrink flex-1 text-base font-medium'
-                      : 'text-foreground shrink flex-1 text-base'
-                  }
-                  numberOfLines={1}
-                >
-                  {option.label}
-                </Text>
-                {isSelected ? (
-                  <Check size={18} color={theme.colors.primary} strokeWidth={2.5} />
-                ) : (
-                  <View style={styles.optionCheckSpacer} />
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
+    <View style={[styles.chipRow, style]}>
+      {options.map((option) => {
+        const on = option.value === value;
+        return (
+          <Pressable
+            key={option.value}
+            onPress={() => onChange(option.value)}
+            style={[
+              styles.chip,
+              {
+                backgroundColor: on ? colors.primaryTint : colors.surface2,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityState={{ selected: on }}
+          >
+            <Text
+              style={{
+                fontFamily: Fonts.sans.semibold,
+                fontSize: 12.5,
+                letterSpacing: -0.12,
+                color: on ? colors.primary : colors.muted,
+              }}
+              numberOfLines={1}
+            >
+              {option.label}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
 
+function FilterGroup({
+  label,
+  children,
+  style,
+}: {
+  label: string;
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const { theme } = useAppTheme();
+  const { colors } = theme;
+
+  return (
+    <View style={[styles.group, style]}>
+      <Text
+        style={{
+          fontFamily: Fonts.sans.semibold,
+          fontSize: 11,
+          lineHeight: 14,
+          letterSpacing: 1.54,
+          textTransform: 'uppercase',
+          color: colors.muted,
+          marginBottom: 10,
+        }}
+      >
+        {label}
+      </Text>
+      {children}
+    </View>
+  );
+}
+
+/** Naslov report filters — BlurOverlay must be a sibling on the host screen. */
 export function ReportFiltersSheet({
   visible,
   onDismiss,
   period,
   onPeriodChange,
   propertyFilter,
-  onPropertyFilterChange,
   categoryFilter,
   onCategoryFilterChange,
   categoryTypeFilter,
   onCategoryTypeFilterChange,
-  expensePaymentStatus,
-  onExpensePaymentStatusChange,
-  propertyOptions,
   categoryOptions,
   onClearFilters,
 }: ReportFiltersSheetProps) {
   const { t } = useTranslation();
-  const { earliestActivityDate, isLoading: earliestActivityLoading } =
-    useEarliestReportActivity(propertyFilter);
+  const { theme } = useAppTheme();
+  const { colors } = theme;
+  const { earliestActivityDate } = useEarliestReportActivity(propertyFilter);
+
+  const activeCount = useMemo(() => {
+    let count = 0;
+    if (period.preset !== 'last_6_months') count += 1;
+    if (categoryFilter !== 'all') count += 1;
+    if (categoryTypeFilter !== 'all') count += 1;
+    return count;
+  }, [categoryFilter, categoryTypeFilter, period.preset]);
+
+  const typeOptions: FilterChipOption<ReportCategoryTypeFilter>[] = [
+    { label: t('reports.typeAll'), value: 'all' },
+    { label: t('reports.typeRegular'), value: 'regular' },
+    { label: t('reports.typeIrregular'), value: 'irregular' },
+  ];
 
   const handleClear = () => {
     onClearFilters();
     onDismiss();
   };
 
+  const doneLabel =
+    activeCount > 0 ? `${t('common.done')} ${activeCount}` : t('common.done');
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
-      <Pressable style={styles.overlay} onPress={onDismiss}>
-        <Pressable
-          style={styles.content}
-          className="bg-card"
-          onPress={(event) => event.stopPropagation()}
+    <AppBottomSheet visible={visible} onDismiss={onDismiss} title={t('reports.filters')}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        bounces={false}
+      >
+        <FilterGroup label={t('reports.periodFilter')}>
+          <PeriodFilter
+            value={period}
+            onChange={onPeriodChange}
+            propertyFilter={propertyFilter}
+            earliestActivityDate={earliestActivityDate}
+          />
+        </FilterGroup>
+
+        <FilterGroup label={t('reports.filterCategory')}>
+          <AppPicker
+            options={categoryOptions}
+            value={categoryFilter}
+            onValueChange={onCategoryFilterChange}
+            placeholder={t('reports.allCategories')}
+          />
+        </FilterGroup>
+
+        <FilterGroup label={t('reports.filterType')} style={styles.groupTight}>
+          <FilterChipRow
+            options={typeOptions}
+            value={categoryTypeFilter}
+            onChange={onCategoryTypeFilterChange}
+          />
+        </FilterGroup>
+
+        <Text
+          style={{
+            fontFamily: Fonts.sans.regular,
+            fontSize: 11.5,
+            lineHeight: 18,
+            color: colors.muted,
+            marginBottom: 22,
+          }}
         >
-          <View style={styles.handle} className="bg-border" />
+          {t('reports.expenseFilterHint')}
+        </Text>
+      </ScrollView>
 
-          <Text className="mb-2 text-center text-lg font-medium">{t('reports.filters')}</Text>
-
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
+      <View style={styles.footer}>
+        <Pressable
+          onPress={handleClear}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.clearFilters')}
+          style={[styles.footerBtn, styles.clearBtn, { backgroundColor: colors.surface2 }]}
+        >
+          <Text
+            style={{
+              fontFamily: Fonts.sans.semibold,
+              fontSize: 14,
+              letterSpacing: -0.14,
+              color: colors.fg,
+            }}
+            numberOfLines={1}
           >
-            <Text className="text-muted-foreground mt-1 text-sm font-semibold">
-              {t('reports.periodFilter')}
-            </Text>
-            <PeriodFilter
-              value={period}
-              onChange={onPeriodChange}
-              propertyFilter={propertyFilter}
-              earliestActivityDate={earliestActivityDate}
-              earliestActivityLoading={earliestActivityLoading}
-              style={styles.periodFilter}
-            />
-
-            <Text className="text-muted-foreground mt-1 text-sm font-semibold">
-              {t('reports.filterProperty')}
-            </Text>
-            <InlineSelectField
-              options={propertyOptions}
-              value={propertyFilter}
-              onValueChange={onPropertyFilterChange}
-              placeholder={t('reports.allProperties')}
-            />
-
-            <Text className="text-muted-foreground mt-1 text-sm font-semibold">
-              {t('reports.filterPaymentStatus')}
-            </Text>
-            <AppSegmentedControl
-              segments={[
-                { label: t('reports.paymentStatusAll'), value: 'all' },
-                { label: t('reports.paymentStatusPaid'), value: 'paid' },
-                { label: t('reports.paymentStatusUnpaid'), value: 'unpaid' },
-              ]}
-              value={expensePaymentStatus}
-              onValueChange={(value) =>
-                onExpensePaymentStatusChange(value as ReportExpensePaymentStatus)
-              }
-            />
-
-            <Text className="text-muted-foreground mt-1 text-sm font-semibold">
-              {t('reports.filterCategory')}
-            </Text>
-            <InlineSelectField
-              options={categoryOptions}
-              value={categoryFilter}
-              onValueChange={onCategoryFilterChange}
-              placeholder={t('reports.allCategories')}
-            />
-
-            <Text className="text-muted-foreground mt-1 text-sm font-semibold">
-              {t('reports.filterType')}
-            </Text>
-            <AppSegmentedControl
-              segments={[
-                { label: t('reports.typeAll'), value: 'all' },
-                { label: t('reports.typeRegular'), value: 'regular' },
-                { label: t('reports.typeIrregular'), value: 'irregular' },
-              ]}
-              value={categoryTypeFilter}
-              onValueChange={(value) =>
-                onCategoryTypeFilterChange(value as ReportCategoryTypeFilter)
-              }
-            />
-
-            <Text className="text-muted-foreground mt-2 text-sm">
-              {t('reports.expenseFilterHint')}
-            </Text>
-          </ScrollView>
-
-          <View style={styles.actions}>
-            <AppButton mode="text" onPress={handleClear}>
-              {t('common.clearFilters')}
-            </AppButton>
-            <AppButton mode="contained" onPress={onDismiss}>
-              {t('common.done')}
-            </AppButton>
-          </View>
+            {t('common.clearFilters')}
+          </Text>
         </Pressable>
-      </Pressable>
-    </Modal>
+
+        <Pressable
+          onPress={onDismiss}
+          accessibilityRole="button"
+          accessibilityLabel={doneLabel}
+          style={[styles.footerBtn, styles.doneBtn, { backgroundColor: colors.primary }]}
+        >
+          <Text
+            style={{
+              fontFamily: Fonts.sans.semibold,
+              fontSize: 14,
+              letterSpacing: -0.14,
+              color: colors.onPrimary,
+            }}
+          >
+            {doneLabel}
+          </Text>
+        </Pressable>
+      </View>
+    </AppBottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-  },
-  content: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xl,
-    maxHeight: '85%',
-  },
-  handle: {
-    alignSelf: 'center',
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    marginBottom: Spacing.sm,
-  },
   scroll: {
     flexGrow: 0,
+    maxHeight: 420,
   },
   scrollContent: {
-    gap: Spacing.sm,
-    paddingBottom: Spacing.sm,
+    paddingBottom: 4,
   },
-  periodFilter: {
-    marginBottom: 0,
+  group: {
+    marginBottom: 18,
   },
-  selectField: {
-    borderWidth: 1,
-    borderRadius: 12,
-    overflow: 'hidden',
+  groupTight: {
+    marginBottom: 10,
   },
-  selectTrigger: {
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    height: 34,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footer: {
+    flexDirection: 'row',
+    gap: 9,
+  },
+  footerBtn: {
+    height: 44,
+    borderRadius: 999,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
   },
-  selectOptions: {
-    borderTopWidth: StyleSheet.hairlineWidth,
+  clearBtn: {
+    flex: 1,
   },
-  optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-  },
-  optionCheckSpacer: {
-    width: 18,
-    height: 18,
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: Spacing.md,
+  doneBtn: {
+    flex: 2,
   },
 });

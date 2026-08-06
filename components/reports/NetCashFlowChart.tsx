@@ -7,14 +7,16 @@ import {
   View,
   type StyleProp,
   type ViewStyle,
+  Text,
 } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import { useTranslation } from 'react-i18next';
-import { ChartCard } from '@/components/reports/ChartCard';
+
+import { DisplayAmount } from '@/components/ui/DisplayAmount';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Text } from '@/components/ui/text';
+import { Typography } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { Colors, Spacing, Typography } from '@/constants/theme';
+import { displayFontFamily, Fonts } from '@/lib/fonts';
 import {
   CHART_LABEL_BAND,
   CHART_VIEWPORT_HEIGHT,
@@ -47,135 +49,10 @@ type ChartPoint = {
 
 function formatDeltaPercent(value: number): string {
   const sign = value > 0 ? '+' : '';
-  return `${sign}${value.toFixed(1)}%`;
+  return `${sign}${value.toFixed(1).replace('.', ',')} %`;
 }
 
-function formatDeltaAbsolute(value: number, currency: string, language: Language): string {
-  const formatted = formatCurrency(Math.abs(value), currency, language);
-  if (value > 0) return `+${formatted}`;
-  if (value < 0) return `−${formatted}`;
-  return formatted;
-}
-
-interface SignedComparisonRowProps {
-  label: string;
-  value: number;
-  maxAbs: number;
-  currency: string;
-  language: Language;
-  trackColor: string;
-  emphasize?: boolean;
-}
-
-function SignedComparisonRow({
-  label,
-  value,
-  maxAbs,
-  currency,
-  language,
-  trackColor,
-  emphasize = false,
-}: SignedComparisonRowProps) {
-  const color = value >= 0 ? Colors.accent : Colors.danger;
-  const fillRatio = maxAbs > 0 ? Math.min(Math.abs(value) / maxAbs, 1) : 0;
-
-  return (
-    <View style={styles.compareRow}>
-      <View style={styles.compareMeta}>
-        <Text
-          className={
-            emphasize
-              ? 'text-foreground shrink text-sm font-semibold'
-              : 'text-muted-foreground shrink text-sm font-medium'
-          }
-          numberOfLines={1}
-        >
-          {label}
-        </Text>
-        <Text className="text-sm font-bold" style={{ color }}>
-          {formatCurrency(value, currency, language)}
-        </Text>
-      </View>
-      <View style={[styles.compareTrack, { backgroundColor: trackColor }]}>
-        <View style={styles.compareHalf}>
-          {value < 0 ? (
-            <View
-              style={[
-                styles.compareFill,
-                styles.compareFillNegative,
-                { width: `${fillRatio * 100}%`, backgroundColor: color },
-              ]}
-            />
-          ) : null}
-        </View>
-        <View style={[styles.compareZero, { backgroundColor: Colors.textDisabled }]} />
-        <View style={styles.compareHalf}>
-          {value > 0 ? (
-            <View
-              style={[
-                styles.compareFill,
-                styles.compareFillPositive,
-                { width: `${fillRatio * 100}%`, backgroundColor: color },
-              ]}
-            />
-          ) : null}
-        </View>
-      </View>
-    </View>
-  );
-}
-
-interface SinglePeriodComparisonProps {
-  currentLabel: string;
-  currentValue: number;
-  previousValue: number | null;
-  currency: string;
-  language: Language;
-  trackColor: string;
-}
-
-function SinglePeriodComparison({
-  currentLabel,
-  currentValue,
-  previousValue,
-  currency,
-  language,
-  trackColor,
-}: SinglePeriodComparisonProps) {
-  const { t } = useTranslation();
-  const maxAbs = Math.max(
-    Math.abs(currentValue),
-    previousValue !== null ? Math.abs(previousValue) : 0,
-    1,
-  );
-
-  return (
-    <View style={[styles.compareWrap, { height: CHART_VIEWPORT_HEIGHT }]}>
-      <SignedComparisonRow
-        label={currentLabel}
-        value={currentValue}
-        maxAbs={maxAbs}
-        currency={currency}
-        language={language}
-        trackColor={trackColor}
-        emphasize
-      />
-      {previousValue !== null ? (
-        <SignedComparisonRow
-          label={t('reports.previousPeriod')}
-          value={previousValue}
-          maxAbs={maxAbs}
-          currency={currency}
-          language={language}
-          trackColor={trackColor}
-        />
-      ) : (
-        <Text className="text-muted-foreground text-xs">{t('reports.singlePeriodHint')}</Text>
-      )}
-    </View>
-  );
-}
-
+/** Naslov net cash-flow card — big figure, delta chip, line chart. */
 export function NetCashFlowChart({
   data,
   netTotal,
@@ -185,7 +62,8 @@ export function NetCashFlowChart({
   expensePaymentStatus = 'all',
   style,
 }: NetCashFlowChartProps) {
-  const { theme, isDark } = useAppTheme();
+  const { theme } = useAppTheme();
+  const { colors, elevation, radius } = theme;
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
 
@@ -199,15 +77,10 @@ export function NetCashFlowChart({
   }, [data, language]);
 
   const scale = useMemo(() => getSignedChartScale(data.map((item) => item.net)), [data]);
-
-  const netColor = netTotal >= 0 ? Colors.accent : Colors.danger;
-  const deltaValue = comparison?.deltaAbsolute ?? null;
-  const deltaColor =
-    deltaValue === null
-      ? theme.colors.onSurfaceVariant
-      : deltaValue >= 0
-        ? Colors.accent
-        : Colors.danger;
+  const chartColor = colors.primary;
+  const deltaValue = comparison?.deltaPercent ?? comparison?.deltaAbsolute ?? null;
+  const deltaPositive =
+    comparison == null ? true : (comparison.deltaPercent ?? comparison.deltaAbsolute) >= 0;
 
   const paymentStatusCue =
     expensePaymentStatus === 'paid'
@@ -215,9 +88,6 @@ export function NetCashFlowChart({
       : expensePaymentStatus === 'unpaid'
         ? t('reports.netUnpaidExpensesOnly')
         : null;
-
-  const useSinglePeriodView = data.length < 2;
-  const trackColor = isDark ? Colors.surfaceVariantDark : Colors.surfaceVariant;
 
   if (data.length === 0) {
     return (
@@ -229,8 +99,8 @@ export function NetCashFlowChart({
     );
   }
 
-  const chartWidth = Math.max(width - Spacing.md * 4, data.length * 52);
-  const yAxisLabelWidth = 40;
+  const chartWidth = Math.max(width - 68, data.length * 52);
+  const yAxisLabelWidth = 36;
   const sharedAxisProps = {
     maxValue: scale.maxValue,
     mostNegativeValue: scale.mostNegativeValue,
@@ -241,12 +111,20 @@ export function NetCashFlowChart({
     roundToDigits: 0,
     yAxisLabelWidth,
     formatYLabel: formatChartAxisValue,
-    yAxisTextStyle: { color: theme.colors.onSurfaceVariant, fontSize: 10 },
-    xAxisLabelTextStyle: { color: theme.colors.onSurfaceVariant, fontSize: 10 },
+    yAxisTextStyle: {
+      color: colors.muted,
+      fontSize: 10,
+      fontFamily: Fonts.sans.regular,
+    },
+    xAxisLabelTextStyle: {
+      color: colors.muted,
+      fontSize: 10,
+      fontFamily: Fonts.sans.semibold,
+    },
     xAxisThickness: 0,
     yAxisThickness: 0,
     rulesThickness: StyleSheet.hairlineWidth,
-    rulesColor: theme.colors.outline,
+    rulesColor: colors.bd,
     hideRules: false,
     width: chartWidth - yAxisLabelWidth,
     height: scale.height,
@@ -255,59 +133,111 @@ export function NetCashFlowChart({
   };
 
   return (
-    <ChartCard style={style}>
-      <View style={styles.header}>
-        <Text className="text-muted-foreground text-sm font-semibold uppercase tracking-wide">
-          {t('reports.netCashFlow')}
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.cardBd,
+          borderRadius: radius.xl,
+          ...elevation.card,
+        },
+        style,
+      ]}
+    >
+      <Text
+        style={{
+          fontFamily: Fonts.sans.semibold,
+          fontSize: Typography.eyebrow.base.size,
+          letterSpacing: Typography.eyebrow.base.letterSpacing,
+          textTransform: 'uppercase',
+          color: colors.muted,
+          marginBottom: 11,
+        }}
+      >
+        {t('reports.netCashFlow')}
+      </Text>
+
+      <DisplayAmount
+        amount={netTotal}
+        currency={currency}
+        language={language}
+        size={Typography.display.heroSm.size}
+        lineHeight={Typography.display.heroSm.lineHeight}
+        letterSpacing={Typography.display.heroSm.letterSpacing}
+      />
+
+      {paymentStatusCue ? (
+        <Text
+          style={{
+            fontFamily: Fonts.sans.regular,
+            fontSize: Typography.text.caption.size,
+            color: colors.muted,
+            marginTop: 8,
+          }}
+        >
+          {paymentStatusCue}
         </Text>
-        <Text className="text-3xl font-bold" style={{ color: netColor }}>
-          {formatCurrency(netTotal, currency, language)}
-        </Text>
-        {paymentStatusCue ? (
-          <Text className="text-muted-foreground text-xs font-medium">{paymentStatusCue}</Text>
-        ) : null}
-        {comparison ? (
-          <View style={styles.deltaRow}>
-            {comparison.deltaAbsolute >= 0 ? (
-              <TrendingUp size={14} color={deltaColor} strokeWidth={2.5} />
+      ) : null}
+
+      {comparison && deltaValue !== null ? (
+        <View style={styles.deltaRow}>
+          <View
+            style={[
+              styles.chip,
+              {
+                backgroundColor: deltaPositive ? colors.posTint : colors.negTint,
+              },
+            ]}
+          >
+            {deltaPositive ? (
+              <TrendingUp size={12} color={colors.pos} strokeWidth={2.5} />
             ) : (
-              <TrendingDown size={14} color={deltaColor} strokeWidth={2.5} />
+              <TrendingDown size={12} color={colors.neg} strokeWidth={2.5} />
             )}
-            <Text className="text-sm font-semibold" style={{ color: deltaColor }}>
-              {formatDeltaAbsolute(comparison.deltaAbsolute, currency, language)}
+            <Text
+              style={{
+                fontFamily: Fonts.sans.semibold,
+                fontSize: Typography.text.chip.size,
+                color: deltaPositive ? colors.pos : colors.neg,
+              }}
+            >
               {comparison.deltaPercent !== null
-                ? ` · ${formatDeltaPercent(comparison.deltaPercent)}`
-                : ''}{' '}
-              {t('reports.vsPrevious')}
+                ? formatDeltaPercent(comparison.deltaPercent)
+                : formatCurrency(comparison.deltaAbsolute, currency, language)}
             </Text>
           </View>
-        ) : null}
-      </View>
-
-      {useSinglePeriodView ? (
-        <SinglePeriodComparison
-          currentLabel={chartData[0]?.periodLabel ?? t('reports.thisPeriod')}
-          currentValue={netTotal}
-          previousValue={comparison ? comparison.previousNet : null}
-          currency={currency}
-          language={language}
-          trackColor={trackColor}
-        />
+          <Text
+            style={{
+              fontFamily: Fonts.sans.semibold,
+              fontSize: Typography.eyebrow.sm.size,
+              letterSpacing: Typography.eyebrow.sm.letterSpacing,
+              textTransform: 'uppercase',
+              color: colors.muted,
+            }}
+          >
+            {t('reports.previousPeriod')}
+          </Text>
+        </View>
       ) : (
+        <View style={{ height: 14 }} />
+      )}
+
+      {data.length >= 2 ? (
         <View style={[styles.chartClip, { height: CHART_VIEWPORT_HEIGHT }]}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <LineChart
               areaChart
               curved
               data={chartData}
-              color={netColor}
-              startFillColor={netColor}
-              endFillColor={netColor}
-              startOpacity={0.28}
+              color={chartColor}
+              startFillColor={chartColor}
+              endFillColor={chartColor}
+              startOpacity={0.22}
               endOpacity={0.02}
               thickness={2.5}
               hideDataPoints={false}
-              dataPointsColor={netColor}
+              dataPointsColor={chartColor}
               dataPointsRadius={3.5}
               textFontSize={0}
               showValuesAsDataPointsText={false}
@@ -320,9 +250,9 @@ export function NetCashFlowChart({
               pointerConfig={{
                 activatePointersOnLongPress: false,
                 activatePointersInstantlyOnTouch: true,
-                pointerStripColor: theme.colors.outline,
+                pointerStripColor: colors.bd,
                 pointerStripWidth: 1,
-                pointerColor: netColor,
+                pointerColor: chartColor,
                 radius: 5,
                 pointerLabelWidth: 128,
                 pointerLabelHeight: 56,
@@ -334,13 +264,25 @@ export function NetCashFlowChart({
                     <View
                       style={[
                         styles.tooltip,
-                        {
-                          backgroundColor: isDark ? Colors.surfaceVariantDark : Colors.textPrimary,
-                        },
+                        { backgroundColor: colors.surface3 },
                       ]}
                     >
-                      <Text style={styles.tooltipLabel}>{item.periodLabel ?? item.label}</Text>
-                      <Text style={styles.tooltipValue}>
+                      <Text
+                        style={{
+                          fontFamily: Fonts.sans.regular,
+                          fontSize: 11,
+                          color: colors.muted,
+                        }}
+                      >
+                        {item.periodLabel ?? item.label}
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: displayFontFamily(theme.name),
+                          fontSize: 14,
+                          color: colors.fg,
+                        }}
+                      >
                         {formatCurrency(Number(item.value), currency, language)}
                       </Text>
                     </View>
@@ -352,80 +294,45 @@ export function NetCashFlowChart({
             />
           </ScrollView>
         </View>
-      )}
-    </ChartCard>
+      ) : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: Spacing.xs,
+  card: {
+    paddingTop: 20,
+    paddingHorizontal: 18,
+    paddingBottom: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: 10,
   },
   deltaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
+    gap: 9,
+    marginTop: 14,
+    marginBottom: 18,
     flexWrap: 'wrap',
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    borderRadius: 999,
   },
   chartClip: {
     overflow: 'hidden',
   },
-  compareWrap: {
-    justifyContent: 'center',
-    gap: Spacing.lg,
-  },
-  compareRow: {
-    gap: Spacing.sm,
-  },
-  compareMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.sm,
-  },
-  compareTrack: {
-    height: 12,
-    borderRadius: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  compareHalf: {
-    flex: 1,
-    height: '100%',
-    justifyContent: 'center',
-  },
-  compareZero: {
-    width: StyleSheet.hairlineWidth * 2,
-    height: '100%',
-  },
-  compareFill: {
-    height: 12,
-    borderRadius: 6,
-    minWidth: 4,
-  },
-  compareFillNegative: {
-    alignSelf: 'flex-end',
-  },
-  compareFillPositive: {
-    alignSelf: 'flex-start',
-  },
   tooltip: {
-    borderRadius: 8,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     gap: 2,
   },
-  tooltipLabel: {
-    ...Typography.labelSmall,
-    color: Colors.textDisabled,
-  },
-  tooltipValue: {
-    ...Typography.labelMedium,
-    color: Colors.textInverse,
-    fontWeight: '700',
-  },
   empty: {
-    paddingVertical: Spacing.lg,
+    paddingVertical: 24,
   },
 });

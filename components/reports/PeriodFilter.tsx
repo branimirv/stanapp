@@ -3,17 +3,18 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Text,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
 import { AppDatePicker } from '@/components/ui/AppDatePicker';
-import { Text } from '@/components/ui/text';
+import { Spacing } from '@/constants/theme';
 import { buildReportPeriod } from '@/hooks/useReports';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { cn } from '@/lib/utils';
-import { Colors, Spacing } from '@/constants/theme';
+import { Fonts } from '@/lib/fonts';
 import {
   isUsableCustomStartDate,
   resolveCustomReportPeriod,
@@ -69,7 +70,8 @@ export function PeriodFilter({
   earliestActivityDate = null,
   style,
 }: PeriodFilterProps) {
-  const { isDark } = useAppTheme();
+  const { theme } = useAppTheme();
+  const { colors } = theme;
   const { t } = useTranslation();
   const [customStart, setCustomStart] = useState(value.startDate);
   const [customEnd, setCustomEnd] = useState(value.endDate);
@@ -150,7 +152,6 @@ export function PeriodFilter({
         forceReseedStart: true,
       }).startDate;
       if (nextEnd < nextStart) {
-        // Keep user's end; clamp start down only if needed via end as both.
         nextStart = nextEnd;
       }
     }
@@ -167,29 +168,25 @@ export function PeriodFilter({
         contentContainerStyle={styles.pillRow}
       >
         {pills.map((pill) => {
-          const isSelected = value.preset === pill.value;
+          const on = value.preset === pill.value;
           return (
             <Pressable
               key={pill.value}
               onPress={() => handlePresetChange(pill.value)}
-              style={({ pressed }) => [
+              style={[
                 styles.pill,
-                !isSelected && {
-                  backgroundColor: isDark ? Colors.surfaceVariantDark : Colors.surfaceVariant,
+                {
+                  backgroundColor: on ? colors.primaryTint : colors.surface2,
                 },
-                { opacity: pressed ? 0.85 : 1 },
               ]}
-              className={isSelected ? 'bg-primary' : undefined}
               accessibilityRole="button"
-              accessibilityState={{ selected: isSelected }}
+              accessibilityState={{ selected: on }}
             >
               <Text
-                className={cn(
-                  'text-center text-sm',
-                  isSelected
-                    ? 'text-primary-foreground font-bold'
-                    : 'text-muted-foreground font-medium',
-                )}
+                style={[
+                  styles.pillLabel,
+                  { color: on ? colors.primary : colors.muted },
+                ]}
                 numberOfLines={1}
               >
                 {pill.label}
@@ -224,19 +221,22 @@ export function PeriodFilter({
 const styles = StyleSheet.create({
   container: {
     gap: Spacing.sm,
-    marginBottom: Spacing.md,
   },
   pillRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.xs / 2,
+    gap: 8,
   },
   pill: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    height: 34,
+    paddingHorizontal: 14,
     borderRadius: 999,
-    minHeight: 38,
+    alignItems: 'center',
     justifyContent: 'center',
+  },
+  pillLabel: {
+    fontFamily: Fonts.sans.semibold,
+    fontSize: 12.5,
+    letterSpacing: -0.12,
   },
   customRange: {
     flexDirection: 'row',
