@@ -5,12 +5,14 @@ import { useTranslation } from 'react-i18next';
 import { Colors } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useTabBarPreference } from '@/hooks/useTabBarPreference';
+import { useTabBarStore } from '@/stores/tabBarStore';
 
 export default function TabLayout() {
   const { t } = useTranslation();
   const { theme, isDark } = useAppTheme();
   const isAndroid = Platform.OS === 'android';
   const { showLabels } = useTabBarPreference();
+  const chromeHidden = useTabBarStore((s) => s.chromeHidden);
 
   const tintColor =
     Platform.OS === 'ios'
@@ -33,8 +35,8 @@ export default function TabLayout() {
           selected: { color: theme.colors.primary },
         };
 
-  // Soft brand wash lives in each tab layout (`AppScreenBackground`) because
-  // NativeTabs scenes are opaque and hide the root ambient.
+  // Solid `--bg` fill lives in each tab layout (`AppScreenBackground`) because
+  // NativeTabs scenes are opaque and hide the root canvas.
   // Frosted chrome stays translucent so scroll content shows through;
   // icons/labels stay fully opaque via tintColor + labelStyle.
   // disableTransparentOnScrollEdge keeps blur at the edge (otherwise iOS
@@ -67,6 +69,7 @@ export default function TabLayout() {
 
   return (
     <NativeTabs
+      hidden={chromeHidden}
       tintColor={tintColor}
       labelStyle={labelStyle}
       // Keep the full tab bar always visible. iOS 26 minimize collapses
