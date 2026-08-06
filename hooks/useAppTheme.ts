@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Appearance, Platform, useColorScheme as useSystemColorScheme } from 'react-native';
 import { Uniwind } from 'uniwind';
 
-import { Colors, darkTheme, lightTheme } from '@/constants/theme';
 import { useProfile } from '@/hooks/useProfile';
+import { THEMES, type AppTheme } from '@/lib/theme';
 import { resolveIsDark, useThemeStore } from '@/stores/themeStore';
 import type { Theme } from '@/types/app.types';
 
@@ -11,6 +11,31 @@ function syncUniwindTheme(preference: Theme) {
   Uniwind.setTheme(preference === 'system' ? 'system' : preference);
 }
 
+/** Paper / pre-Naslov colour aliases used by unmigrated screens. */
+type LegacyPaperColors = {
+  background: string;
+  onBackground: string;
+  onSurface: string;
+  onSurfaceVariant: string;
+  surfaceVariant: string;
+  outline: string;
+  error: string;
+  secondary: string;
+  secondaryContainer: string;
+  primaryContainer: string;
+  onSecondary: string;
+};
+
+export type AppThemeWithLegacy = Omit<AppTheme, 'colors'> & {
+  dark: boolean;
+  roundness: number;
+  colors: AppTheme['colors'] & LegacyPaperColors;
+};
+
+/**
+ * Theme orchestrator: preference store, Uniwind sync, profile hydrate.
+ * Returns Naslov AppTheme plus temporary Paper colour aliases.
+ */
 export function useAppTheme() {
   const systemScheme = useSystemColorScheme();
   const { profile } = useProfile();
@@ -48,7 +73,28 @@ export function useAppTheme() {
     [preference, systemScheme],
   );
 
-  const theme = isDark ? darkTheme : lightTheme;
+  const theme = useMemo((): AppThemeWithLegacy => {
+    const base = THEMES[isDark ? 'dark' : 'light'];
+    return {
+      ...base,
+      dark: isDark,
+      roundness: base.radius.md,
+      colors: {
+        ...base.colors,
+        background: base.colors.bg,
+        onBackground: base.colors.fg,
+        onSurface: base.colors.fg,
+        onSurfaceVariant: base.colors.muted,
+        surfaceVariant: base.colors.surface2,
+        outline: base.colors.bd,
+        error: base.colors.neg,
+        secondary: base.colors.pos,
+        secondaryContainer: base.colors.posTint,
+        primaryContainer: base.colors.primaryTint,
+        onSecondary: base.colors.onPrimary,
+      },
+    };
+  }, [isDark]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -59,8 +105,8 @@ export function useAppTheme() {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
 
     document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
-    document.body.style.backgroundColor = isDark ? Colors.backgroundDark : Colors.background;
-  }, [isDark]);
+    document.body.style.backgroundColor = theme.colors.bg;
+  }, [isDark, theme.colors.bg]);
 
   // NativeTabs on Android use Material dynamic colors tied to Appearance.
   // Keep them aligned with the in-app theme (which can differ from system).

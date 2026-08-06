@@ -1,12 +1,23 @@
 import '@/i18n';
 import '../global.css';
 
+import {
+  Fraunces_500Medium,
+  Fraunces_600SemiBold,
+} from '@expo-google-fonts/fraunces';
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PortalHost } from '@rn-primitives/portal';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { useFonts } from 'expo-font';
 import { Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -16,12 +27,11 @@ import i18n from '@/i18n';
 import { AppScreenBackground } from '@/components/ui/AppScreenBackground';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Toast } from '@/components/ui/Toast';
-import { Colors } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProfile } from '@/hooks/useProfile';
 import { onAuthStateChange } from '@/lib/auth';
 import { queryClient } from '@/lib/queryClient';
-import { NAV_THEME } from '@/lib/theme';
+import { NAV_THEME, THEMES } from '@/lib/theme';
 import { useAuthStore } from '@/stores/authStore';
 
 export { ErrorBoundary } from 'expo-router';
@@ -39,6 +49,15 @@ export default function RootLayout() {
   const isLoading = useAuthStore((state) => state.isLoading);
   const isAuthenticated = useAuthStore((state) => Boolean(state.session));
 
+  const [fontsLoaded, fontError] = useFonts({
+    Inter: Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Fraunces: Fraunces_500Medium,
+    Fraunces_600SemiBold,
+  });
+
   useEffect(() => {
     initialize();
   }, [initialize]);
@@ -54,10 +73,14 @@ export default function RootLayout() {
   }, [setSession]);
 
   useEffect(() => {
-    if (!isLoading) {
+    if ((!isLoading && fontsLoaded) || fontError) {
       SplashScreen.hideAsync();
     }
-  }, [isLoading]);
+  }, [isLoading, fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
 
   return (
     <GestureHandlerRootView style={styles.root}>
@@ -144,10 +167,10 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   bootLight: {
-    backgroundColor: Colors.background,
+    backgroundColor: THEMES.light.colors.bg,
   },
   bootDark: {
-    backgroundColor: Colors.backgroundDark,
+    backgroundColor: THEMES.dark.colors.bg,
   },
   transparentScreen: {
     backgroundColor: 'transparent',

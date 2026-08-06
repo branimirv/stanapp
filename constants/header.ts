@@ -3,11 +3,11 @@ import { Spacing } from '@/constants/theme';
 /** Horizontal inset from screen edge — single source for header side padding. */
 export const HEADER_EDGE_INSET = Spacing.md;
 
-/** Fixed touch slot for each header action icon. */
-export const HEADER_ACTION_SLOT = 40;
+/** Fixed touch slot for each header action icon (matches Naslov btn-ico). */
+export const HEADER_ACTION_SLOT = 38;
 
-/** Lucide icon size inside header actions. */
-export const HEADER_ICON_SIZE = 22;
+/** Lucide icon size inside header actions (matches HeaderBackButton). */
+export const HEADER_ICON_SIZE = 17;
 
 export const headerLeftContainerStyle = {
   paddingLeft: HEADER_EDGE_INSET,

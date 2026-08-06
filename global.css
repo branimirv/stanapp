@@ -1,103 +1,147 @@
+/* ============================================================================
+   KUPOLA — DESIGN TOKENS  (final, single direction: "Naslov")
+   Source of truth: naslov-theme.html
+
+   This replaces the multi-direction exploration file. There is exactly one
+   palette now; the PALETTES map and Direction union in the old
+   constants/theme.ts can be deleted.
+
+   NAMING
+   ------
+   Tokens are semantic, not literal: `pos`, not `green`. In dark theme --pos
+   is a mint; in light it's a deep forest. Same role, different value — which
+   is the whole reason the token exists.
+
+   PAIRING
+   -------
+   Every value here is duplicated in constants/theme.ts. If you change one,
+   change both. The doc explains why that duplication is intentional.
+   ============================================================================ */
+
 @import 'tailwindcss';
 @import 'uniwind';
 @import 'tw-animate-css';
 
 @theme {
-  --radius: 12px;
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* Tailwind/Uniwind spacing unit — required for --spacing(…) in utilities
+     (p-4, gap-2, m-safe-or-*, …). Default Tailwind scale is 0.25rem. */
+  --spacing: 0.25rem;
 
+  /* ---- radii ----------------------------------------------------------
+     Every *interactive* control is a full pill (999px). The numbered scale
+     is for containers only. Don't reach for radius-md on a button. */
+  --radius-xs:   6px;    /* checkbox */
+  --radius-sm:   12px;
+  --radius-md:   14px;   /* text input, selectrow */
+  --radius-lg:   16px;   /* calendar cell */
+  --radius-xl:   24px;   /* card, bays, modal */
+  --radius-2xl:  26px;   /* bottom sheet (top corners only) */
+  --radius-3xl:  28px;   /* floating tab bar */
+  --radius-full: 999px;  /* every button, pill, chip, avatar, icon well */
+
+  /* ---- type families --------------------------------------------------
+     Must match the names expo-font registers. See theme.ts Typography. */
+  --font-sans:    'Inter';
+  --font-display: 'Fraunces';
+
+  /* ---- spacing --------------------------------------------------------- */
+  --spacing-gutter: 17px;  /* screen body horizontal padding — the .pscroll
+                              edge-bleed depends on this exact number */
+  --spacing-scroll-bottom: 100px; /* reserve at the end of every ScrollView so
+                                     the last row clears the floating tab bar */
   --spacing-hairline: hairlineWidth();
 }
 
-@layer theme {
-  :root {
-    @variant light {
-      /* Stanapp brand — mapped from constants/theme.ts */
-      --color-background: #f8fafc;
-      --color-foreground: #0f172a;
-      --color-card: #ffffff;
-      --color-card-foreground: #0f172a;
-      --color-popover: #ffffff;
-      --color-popover-foreground: #0f172a;
-      --color-primary: #2563eb;
-      --color-primary-foreground: #ffffff;
-      --color-secondary: #f1f5f9;
-      --color-secondary-foreground: #0f172a;
-      --color-muted: #f1f5f9;
-      --color-muted-foreground: #64748b;
-      --color-accent: #dbeafe;
-      --color-accent-foreground: #1e40af;
-      --color-destructive: #ef4444;
-      --color-border: #e2e8f0;
-      --color-input: #e2e8f0;
-      --color-ring: #2563eb;
-      --color-chart-1: #2563eb;
-      --color-chart-2: #10b981;
-      --color-chart-3: #f59e0b;
-      --color-chart-4: #8b5cf6;
-      --color-chart-5: #ef4444;
-      --color-sidebar: #ffffff;
-      --color-sidebar-foreground: #0f172a;
-      --color-sidebar-primary: #2563eb;
-      --color-sidebar-primary-foreground: #ffffff;
-      --color-sidebar-accent: #f1f5f9;
-      --color-sidebar-accent-foreground: #0f172a;
-      --color-sidebar-border: #e2e8f0;
-      --color-sidebar-ring: #2563eb;
+/* ============================================================================
+   DARK  — default
+   ============================================================================ */
+@variant dark {
+  --color-bg:            #0B0B0D;
+  --color-fg:            #F0EFEA;
+  --color-muted:         #7E7F85;
 
-      /* Domain extras */
-      --color-success: #10b981;
-      --color-warning: #f59e0b;
-      --color-status-paid: #10b981;
-      --color-status-pending: #f59e0b;
-      --color-status-late: #ef4444;
-      --color-status-partial: #8b5cf6;
-      --color-surface-variant: #f1f5f9;
-    }
+  --color-surface:       #141417;
+  --color-surface-2:     #1F1F23;
+  --color-surface-3:     #2C2C31;
 
-    @variant dark {
-      --color-background: #000000;
-      --color-foreground: #ffffff;
-      --color-card: #121212;
-      --color-card-foreground: #ffffff;
-      --color-popover: #121212;
-      --color-popover-foreground: #ffffff;
-      --color-primary: #2563eb;
-      --color-primary-foreground: #ffffff;
-      --color-secondary: #1c1c1e;
-      --color-secondary-foreground: #ffffff;
-      --color-muted: #1c1c1e;
-      --color-muted-foreground: #9ca3af;
-      --color-accent: #1e3a8a;
-      --color-accent-foreground: #dbeafe;
-      --color-destructive: #ef4444;
-      --color-border: #2a2a2c;
-      --color-input: #2a2a2c;
-      --color-ring: #2563eb;
-      --color-chart-1: #3b82f6;
-      --color-chart-2: #10b981;
-      --color-chart-3: #f59e0b;
-      --color-chart-4: #8b5cf6;
-      --color-chart-5: #ef4444;
-      --color-sidebar: #121212;
-      --color-sidebar-foreground: #ffffff;
-      --color-sidebar-primary: #2563eb;
-      --color-sidebar-primary-foreground: #ffffff;
-      --color-sidebar-accent: #1c1c1e;
-      --color-sidebar-accent-foreground: #ffffff;
-      --color-sidebar-border: #2a2a2c;
-      --color-sidebar-ring: #2563eb;
+  --color-bd:            rgba(255, 255, 255, 0.11);
+  --color-bd-strong:     rgba(255, 255, 255, 0.22);
 
-      --color-success: #10b981;
-      --color-warning: #f59e0b;
-      --color-status-paid: #10b981;
-      --color-status-pending: #f59e0b;
-      --color-status-late: #ef4444;
-      --color-status-partial: #8b5cf6;
-      --color-surface-variant: #1c1c1e;
-    }
-  }
+  --color-primary:       #5B8FE8;
+  --color-on-primary:    #050E1C;
+  --color-primary-tint:  rgba(91, 143, 232, 0.15);
+
+  --color-pos:           #5CBE99;
+  --color-pos-tint:      rgba(92, 190, 153, 0.13);
+
+  --color-neg:           #E27266;
+  --color-on-neg:        #2B0B08;
+  --color-neg-tint:      rgba(226, 114, 102, 0.13);
+
+  --color-track:         rgba(255, 255, 255, 0.10);
+
+  /* glass — used by GlassSurface / expo-blur. On iOS NativeTabs the system
+     draws its own Liquid Glass; these are for Android fallback and for any
+     custom sheet that has to visually match the bar. */
+  --color-glass:         rgba(36, 36, 40, 0.55);
+  --color-glass-edge:    rgba(255, 255, 255, 0.14);
+  --color-glass-spec:    rgba(255, 255, 255, 0.10);
+
+  /* categorical chart hues. chart-1..3 deliberately alias the semantic
+     colours (an "income" series should be the same green as a paid badge);
+     4..6 are chart-only and carry no meaning. */
+  --color-chart-4:       #7E7F85;
+  --color-chart-4-tint:  rgba(126, 127, 133, 0.16);
+  --color-chart-5:       #D3A55F;
+  --color-chart-5-tint:  rgba(211, 165, 95, 0.16);
+  --color-chart-6:       #9B8CE0;
+  --color-chart-6-tint:  rgba(155, 140, 224, 0.17);
+
+  /* cards sit on near-black: a shadow is invisible and a border is noise */
+  --color-card-bd:       transparent;
+}
+
+/* ============================================================================
+   LIGHT
+   ============================================================================ */
+@variant light {
+  --color-bg:            #F7F6F2;
+  --color-fg:            #121114;
+  --color-muted:         #5C5D63;
+
+  --color-surface:       #FFFFFF;
+  --color-surface-2:     #EDECE6;
+  --color-surface-3:     #E3E1D9;
+
+  --color-bd:            rgba(18, 17, 20, 0.11);
+  --color-bd-strong:     rgba(18, 17, 20, 0.22);
+
+  --color-primary:       #2A5EC0;
+  --color-on-primary:    #FFFFFF;
+  --color-primary-tint:  rgba(42, 94, 192, 0.11);
+
+  --color-pos:           #1C7355;
+  --color-pos-tint:      rgba(28, 115, 85, 0.12);
+
+  --color-neg:           #AC4536;
+  --color-on-neg:        #FFFFFF;
+  --color-neg-tint:      rgba(172, 69, 54, 0.11);
+
+  --color-track:         rgba(18, 17, 20, 0.10);
+
+  --color-glass:         rgba(255, 255, 255, 0.70);
+  --color-glass-edge:    rgba(18, 17, 20, 0.10);
+  --color-glass-spec:    rgba(255, 255, 255, 0.90);
+
+  --color-chart-4:       #85868D;
+  --color-chart-4-tint:  rgba(133, 134, 141, 0.14);
+  --color-chart-5:       #8A6310;
+  --color-chart-5-tint:  rgba(138, 99, 16, 0.12);
+  --color-chart-6:       #6656B8;
+  --color-chart-6-tint:  rgba(102, 86, 184, 0.13);
+
+  /* --bg is an off-white close to --surface, so cards need a hairline plus a
+     micro-shadow to separate. See Typography.displayWeight for the other
+     half of the light-theme compensation. */
+  --color-card-bd:       var(--color-bd);
 }
