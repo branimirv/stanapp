@@ -1,18 +1,21 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+
+import { CategoryChipPicker } from '@/components/expense/CategoryChipPicker';
+import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppDatePicker } from '@/components/ui/AppDatePicker';
-import { AppFormScroll, AppFormSubmit } from '@/components/ui/AppFormScroll';
 import { AppPicker } from '@/components/ui/AppPicker';
 import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
+import { useStackChromeEdgeInset } from '@/components/ui/StackScreenChrome';
 import { AppTextInput } from '@/components/ui/AppTextInput';
-import { Switch } from '@/components/ui/switch';
-import { Text } from '@/components/ui/text';
-import { CategoryChipPicker } from '@/components/expense/CategoryChipPicker';
-import { Spacing } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
+import { displayFontFamily, Fonts } from '@/lib/fonts';
 import type { ExpenseCategory, ExpenseType, Property } from '@/types/app.types';
 import {
   defaultRecurringForType,
@@ -23,6 +26,7 @@ import { parseDateString, toDateString, translateFieldError } from '@/utils/form
 import { expenseSchema, type ExpenseFormValues } from '@/utils/validators';
 
 export interface ExpenseFormProps {
+  title?: string;
   defaultValues?: Partial<ExpenseFormValues>;
   properties: Property[];
   categories: ExpenseCategory[];
@@ -30,6 +34,8 @@ export interface ExpenseFormProps {
   isSubmitting?: boolean;
   submitLabel?: string;
   onSubmit: (values: ExpenseFormValues) => void | Promise<void>;
+  /** Host BlurOverlay sibling — fire when any picker/date/custom sheet opens or closes. */
+  onSheetVisibilityChange?: (open: boolean) => void;
 }
 
 const defaultFormValues: ExpenseFormValues = {
@@ -37,12 +43,30 @@ const defaultFormValues: ExpenseFormValues = {
   category_id: '',
   amount: 0,
   is_recurring: true,
-  billing_date: '',
+  billing_date: toDateString(new Date()) ?? '',
   due_date: null,
   notes: null,
 };
 
+function FieldLab({ label }: { label: string }) {
+  const { theme } = useAppTheme();
+  return (
+    <Text
+      style={{
+        fontFamily: Fonts.sans.semibold,
+        fontSize: Typography.text.fieldLabel.size,
+        lineHeight: 17,
+        color: theme.colors.fg,
+        marginBottom: 8,
+      }}
+    >
+      {label}
+    </Text>
+  );
+}
+
 export function ExpenseForm({
+  title,
   defaultValues,
   properties,
   categories,
@@ -50,8 +74,13 @@ export function ExpenseForm({
   isSubmitting = false,
   submitLabel,
   onSubmit,
+  onSheetVisibilityChange,
 }: ExpenseFormProps) {
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
+  const { colors } = theme;
+  const insets = useSafeAreaInsets();
+  const edgeInset = useStackChromeEdgeInset();
 
   const {
     control,
@@ -111,6 +140,18 @@ export function ExpenseForm({
 
   const translateError = (message?: string) => translateFieldError(t, message);
 
+  const openCustomCategory = () => {
+    setCustomCategoryName('');
+    setCustomCategoryError(null);
+    setCustomCategoryVisible(true);
+    onSheetVisibilityChange?.(true);
+  };
+
+  const dismissCustomCategory = () => {
+    setCustomCategoryVisible(false);
+    onSheetVisibilityChange?.(false);
+  };
+
   const handleAddCustomCategory = async () => {
     if (!onCreateCustomCategory || isCreatingCategory) return;
 
@@ -136,7 +177,7 @@ export function ExpenseForm({
       const createdCategory = await onCreateCustomCategory(normalizedName);
       setValue('category_id', createdCategory.id, { shouldValidate: true });
       setCustomCategoryName('');
-      setCustomCategoryVisible(false);
+      dismissCustomCategory();
     } catch (error) {
       setCustomCategoryError(
         error instanceof Error ? error.message : t('expenses.customCategoryCreateFailed'),
@@ -147,212 +188,241 @@ export function ExpenseForm({
   };
 
   return (
-    <>
-      <AppFormScroll>
-      <View style={styles.typeField}>
-        <Text className="text-lg font-medium">{t('expenses.expenseType')}</Text>
-        <AppSegmentedControl
-          segments={[
-            { label: t('expenses.typeRegular'), value: 'regular' },
-            { label: t('expenses.typeIrregular'), value: 'irregular' },
-          ]}
-          value={expenseType}
-          onValueChange={(value) => handleExpenseTypeChange(value as ExpenseType)}
+    <View style={styles.shell}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingHorizontal: theme.spacing.gutter,
+            paddingTop: (edgeInset ?? 0) + 8,
+            paddingBottom: 24,
+          },
+        ]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {title ? (
+          <Text
+            style={{
+              fontFamily: displayFontFamily(theme.name),
+              fontSize: 32,
+              lineHeight: 32,
+              letterSpacing: -0.8,
+              color: colors.fg,
+              marginBottom: 22,
+            }}
+            accessibilityRole="header"
+          >
+            {title}
+          </Text>
+        ) : null}
+
+        <View style={styles.field}>
+          <FieldLab label={t('expenses.expenseType')} />
+          <AppSegmentedControl
+            variant="picker"
+            segments={[
+              { label: t('expenses.typeRegular'), value: 'regular' },
+              { label: t('expenses.typeIrregular'), value: 'irregular' },
+            ]}
+            value={expenseType}
+            onValueChange={(value) => handleExpenseTypeChange(value as ExpenseType)}
+          />
+          <Text
+            style={{
+              fontFamily: Fonts.sans.regular,
+              fontSize: 11.5,
+              lineHeight: 17,
+              color: colors.muted,
+              marginTop: 8,
+            }}
+          >
+            {expenseType === 'regular'
+              ? t('expenses.typeRegularHint')
+              : t('expenses.typeIrregularHint')}
+          </Text>
+        </View>
+
+        <Controller
+          control={control}
+          name="property_id"
+          render={({ field: { value, onChange }, fieldState }) => (
+            <AppPicker
+              label={t('expenses.property')}
+              placeholder={t('expenses.selectProperty')}
+              options={propertyOptions}
+              value={value || null}
+              onValueChange={onChange}
+              error={translateError(fieldState.error?.message)}
+              style={styles.field}
+              onVisibilityChange={onSheetVisibilityChange}
+            />
+          )}
         />
-        <Text className="text-muted-foreground text-sm">
-          {expenseType === 'regular'
-            ? t('expenses.typeRegularHint')
-            : t('expenses.typeIrregularHint')}
-        </Text>
+
+        <Controller
+          control={control}
+          name="category_id"
+          render={({ field: { value, onChange }, fieldState }) => (
+            <View style={styles.field}>
+              <CategoryChipPicker
+                label={t('expenses.category')}
+                categories={filteredCategories}
+                value={value || null}
+                onValueChange={onChange}
+                onAddCustom={
+                  expenseType === 'irregular' && onCreateCustomCategory
+                    ? openCustomCategory
+                    : undefined
+                }
+                error={translateError(fieldState.error?.message)}
+              />
+            </View>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="amount"
+          render={({ field: { value, onChange, onBlur }, fieldState }) => (
+            <AppTextInput
+              label={t('expenses.amount')}
+              value={value ? String(value) : ''}
+              onChangeText={(text) => {
+                const parsed = Number.parseFloat(text.replace(',', '.'));
+                onChange(Number.isNaN(parsed) ? 0 : parsed);
+              }}
+              onBlur={onBlur}
+              keyboardType="decimal-pad"
+              error={translateError(fieldState.error?.message)}
+              containerStyle={styles.inputGap}
+              className="pl-[52px]"
+              left={
+                <Text
+                  style={{
+                    fontFamily: Fonts.sans.medium,
+                    fontSize: 14,
+                    color: colors.muted,
+                  }}
+                >
+                  EUR
+                </Text>
+              }
+            />
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="billing_date"
+          render={({ field: { value, onChange }, fieldState }) => (
+            <AppDatePicker
+              label={t('expenses.billingDate')}
+              value={parseDateString(value)}
+              onChange={(date) => onChange(toDateString(date))}
+              error={translateError(fieldState.error?.message)}
+              style={styles.field}
+              onVisibilityChange={onSheetVisibilityChange}
+            />
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="due_date"
+          render={({ field: { value, onChange }, fieldState }) => (
+            <AppDatePicker
+              label={t('expenses.dueDate')}
+              value={parseDateString(value)}
+              onChange={(date) => onChange(date ? toDateString(date) : null)}
+              error={translateError(fieldState.error?.message)}
+              style={styles.field}
+              onVisibilityChange={onSheetVisibilityChange}
+            />
+          )}
+        />
+
+        <AppTextInput
+          control={control}
+          name="notes"
+          label={t('expenses.notes')}
+          placeholder={t('expenses.notesPlaceholder')}
+          multiline
+          numberOfLines={4}
+          error={translateError(errors.notes?.message)}
+          containerStyle={[styles.inputGap, { marginBottom: 0 }]}
+        />
+      </ScrollView>
+
+      <View
+        style={[
+          styles.formFoot,
+          {
+            paddingBottom: Math.max(insets.bottom, 14) + 8,
+            backgroundColor: colors.bg,
+          },
+        ]}
+      >
+        <AppButton
+          mode="contained"
+          loading={isSubmitting}
+          onPress={handleSubmit(onSubmit)}
+          className="h-11 w-full"
+          accessibilityLabel={submitLabel ?? t('dashboard.addExpense')}
+        >
+          {submitLabel ?? t('dashboard.addExpense')}
+        </AppButton>
       </View>
 
-      <Controller
-        control={control}
-        name="property_id"
-        render={({ field: { value, onChange }, fieldState }) => (
-          <AppPicker
-            label={t('expenses.property')}
-            placeholder={t('expenses.selectProperty')}
-            options={propertyOptions}
-            value={value || null}
-            onValueChange={onChange}
-            error={translateError(fieldState.error?.message)}
-          />
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="category_id"
-        render={({ field: { value, onChange }, fieldState }) => (
-          <CategoryChipPicker
-            label={t('expenses.category')}
-            categories={filteredCategories}
-            value={value || null}
-            onValueChange={onChange}
-            onAddCustom={
-              expenseType === 'irregular' && onCreateCustomCategory
-                ? () => {
-                    setCustomCategoryName('');
-                    setCustomCategoryError(null);
-                    setCustomCategoryVisible(true);
-                  }
-                : undefined
-            }
-            error={translateError(fieldState.error?.message)}
-          />
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="amount"
-        render={({ field: { value, onChange, onBlur }, fieldState }) => (
-          <AppTextInput
-            label={t('expenses.amount')}
-            placeholder={t('expenses.amountPlaceholder')}
-            value={String(value ?? 0)}
-            onChangeText={(text) => {
-              const parsed = Number.parseFloat(text.replace(',', '.'));
-              onChange(Number.isNaN(parsed) ? 0 : parsed);
-            }}
-            onBlur={onBlur}
-            keyboardType="decimal-pad"
-            error={translateError(fieldState.error?.message)}
-          />
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="is_recurring"
-        render={({ field: { value, onChange } }) => (
-          <View style={styles.switchRow}>
-            <View style={styles.switchText}>
-              <Text className="text-lg font-medium">{t('expenses.isRecurring')}</Text>
-              <Text className="text-muted-foreground text-sm">
-                {t('expenses.isRecurringHint')}
-              </Text>
-            </View>
-            <Switch checked={value} onCheckedChange={onChange} />
-          </View>
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="billing_date"
-        render={({ field: { value, onChange }, fieldState }) => (
-          <AppDatePicker
-            label={t('expenses.billingDate')}
-            value={parseDateString(value)}
-            onChange={(date) => onChange(toDateString(date))}
-            error={translateError(fieldState.error?.message)}
-          />
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="due_date"
-        render={({ field: { value, onChange }, fieldState }) => (
-          <AppDatePicker
-            label={t('expenses.dueDate')}
-            value={parseDateString(value)}
-            onChange={(date) => onChange(date ? toDateString(date) : null)}
-            error={translateError(fieldState.error?.message)}
-          />
-        )}
-      />
-
-      <AppTextInput
-        control={control}
-        name="notes"
-        label={t('expenses.notes')}
-        placeholder={t('expenses.notesPlaceholder')}
-        multiline
-        numberOfLines={4}
-        error={translateError(errors.notes?.message)}
-      />
-
-      <AppFormSubmit
-        label={submitLabel ?? t('common.save')}
-        loading={isSubmitting}
-        onPress={handleSubmit(onSubmit)}
-      />
-      </AppFormScroll>
-
-      <Modal
+      <AppBottomSheet
         visible={customCategoryVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setCustomCategoryVisible(false)}
+        onDismiss={dismissCustomCategory}
+        title={t('expenses.addCustomCategory')}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setCustomCategoryVisible(false)}>
-          <Pressable
-            style={styles.modalCard}
-            className="bg-card"
-            onPress={(event) => event.stopPropagation()}
-          >
-            <Text className="text-lg font-medium">{t('expenses.addCustomCategory')}</Text>
-            <AppTextInput
-              label={t('expenses.customCategoryName')}
-              placeholder={t('expenses.customCategoryPlaceholder')}
-              value={customCategoryName}
-              onChangeText={(value) => {
-                setCustomCategoryName(value);
-                if (customCategoryError) setCustomCategoryError(null);
-              }}
-              error={customCategoryError ?? undefined}
-              autoFocus
-            />
-            <View style={styles.modalActions}>
-              <AppButton
-                mode="text"
-                onPress={() => setCustomCategoryVisible(false)}
-                disabled={isCreatingCategory}
-              >
-                {t('common.cancel')}
-              </AppButton>
-              <AppButton mode="contained" onPress={handleAddCustomCategory} loading={isCreatingCategory}>
-                {t('common.add')}
-              </AppButton>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
-    </>
+        <AppTextInput
+          label={t('expenses.customCategoryName')}
+          placeholder={t('expenses.customCategoryPlaceholder')}
+          value={customCategoryName}
+          onChangeText={(next) => {
+            setCustomCategoryName(next);
+            if (customCategoryError) setCustomCategoryError(null);
+          }}
+          error={customCategoryError ?? undefined}
+          autoFocus
+          containerStyle={{ marginBottom: 16 }}
+        />
+        <AppButton
+          mode="contained"
+          onPress={handleAddCustomCategory}
+          loading={isCreatingCategory}
+          className="h-11 w-full"
+        >
+          {t('common.add')}
+        </AppButton>
+      </AppBottomSheet>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  typeField: {
-    gap: Spacing.sm,
-  },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.md,
-  },
-  switchText: {
+  shell: {
     flex: 1,
-    gap: Spacing.xs,
   },
-  modalOverlay: {
+  scroll: {
     flex: 1,
-    justifyContent: 'center',
-    padding: Spacing.lg,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
   },
-  modalCard: {
-    borderRadius: 14,
-    padding: Spacing.md,
-    gap: Spacing.sm,
+  scrollContent: {
+    flexGrow: 1,
   },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: Spacing.sm,
+  field: {
+    marginBottom: 18,
+  },
+  inputGap: {
+    marginBottom: 18,
+  },
+  formFoot: {
+    paddingHorizontal: Spacing.gutter,
+    paddingTop: 14,
   },
 });

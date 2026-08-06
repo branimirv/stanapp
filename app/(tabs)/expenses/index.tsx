@@ -1,16 +1,18 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { parseISO } from 'date-fns';
-import { Receipt } from 'lucide-react-native';
+import { parseISO, format as formatDateFns } from 'date-fns';
+import { Plus, Receipt, Search } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Pressable,
   RefreshControl,
-  SectionList,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { ExpenseCard } from '@/components/expense/ExpenseCard';
+
+import { ExpenseListRow } from '@/components/expense/ExpenseListRow';
 import {
   countExpenseActiveFilters,
   ExpenseActiveFilterChips,
@@ -19,46 +21,57 @@ import {
   type StatusFilter,
 } from '@/components/expense/ExpenseFilters';
 import type { RecurringFilter, TypeFilter } from '@/components/expense/expenseFilterTypes';
-import { ExpenseScreenActions } from '@/components/expense/ExpenseScreenActions';
+import {
+  buildDefaultExpensePeriod,
+  formatExpensePeriodLabel,
+  isExpenseInPeriod,
+  type ExpensePeriod,
+} from '@/components/expense/expensePeriod';
+import { APP_BOTTOM_SHEET_CLOSE_MS } from '@/components/ui/AppBottomSheet';
 import { AppExpandableSearch } from '@/components/ui/AppExpandableSearch';
 import type { PickerOption } from '@/components/ui/AppPicker';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { BlurOverlay } from '@/components/ui/BlurOverlay';
+import { DisplayAmount } from '@/components/ui/DisplayAmount';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { FilterIconButton } from '@/components/ui/FilterIconButton';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
-import { listPerformanceProps } from '@/constants/list';
-import { Spacing } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useExpandableSearchState } from '@/hooks/useExpandableSearch';
-import { useFloatingActionsInset } from '@/components/ui/FloatingScreenActions';
-import { SearchableTabActions } from '@/hooks/useSearchableTabHeader';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
-import { useUiStore } from '@/stores/uiStore';
+import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { useTabBarStore } from '@/stores/tabBarStore';
+import type { Language } from '@/types/app.types';
 import { getCategoryEffectiveType, getCategoryLabel } from '@/utils/expense';
-import { formatPeriod } from '@/utils/formatters';
-import type { Expense, Language } from '@/types/app.types';
 
-interface ExpenseSection {
-  title: string;
-  month: number;
-  year: number;
-  total: number;
-  data: Expense[];
+const PREVIEW_COUNT = 4;
+
+/** Naslov Troškovi list: inline actions + flat expense rows. */
+function isInMonth(billingDate: string, month: number, year: number): boolean {
+  const date = parseISO(billingDate);
+  return date.getFullYear() === year && date.getMonth() + 1 === month;
 }
 
 export default function ExpensesScreen() {
   const { t, i18n } = useTranslation();
+  const { theme } = useAppTheme();
+  const { colors, elevation, radius } = theme;
   const params = useLocalSearchParams<{ filter?: string }>();
-  const showConfirmDialog = useUiStore((state) => state.showConfirmDialog);
-  const showToast = useUiStore((state) => state.showToast);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [recurringFilter, setRecurringFilter] = useState<RecurringFilter>('all');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [propertyFilter, setPropertyFilter] = useState<string>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
+  const [period, setPeriod] = useState<ExpensePeriod>(() => buildDefaultExpensePeriod());
   const [filtersVisible, setFiltersVisible] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const setChromeHidden = useTabBarStore((s) => s.setChromeHidden);
+
   const handleCreatePress = useCallback(() => {
     router.push('/expense/new');
   }, []);
@@ -70,11 +83,15 @@ export default function ExpensesScreen() {
     handleSearchPress,
     dismissSearchIfEmpty,
     searchBarControlProps,
-    listKeyboardProps,
   } = useExpandableSearchState();
 
-  const floatingInset = useFloatingActionsInset();
-  const [refreshing, setRefreshing] = useState(false);
+  const handleFiltersVisibleChange = useCallback(
+    (open: boolean) => {
+      setFiltersVisible(open);
+      setChromeHidden(open);
+    },
+    [setChromeHidden],
+  );
 
   useEffect(() => {
     if (params.filter === 'overdue') {
@@ -87,7 +104,7 @@ export default function ExpensesScreen() {
   const expenseStatus = statusFilter === 'all' ? undefined : statusFilter;
   const propertyId = propertyFilter === 'all' ? undefined : propertyFilter;
 
-  const { expenses, isLoading, error, refetch, markAsPaid, remove } = useExpenses({
+  const { expenses, isLoading, error, refetch } = useExpenses({
     status: expenseStatus,
     propertyId,
   });
@@ -97,6 +114,10 @@ export default function ExpensesScreen() {
 
   const language = (profile?.language ?? i18n.language ?? 'hr') as Language;
   const currency = profile?.default_currency ?? 'EUR';
+
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
 
   const categoryMap = useMemo(
     () => new Map(categories.map((category) => [category.id, category])),
@@ -135,9 +156,15 @@ export default function ExpensesScreen() {
         typeFilter,
         propertyFilter,
         categoryFilter,
+        period,
       ),
-    [categoryFilter, propertyFilter, recurringFilter, statusFilter, typeFilter],
+    [categoryFilter, period, propertyFilter, recurringFilter, statusFilter, typeFilter],
   );
+
+  const handlePeriodChange = useCallback((next: ExpensePeriod) => {
+    setPeriod(next);
+    setExpanded(false);
+  }, []);
 
   const filterStateProps: ExpenseFiltersStateProps = {
     statusFilter,
@@ -150,112 +177,106 @@ export default function ExpensesScreen() {
     onPropertyFilterChange: setPropertyFilter,
     categoryFilter,
     onCategoryFilterChange: setCategoryFilter,
+    period,
+    onPeriodChange: handlePeriodChange,
     propertyOptions,
     categoryOptions,
   };
 
-  const filteredExpenses = useMemo(() => {
+  const scopedExpenses = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return expenses.filter((expense) => {
-      if (recurringFilter === 'recurring' && !expense.is_recurring) return false;
-      if (recurringFilter === 'one_time' && expense.is_recurring) return false;
-      if (typeFilter !== 'all') {
-        const categoryType = categoryMap.get(expense.category_id);
-        if (categoryType && getCategoryEffectiveType(categoryType) !== typeFilter) return false;
-      }
-      if (categoryFilter !== 'all' && expense.category_id !== categoryFilter) return false;
-      if (!query) return true;
+    return expenses
+      .filter((expense) => {
+        if (recurringFilter === 'recurring' && !expense.is_recurring) return false;
+        if (recurringFilter === 'one_time' && expense.is_recurring) return false;
+        if (typeFilter !== 'all') {
+          const categoryType = categoryMap.get(expense.category_id);
+          if (categoryType && getCategoryEffectiveType(categoryType) !== typeFilter) {
+            return false;
+          }
+        }
+        if (
+          categoryFilter.length > 0 &&
+          !categoryFilter.includes(expense.category_id)
+        ) {
+          return false;
+        }
+        if (!query) return true;
 
-      const category = categoryMap.get(expense.category_id);
-      const property = propertyMap.get(expense.property_id);
-      const categoryLabel = getCategoryLabel(category, t);
-      return (
-        categoryLabel.toLowerCase().includes(query) ||
-        property?.name.toLowerCase().includes(query) ||
-        expense.notes?.toLowerCase().includes(query)
-      );
-    });
+        const category = categoryMap.get(expense.category_id);
+        const property = propertyMap.get(expense.property_id);
+        const categoryLabel = getCategoryLabel(category, t);
+        return (
+          categoryLabel.toLowerCase().includes(query) ||
+          property?.name.toLowerCase().includes(query) ||
+          expense.notes?.toLowerCase().includes(query)
+        );
+      })
+      .sort((a, b) => b.billing_date.localeCompare(a.billing_date));
   }, [categoryFilter, categoryMap, expenses, propertyMap, recurringFilter, search, t, typeFilter]);
 
-  const sections = useMemo(() => {
-    const grouped = new Map<string, ExpenseSection>();
+  const filteredExpenses = useMemo(
+    () => scopedExpenses.filter((expense) => isExpenseInPeriod(expense.billing_date, period)),
+    [period, scopedExpenses],
+  );
 
-    for (const expense of filteredExpenses) {
-      const date = parseISO(expense.billing_date);
+  const thisMonthTotal = useMemo(
+    () =>
+      scopedExpenses
+        .filter((expense) => isInMonth(expense.billing_date, currentMonth, currentYear))
+        .reduce((sum, expense) => sum + Number(expense.amount), 0),
+    [currentMonth, currentYear, scopedExpenses],
+  );
+
+  const sixMonthAverage = useMemo(() => {
+    const monthTotals: number[] = [];
+    for (let offset = 0; offset < 6; offset += 1) {
+      const date = new Date(currentYear, currentMonth - 1 - offset, 1);
       const month = date.getMonth() + 1;
       const year = date.getFullYear();
-      const key = `${year}-${month}`;
-      const title = formatPeriod(month, year, language);
-
-      const section = grouped.get(key) ?? {
-        title,
-        month,
-        year,
-        total: 0,
-        data: [],
-      };
-
-      section.data.push(expense);
-      section.total += Number(expense.amount);
-      grouped.set(key, section);
+      const total = scopedExpenses
+        .filter((expense) => isInMonth(expense.billing_date, month, year))
+        .reduce((sum, expense) => sum + Number(expense.amount), 0);
+      monthTotals.push(total);
     }
+    return monthTotals.reduce((sum, value) => sum + value, 0) / 6;
+  }, [currentMonth, currentYear, scopedExpenses]);
 
-    return [...grouped.values()].sort((a, b) => {
-      if (a.year !== b.year) return b.year - a.year;
-      return b.month - a.month;
-    });
-  }, [filteredExpenses, language]);
+  const visibleExpenses = useMemo(() => {
+    if (expanded || filteredExpenses.length <= PREVIEW_COUNT) return filteredExpenses;
+    return filteredExpenses.slice(0, PREVIEW_COUNT);
+  }, [expanded, filteredExpenses]);
+
+  const hasMore = filteredExpenses.length > PREVIEW_COUNT;
+  const hasAnyExpenses = expenses.length > 0;
+  const isEmptyList = filteredExpenses.length === 0;
+  const isTrueEmpty = !hasAnyExpenses;
+  const periodLabel = formatExpensePeriodLabel(period, language, t);
+  const scopeLabel =
+    propertyFilter === 'all'
+      ? t('reports.allProperties')
+      : (propertyMap.get(propertyFilter)?.name ?? t('reports.allProperties'));
+  const eyebrowText = isTrueEmpty
+    ? t('expenses.eyebrowScope', { period: periodLabel, scope: scopeLabel })
+    : t('expenses.eyebrow', {
+        period: periodLabel,
+        count: filteredExpenses.length,
+      });
+
+  const lastExpenseShortDate = useMemo(() => {
+    if (expenses.length === 0) return null;
+    let latest = expenses[0].billing_date;
+    for (const expense of expenses) {
+      if (expense.billing_date > latest) latest = expense.billing_date;
+    }
+    return formatDateFns(parseISO(latest), 'dd.MM.');
+  }, [expenses]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
   }, [refetch]);
-
-  const handleMarkPaid = useCallback(
-    (id: string) => {
-      showConfirmDialog({
-        title: t('confirm.markPaidTitle'),
-        message: t('confirm.markPaidMessage'),
-        confirmLabel: t('expenses.markPaid'),
-        onConfirm: async () => {
-          try {
-            await markAsPaid(id);
-            showToast({ message: t('expenses.markedPaid'), type: 'success' });
-          } catch (err) {
-            showToast({
-              message: err instanceof Error ? err.message : t('expenses.markPaidFailed'),
-              type: 'error',
-            });
-          }
-        },
-      });
-    },
-    [markAsPaid, showConfirmDialog, showToast, t],
-  );
-
-  const handleDelete = useCallback(
-    (id: string) => {
-      showConfirmDialog({
-        title: t('confirm.deleteExpenseTitle'),
-        message: t('confirm.deleteExpenseMessage'),
-        confirmLabel: t('common.delete'),
-        destructive: true,
-        onConfirm: async () => {
-          try {
-            await remove(id);
-            showToast({ message: t('expenses.deleteSuccess'), type: 'success' });
-          } catch (err) {
-            showToast({
-              message: err instanceof Error ? err.message : t('expenses.deleteFailed'),
-              type: 'error',
-            });
-          }
-        },
-      });
-    },
-    [remove, showConfirmDialog, showToast, t],
-  );
 
   const handleExpensePress = useCallback(
     (expenseId: string) => {
@@ -267,41 +288,16 @@ export default function ExpensesScreen() {
 
   const handleFilterPress = useCallback(() => {
     dismissSearchIfEmpty();
-    setFiltersVisible(true);
-  }, [dismissSearchIfEmpty]);
+    handleFiltersVisibleChange(true);
+  }, [dismissSearchIfEmpty, handleFiltersVisibleChange]);
 
-  const renderExpenseItem = useCallback(
-    ({ item }: { item: Expense }) => (
-      <View style={styles.itemWrap}>
-        <ExpenseCard
-          expense={item}
-          category={categoryMap.get(item.category_id)}
-          propertyName={propertyMap.get(item.property_id)?.name}
-          currency={currency}
-          language={language}
-          onPress={handleExpensePress}
-          onMarkPaid={item.paid_at ? undefined : handleMarkPaid}
-          onDelete={handleDelete}
-        />
-      </View>
-    ),
-    [categoryMap, currency, handleDelete, handleExpensePress, handleMarkPaid, language, propertyMap],
-  );
-
-  const renderSectionHeader = useCallback(
-    ({ section }: { section: ExpenseSection }) => (
-      <View style={styles.sectionHeader} className="bg-background">
-        <Text className="text-base font-medium">{section.title}</Text>
-        <Text className="text-muted-foreground mt-0.5 text-xs">
-          {t('expenses.monthTotal', {
-            period: formatPeriod(section.month, section.year, language),
-          })}
-          {' · '}
-          {section.total.toFixed(2)} {currency}
-        </Text>
-      </View>
-    ),
-    [currency, language, t],
+  const handlePropertyPill = useCallback(
+    (value: string) => {
+      dismissSearchIfEmpty();
+      setPropertyFilter(value);
+      setExpanded(false);
+    },
+    [dismissSearchIfEmpty],
   );
 
   if (isLoading && expenses.length === 0) {
@@ -322,56 +318,398 @@ export default function ExpensesScreen() {
 
   return (
     <View style={styles.container} className="bg-transparent" collapsable={false}>
-      <ExpenseScreenActions
-        activeFilterCount={activeFilterCount}
-        onFilterPress={handleFilterPress}
-      />
-      <SearchableTabActions
-        showCreate
-        onCreatePress={handleCreatePress}
-        searchActive={searchHasText}
-        searchExpanded={searchExpanded}
-        onSearchPress={handleSearchPress}
-      />
-      <View style={[styles.listHeader, { paddingTop: floatingInset }]}>
+      <ScrollView
+        style={styles.list}
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={[
+          styles.listContent,
+          {
+            paddingHorizontal: theme.spacing.gutter,
+            paddingTop: 0,
+            paddingBottom: Spacing.scrollBottom,
+          },
+          filteredExpenses.length === 0 && styles.listEmpty,
+        ]}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.topRow}>
+          {hasAnyExpenses ? (
+            <FilterIconButton
+              activeCount={activeFilterCount}
+              onPress={handleFilterPress}
+              accessibilityLabel={
+                activeFilterCount > 0
+                  ? t('expenses.filtersWithCount', { count: activeFilterCount })
+                  : t('expenses.filters')
+              }
+            />
+          ) : (
+            <View style={styles.topSpacer} />
+          )}
+          <View style={styles.actions}>
+            <Pressable
+              onPress={handleSearchPress}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.search')}
+              style={[
+                styles.btnIco,
+                {
+                  backgroundColor:
+                    searchHasText || searchExpanded
+                      ? colors.primaryTint
+                      : colors.surface2,
+                },
+              ]}
+              hitSlop={4}
+            >
+              <Search
+                size={17}
+                color={searchHasText || searchExpanded ? colors.primary : colors.fg}
+                strokeWidth={2}
+              />
+            </Pressable>
+            <Pressable
+              onPress={handleCreatePress}
+              accessibilityRole="button"
+              accessibilityLabel={t('expenses.addNew')}
+              style={[styles.btnIco, { backgroundColor: colors.surface2 }]}
+              hitSlop={4}
+            >
+              <Plus size={17} color={colors.fg} strokeWidth={2} />
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.titleBlk}>
+          <Text
+            style={{
+              fontFamily: Fonts.sans.semibold,
+              fontSize: 11,
+              lineHeight: 14,
+              letterSpacing: 1.54,
+              textTransform: 'uppercase',
+              color: colors.muted,
+              marginBottom: 10,
+            }}
+          >
+            {eyebrowText}
+          </Text>
+          <Text
+            style={{
+              fontFamily: displayFontFamily(theme.name),
+              fontSize: 34,
+              lineHeight: 34,
+              letterSpacing: -0.85,
+              color: colors.fg,
+            }}
+          >
+            {t('expenses.title')}
+          </Text>
+        </View>
+
         <AppExpandableSearch
           {...searchBarControlProps}
           placeholder={t('expenses.searchPlaceholder')}
           style={styles.searchBar}
         />
-        <ExpenseActiveFilterChips {...filterStateProps} />
-      </View>
-      <SectionList
-        style={styles.list}
-        contentInsetAdjustmentBehavior="automatic"
-        sections={sections}
-        keyExtractor={(item) => item.id}
-        stickySectionHeadersEnabled
-        {...listKeyboardProps}
-        {...listPerformanceProps}
-        contentContainerStyle={[
-          sections.length === 0 && styles.listEmpty,
-          { paddingBottom: Spacing.lg },
-        ]}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        renderSectionHeader={renderSectionHeader}
-        renderItem={renderExpenseItem}
-        ListEmptyComponent={
-          <EmptyState
-            icon={Receipt}
-            title={t('empty.noExpenses')}
-            subtitle={
-              search || activeFilterCount > 0
-                ? t('empty.noResultsHint')
-                : t('empty.noExpensesHint')
-            }
-          />
-        }
-      />
+
+        {hasAnyExpenses ? (
+          <>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.pillBleed}
+              contentContainerStyle={[styles.pillRow, { paddingHorizontal: theme.spacing.gutter }]}
+            >
+              <Pressable
+                onPress={() => handlePropertyPill('all')}
+                style={[
+                  styles.pill,
+                  {
+                    backgroundColor:
+                      propertyFilter === 'all' ? colors.primaryTint : colors.surface2,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: propertyFilter === 'all' }}
+              >
+                <Text
+                  style={{
+                    fontFamily: Fonts.sans.semibold,
+                    fontSize: 13,
+                    color: propertyFilter === 'all' ? colors.primary : colors.muted,
+                  }}
+                >
+                  {t('reports.allProperties')}
+                </Text>
+              </Pressable>
+              {properties.map((property) => {
+                const on = propertyFilter === property.id;
+                return (
+                  <Pressable
+                    key={property.id}
+                    onPress={() => handlePropertyPill(property.id)}
+                    style={[
+                      styles.pill,
+                      {
+                        backgroundColor: on ? colors.primaryTint : colors.surface2,
+                      },
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: on }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: Fonts.sans.semibold,
+                        fontSize: 13,
+                        color: on ? colors.primary : colors.muted,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {property.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            <ExpenseActiveFilterChips {...filterStateProps} />
+          </>
+        ) : null}
+
+        <View
+          style={[
+            styles.bays,
+            isEmptyList ? styles.baysBeforeEmpty : null,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.cardBd,
+              borderRadius: radius.xl,
+              ...elevation.card,
+            },
+          ]}
+        >
+          <View style={styles.bay}>
+            <Text
+              style={{
+                fontFamily: Fonts.sans.semibold,
+                fontSize: 10,
+                letterSpacing: 0.8,
+                textTransform: 'uppercase',
+                color: colors.muted,
+                marginBottom: 9,
+              }}
+            >
+              {t('expenses.thisMonthBay')}
+            </Text>
+            <DisplayAmount
+              amount={thisMonthTotal}
+              currency={currency}
+              language={language}
+              size={Typography.display.amountSm.size}
+              lineHeight={Typography.display.amountSm.lineHeight}
+              letterSpacing={Typography.display.amountSm.letterSpacing}
+            />
+          </View>
+          <View style={[styles.bayDivider, { backgroundColor: colors.bd }]} />
+          <View style={styles.bay}>
+            <Text
+              style={{
+                fontFamily: Fonts.sans.semibold,
+                fontSize: 10,
+                letterSpacing: 0.8,
+                textTransform: 'uppercase',
+                color: colors.muted,
+                marginBottom: 9,
+              }}
+            >
+              {t('expenses.avgSixMonthsBay')}
+            </Text>
+            <DisplayAmount
+              amount={sixMonthAverage}
+              currency={currency}
+              language={language}
+              size={Typography.display.amountSm.size}
+              lineHeight={Typography.display.amountSm.lineHeight}
+              letterSpacing={Typography.display.amountSm.letterSpacing}
+              color={colors.muted}
+            />
+          </View>
+        </View>
+
+        {isEmptyList ? (
+          <>
+            <View
+              style={[
+                styles.emptyCard,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.cardBd,
+                  borderRadius: radius.xl,
+                  ...elevation.card,
+                },
+              ]}
+            >
+              <View style={[styles.emptyIc, { backgroundColor: colors.primaryTint }]}>
+                <Receipt size={25} color={colors.primary} strokeWidth={2} />
+              </View>
+              <Text
+                style={{
+                  fontFamily: displayFontFamily(theme.name),
+                  fontSize: 23,
+                  letterSpacing: -0.46,
+                  color: colors.fg,
+                  textAlign: 'center',
+                  marginBottom: 8,
+                }}
+              >
+                {search || activeFilterCount > 0
+                  ? t('empty.noResults')
+                  : t('empty.noExpenses')}
+              </Text>
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.regular,
+                  fontSize: 12.5,
+                  lineHeight: 20,
+                  color: colors.muted,
+                  textAlign: 'center',
+                  maxWidth: 210,
+                  marginBottom: 22,
+                }}
+              >
+                {search || activeFilterCount > 0
+                  ? t('empty.noResultsHint')
+                  : t('empty.noExpensesHint')}
+              </Text>
+              {!search && activeFilterCount === 0 ? (
+                <Pressable
+                  onPress={handleCreatePress}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('expenses.addNew')}
+                  style={[styles.emptyCta, { backgroundColor: colors.primary }]}
+                >
+                  <Plus size={18} color={colors.onPrimary} strokeWidth={2} />
+                  <Text
+                    style={{
+                      fontFamily: Fonts.sans.semibold,
+                      fontSize: 14,
+                      letterSpacing: -0.14,
+                      color: colors.onPrimary,
+                    }}
+                  >
+                    {t('expenses.addNew')}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+            {lastExpenseShortDate ? (
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.semibold,
+                  fontSize: 10,
+                  letterSpacing: 0.8,
+                  textTransform: 'uppercase',
+                  color: colors.muted,
+                  textAlign: 'center',
+                  marginTop: 24,
+                }}
+              >
+                {t('expenses.lastExpenseRecorded', { date: lastExpenseShortDate })}
+              </Text>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <View
+              style={[
+                styles.card,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.cardBd,
+                  borderRadius: radius.xl,
+                  ...elevation.card,
+                },
+              ]}
+            >
+              {visibleExpenses.map((expense, index) => (
+                <ExpenseListRow
+                  key={expense.id}
+                  expense={expense}
+                  category={categoryMap.get(expense.category_id)}
+                  propertyName={propertyMap.get(expense.property_id)?.name}
+                  currency={currency}
+                  language={language}
+                  showDivider={index > 0}
+                  onPress={handleExpensePress}
+                />
+              ))}
+            </View>
+
+            {hasMore ? (
+              <Pressable
+                onPress={() => setExpanded((current) => !current)}
+                accessibilityRole="button"
+                accessibilityState={{ expanded }}
+                hitSlop={8}
+                style={styles.footerTap}
+              >
+                <Text
+                  style={{
+                    fontFamily: Fonts.sans.semibold,
+                    fontSize: 10,
+                    letterSpacing: 0.8,
+                    textTransform: 'uppercase',
+                    color: colors.muted,
+                    textAlign: 'center',
+                  }}
+                >
+                  {expanded
+                    ? t('expenses.showingShowLess', {
+                        shown: filteredExpenses.length,
+                        total: filteredExpenses.length,
+                      })
+                    : t('expenses.showingLoadMore', {
+                        shown: visibleExpenses.length,
+                        total: filteredExpenses.length,
+                      })}
+                </Text>
+              </Pressable>
+            ) : (
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.semibold,
+                  fontSize: 10,
+                  letterSpacing: 0.8,
+                  textTransform: 'uppercase',
+                  color: colors.muted,
+                  textAlign: 'center',
+                  marginTop: 14,
+                }}
+              >
+                {t('properties.showingOf', {
+                  shown: filteredExpenses.length,
+                  total: filteredExpenses.length,
+                })}
+              </Text>
+            )}
+          </>
+        )}
+      </ScrollView>
+
       <ExpenseFiltersSheetHost
         sheetVisible={filtersVisible}
-        onSheetVisibleChange={setFiltersVisible}
+        onSheetVisibleChange={handleFiltersVisibleChange}
         {...filterStateProps}
+      />
+      <BlurOverlay
+        visible={filtersVisible}
+        intensity="strong"
+        tint="dark"
+        duration={APP_BOTTOM_SHEET_CLOSE_MS}
+        zIndex={5}
       />
     </View>
   );
@@ -384,24 +722,112 @@ const styles = StyleSheet.create({
   list: {
     flex: 1,
   },
-  skeleton: {
-    padding: Spacing.md,
-  },
-  listHeader: {
-    paddingBottom: Spacing.sm,
+  listContent: {
+    flexGrow: 1,
   },
   listEmpty: {
     flexGrow: 1,
   },
+  skeleton: {
+    padding: Spacing.md,
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+  },
+  topSpacer: {
+    flex: 1,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  btnIco: {
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titleBlk: {
+    marginBottom: 14,
+  },
   searchBar: {
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
+    marginBottom: 8,
   },
-  sectionHeader: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+  pillBleed: {
+    flexGrow: 0,
+    marginHorizontal: -Spacing.gutter,
+    marginBottom: 10,
   },
-  itemWrap: {
-    paddingHorizontal: Spacing.md,
+  pillRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  pill: {
+    height: 34,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    maxWidth: 180,
+  },
+  bays: {
+    flexDirection: 'row',
+    overflow: 'hidden',
+    marginBottom: 14,
+    borderWidth: 1,
+  },
+  baysBeforeEmpty: {
+    marginBottom: 26,
+  },
+  bay: {
+    flex: 1,
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 15,
+  },
+  bayDivider: {
+    width: 1,
+    alignSelf: 'stretch',
+  },
+  card: {
+    borderWidth: 1,
+    paddingHorizontal: 18,
+    paddingTop: 4,
+    paddingBottom: 6,
+    marginBottom: 10,
+  },
+  footerTap: {
+    marginTop: 6,
+    marginBottom: 8,
+    paddingVertical: 8,
+  },
+  emptyCard: {
+    paddingTop: 38,
+    paddingHorizontal: 20,
+    paddingBottom: 34,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  emptyIc: {
+    width: 60,
+    height: 60,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  emptyCta: {
+    height: 44,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 });

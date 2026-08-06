@@ -7,9 +7,15 @@ import type {
   StatusFilter,
   TypeFilter,
 } from '@/components/expense/expenseFilterTypes';
+import {
+  buildDefaultExpensePeriod,
+  formatExpensePeriodLabel,
+  type ExpensePeriod,
+} from '@/components/expense/expensePeriod';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { FilterChipRow, type FilterChip } from '@/components/ui/FilterChipRow';
-import { Spacing } from '@/constants/theme';
+import { useProfile } from '@/hooks/useProfile';
+import type { Language } from '@/types/app.types';
 
 export type { RecurringFilter, StatusFilter, TypeFilter } from '@/components/expense/expenseFilterTypes';
 
@@ -22,8 +28,11 @@ export interface ExpenseFiltersStateProps {
   onTypeFilterChange: (value: TypeFilter) => void;
   propertyFilter: string;
   onPropertyFilterChange: (value: string) => void;
-  categoryFilter: string;
-  onCategoryFilterChange: (value: string) => void;
+  /** Empty = all categories. */
+  categoryFilter: string[];
+  onCategoryFilterChange: (value: string[]) => void;
+  period: ExpensePeriod;
+  onPeriodChange: (value: ExpensePeriod) => void;
   propertyOptions: PickerOption[];
   categoryOptions: PickerOption[];
 }
@@ -33,19 +42,24 @@ export interface ExpenseFiltersSheetHostProps extends ExpenseFiltersStateProps {
   onSheetVisibleChange: (visible: boolean) => void;
 }
 
+/**
+ * Sheet/chip filters only — property is owned by the pill row, so it is not
+ * counted here (avoids a duplicate “active” signal next to the pills).
+ * Period counts when not the default (current month).
+ */
 function countActiveFilters(
   statusFilter: StatusFilter,
   recurringFilter: RecurringFilter,
   typeFilter: TypeFilter,
-  propertyFilter: string,
-  categoryFilter: string,
+  categoryFilter: string[],
+  period: ExpensePeriod,
 ): number {
   let count = 0;
   if (statusFilter !== 'all') count += 1;
   if (recurringFilter !== 'all') count += 1;
   if (typeFilter !== 'all') count += 1;
-  if (propertyFilter !== 'all') count += 1;
-  if (categoryFilter !== 'all') count += 1;
+  if (categoryFilter.length > 0) count += 1;
+  if (period.preset !== 'current_month') count += 1;
   return count;
 }
 
@@ -53,15 +67,16 @@ export function countExpenseActiveFilters(
   statusFilter: StatusFilter,
   recurringFilter: RecurringFilter,
   typeFilter: TypeFilter,
-  propertyFilter: string,
-  categoryFilter: string,
+  _propertyFilter: string,
+  categoryFilter: string[],
+  period: ExpensePeriod,
 ): number {
   return countActiveFilters(
     statusFilter,
     recurringFilter,
     typeFilter,
-    propertyFilter,
     categoryFilter,
+    period,
   );
 }
 
@@ -72,14 +87,15 @@ function useExpenseFilterChips({
   onRecurringFilterChange,
   typeFilter,
   onTypeFilterChange,
-  propertyFilter,
-  onPropertyFilterChange,
   categoryFilter,
   onCategoryFilterChange,
-  propertyOptions,
   categoryOptions,
+  period,
+  onPeriodChange,
 }: ExpenseFiltersStateProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { profile } = useProfile();
+  const language = (profile?.language ?? i18n.language ?? 'hr') as Language;
 
   return useMemo(() => {
     const chips: FilterChip[] = [];
@@ -104,24 +120,14 @@ function useExpenseFilterChips({
       });
     }
 
-    if (propertyFilter !== 'all') {
-      const label = propertyOptions.find((option) => option.value === propertyFilter)?.label;
+    for (const categoryId of categoryFilter) {
+      const label = categoryOptions.find((option) => option.value === categoryId)?.label;
       if (label) {
         chips.push({
-          key: 'property',
+          key: `category-${categoryId}`,
           label,
-          onClear: () => onPropertyFilterChange('all'),
-        });
-      }
-    }
-
-    if (categoryFilter !== 'all') {
-      const label = categoryOptions.find((option) => option.value === categoryFilter)?.label;
-      if (label) {
-        chips.push({
-          key: 'category',
-          label,
-          onClear: () => onCategoryFilterChange('all'),
+          onClear: () =>
+            onCategoryFilterChange(categoryFilter.filter((id) => id !== categoryId)),
         });
       }
     }
@@ -154,17 +160,25 @@ function useExpenseFilterChips({
       });
     }
 
+    if (period.preset !== 'current_month') {
+      chips.push({
+        key: 'period',
+        label: formatExpensePeriodLabel(period, language, t),
+        onClear: () => onPeriodChange(buildDefaultExpensePeriod()),
+      });
+    }
+
     return chips;
   }, [
     categoryFilter,
     categoryOptions,
+    language,
     onCategoryFilterChange,
-    onPropertyFilterChange,
+    onPeriodChange,
     onRecurringFilterChange,
     onStatusFilterChange,
     onTypeFilterChange,
-    propertyFilter,
-    propertyOptions,
+    period,
     recurringFilter,
     statusFilter,
     t,
@@ -172,7 +186,7 @@ function useExpenseFilterChips({
   ]);
 }
 
-/** Active filter chips shown above expense list content. */
+/** Active filter chips shown under property pills (Naslov `.fchip` row). */
 export function ExpenseActiveFilterChips(props: ExpenseFiltersStateProps) {
   const chips = useExpenseFilterChips(props);
   if (chips.length === 0) return null;
@@ -198,6 +212,8 @@ export function ExpenseFiltersSheetHost({
   onPropertyFilterChange,
   categoryFilter,
   onCategoryFilterChange,
+  period,
+  onPeriodChange,
   propertyOptions,
   categoryOptions,
 }: ExpenseFiltersSheetHostProps) {
@@ -206,7 +222,8 @@ export function ExpenseFiltersSheetHost({
     onRecurringFilterChange('all');
     onTypeFilterChange('all');
     onPropertyFilterChange('all');
-    onCategoryFilterChange('all');
+    onCategoryFilterChange([]);
+    onPeriodChange(buildDefaultExpensePeriod());
   };
 
   return (
@@ -225,6 +242,8 @@ export function ExpenseFiltersSheetHost({
       onRecurringFilterChange={onRecurringFilterChange}
       typeFilter={typeFilter}
       onTypeFilterChange={onTypeFilterChange}
+      period={period}
+      onPeriodChange={onPeriodChange}
       onClearFilters={handleClearFilters}
     />
   );
@@ -232,7 +251,6 @@ export function ExpenseFiltersSheetHost({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.sm,
+    marginBottom: 16,
   },
 });

@@ -1,19 +1,22 @@
+import { parseISO } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
+import { ExpenseForm } from '@/components/expense/ExpenseForm';
+import { APP_BOTTOM_SHEET_CLOSE_MS } from '@/components/ui/AppBottomSheet';
+import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
-import { ExpenseForm } from '@/components/expense/ExpenseForm';
-import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useExpenseMutations } from '@/hooks/useExpenses';
 import { useProperties } from '@/hooks/useProperties';
 import { scheduleExpenseDueReminder } from '@/lib/notifications';
 import { useUiStore } from '@/stores/uiStore';
 import { getCategoryLabel } from '@/utils/expense';
+import { toDateString } from '@/utils/formHelpers';
 import type { ExpenseFormValues } from '@/utils/validators';
-import { parseISO } from 'date-fns';
 
 export default function NewExpenseScreen() {
   const { propertyId, categoryId, amount, notes, billingDate } = useLocalSearchParams<{
@@ -29,7 +32,12 @@ export default function NewExpenseScreen() {
   const { create } = useExpenseMutations();
   const showToast = useUiStore((s) => s.showToast);
   const [isSaving, setIsSaving] = useState(false);
-  const screenStyles = useThemedScreenStyles();
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const lockedProperty = useMemo(
+    () => (propertyId ? properties.find((property) => property.id === propertyId) : undefined),
+    [properties, propertyId],
+  );
 
   const handleSubmit = async (values: ExpenseFormValues) => {
     setIsSaving(true);
@@ -68,29 +76,40 @@ export default function NewExpenseScreen() {
 
   if (propertiesLoading || categoriesLoading) {
     return (
-      <StackScreenChrome title={t('expenses.newExpense')}>
+      <StackScreenChrome title={t('expenses.newExpense')} hideHeaderTitle edgeToEdge>
         <SkeletonLoader count={6} style={styles.loader} />
       </StackScreenChrome>
     );
   }
 
   return (
-    <StackScreenChrome title={t('expenses.newExpense')} edgeToEdge>
-      <View style={screenStyles.container}>
+    <StackScreenChrome title={t('expenses.newExpense')} hideHeaderTitle edgeToEdge>
+      <View className="flex-1 bg-transparent">
         <ExpenseForm
+          key={propertyId ? `property-${propertyId}` : 'global'}
+          title={t('expenses.newExpense')}
           properties={properties}
           categories={categories}
           defaultValues={{
-            property_id: propertyId ?? '',
+            property_id: propertyId ?? lockedProperty?.id ?? '',
             category_id: categoryId ?? '',
             amount: amount ? Number.parseFloat(amount) : 0,
-            billing_date: billingDate ?? new Date().toISOString().slice(0, 10),
+            billing_date: billingDate ?? toDateString(new Date()) ?? '',
             notes: notes ?? null,
           }}
           onSubmit={handleSubmit}
           onCreateCustomCategory={createCustomCategory}
           isSubmitting={isSaving}
-          submitLabel={t('common.create')}
+          submitLabel={t('dashboard.addExpense')}
+          onSheetVisibilityChange={setSheetOpen}
+        />
+        {/* Blur sibling of form — never inside the Modal (see docs/blur). */}
+        <BlurOverlay
+          visible={sheetOpen}
+          intensity="strong"
+          tint="dark"
+          duration={APP_BOTTOM_SHEET_CLOSE_MS}
+          zIndex={5}
         />
       </View>
     </StackScreenChrome>

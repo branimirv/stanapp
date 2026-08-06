@@ -1,12 +1,15 @@
+import { parseISO } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
+import { ExpenseForm } from '@/components/expense/ExpenseForm';
+import { APP_BOTTOM_SHEET_CLOSE_MS } from '@/components/ui/AppBottomSheet';
+import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
-import { ExpenseForm } from '@/components/expense/ExpenseForm';
-import { useThemedScreenStyles } from '@/hooks/useThemedScreenStyles';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useExpense, useExpenseMutations } from '@/hooks/useExpenses';
 import { useProperties } from '@/hooks/useProperties';
@@ -17,7 +20,6 @@ import {
 import { useUiStore } from '@/stores/uiStore';
 import { getCategoryLabel } from '@/utils/expense';
 import type { ExpenseFormValues } from '@/utils/validators';
-import { parseISO } from 'date-fns';
 
 export default function EditExpenseScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -29,7 +31,7 @@ export default function EditExpenseScreen() {
   const showToast = useUiStore((s) => s.showToast);
 
   const [isSaving, setIsSaving] = useState(false);
-  const screenStyles = useThemedScreenStyles();
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const handleSubmit = async (values: ExpenseFormValues) => {
     if (!id) return;
@@ -71,7 +73,7 @@ export default function EditExpenseScreen() {
 
   if (isLoading) {
     return (
-      <StackScreenChrome title={t('expenses.editExpense')}>
+      <StackScreenChrome title={t('expenses.editExpense')} hideHeaderTitle edgeToEdge>
         <SkeletonLoader count={6} style={styles.loader} />
       </StackScreenChrome>
     );
@@ -79,16 +81,17 @@ export default function EditExpenseScreen() {
 
   if (error || !expense) {
     return (
-      <StackScreenChrome title={t('expenses.editExpense')}>
+      <StackScreenChrome title={t('expenses.editExpense')} hideHeaderTitle edgeToEdge>
         <ErrorState message={error ?? t('expenses.notFound')} onRetry={refetch} />
       </StackScreenChrome>
     );
   }
 
   return (
-    <StackScreenChrome title={t('expenses.editExpense')}>
-      <View style={[screenStyles.container, styles.container]}>
+    <StackScreenChrome title={t('expenses.editExpense')} hideHeaderTitle edgeToEdge>
+      <View className="flex-1 bg-transparent">
         <ExpenseForm
+          title={t('expenses.editExpense')}
           properties={properties}
           categories={categories}
           defaultValues={{
@@ -104,6 +107,14 @@ export default function EditExpenseScreen() {
           onCreateCustomCategory={createCustomCategory}
           isSubmitting={isSaving}
           submitLabel={t('common.update')}
+          onSheetVisibilityChange={setSheetOpen}
+        />
+        <BlurOverlay
+          visible={sheetOpen}
+          intensity="strong"
+          tint="dark"
+          duration={APP_BOTTOM_SHEET_CLOSE_MS}
+          zIndex={5}
         />
       </View>
     </StackScreenChrome>
@@ -111,9 +122,6 @@ export default function EditExpenseScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingTop: 8,
-  },
   loader: {
     padding: 16,
   },
