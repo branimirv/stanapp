@@ -67,3 +67,8 @@ temp/
 
 # AI prompts (local only)
 prompts/
+
+# Documentation
+docs/
+CONTEXT.md
+.cursor/
