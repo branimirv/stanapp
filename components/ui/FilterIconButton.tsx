@@ -1,6 +1,8 @@
 import { SlidersHorizontal } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { HeaderBtnIco } from '@/components/ui/HeaderActionsPill';
+import { HEADER_ICON_SIZE } from '@/constants/header';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { Fonts } from '@/lib/fonts';
 
@@ -24,24 +26,18 @@ export function FilterIconButton({
   const active = activeCount > 0;
 
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ selected: active }}
-      style={[
-        styles.btnIco,
-        {
-          backgroundColor: active ? colors.primaryTint : colors.surface2,
-        },
-      ]}
-      hitSlop={4}
-    >
-      <SlidersHorizontal
-        size={17}
-        color={active ? colors.primary : colors.fg}
-        strokeWidth={2}
-      />
+    <View style={styles.wrap}>
+      <HeaderBtnIco
+        onPress={onPress}
+        accessibilityLabel={accessibilityLabel}
+        active={active}
+      >
+        <SlidersHorizontal
+          size={HEADER_ICON_SIZE}
+          color={active ? colors.primary : colors.fg}
+          strokeWidth={2}
+        />
+      </HeaderBtnIco>
       {active ? (
         <View
           style={[styles.fcount, { backgroundColor: colors.primary }]}
@@ -58,18 +54,13 @@ export function FilterIconButton({
           </Text>
         </View>
       ) : null}
-    </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  btnIco: {
+  wrap: {
     position: 'relative',
-    width: 38,
-    height: 38,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   fcount: {
     position: 'absolute',

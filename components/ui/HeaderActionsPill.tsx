@@ -1,6 +1,8 @@
 import { Children, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { GlassSurface } from '@/components/ui/GlassSurface';
+import { HEADER_ACTION_SLOT } from '@/constants/header';
 import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 
@@ -11,11 +13,9 @@ interface HeaderActionsPillProps {
 
 /**
  * Row of Naslov `btn-ico` circles (docs, edit, etc.).
- * Children should be icon presses (e.g. HeaderIconButton) — this wraps each in surface2.
+ * Children should be icon presses (e.g. HeaderIconButton) — each sits on liquid glass.
  */
 export function HeaderActionsPill({ children, style }: HeaderActionsPillProps) {
-  const { theme } = useAppTheme();
-  const { colors } = theme;
   const actions = Children.toArray(children).filter(Boolean);
   if (actions.length === 0) {
     return null;
@@ -24,40 +24,61 @@ export function HeaderActionsPill({ children, style }: HeaderActionsPillProps) {
   return (
     <View style={[styles.row, style]}>
       {actions.map((child, index) => (
-        <View
+        <GlassSurface
           key={index}
-          style={[styles.btnIco, { backgroundColor: colors.surface2 }]}
+          shape="circle"
+          interactive
+          style={styles.btnIco}
+          contentStyle={styles.btnIcoContent}
         >
           {child}
-        </View>
+        </GlassSurface>
       ))}
     </View>
   );
 }
 
-/** Standalone Naslov btn-ico for one-off header actions. */
+/** Standalone Naslov btn-ico for one-off header / floating nav actions. */
 export function HeaderBtnIco({
   children,
   onPress,
   accessibilityLabel,
   style,
+  active = false,
+  disabled = false,
 }: {
   children: ReactNode;
   onPress: () => void;
   accessibilityLabel: string;
   style?: StyleProp<ViewStyle>;
+  /** Filter / search “on” state — primary tint over glass. */
+  active?: boolean;
+  disabled?: boolean;
 }) {
   const { theme } = useAppTheme();
+
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      style={[styles.btnIco, { backgroundColor: theme.colors.surface2 }, style]}
-      hitSlop={4}
+    <GlassSurface
+      shape="circle"
+      interactive={!disabled}
+      style={[styles.btnIco, disabled ? styles.disabled : null, style]}
+      contentStyle={[
+        styles.btnIcoContent,
+        active ? { backgroundColor: theme.colors.primaryTint } : null,
+      ]}
     >
-      {children}
-    </Pressable>
+      <Pressable
+        onPress={onPress}
+        disabled={disabled}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ selected: active, disabled }}
+        style={styles.pressable}
+        hitSlop={4}
+      >
+        {children}
+      </Pressable>
+    </GlassSurface>
   );
 }
 
@@ -68,11 +89,21 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   btnIco: {
-    width: 38,
-    height: 38,
-    borderRadius: 999,
+    width: HEADER_ACTION_SLOT,
+    height: HEADER_ACTION_SLOT,
+  },
+  btnIcoContent: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
+  },
+  pressable: {
+    flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  disabled: {
+    opacity: 0.45,
   },
 });

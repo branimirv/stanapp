@@ -1,5 +1,5 @@
 import { parseISO } from 'date-fns';
-import { BarChart3, Download } from 'lucide-react-native';
+import { BarChart3 } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import {
   Pressable,
@@ -20,13 +20,14 @@ import {
   ReportFiltersSheetHost,
   type ReportFiltersStateProps,
 } from '@/components/reports/ReportFilters';
+import { ReportScreenActions } from '@/components/reports/ReportScreenActions';
 import { APP_BOTTOM_SHEET_CLOSE_MS } from '@/components/ui/AppBottomSheet';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { DisplayAmount } from '@/components/ui/DisplayAmount';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { FilterIconButton } from '@/components/ui/FilterIconButton';
+import { FLOATING_ACTIONS_ROW_HEIGHT } from '@/components/ui/FloatingScreenActions';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { Spacing } from '@/constants/theme';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
@@ -238,33 +239,7 @@ export default function ReportsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.topRow}>
-          <FilterIconButton
-            activeCount={activeFilterCount}
-            onPress={() => handleFiltersVisibleChange(true)}
-            accessibilityLabel={
-              activeFilterCount > 0
-                ? t('reports.filtersWithCount', { count: activeFilterCount })
-                : t('reports.filters')
-            }
-          />
-          <Pressable
-            onPress={handleExport}
-            disabled={downloadDisabled}
-            accessibilityRole="button"
-            accessibilityLabel={t('reports.export')}
-            style={[
-              styles.btnIco,
-              {
-                backgroundColor: colors.surface2,
-                opacity: downloadDisabled ? 0.45 : 1,
-              },
-            ]}
-            hitSlop={4}
-          >
-            <Download size={17} color={colors.fg} strokeWidth={2} />
-          </Pressable>
-        </View>
+        <View style={styles.actionsClearance} />
 
         <View style={styles.titleBlk}>
           <Text
@@ -470,6 +445,13 @@ export default function ReportsScreen() {
         )}
       </ScrollView>
 
+      <ReportScreenActions
+        activeFilterCount={activeFilterCount}
+        onFilterPress={() => handleFiltersVisibleChange(true)}
+        onDownloadPress={handleExport}
+        downloadDisabled={downloadDisabled}
+      />
+
       <BlurOverlay
         visible={filtersVisible}
         intensity="strong"
@@ -500,18 +482,8 @@ const styles = StyleSheet.create({
   skeleton: {
     padding: Spacing.md,
   },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-  },
-  btnIco: {
-    width: 38,
-    height: 38,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
+  actionsClearance: {
+    height: FLOATING_ACTIONS_ROW_HEIGHT,
   },
   titleBlk: {
     marginBottom: 16,

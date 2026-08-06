@@ -29,6 +29,8 @@ import { useTranslation } from 'react-i18next';
 import { APP_BOTTOM_SHEET_CLOSE_MS } from '@/components/ui/AppBottomSheet';
 import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { FloatingScreenActions } from '@/components/ui/FloatingScreenActions';
+import { HeaderBtnIco } from '@/components/ui/HeaderActionsPill';
 import {
   SettingsGroup,
   SettingsOptionSheet,
@@ -36,7 +38,7 @@ import {
 } from '@/components/ui/SettingsList';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { THEMES } from '@/constants/config';
-import { tabRootScreenOptions } from '@/constants/header';
+import { HEADER_ACTION_SLOT, HEADER_ICON_SIZE, tabRootScreenOptions } from '@/constants/header';
 import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useMyMemberships } from '@/hooks/useMembers';
@@ -290,19 +292,12 @@ export default function MeScreen() {
               letterSpacing: 1.54,
               textTransform: 'uppercase',
               color: colors.muted,
+              flex: 1,
             }}
           >
             {t('settings.profile')}
           </Text>
-          <Pressable
-            onPress={() => router.push('/(tabs)/me/notifications')}
-            accessibilityRole="button"
-            accessibilityLabel={t('settings.notifications')}
-            style={[styles.btnIco, { backgroundColor: colors.surface2 }]}
-            hitSlop={4}
-          >
-            <Bell size={17} color={colors.fg} strokeWidth={2} />
-          </Pressable>
+          <View style={styles.bellClearance} />
         </View>
 
         <View style={styles.titleBlk}>
@@ -488,6 +483,15 @@ export default function MeScreen() {
         </Text>
       </ScrollView>
 
+      <FloatingScreenActions align="right">
+        <HeaderBtnIco
+          onPress={() => router.push('/(tabs)/me/notifications')}
+          accessibilityLabel={t('settings.notifications')}
+        >
+          <Bell size={HEADER_ICON_SIZE} color={colors.fg} strokeWidth={2} />
+        </HeaderBtnIco>
+      </FloatingScreenActions>
+
       <BlurOverlay
         visible={pickerOpen}
         intensity="strong"
@@ -550,13 +554,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 16,
+    minHeight: HEADER_ACTION_SLOT + 32,
   },
-  btnIco: {
-    width: 38,
-    height: 38,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
+  bellClearance: {
+    width: HEADER_ACTION_SLOT,
+    height: HEADER_ACTION_SLOT,
   },
   titleBlk: {
     marginBottom: 20,

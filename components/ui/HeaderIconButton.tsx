@@ -12,7 +12,7 @@ interface HeaderIconButtonProps {
   style?: StyleProp<ViewStyle>;
 }
 
-/** Icon press for Naslov `btn-ico` circles (wrap with StackHeaderActions / HeaderActionsPill). */
+/** Icon press for Naslov `btn-ico` circles (wrap with StackHeaderActions / HeaderActionsPill glass). */
 export function HeaderIconButton({
   icon: IconComponent,
   onPress,

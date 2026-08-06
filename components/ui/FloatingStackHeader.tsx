@@ -19,8 +19,8 @@ interface FloatingStackHeaderProps {
 /** Side slot width so a centered title stays balanced with back / up to 3 actions. */
 const SIDE_SLOT = HEADER_ACTION_SLOT * 3 + 8;
 
-/** Vertical space under the status bar for the floating stack chrome. */
-export const FLOATING_STACK_HEADER_HEIGHT = HEADER_ACTION_SLOT + 8;
+/** Vertical space under the status bar for the floating stack chrome (+ gap before content). */
+export const FLOATING_STACK_HEADER_HEIGHT = HEADER_ACTION_SLOT + 24;
 
 export function useFloatingStackHeaderInset() {
   const insets = useSafeAreaInsets();

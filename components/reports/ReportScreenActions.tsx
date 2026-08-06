@@ -1,11 +1,10 @@
 import { Download } from 'lucide-react-native';
-import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { FilterIconButton } from '@/components/ui/FilterIconButton';
 import { FloatingScreenActions } from '@/components/ui/FloatingScreenActions';
-import { HeaderAction } from '@/components/ui/HeaderAction';
-import { HeaderActionsPill } from '@/components/ui/HeaderActionsPill';
+import { HeaderBtnIco } from '@/components/ui/HeaderActionsPill';
+import { HEADER_ICON_SIZE } from '@/constants/header';
 import { useAppTheme } from '@/hooks/useAppTheme';
 
 interface ReportScreenActionsProps {
@@ -41,14 +40,13 @@ export function ReportScreenActions({
       </FloatingScreenActions>
 
       <FloatingScreenActions align="right">
-        <HeaderActionsPill>
-          <HeaderAction
-            icon={Download}
-            onPress={onDownloadPress}
-            accessibilityLabel={t('reports.export')}
-            color={downloadDisabled ? theme.colors.onSurfaceVariant : undefined}
-          />
-        </HeaderActionsPill>
+        <HeaderBtnIco
+          onPress={onDownloadPress}
+          accessibilityLabel={t('reports.export')}
+          disabled={downloadDisabled}
+        >
+          <Download size={HEADER_ICON_SIZE} color={theme.colors.fg} strokeWidth={2} />
+        </HeaderBtnIco>
       </FloatingScreenActions>
     </>
   );

@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 import { router } from 'expo-router';
 
+import { HeaderBtnIco } from '@/components/ui/HeaderActionsPill';
+import { HEADER_ICON_SIZE } from '@/constants/header';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { Typography } from '@/constants/theme';
 import { displayFontFamily, Fonts } from '@/lib/fonts';
@@ -52,14 +53,13 @@ export function AuthScreen({
             showsVerticalScrollIndicator={false}
           >
             {showBack ? (
-              <Pressable
+              <HeaderBtnIco
                 onPress={() => router.back()}
-                accessibilityRole="button"
                 accessibilityLabel={t('common.back')}
-                style={[styles.back, { backgroundColor: theme.colors.surface2 }]}
+                style={styles.back}
               >
-                <ChevronLeft size={17} color={theme.colors.fg} strokeWidth={2} />
-              </Pressable>
+                <ChevronLeft size={HEADER_ICON_SIZE} color={theme.colors.fg} strokeWidth={2} />
+              </HeaderBtnIco>
             ) : null}
             {children}
           </ScrollView>
@@ -182,11 +182,6 @@ const styles = StyleSheet.create({
     marginBottom: 26,
   },
   back: {
-    width: 38,
-    height: 38,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginTop: 8,
     marginBottom: 8,
   },

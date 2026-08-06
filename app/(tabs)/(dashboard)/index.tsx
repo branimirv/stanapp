@@ -23,6 +23,7 @@ import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { DashboardCreateActions } from '@/hooks/useDashboardCreateHeader';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
 import { useTabBarStore } from '@/stores/tabBarStore';
@@ -68,11 +69,12 @@ export default function DashboardScreen() {
     return previousFromDelta(stats.netIncome, stats.netDeltaPct);
   }, [stats]);
 
-  const wrap = (children: ReactNode) => (
+  const wrap = (children: ReactNode, showCreate = false) => (
     <View style={styles.shell} collapsable={false}>
       <View style={styles.content} collapsable={false}>
         {children}
       </View>
+      {showCreate ? <DashboardCreateActions onCreatePress={openCreateSheet} /> : null}
       {/* Blur sibling of content — never inside the Modal (see docs/blur). */}
       <BlurOverlay
         visible={createSheetVisible}
@@ -125,14 +127,10 @@ export default function DashboardScreen() {
         contentContainerStyle={contentPad}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        <DashboardHeader
-          name={profile?.full_name}
-          language={language}
-          showAdd
-          onAddPress={openCreateSheet}
-        />
+        <DashboardHeader name={profile?.full_name} language={language} showAdd />
         <DashboardEmptyState />
       </ScrollView>,
+      true,
     );
   }
 
@@ -142,12 +140,7 @@ export default function DashboardScreen() {
       contentContainerStyle={contentPad}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
-      <DashboardHeader
-        name={profile?.full_name}
-        language={language}
-        showAdd
-        onAddPress={openCreateSheet}
-      />
+      <DashboardHeader name={profile?.full_name} language={language} showAdd />
 
       <DashboardPeriodFilter value={period} onChange={setPeriod} language={language} />
 
@@ -242,6 +235,7 @@ export default function DashboardScreen() {
         }}
       />
     </ScrollView>,
+    true,
   );
 }
 

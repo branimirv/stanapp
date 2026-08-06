@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { parseISO, format as formatDateFns } from 'date-fns';
-import { Plus, Receipt, Search } from 'lucide-react-native';
+import { Plus, Receipt } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Pressable,
@@ -27,13 +27,14 @@ import {
   isExpenseInPeriod,
   type ExpensePeriod,
 } from '@/components/expense/expensePeriod';
+import { ExpenseScreenActions } from '@/components/expense/ExpenseScreenActions';
 import { APP_BOTTOM_SHEET_CLOSE_MS } from '@/components/ui/AppBottomSheet';
 import { AppExpandableSearch } from '@/components/ui/AppExpandableSearch';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { DisplayAmount } from '@/components/ui/DisplayAmount';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { FilterIconButton } from '@/components/ui/FilterIconButton';
+import { FLOATING_ACTIONS_ROW_HEIGHT } from '@/components/ui/FloatingScreenActions';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { Spacing, Typography } from '@/constants/theme';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
@@ -42,6 +43,7 @@ import { useExpandableSearchState } from '@/hooks/useExpandableSearch';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
+import { SearchableTabActions } from '@/hooks/useSearchableTabHeader';
 import { displayFontFamily, Fonts } from '@/lib/fonts';
 import { useTabBarStore } from '@/stores/tabBarStore';
 import type { Language } from '@/types/app.types';
@@ -334,53 +336,7 @@ export default function ExpensesScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.topRow}>
-          {hasAnyExpenses ? (
-            <FilterIconButton
-              activeCount={activeFilterCount}
-              onPress={handleFilterPress}
-              accessibilityLabel={
-                activeFilterCount > 0
-                  ? t('expenses.filtersWithCount', { count: activeFilterCount })
-                  : t('expenses.filters')
-              }
-            />
-          ) : (
-            <View style={styles.topSpacer} />
-          )}
-          <View style={styles.actions}>
-            <Pressable
-              onPress={handleSearchPress}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.search')}
-              style={[
-                styles.btnIco,
-                {
-                  backgroundColor:
-                    searchHasText || searchExpanded
-                      ? colors.primaryTint
-                      : colors.surface2,
-                },
-              ]}
-              hitSlop={4}
-            >
-              <Search
-                size={17}
-                color={searchHasText || searchExpanded ? colors.primary : colors.fg}
-                strokeWidth={2}
-              />
-            </Pressable>
-            <Pressable
-              onPress={handleCreatePress}
-              accessibilityRole="button"
-              accessibilityLabel={t('expenses.addNew')}
-              style={[styles.btnIco, { backgroundColor: colors.surface2 }]}
-              hitSlop={4}
-            >
-              <Plus size={17} color={colors.fg} strokeWidth={2} />
-            </Pressable>
-          </View>
-        </View>
+        <View style={styles.actionsClearance} />
 
         <View style={styles.titleBlk}>
           <Text
@@ -699,6 +655,21 @@ export default function ExpensesScreen() {
         )}
       </ScrollView>
 
+      {hasAnyExpenses ? (
+        <ExpenseScreenActions
+          activeFilterCount={activeFilterCount}
+          onFilterPress={handleFilterPress}
+        />
+      ) : null}
+      <SearchableTabActions
+        showCreate
+        onCreatePress={handleCreatePress}
+        searchActive={searchHasText}
+        searchExpanded={searchExpanded}
+        onSearchPress={handleSearchPress}
+        createAccessibilityLabel={t('expenses.addNew')}
+      />
+
       <ExpenseFiltersSheetHost
         sheetVisible={filtersVisible}
         onSheetVisibleChange={handleFiltersVisibleChange}
@@ -731,26 +702,8 @@ const styles = StyleSheet.create({
   skeleton: {
     padding: Spacing.md,
   },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-  },
-  topSpacer: {
-    flex: 1,
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  btnIco: {
-    width: 38,
-    height: 38,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
+  actionsClearance: {
+    height: FLOATING_ACTIONS_ROW_HEIGHT,
   },
   titleBlk: {
     marginBottom: 14,

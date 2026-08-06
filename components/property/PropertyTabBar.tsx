@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { NavigationState, SceneRendererProps } from 'react-native-tab-view';
 
+import { GlassSurface } from '@/components/ui/GlassSurface';
 import { Text } from '@/components/ui/text';
 import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -16,7 +17,7 @@ export const PROPERTY_TAB_BAR_HEIGHT = 40 + Spacing.sm * 2 + Spacing.xs;
 /** Extra space between floating tabs and scene content. */
 export const PROPERTY_SCENE_TOP_GAP = Spacing.md;
 
-/** Naslov `.segs` nav — surface2 track, surface3 selected (not picker primary). */
+/** Naslov `.segs` nav — liquid-glass track, surface3 selected (not picker primary). */
 export function PropertyTabBar({ navigationState, jumpTo }: PropertyTabBarProps) {
   const { theme } = useAppTheme();
   const { colors } = theme;
@@ -24,7 +25,12 @@ export function PropertyTabBar({ navigationState, jumpTo }: PropertyTabBarProps)
 
   return (
     <View pointerEvents="box-none" style={styles.wrap}>
-      <View style={[styles.track, { backgroundColor: colors.surface2 }]}>
+      <GlassSurface
+        shape="pill"
+        interactive
+        style={styles.track}
+        contentStyle={styles.trackContent}
+      >
         {routes.map((route, routeIndex) => {
           const isFocused = selectedIndex === routeIndex;
           return (
@@ -53,7 +59,7 @@ export function PropertyTabBar({ navigationState, jumpTo }: PropertyTabBarProps)
             </Pressable>
           );
         })}
-      </View>
+      </GlassSurface>
     </View>
   );
 }
@@ -64,10 +70,12 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   track: {
+    minHeight: 40,
+  },
+  trackContent: {
     flexDirection: 'row',
     gap: 5,
     padding: 4,
-    borderRadius: 999,
     minHeight: 40,
   },
   seg: {

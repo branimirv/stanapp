@@ -1,14 +1,15 @@
 import { ChevronLeft } from 'lucide-react-native';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { HeaderBtnIco } from '@/components/ui/HeaderActionsPill';
+import { HEADER_ICON_SIZE } from '@/constants/header';
 import { useAppTheme } from '@/hooks/useAppTheme';
 
 /**
  * Back button for stack screens. Always visible — if there is no history
  * (deep link / cold open), falls back to the main tabs.
- * Naslov `btn-ico` — 38×38 surface2 circle.
+ * Naslov `btn-ico` — liquid-glass circle over edge-to-edge content.
  */
 export function HeaderBackButton() {
   const { t } = useTranslation();
@@ -24,24 +25,8 @@ export function HeaderBackButton() {
   };
 
   return (
-    <Pressable
-      onPress={handlePress}
-      accessibilityRole="button"
-      accessibilityLabel={t('common.back')}
-      style={[styles.btnIco, { backgroundColor: colors.surface2 }]}
-      hitSlop={4}
-    >
-      <ChevronLeft size={17} color={colors.fg} strokeWidth={2} />
-    </Pressable>
+    <HeaderBtnIco onPress={handlePress} accessibilityLabel={t('common.back')}>
+      <ChevronLeft size={HEADER_ICON_SIZE} color={colors.fg} strokeWidth={2} />
+    </HeaderBtnIco>
   );
 }
-
-const styles = StyleSheet.create({
-  btnIco: {
-    width: 38,
-    height: 38,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

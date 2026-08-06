@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
+import { HeaderBtnIco } from '@/components/ui/HeaderActionsPill';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { displayFontFamily } from '@/lib/fonts';
 
@@ -172,15 +173,12 @@ export function AppBottomSheet({
             >
               {title}
             </Text>
-            <Pressable
+            <HeaderBtnIco
               onPress={requestClose}
-              accessibilityRole="button"
               accessibilityLabel={t('common.close')}
-              style={[styles.closeBtn, { backgroundColor: colors.surface2 }]}
-              hitSlop={4}
             >
               <X size={17} color={colors.fg} strokeWidth={2} />
-            </Pressable>
+            </HeaderBtnIco>
           </View>
 
           {body}
@@ -217,13 +215,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     marginBottom: 20,
-  },
-  closeBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   scroll: {
     flexGrow: 0,

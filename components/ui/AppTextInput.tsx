@@ -91,10 +91,10 @@ const AppTextInputInner = forwardRef<ComponentRef<typeof TextInput>, BaseAppText
             ref={ref}
             multiline={multiline}
             className={cn(
-              'bg-surface-2 border-bd text-fg w-full rounded-[14px] border px-3.5 shadow-none',
+              'bg-surface-2 border-bd text-fg w-full rounded-md border px-3.5 shadow-none',
               isMultiline
                 ? 'h-auto min-h-21 py-3'
-                : 'h-[48px] min-h-[48px] py-0',
+                : 'h-12 min-h-12 py-0',
               hasLeft && 'pl-11',
               hasRight && 'pr-11',
               hasError && 'border-neg',

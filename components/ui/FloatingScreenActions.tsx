@@ -10,8 +10,8 @@ interface FloatingScreenActionsProps {
   align?: 'left' | 'right';
 }
 
-/** Vertical space reserved under the status bar for floating actions. */
-export const FLOATING_ACTIONS_ROW_HEIGHT = HEADER_ACTION_SLOT + 8;
+/** Vertical space reserved under the status bar for floating actions (+ gap before titles). */
+export const FLOATING_ACTIONS_ROW_HEIGHT = HEADER_ACTION_SLOT + 24;
 
 /** Top padding so scroll content clears the floating action row. */
 export function useFloatingActionsInset() {

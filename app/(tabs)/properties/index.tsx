@@ -2,7 +2,6 @@ import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -11,7 +10,7 @@ import {
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
-import { Building2, Plus, Search } from 'lucide-react-native';
+import { Building2 } from 'lucide-react-native';
 
 import { PropertyCard } from '@/components/property/PropertyCard';
 import { PropertyFilters } from '@/components/property/PropertyFilters';
@@ -20,6 +19,7 @@ import { AppExpandableSearch } from '@/components/ui/AppExpandableSearch';
 import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { FLOATING_ACTIONS_ROW_HEIGHT } from '@/components/ui/FloatingScreenActions';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { listPerformanceProps } from '@/constants/list';
 import { Colors, Spacing, Typography } from '@/constants/theme';
@@ -29,6 +29,7 @@ import { useProperties } from '@/hooks/useProperties';
 import { useExpandableSearchState } from '@/hooks/useExpandableSearch';
 import { useRefetchOnFocus } from '@/hooks/useRefetchOnFocus';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { SearchableTabActions } from '@/hooks/useSearchableTabHeader';
 import { useTenants } from '@/hooks/useTenants';
 import { displayFontFamily, Fonts } from '@/lib/fonts';
 import { useAuthStore } from '@/stores/authStore';
@@ -247,38 +248,7 @@ export default function PropertiesScreen() {
 
   const listHeader = (
     <View>
-      <View style={styles.topRow}>
-        <View style={styles.topSpacer} />
-        <View style={styles.actions}>
-          <Pressable
-            onPress={handleSearchPress}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.search')}
-            style={[
-              styles.btnIco,
-              {
-                backgroundColor: searchActive ? colors.primaryTint : colors.surface2,
-              },
-            ]}
-            hitSlop={4}
-          >
-            <Search
-              size={17}
-              color={searchActive ? colors.primary : colors.fg}
-              strokeWidth={2}
-            />
-          </Pressable>
-          <Pressable
-            onPress={handleCreatePress}
-            accessibilityRole="button"
-            accessibilityLabel={t('properties.addNew')}
-            style={[styles.btnIco, { backgroundColor: colors.surface2 }]}
-            hitSlop={4}
-          >
-            <Plus size={17} color={colors.fg} strokeWidth={2} />
-          </Pressable>
-        </View>
-      </View>
+      <View style={styles.actionsClearance} />
 
       <View style={styles.titleBlk}>
         <Text
@@ -404,6 +374,14 @@ export default function PropertiesScreen() {
           }
         />
       </View>
+      <SearchableTabActions
+        showCreate
+        onCreatePress={handleCreatePress}
+        searchActive={searchActive}
+        searchExpanded={searchExpanded}
+        onSearchPress={handleSearchPress}
+        createAccessibilityLabel={t('properties.addNew')}
+      />
       {/* Blur sibling of list — never inside the Modal (see docs/blur). */}
       <BlurOverlay
         visible={filterSheetOpen}
@@ -432,27 +410,8 @@ const styles = StyleSheet.create({
   listEmpty: {
     flexGrow: 1,
   },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingVertical: 16,
-    gap: 8,
-  },
-  topSpacer: {
-    flex: 1,
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  btnIco: {
-    width: 38,
-    height: 38,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
+  actionsClearance: {
+    height: FLOATING_ACTIONS_ROW_HEIGHT,
   },
   titleBlk: {
     marginBottom: 16,

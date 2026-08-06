@@ -29,6 +29,8 @@ interface StackScreenChromeProps {
   right?: ReactNode;
   /** When true, children fill under the floating header (no top pad). */
   edgeToEdge?: boolean;
+  /** Hide floating back/actions while a sheet/modal covers the screen. */
+  chromeHidden?: boolean;
   children: ReactNode;
 }
 
@@ -44,13 +46,14 @@ export function StackScreenChrome({
   hideHeaderTitle = false,
   right,
   edgeToEdge = false,
+  chromeHidden = false,
   children,
 }: StackScreenChromeProps) {
   const inset = useFloatingStackHeaderInset();
   const showPageTitle = !hideHeaderTitle;
   const [stickyTitleHeight, setStickyTitleHeight] = useState(STICKY_TITLE_FALLBACK);
 
-  const useStickyGlassTitle = edgeToEdge && showPageTitle;
+  const useStickyGlassTitle = edgeToEdge && showPageTitle && !chromeHidden;
   const scrollEdgeInset = edgeToEdge
     ? inset + (useStickyGlassTitle ? stickyTitleHeight : 0)
     : null;
@@ -59,7 +62,9 @@ export function StackScreenChrome({
   return (
     <StackChromeEdgeInsetContext.Provider value={scrollEdgeInset}>
       <View className="flex-1 bg-transparent" collapsable={false}>
-        <FloatingStackHeader title={title} hideTitle right={right} />
+        {!chromeHidden ? (
+          <FloatingStackHeader title={title} hideTitle right={right} />
+        ) : null}
 
         {useStickyGlassTitle ? (
           <View
