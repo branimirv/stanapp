@@ -1,5 +1,5 @@
 import { Building2, Car, Home, MapPin } from 'lucide-react-native';
-import { Colors } from '@/constants/theme';
+import { LIGHT } from '@/constants/theme';
 import type { PropertyType } from '@/types/app.types';
 
 export const PROPERTY_TYPE_ICONS = {
@@ -10,8 +10,8 @@ export const PROPERTY_TYPE_ICONS = {
 } as const;
 
 export const PROPERTY_TYPE_COLORS: Record<PropertyType, string> = {
-  apartment: Colors.typeApartment,
-  house: Colors.typeHouse,
-  garage: Colors.typeGarage,
-  other: Colors.typeOther,
+  apartment: LIGHT.primary,
+  house: LIGHT.pos,
+  garage: LIGHT.muted,
+  other: LIGHT.chart[5],
 };

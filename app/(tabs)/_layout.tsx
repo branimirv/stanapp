@@ -2,7 +2,11 @@ import { DynamicColorIOS, Platform } from 'react-native';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useTranslation } from 'react-i18next';
 
-import { Colors } from '@/constants/theme';
+import {
+  ANDROID_TAB_BAR_BG_DARK,
+  ANDROID_TAB_BAR_BG_LIGHT,
+} from '@/constants/tabBar';
+import { DARK, LIGHT } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useTabBarPreference } from '@/hooks/useTabBarPreference';
 import { useTabBarStore } from '@/stores/tabBarStore';
@@ -17,8 +21,8 @@ export default function TabLayout() {
   const tintColor =
     Platform.OS === 'ios'
       ? DynamicColorIOS({
-          light: Colors.primary,
-          dark: Colors.primary,
+          light: LIGHT.primary,
+          dark: DARK.primary,
         })
       : theme.colors.primary;
 
@@ -26,8 +30,8 @@ export default function TabLayout() {
     Platform.OS === 'ios'
       ? {
           color: DynamicColorIOS({
-            light: Colors.textPrimary,
-            dark: Colors.textInverse,
+            light: LIGHT.fg,
+            dark: DARK.fg,
           }),
         }
       : {
@@ -55,7 +59,7 @@ export default function TabLayout() {
   // Android has no liquid glass; use a translucent surface so content peeks through.
   const androidTabBarProps = isAndroid
     ? {
-        backgroundColor: isDark ? 'rgba(18, 18, 18, 0.88)' : 'rgba(255, 255, 255, 0.92)',
+        backgroundColor: isDark ? ANDROID_TAB_BAR_BG_DARK : ANDROID_TAB_BAR_BG_LIGHT,
         labelVisibilityMode: (showLabels ? 'labeled' : 'unlabeled') as
           | 'labeled'
           | 'unlabeled',

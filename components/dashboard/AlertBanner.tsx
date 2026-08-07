@@ -4,7 +4,6 @@ import { Pressable, View } from 'react-native';
 
 import { Text } from '@/components/ui/text';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { Colors } from '@/constants/theme';
 
 export type AlertBannerVariant = 'danger' | 'warning' | 'info';
 
@@ -16,33 +15,6 @@ export interface AlertBannerProps {
   icon?: LucideIcon;
   onPress?: () => void;
 }
-
-const variantStyles: Record<
-  AlertBannerVariant,
-  { bgLight: string; bgDark: string; border: string; text: string; textDark: string }
-> = {
-  danger: {
-    bgLight: '#FEF2F2',
-    bgDark: '#1A0A0C',
-    border: Colors.danger,
-    text: Colors.danger,
-    textDark: '#FCA5A5',
-  },
-  warning: {
-    bgLight: '#FFFBEB',
-    bgDark: '#1A1408',
-    border: Colors.warning,
-    text: '#B45309',
-    textDark: '#FCD34D',
-  },
-  info: {
-    bgLight: '#EFF6FF',
-    bgDark: '#0A1628',
-    border: Colors.primary,
-    text: Colors.primary,
-    textDark: '#93C5FD',
-  },
-};
 
 const defaultIcons: Record<AlertBannerVariant, LucideIcon> = {
   danger: AlertTriangle,
@@ -58,8 +30,33 @@ export function AlertBanner({
   icon,
   onPress,
 }: AlertBannerProps) {
-  const { isDark } = useAppTheme();
-  const palette = variantStyles[variant];
+  const { theme, isDark } = useAppTheme();
+  const { colors } = theme;
+
+  const palette = {
+    danger: {
+      bgLight: '#FEF2F2',
+      bgDark: '#1A0A0C',
+      border: colors.neg,
+      text: colors.neg,
+      textDark: '#FCA5A5',
+    },
+    warning: {
+      bgLight: '#FFFBEB',
+      bgDark: '#1A1408',
+      border: colors.chart[4],
+      text: '#B45309',
+      textDark: '#FCD34D',
+    },
+    info: {
+      bgLight: '#EFF6FF',
+      bgDark: '#0A1628',
+      border: colors.primary,
+      text: colors.primary,
+      textDark: '#93C5FD',
+    },
+  }[variant];
+
   const Icon = icon ?? defaultIcons[variant];
 
   return (
