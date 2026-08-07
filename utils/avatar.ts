@@ -16,6 +16,17 @@ export function getInitialsFromFullName(fullName: string): string {
   return getInitials(parts[0] ?? '', '');
 }
 
+/** Split a display name for stacked hero typography ("Ana Anić" → first / rest). */
+export function splitDisplayName(fullName: string): { first: string; rest: string | null } {
+  const trimmed = fullName.trim();
+  const space = trimmed.indexOf(' ');
+  if (space <= 0) return { first: trimmed, rest: null };
+  return {
+    first: trimmed.slice(0, space),
+    rest: trimmed.slice(space + 1).trim() || null,
+  };
+}
+
 export function getAvatarColor(name: string): string {
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
