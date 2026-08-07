@@ -1,13 +1,14 @@
-import { Modal, Pressable, ScrollView, View } from 'react-native';
-import { useTranslation } from 'react-i18next';
 import { formatDistanceStrict, parseISO } from 'date-fns';
 import { enUS, hr } from 'date-fns/locale';
+import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { UsageStatusBadge } from '@/components/property/UsageStatusBadge';
+import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
-import { Text } from '@/components/ui/text';
-import { cn } from '@/lib/utils';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { usePropertyStatusHistory } from '@/hooks/usePropertyStatusHistory';
+import { Fonts } from '@/lib/fonts';
 import type { Language } from '@/types/app.types';
 import { formatDate } from '@/utils/formatters';
 
@@ -20,6 +21,9 @@ export interface UsageHistorySheetProps {
   language: Language;
 }
 
+/**
+ * Usage status timeline — AppBottomSheet + sibling BlurOverlay on the host screen.
+ */
 export function UsageHistorySheet({
   visible,
   onDismiss,
@@ -27,62 +31,129 @@ export function UsageHistorySheet({
   language,
 }: UsageHistorySheetProps) {
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
+  const { colors, radius } = theme;
   const { history, isLoading, error } = usePropertyStatusHistory(propertyId, visible);
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
-      <Pressable className="flex-1 justify-end bg-black/45" onPress={onDismiss}>
-        <Pressable
-          className="bg-card gap-4 rounded-t-[20px] px-6 pb-8 pt-2"
-          style={{ maxHeight: '70%' }}
-          onPress={(event) => event.stopPropagation()}
+    <AppBottomSheet
+      visible={visible}
+      onDismiss={onDismiss}
+      title={t('properties.usageHistory')}
+      scrollable
+    >
+      {isLoading ? (
+        <SkeletonLoader count={3} />
+      ) : error ? (
+        <Text
+          style={{
+            fontFamily: Fonts.sans.regular,
+            fontSize: 14,
+            color: colors.neg,
+            textAlign: 'center',
+            paddingVertical: 28,
+          }}
         >
-          <View className="bg-border mb-2 h-1 w-9 self-center rounded-full" />
-
-          <Text className="text-center text-base font-medium">
-            {t('properties.usageHistory')}
+          {error}
+        </Text>
+      ) : history.length === 0 ? (
+        <View
+          style={[
+            styles.empty,
+            {
+              backgroundColor: colors.surface2,
+              borderRadius: radius.lg,
+            },
+          ]}
+        >
+          <Text
+            style={{
+              fontFamily: Fonts.sans.regular,
+              fontSize: 13,
+              lineHeight: 20,
+              color: colors.muted,
+              textAlign: 'center',
+            }}
+          >
+            {t('properties.usageHistoryEmpty')}
           </Text>
-
-          {isLoading ? (
-            <SkeletonLoader count={3} />
-          ) : error ? (
-            <Text className="text-destructive py-6 text-center text-sm">{error}</Text>
-          ) : history.length === 0 ? (
-            <Text className="text-muted-foreground py-6 text-center text-sm">
-              {t('properties.usageHistoryEmpty')}
-            </Text>
-          ) : (
-            <ScrollView style={{ flexGrow: 0 }} contentContainerClassName="pb-2">
-              {history.map((entry, index) => {
-                const start = parseISO(entry.started_at);
-                const end = entry.ended_at ? parseISO(entry.ended_at) : new Date();
-                const duration = formatDistanceStrict(end, start, {
-                  locale: dateLocales[language],
+        </View>
+      ) : (
+        <View style={styles.list}>
+          {history.map((entry) => {
+            const start = parseISO(entry.started_at);
+            const end = entry.ended_at ? parseISO(entry.ended_at) : new Date();
+            const duration = formatDistanceStrict(end, start, {
+              locale: dateLocales[language],
+            });
+            const rangeLabel = entry.ended_at
+              ? `${formatDate(entry.started_at, language)} – ${formatDate(entry.ended_at, language)}`
+              : t('properties.usageSince', {
+                  date: formatDate(entry.started_at, language),
                 });
-                const rangeLabel = entry.ended_at
-                  ? `${formatDate(entry.started_at, language)} – ${formatDate(entry.ended_at, language)}`
-                  : t('properties.usageSince', { date: formatDate(entry.started_at, language) });
 
-                return (
-                  <View
-                    key={entry.id}
-                    className={cn(
-                      'flex-row items-center gap-4 py-4',
-                      index < history.length - 1 && 'border-border border-b',
-                    )}
+            return (
+              <View
+                key={entry.id}
+                style={[
+                  styles.row,
+                  {
+                    backgroundColor: colors.surface2,
+                    borderRadius: radius.lg,
+                  },
+                ]}
+              >
+                <UsageStatusBadge status={entry.status} />
+                <View style={styles.meta}>
+                  <Text
+                    style={{
+                      fontFamily: Fonts.sans.semibold,
+                      fontSize: 14,
+                      letterSpacing: -0.14,
+                      color: colors.fg,
+                    }}
                   >
-                    <UsageStatusBadge status={entry.status} />
-                    <View className="flex-1 gap-0.5">
-                      <Text className="text-sm">{rangeLabel}</Text>
-                      <Text className="text-muted-foreground text-xs">{duration}</Text>
-                    </View>
-                  </View>
-                );
-              })}
-            </ScrollView>
-          )}
-        </Pressable>
-      </Pressable>
-    </Modal>
+                    {rangeLabel}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: Fonts.sans.regular,
+                      fontSize: 12,
+                      color: colors.muted,
+                      marginTop: 2,
+                    }}
+                  >
+                    {duration}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
+    </AppBottomSheet>
   );
 }
+
+const styles = StyleSheet.create({
+  list: {
+    gap: 10,
+    paddingBottom: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+  },
+  meta: {
+    flex: 1,
+    minWidth: 0,
+  },
+  empty: {
+    paddingVertical: 28,
+    paddingHorizontal: 18,
+    alignItems: 'center',
+  },
+});

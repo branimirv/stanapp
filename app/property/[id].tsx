@@ -561,6 +561,14 @@ export default function PropertyDetailScreen() {
         }
       />
 
+      <BlurOverlay
+        visible={rentSheet.visible || historyVisible}
+        intensity="strong"
+        tint="dark"
+        duration={APP_BOTTOM_SHEET_CLOSE_MS}
+        zIndex={30}
+      />
+
       <UsageHistorySheet
         visible={historyVisible}
         onDismiss={() => setHistoryVisible(false)}
@@ -581,14 +589,6 @@ export default function PropertyDetailScreen() {
         language={language}
         onExportSuccess={() => showToast({ message: t('statement.exportSuccess'), type: 'success' })}
         onExportError={(message) => showToast({ message, type: 'error' })}
-      />
-
-      <BlurOverlay
-        visible={rentSheet.visible}
-        intensity="strong"
-        tint="dark"
-        duration={APP_BOTTOM_SHEET_CLOSE_MS}
-        zIndex={30}
       />
 
       <RentMonthActionSheet
