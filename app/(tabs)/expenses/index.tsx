@@ -6,7 +6,6 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -45,7 +44,8 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
 import { SearchableTabActions } from '@/hooks/useSearchableTabHeader';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import { useTabBarStore } from '@/stores/tabBarStore';
 import type { Language } from '@/types/app.types';
 import { getCategoryEffectiveType, getCategoryLabel } from '@/utils/expense';
@@ -61,7 +61,7 @@ function isInMonth(billingDate: string, month: number, year: number): boolean {
 export default function ExpensesScreen() {
   const { t, i18n } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors, elevation, radius } = theme;
+  const { colors, elevation } = theme;
   const params = useLocalSearchParams<{ filter?: string }>();
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -305,61 +305,48 @@ export default function ExpensesScreen() {
 
   if (isLoading && expenses.length === 0) {
     return (
-      <View style={styles.container} className="bg-transparent">
-        <SkeletonLoader count={6} height={120} style={styles.skeleton} />
+      <View className="flex-1 bg-transparent">
+        <SkeletonLoader count={6} height={120} className="p-4" />
       </View>
     );
   }
 
   if (error && expenses.length === 0) {
     return (
-      <View style={styles.container} className="bg-transparent">
+      <View className="flex-1 bg-transparent">
         <ErrorState message={error} onRetry={refetch} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container} className="bg-transparent" collapsable={false}>
+    <View className="flex-1 bg-transparent" collapsable={false}>
       <ScrollView
-        style={styles.list}
+        className="flex-1"
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={[
-          styles.listContent,
           {
+            flexGrow: 1,
             paddingHorizontal: theme.spacing.gutter,
             paddingTop: 0,
             paddingBottom: Spacing.scrollBottom,
           },
-          filteredExpenses.length === 0 && styles.listEmpty,
         ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.actionsClearance} />
+        <View style={{ height: FLOATING_ACTIONS_ROW_HEIGHT }} />
 
-        <View style={styles.titleBlk}>
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 11,
-              lineHeight: 14,
-              letterSpacing: 1.54,
-              textTransform: 'uppercase',
-              color: colors.muted,
-              marginBottom: 10,
-            }}
-          >
+        <View className="mb-3.5">
+          <Text className="text-muted mb-2.5 text-[11px] leading-3.5 font-semibold tracking-[1.54px] uppercase">
             {eyebrowText}
           </Text>
           <Text
+            className="text-fg text-[34px] tracking-[-0.85px]"
             style={{
               fontFamily: displayFontFamily(theme.name),
-              fontSize: 34,
               lineHeight: 34,
-              letterSpacing: -0.85,
-              color: colors.fg,
             }}
           >
             {t('expenses.title')}
@@ -369,7 +356,7 @@ export default function ExpensesScreen() {
         <AppExpandableSearch
           {...searchBarControlProps}
           placeholder={t('expenses.searchPlaceholder')}
-          style={styles.searchBar}
+          className="mb-2"
         />
 
         {hasAnyExpenses ? (
@@ -377,27 +364,25 @@ export default function ExpensesScreen() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              style={styles.pillBleed}
-              contentContainerStyle={[styles.pillRow, { paddingHorizontal: theme.spacing.gutter }]}
+              className="mb-2.5 grow-0"
+              style={{ marginHorizontal: -theme.spacing.gutter }}
+              contentContainerClassName="flex-row items-center gap-2"
+              contentContainerStyle={{ paddingHorizontal: theme.spacing.gutter }}
             >
               <Pressable
                 onPress={() => handlePropertyPill('all')}
-                style={[
-                  styles.pill,
-                  {
-                    backgroundColor:
-                      propertyFilter === 'all' ? colors.primaryTint : colors.surface2,
-                  },
-                ]}
+                className={cn(
+                  'h-8.5 max-w-[180px] items-center justify-center rounded-full px-3.5',
+                  propertyFilter === 'all' ? 'bg-primary-tint' : 'bg-surface-2',
+                )}
                 accessibilityRole="button"
                 accessibilityState={{ selected: propertyFilter === 'all' }}
               >
                 <Text
-                  style={{
-                    fontFamily: Fonts.sans.semibold,
-                    fontSize: 13,
-                    color: propertyFilter === 'all' ? colors.primary : colors.muted,
-                  }}
+                  className={cn(
+                    'text-[13px] font-semibold',
+                    propertyFilter === 'all' ? 'text-primary' : 'text-muted',
+                  )}
                 >
                   {t('reports.allProperties')}
                 </Text>
@@ -408,21 +393,15 @@ export default function ExpensesScreen() {
                   <Pressable
                     key={property.id}
                     onPress={() => handlePropertyPill(property.id)}
-                    style={[
-                      styles.pill,
-                      {
-                        backgroundColor: on ? colors.primaryTint : colors.surface2,
-                      },
-                    ]}
+                    className={cn(
+                      'h-8.5 max-w-[180px] items-center justify-center rounded-full px-3.5',
+                      on ? 'bg-primary-tint' : 'bg-surface-2',
+                    )}
                     accessibilityRole="button"
                     accessibilityState={{ selected: on }}
                   >
                     <Text
-                      style={{
-                        fontFamily: Fonts.sans.semibold,
-                        fontSize: 13,
-                        color: on ? colors.primary : colors.muted,
-                      }}
+                      className={cn('text-[13px] font-semibold', on ? 'text-primary' : 'text-muted')}
                       numberOfLines={1}
                     >
                       {property.name}
@@ -437,28 +416,14 @@ export default function ExpensesScreen() {
         ) : null}
 
         <View
-          style={[
-            styles.bays,
-            isEmptyList ? styles.baysBeforeEmpty : null,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.cardBd,
-              borderRadius: radius.xl,
-              ...elevation.card,
-            },
-          ]}
+          className={cn(
+            'border-card-bd bg-surface flex-row overflow-hidden rounded-xl border',
+            isEmptyList ? 'mb-6.5' : 'mb-3.5',
+          )}
+          style={elevation.card}
         >
-          <View style={styles.bay}>
-            <Text
-              style={{
-                fontFamily: Fonts.sans.semibold,
-                fontSize: 10,
-                letterSpacing: 0.8,
-                textTransform: 'uppercase',
-                color: colors.muted,
-                marginBottom: 9,
-              }}
-            >
+          <View className="flex-1 px-4 pt-4 pb-[15px]">
+            <Text className="text-muted mb-2.25 text-[10px] font-semibold tracking-[0.8px] uppercase">
               {t('expenses.thisMonthBay')}
             </Text>
             <DisplayAmount
@@ -470,18 +435,9 @@ export default function ExpensesScreen() {
               letterSpacing={Typography.display.amountSm.letterSpacing}
             />
           </View>
-          <View style={[styles.bayDivider, { backgroundColor: colors.bd }]} />
-          <View style={styles.bay}>
-            <Text
-              style={{
-                fontFamily: Fonts.sans.semibold,
-                fontSize: 10,
-                letterSpacing: 0.8,
-                textTransform: 'uppercase',
-                color: colors.muted,
-                marginBottom: 9,
-              }}
-            >
+          <View className="bg-bd w-px self-stretch" />
+          <View className="flex-1 px-4 pt-4 pb-[15px]">
+            <Text className="text-muted mb-2.25 text-[10px] font-semibold tracking-[0.8px] uppercase">
               {t('expenses.avgSixMonthsBay')}
             </Text>
             <DisplayAmount
@@ -519,17 +475,7 @@ export default function ExpensesScreen() {
               }
             />
             {lastExpenseShortDate ? (
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 10,
-                  letterSpacing: 0.8,
-                  textTransform: 'uppercase',
-                  color: colors.muted,
-                  textAlign: 'center',
-                  marginTop: 24,
-                }}
-              >
+              <Text className="text-muted mt-6 text-center text-[10px] font-semibold tracking-[0.8px] uppercase">
                 {t('expenses.lastExpenseRecorded', { date: lastExpenseShortDate })}
               </Text>
             ) : null}
@@ -537,15 +483,8 @@ export default function ExpensesScreen() {
         ) : (
           <>
             <View
-              style={[
-                styles.card,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.cardBd,
-                  borderRadius: radius.xl,
-                  ...elevation.card,
-                },
-              ]}
+              className="border-card-bd bg-surface mb-2.5 rounded-xl border px-4.5 pt-1 pb-1.5"
+              style={elevation.card}
             >
               {visibleExpenses.map((expense, index) => (
                 <ExpenseListRow
@@ -567,18 +506,9 @@ export default function ExpensesScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ expanded }}
                 hitSlop={8}
-                style={styles.footerTap}
+                className="mt-1.5 mb-2 py-2"
               >
-                <Text
-                  style={{
-                    fontFamily: Fonts.sans.semibold,
-                    fontSize: 10,
-                    letterSpacing: 0.8,
-                    textTransform: 'uppercase',
-                    color: colors.muted,
-                    textAlign: 'center',
-                  }}
-                >
+                <Text className="text-muted text-center text-[10px] font-semibold tracking-[0.8px] uppercase">
                   {expanded
                     ? t('expenses.showingShowLess', {
                         shown: filteredExpenses.length,
@@ -591,17 +521,7 @@ export default function ExpensesScreen() {
                 </Text>
               </Pressable>
             ) : (
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 10,
-                  letterSpacing: 0.8,
-                  textTransform: 'uppercase',
-                  color: colors.muted,
-                  textAlign: 'center',
-                  marginTop: 14,
-                }}
-              >
+              <Text className="text-muted mt-3.5 text-center text-[10px] font-semibold tracking-[0.8px] uppercase">
                 {t('properties.showingOf', {
                   shown: filteredExpenses.length,
                   total: filteredExpenses.length,
@@ -643,78 +563,3 @@ export default function ExpensesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  list: {
-    flex: 1,
-  },
-  listContent: {
-    flexGrow: 1,
-  },
-  listEmpty: {
-    flexGrow: 1,
-  },
-  skeleton: {
-    padding: Spacing.md,
-  },
-  actionsClearance: {
-    height: FLOATING_ACTIONS_ROW_HEIGHT,
-  },
-  titleBlk: {
-    marginBottom: 14,
-  },
-  searchBar: {
-    marginBottom: 8,
-  },
-  pillBleed: {
-    flexGrow: 0,
-    marginHorizontal: -Spacing.gutter,
-    marginBottom: 10,
-  },
-  pillRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  pill: {
-    height: 34,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    maxWidth: 180,
-  },
-  bays: {
-    flexDirection: 'row',
-    overflow: 'hidden',
-    marginBottom: 14,
-    borderWidth: 1,
-  },
-  baysBeforeEmpty: {
-    marginBottom: 26,
-  },
-  bay: {
-    flex: 1,
-    paddingTop: 16,
-    paddingHorizontal: 16,
-    paddingBottom: 15,
-  },
-  bayDivider: {
-    width: 1,
-    alignSelf: 'stretch',
-  },
-  card: {
-    borderWidth: 1,
-    paddingHorizontal: 18,
-    paddingTop: 4,
-    paddingBottom: 6,
-    marginBottom: 10,
-  },
-  footerTap: {
-    marginTop: 6,
-    marginBottom: 8,
-    paddingVertical: 8,
-  },
-});

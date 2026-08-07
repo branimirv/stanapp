@@ -1,10 +1,9 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
-import { Spacing } from '@/constants/theme';
 
 interface DetailScreenScaffoldProps {
   title: string;
@@ -49,7 +48,7 @@ export function DetailScreenScaffold({
         edgeToEdge={edgeToEdge}
         chromeHidden={chromeHidden}
       >
-        <SkeletonLoader count={loaderCount} style={styles.loader} />
+        <SkeletonLoader count={loaderCount} className="p-4" />
       </StackScreenChrome>
     );
   }
@@ -79,9 +78,3 @@ export function DetailScreenScaffold({
     </StackScreenChrome>
   );
 }
-
-const styles = StyleSheet.create({
-  loader: {
-    padding: Spacing.md,
-  },
-});

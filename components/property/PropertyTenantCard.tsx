@@ -1,12 +1,13 @@
 import { differenceInDays, parseISO } from 'date-fns';
 import { Calendar } from 'lucide-react-native';
 import { memo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { CONTRACT_EXPIRING_DAYS } from '@/constants/config';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import type { Language, Tenant } from '@/types/app.types';
 import { getInitials } from '@/utils/avatar';
 import { formatDate } from '@/utils/formatters';
@@ -41,7 +42,7 @@ function PropertyTenantCardComponent({
   onPress,
 }: PropertyTenantCardProps) {
   const { theme } = useAppTheme();
-  const { colors, elevation, radius } = theme;
+  const { colors, elevation } = theme;
   const { t, i18n } = useTranslation();
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
   const contractStatus = getContractStatus(tenant);
@@ -54,83 +55,63 @@ function PropertyTenantCardComponent({
     ? formatDate(tenant.contract_end, resolvedLanguage)
     : t('tenants.noContractEnd');
 
-  let chipBg = colors.posTint;
-  let chipFg = colors.pos;
-  if (contractStatus === 'expiring_soon') {
-    chipBg = colors.chartTint[4];
-    chipFg = colors.chart[4];
-  } else if (contractStatus === 'expired') {
-    chipBg = colors.negTint;
-    chipFg = colors.neg;
-  }
+  const chipFg =
+    contractStatus === 'expiring_soon'
+      ? colors.chart[4]
+      : contractStatus === 'expired'
+        ? colors.neg
+        : colors.pos;
 
   return (
     <Pressable
       onPress={onPress ? () => onPress(tenant.id) : undefined}
       disabled={!onPress}
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.cardBd,
-          borderRadius: radius.xl,
-          ...elevation.card,
-        },
-      ]}
+      className="border-card-bd bg-surface mb-3 flex-row items-start gap-3.5 rounded-xl border p-4.5"
+      style={elevation.card}
       accessibilityRole="button"
       accessibilityLabel={fullName}
     >
-      <View style={[styles.avatar, { backgroundColor: colors.primaryTint }]}>
+      <View className="bg-primary-tint h-11 w-11 items-center justify-center rounded-full">
         <Text
+          className="text-primary text-[15px]"
           style={{
             fontFamily: displayFontFamily(theme.name),
-            fontSize: 15,
             fontWeight: theme.typography.displayWeight,
-            color: colors.primary,
           }}
         >
           {initials}
         </Text>
       </View>
 
-      <View style={styles.body}>
-        <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: 15,
-            letterSpacing: -0.15,
-            color: colors.fg,
-          }}
-          numberOfLines={1}
-        >
+      <View className="min-w-0 flex-1">
+        <Text className="text-fg text-[15px] font-semibold tracking-[-0.15px]" numberOfLines={1}>
           {fullName}
         </Text>
 
-        <View style={[styles.chip, { backgroundColor: chipBg }]}>
+        <View
+          className={cn(
+            'mt-2 self-start rounded-full px-2 py-1',
+            contractStatus === 'expired' && 'bg-neg-tint',
+            contractStatus === 'active' && 'bg-pos-tint',
+          )}
+          style={
+            contractStatus === 'expiring_soon'
+              ? { backgroundColor: colors.chartTint[4] }
+              : undefined
+          }
+        >
           <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 11,
-              letterSpacing: -0.05,
-              color: chipFg,
-            }}
+            className="text-[11px] font-semibold tracking-[-0.05px]"
+            style={{ color: chipFg }}
             numberOfLines={1}
           >
             {t(CONTRACT_LABELS[contractStatus])}
           </Text>
         </View>
 
-        <View style={styles.dateRow}>
+        <View className="mt-2.5 flex-row items-center gap-1.5">
           <Calendar size={13} color={colors.muted} strokeWidth={2} />
-          <Text
-            style={{
-              flex: 1,
-              fontFamily: Fonts.sans.regular,
-              fontSize: 12,
-              color: colors.muted,
-            }}
-            numberOfLines={1}
-          >
+          <Text className="text-muted flex-1 text-xs" numberOfLines={1}>
             {sinceLabel} · {endLabel}
           </Text>
         </View>
@@ -140,38 +121,3 @@ function PropertyTenantCardComponent({
 }
 
 export const PropertyTenantCard = memo(PropertyTenantCardComponent);
-
-const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 14,
-    padding: 18,
-    marginBottom: 12,
-    borderWidth: 1,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  body: {
-    flex: 1,
-    minWidth: 0,
-  },
-  chip: {
-    alignSelf: 'flex-start',
-    marginTop: 8,
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 10,
-  },
-});

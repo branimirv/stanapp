@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, type StyleProp, type ViewStyle } from 'react-native';
 
 import { HEADER_ACTION_SLOT, HEADER_ICON_SIZE } from '@/constants/header';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -26,7 +26,8 @@ export function HeaderIconButton({
   return (
     <Pressable
       onPress={onPress}
-      style={StyleSheet.flatten([styles.slot, style])}
+      className="items-center justify-center"
+      style={[{ width: HEADER_ACTION_SLOT, height: HEADER_ACTION_SLOT }, style]}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       hitSlop={4}
@@ -42,12 +43,3 @@ export function HeaderIconButton({
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  slot: {
-    width: HEADER_ACTION_SLOT,
-    height: HEADER_ACTION_SLOT,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

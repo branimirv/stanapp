@@ -1,6 +1,6 @@
 import { Redirect } from 'expo-router';
 import { useRef } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { LoginScreen } from '@/components/auth/LoginScreen';
@@ -22,7 +22,7 @@ export default function Index() {
 
   if (isLoading) {
     return (
-      <View style={styles.loading}>
+      <View className="flex-1 items-center justify-center gap-4 bg-transparent">
         <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text className="text-muted text-sm">{t('common.loading')}</Text>
       </View>
@@ -38,13 +38,3 @@ export default function Index() {
 
   return <LoginScreen />;
 }
-
-const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    backgroundColor: 'transparent',
-  },
-});

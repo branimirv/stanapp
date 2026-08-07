@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
   type StyleProp,
@@ -26,7 +25,7 @@ import { AppDatePicker } from '@/components/ui/AppDatePicker';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { Fonts } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import { getCategoryLabel } from '@/utils/expense';
 import { formatDateOnly } from '@/utils/formatters';
 
@@ -65,40 +64,33 @@ function FilterChipRow<T extends string>({
   options,
   value,
   onChange,
-  style,
+  className,
 }: {
   options: FilterChipOption<T>[];
   value: T;
   onChange: (value: T) => void;
-  style?: StyleProp<ViewStyle>;
+  className?: string;
 }) {
-  const { theme } = useAppTheme();
-  const { colors } = theme;
-
   return (
-    <View style={[styles.chipRow, style]}>
+    <View className={cn('flex-row flex-wrap gap-2', className)}>
       {options.map((option) => {
         const on = option.value === value;
         return (
           <Pressable
             key={option.value}
             onPress={() => onChange(option.value)}
-            style={[
-              styles.chip,
-              {
-                backgroundColor: on ? colors.primaryTint : colors.surface2,
-              },
-            ]}
+            className={cn(
+              'h-8.5 items-center justify-center rounded-full px-3.5',
+              on ? 'bg-primary-tint' : 'bg-surface-2',
+            )}
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
           >
             <Text
-              style={{
-                fontFamily: Fonts.sans.semibold,
-                fontSize: 12.5,
-                letterSpacing: -0.12,
-                color: on ? colors.primary : colors.muted,
-              }}
+              className={cn(
+                'text-[12.5px] font-semibold tracking-[-0.12px]',
+                on ? 'text-primary' : 'text-muted',
+              )}
               numberOfLines={1}
             >
               {option.label}
@@ -113,28 +105,17 @@ function FilterChipRow<T extends string>({
 function FilterGroup({
   label,
   children,
+  className,
   style,
 }: {
   label: string;
   children: ReactNode;
+  className?: string;
   style?: StyleProp<ViewStyle>;
 }) {
-  const { theme } = useAppTheme();
-  const { colors } = theme;
-
   return (
-    <View style={[styles.group, style]}>
-      <Text
-        style={{
-          fontFamily: Fonts.sans.semibold,
-          fontSize: 11,
-          lineHeight: 14,
-          letterSpacing: 1.54,
-          textTransform: 'uppercase',
-          color: colors.muted,
-          marginBottom: 10,
-        }}
-      >
+    <View className={cn('mb-4.5', className)} style={style}>
+      <Text className="text-muted mb-2.5 text-[11px] leading-3.5 font-semibold tracking-[1.54px] uppercase">
         {label}
       </Text>
       {children}
@@ -260,8 +241,8 @@ export function ExpenseFiltersSheet({
       title={t('expenses.filters')}
     >
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        className="max-h-105 grow-0"
+        contentContainerClassName="pb-2"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         bounces={false}
@@ -275,30 +256,24 @@ export function ExpenseFiltersSheet({
         </FilterGroup>
 
         <FilterGroup label={t('expenses.category')}>
-          <View style={styles.categoryGrid}>
+          <View className="flex-row flex-wrap gap-2">
             <Pressable
               onPress={() => onCategoryFilterChange([])}
-              style={[
-                styles.categoryChip,
-                {
-                  borderColor: allCategoriesSelected ? colors.primary : 'transparent',
-                  backgroundColor: allCategoriesSelected
-                    ? colors.primaryTint
-                    : colors.surface2,
-                },
-              ]}
+              className={cn(
+                'shrink-0 rounded-full border-[1.5px]',
+                allCategoriesSelected
+                  ? 'border-primary bg-primary-tint'
+                  : 'border-transparent bg-surface-2',
+              )}
               accessibilityRole="button"
               accessibilityState={{ selected: allCategoriesSelected }}
               accessibilityLabel={t('common.all')}
             >
               <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 12,
-                  color: allCategoriesSelected ? colors.primary : colors.muted,
-                  paddingHorizontal: 4,
-                  paddingVertical: 2,
-                }}
+                className={cn(
+                  'px-1 py-0.5 text-xs font-semibold',
+                  allCategoriesSelected ? 'text-primary' : 'text-muted',
+                )}
               >
                 {t('common.all')}
               </Text>
@@ -310,15 +285,13 @@ export function ExpenseFiltersSheet({
                 <Pressable
                   key={category.id}
                   onPress={() => handleToggleCategory(category.id)}
-                  style={[
-                    styles.categoryChip,
-                    {
-                      borderColor: selected ? colors.primary : 'transparent',
-                      backgroundColor: selected
-                        ? colors.primaryTint
-                        : `${category.color}22`,
-                    },
-                  ]}
+                  className={cn(
+                    'shrink-0 rounded-full border-[1.5px]',
+                    selected ? 'border-primary bg-primary-tint' : 'border-transparent',
+                  )}
+                  style={
+                    selected ? undefined : { backgroundColor: `${category.color}22` }
+                  }
                   accessibilityRole="button"
                   accessibilityState={{ selected }}
                   accessibilityLabel={getCategoryLabel(category, t)}
@@ -352,49 +325,41 @@ export function ExpenseFiltersSheet({
           />
         </FilterGroup>
 
-        <FilterGroup label={t('expenses.period')} style={styles.groupLast}>
+        <FilterGroup label={t('expenses.period')} className="mb-6">
           <FilterChipRow
             options={periodOptions}
             value={period.preset}
             onChange={handlePeriodChange}
           />
           {period.preset === 'custom' ? (
-            <View style={styles.customRange}>
+            <View className="mt-3 flex-row gap-2.5">
               <AppDatePicker
                 label={t('common.from')}
                 value={parseDateValue(customStart)}
                 onChange={handleCustomStartChange}
                 maximumDate={parseDateValue(customEnd) ?? undefined}
-                style={styles.dateField}
+                style={{ flex: 1 }}
               />
               <AppDatePicker
                 label={t('common.to')}
                 value={parseDateValue(customEnd)}
                 onChange={handleCustomEndChange}
                 minimumDate={parseDateValue(customStart) ?? undefined}
-                style={styles.dateField}
+                style={{ flex: 1 }}
               />
             </View>
           ) : null}
         </FilterGroup>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View className="flex-row gap-2.25">
         <Pressable
           onPress={handleClear}
           accessibilityRole="button"
           accessibilityLabel={t('common.clearFilters')}
-          style={[styles.footerBtn, styles.clearBtn, { backgroundColor: colors.surface2 }]}
+          className="bg-surface-2 h-11 flex-1 flex-row items-center justify-center gap-1.5 rounded-full px-4"
         >
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 14,
-              letterSpacing: -0.14,
-              color: colors.fg,
-            }}
-            numberOfLines={1}
-          >
+          <Text className="text-fg text-sm font-semibold tracking-[-0.14px]" numberOfLines={1}>
             {t('common.clearFilters')}
           </Text>
         </Pressable>
@@ -407,29 +372,17 @@ export function ExpenseFiltersSheet({
               ? `${t('common.done')} ${activeCount}`
               : t('common.done')
           }
-          style={[styles.footerBtn, styles.doneBtn, { backgroundColor: colors.primary }]}
+          className="bg-primary h-11 flex-2 flex-row items-center justify-center gap-1.5 rounded-full px-4"
         >
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 14,
-              letterSpacing: -0.14,
-              color: colors.onPrimary,
-            }}
-          >
+          <Text className="text-on-primary text-sm font-semibold tracking-[-0.14px]">
             {t('common.done')}
           </Text>
           {activeCount > 0 ? (
-            <View style={[styles.fcount, { backgroundColor: 'rgba(0,0,0,0.18)' }]}>
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.bold,
-                  fontSize: 10,
-                  color: colors.onPrimary,
-                }}
-              >
-                {activeCount}
-              </Text>
+            <View
+              className="h-4 min-w-4 items-center justify-center rounded-full px-1"
+              style={{ backgroundColor: 'rgba(0,0,0,0.18)' }}
+            >
+              <Text className="text-on-primary text-[10px] font-bold">{activeCount}</Text>
             </View>
           ) : null}
         </Pressable>
@@ -437,76 +390,3 @@ export function ExpenseFiltersSheet({
     </AppBottomSheet>
   );
 }
-
-const styles = StyleSheet.create({
-  scroll: {
-    flexGrow: 0,
-    maxHeight: 420,
-  },
-  scrollContent: {
-    paddingBottom: 8,
-  },
-  group: {
-    marginBottom: 18,
-  },
-  groupLast: {
-    marginBottom: 24,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chip: {
-    height: 34,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  customRange: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 12,
-  },
-  dateField: {
-    flex: 1,
-  },
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  categoryChip: {
-    borderRadius: 999,
-    borderWidth: 1.5,
-    flexShrink: 0,
-  },
-  footer: {
-    flexDirection: 'row',
-    gap: 9,
-  },
-  footerBtn: {
-    height: 44,
-    borderRadius: 999,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-  },
-  clearBtn: {
-    flex: 1,
-  },
-  doneBtn: {
-    flex: 2,
-  },
-  fcount: {
-    minWidth: 16,
-    height: 16,
-    paddingHorizontal: 4,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

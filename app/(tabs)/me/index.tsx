@@ -47,7 +47,7 @@ import { useProperties } from '@/hooks/useProperties';
 import { useTabBarPreference, type TabBarLabelMode } from '@/hooks/useTabBarPreference';
 import { useTenants } from '@/hooks/useTenants';
 import i18n from '@/i18n';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
 import { useAuthStore } from '@/stores/authStore';
 import { useTabBarStore } from '@/stores/tabBarStore';
 import { useUiStore } from '@/stores/uiStore';
@@ -83,7 +83,7 @@ export default function MeScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { theme, preference, setPreference } = useAppTheme();
-  const { colors, elevation, radius } = theme;
+  const { colors, elevation } = theme;
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
   const showToast = useUiStore((s) => s.showToast);
@@ -266,76 +266,54 @@ export default function MeScreen() {
   }
 
   return (
-    <View style={styles.container} className="bg-transparent" collapsable={false}>
+    <View className="flex-1 bg-transparent" collapsable={false}>
         <Stack.Screen options={tabRootScreenOptions(t('settings.profile'))} />
 
       <ScrollView
-        style={styles.scroll}
+        className="flex-1"
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={[
-          styles.content,
-          {
-            paddingHorizontal: theme.spacing.gutter,
-            paddingTop: Platform.OS === 'ios' ? Spacing.sm : insets.top + Spacing.sm,
-            paddingBottom: Spacing.scrollBottom,
-          },
-        ]}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: theme.spacing.gutter,
+          paddingTop: Platform.OS === 'ios' ? Spacing.sm : insets.top + Spacing.sm,
+          paddingBottom: Spacing.scrollBottom,
+        }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.topRow}>
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 11,
-              lineHeight: 14,
-              letterSpacing: 1.54,
-              textTransform: 'uppercase',
-              color: colors.muted,
-              flex: 1,
-            }}
-          >
+        <View
+          className="flex-row items-center justify-between py-4"
+          style={{ minHeight: HEADER_ACTION_SLOT + 32 }}
+        >
+          <Text className="text-muted flex-1 text-[11px] leading-3.5 font-semibold tracking-[1.54px] uppercase">
             {t('settings.profile')}
           </Text>
-          <View style={styles.bellClearance} />
+          <View style={{ width: HEADER_ACTION_SLOT, height: HEADER_ACTION_SLOT }} />
         </View>
 
-        <View style={styles.titleBlk}>
-          <View style={styles.identityRow}>
-            <View style={styles.identityText}>
+        <View className="mb-5">
+          <View className="flex-row items-start gap-3.5">
+            <View className="min-w-0 flex-1">
               <Text
+                className="text-fg text-[32px] tracking-[-0.8px]"
                 style={{
                   fontFamily: displayFontFamily(theme.name),
-                  fontSize: 32,
                   lineHeight: 34.5,
-                  letterSpacing: -0.8,
-                  color: colors.fg,
                 }}
               >
                 {nameParts.first}
                 {nameParts.rest ? `\n${nameParts.rest}` : ''}
               </Text>
               {user?.email ? (
-                <Text
-                  style={{
-                    fontFamily: Fonts.sans.regular,
-                    fontSize: 12.5,
-                    color: colors.muted,
-                    marginTop: 10,
-                  }}
-                  numberOfLines={1}
-                >
+                <Text className="text-muted mt-2.5 text-[12.5px]" numberOfLines={1}>
                   {user.email}
                 </Text>
               ) : null}
             </View>
-            <View style={[styles.avatar, { backgroundColor: colors.primaryTint }]}>
+            <View className="bg-primary-tint h-[58px] w-[58px] items-center justify-center rounded-full">
               <Text
-                style={{
-                  fontFamily: displayFontFamily(theme.name),
-                  fontSize: 21,
-                  color: colors.primary,
-                }}
+                className="text-primary text-[21px]"
+                style={{ fontFamily: displayFontFamily(theme.name) }}
               >
                 {initials}
               </Text>
@@ -344,15 +322,8 @@ export default function MeScreen() {
         </View>
 
         <View
-          style={[
-            styles.bays,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.cardBd,
-              borderRadius: radius.xl,
-              ...elevation.card,
-            },
-          ]}
+          className="border-card-bd bg-surface mb-5.5 flex-row overflow-hidden rounded-xl border"
+          style={[{ borderWidth: StyleSheet.hairlineWidth }, elevation.card]}
         >
           {(
             [
@@ -361,30 +332,17 @@ export default function MeScreen() {
               { label: t('settings.contractsBay'), value: contractCount },
             ] as const
           ).map((bay, index) => (
-            <View key={bay.label} style={styles.bayCell}>
+            <View key={bay.label} className="flex-1 flex-row">
               {index > 0 ? (
-                <View style={[styles.bayDivider, { backgroundColor: colors.bd }]} />
+                <View className="bg-bd" style={{ width: StyleSheet.hairlineWidth }} />
               ) : null}
-              <View style={styles.bay}>
-                <Text
-                  style={{
-                    fontFamily: Fonts.sans.semibold,
-                    fontSize: 10,
-                    letterSpacing: 0.8,
-                    textTransform: 'uppercase',
-                    color: colors.muted,
-                    marginBottom: 9,
-                  }}
-                >
+              <View className="flex-1 px-3.5 py-4">
+                <Text className="text-muted mb-2.25 text-[10px] font-semibold tracking-[0.8px] uppercase">
                   {bay.label}
                 </Text>
                 <Text
-                  style={{
-                    fontFamily: displayFontFamily(theme.name),
-                    fontSize: 21,
-                    letterSpacing: -0.42,
-                    color: colors.fg,
-                  }}
+                  className="text-fg text-[21px] tracking-[-0.42px]"
+                  style={{ fontFamily: displayFontFamily(theme.name) }}
                 >
                   {bay.value}
                 </Text>
@@ -409,7 +367,7 @@ export default function MeScreen() {
           ) : null}
         </SettingsGroup>
 
-        <SettingsGroup title={t('settings.title')} style={styles.settingsGroup}>
+        <SettingsGroup title={t('settings.title')} className="mb-4">
           <SettingsRow
             icon={Moon}
             label={t('settings.appearance')}
@@ -453,32 +411,15 @@ export default function MeScreen() {
           onPress={handleSignOut}
           accessibilityRole="button"
           accessibilityLabel={t('settings.signOut')}
-          style={[styles.signOutBtn, { backgroundColor: colors.surface2 }]}
+          className="bg-surface-2 h-12 flex-row items-center justify-center gap-2 rounded-full"
         >
           <LogOut size={18} color={colors.neg} strokeWidth={2} />
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 14,
-              letterSpacing: -0.14,
-              color: colors.neg,
-            }}
-          >
+          <Text className="text-neg text-sm font-semibold tracking-[-0.14px]">
             {t('settings.signOut')}
           </Text>
         </Pressable>
 
-        <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: 10,
-            letterSpacing: 0.8,
-            textTransform: 'uppercase',
-            color: colors.muted,
-            textAlign: 'center',
-            marginTop: 16,
-          }}
-        >
+        <Text className="text-muted mt-4 text-center text-[10px] font-semibold tracking-[0.8px] uppercase">
           {t('settings.version')} {versionLabel}
         </Text>
       </ScrollView>
@@ -539,73 +480,3 @@ export default function MeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    flexGrow: 1,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    minHeight: HEADER_ACTION_SLOT + 32,
-  },
-  bellClearance: {
-    width: HEADER_ACTION_SLOT,
-    height: HEADER_ACTION_SLOT,
-  },
-  titleBlk: {
-    marginBottom: 20,
-  },
-  identityRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 14,
-  },
-  identityText: {
-    flex: 1,
-    minWidth: 0,
-  },
-  avatar: {
-    width: 58,
-    height: 58,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bays: {
-    flexDirection: 'row',
-    borderWidth: StyleSheet.hairlineWidth,
-    marginBottom: 22,
-    overflow: 'hidden',
-  },
-  bayCell: {
-    flex: 1,
-    flexDirection: 'row',
-  },
-  bayDivider: {
-    width: StyleSheet.hairlineWidth,
-  },
-  bay: {
-    flex: 1,
-    paddingVertical: 16,
-    paddingHorizontal: 14,
-  },
-  settingsGroup: {
-    marginBottom: 16,
-  },
-  signOutBtn: {
-    height: 48,
-    borderRadius: 999,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-});

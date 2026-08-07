@@ -29,7 +29,7 @@ import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProfile } from '@/hooks/useProfile';
 import i18n from '@/i18n';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import { getInitialsFromFullName } from '@/utils/avatar';
@@ -87,7 +87,7 @@ export default function ProfileSettingsScreen() {
   if (isLoading) {
     return (
       <StackScreenChrome title={t('settings.editProfile')} hideHeaderTitle edgeToEdge>
-        <SkeletonLoader count={5} style={styles.loader} />
+        <SkeletonLoader count={5} className="p-4" />
       </StackScreenChrome>
     );
   }
@@ -152,12 +152,11 @@ function ProfileEditBody({
 
   return (
     <KeyboardAvoidingView
-      style={styles.flex}
+      className="flex-1 bg-transparent"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      className="bg-transparent"
     >
       <ScrollView
-        style={styles.flex}
+        className="flex-1"
         contentContainerStyle={{
           paddingHorizontal: Spacing.gutter,
           paddingTop: edgeInset + Spacing.sm,
@@ -167,38 +166,26 @@ function ProfileEditBody({
         showsVerticalScrollIndicator={false}
       >
         <Text
+          className="text-fg mb-6.5 text-[32px] tracking-[-0.8px]"
           style={{
             fontFamily: displayFontFamily(themeName),
-            fontSize: 32,
             lineHeight: 32,
-            letterSpacing: -0.8,
-            color: colors.fg,
-            marginBottom: 26,
           }}
         >
           {t('settings.editProfile')}
         </Text>
 
-        <View style={styles.avatarWrap}>
-          <View style={[styles.avatar, { backgroundColor: colors.primaryTint }]}>
+        <View className="mb-6.5 h-[76px] w-[76px] self-center">
+          <View className="bg-primary-tint h-[76px] w-[76px] items-center justify-center rounded-full">
             <Text
-              style={{
-                fontFamily: displayFontFamily(themeName),
-                fontSize: 26,
-                color: colors.primary,
-              }}
+              className="text-primary text-[26px]"
+              style={{ fontFamily: displayFontFamily(themeName) }}
             >
               {initials}
             </Text>
           </View>
           <View
-            style={[
-              styles.avatarEdit,
-              {
-                backgroundColor: colors.surface3,
-                borderColor: colors.bg,
-              },
-            ]}
+            className="bg-surface-3 border-bg absolute -right-1 -bottom-1 h-[30px] w-[30px] items-center justify-center rounded-full border-2"
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           >
@@ -240,33 +227,21 @@ function ProfileEditBody({
       </ScrollView>
 
       <View
-        style={[
-          styles.formFoot,
-          {
-            paddingBottom: Math.max(footerPad, 12) + 8,
-            backgroundColor: colors.bg,
-            borderTopColor: colors.bd,
-          },
-        ]}
+        className="bg-bg border-bd absolute right-0 bottom-0 left-0 px-gutter pt-3"
+        style={{
+          paddingBottom: Math.max(footerPad, 12) + 8,
+          borderTopWidth: StyleSheet.hairlineWidth,
+        }}
       >
         <Pressable
           onPress={onSubmit}
           disabled={isSaving}
           accessibilityRole="button"
           accessibilityLabel={t('settings.saveChanges')}
-          style={[
-            styles.saveBtn,
-            { backgroundColor: colors.primary, opacity: isSaving ? 0.7 : 1 },
-          ]}
+          className="bg-primary h-[50px] items-center justify-center rounded-full"
+          style={{ opacity: isSaving ? 0.7 : 1 }}
         >
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 15,
-              letterSpacing: -0.15,
-              color: colors.onPrimary,
-            }}
-          >
+          <Text className="text-on-primary text-[15px] font-semibold tracking-[-0.15px]">
             {t('settings.saveChanges')}
           </Text>
         </Pressable>
@@ -275,50 +250,3 @@ function ProfileEditBody({
   );
 }
 
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  loader: {
-    padding: Spacing.md,
-  },
-  avatarWrap: {
-    alignSelf: 'center',
-    width: 76,
-    height: 76,
-    marginBottom: 26,
-  },
-  avatar: {
-    width: 76,
-    height: 76,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarEdit: {
-    position: 'absolute',
-    right: -4,
-    bottom: -4,
-    width: 30,
-    height: 30,
-    borderRadius: 999,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  formFoot: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: Spacing.gutter,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  saveBtn: {
-    height: 50,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

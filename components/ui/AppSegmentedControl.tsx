@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import {
   LayoutChangeEvent,
   Pressable,
-  StyleSheet,
   View,
   type StyleProp,
   type ViewStyle,
@@ -90,25 +89,22 @@ export function AppSegmentedControl<T extends string = string>({
   if (variant === 'picker') {
     return (
       <View
-        style={[
-          styles.pickerTrack,
-          {
-            backgroundColor: colors.surface2,
-            opacity: disabled ? 0.6 : 1,
-          },
-          style,
-        ]}
-        className={className}
+        className={cn(
+          'bg-surface-2 min-h-10 flex-row gap-1.25 rounded-full p-1',
+          disabled && 'opacity-60',
+          className,
+        )}
+        style={style}
       >
         {segments.map((segment) => {
           const isSelected = segment.value === value;
           return (
             <Pressable
               key={segment.value}
-              style={[
-                styles.pickerSeg,
-                isSelected ? { backgroundColor: colors.primary } : null,
-              ]}
+              className={cn(
+                'flex-1 items-center justify-center rounded-full px-1 py-2',
+                isSelected && 'bg-primary',
+              )}
               onPress={() => {
                 if (disabled) return;
                 onValueChange(segment.value);
@@ -118,12 +114,10 @@ export function AppSegmentedControl<T extends string = string>({
               accessibilityState={{ selected: isSelected, disabled }}
             >
               <Text
+                className="text-center text-xs tracking-[-0.12px]"
                 style={{
                   fontFamily: Fonts.sans.semibold,
-                  fontSize: 12,
-                  letterSpacing: -0.12,
                   color: isSelected ? colors.onPrimary : colors.muted,
-                  textAlign: 'center',
                 }}
                 numberOfLines={1}
               >
@@ -182,21 +176,3 @@ export function AppSegmentedControl<T extends string = string>({
     </GlassSurface>
   );
 }
-
-const styles = StyleSheet.create({
-  pickerTrack: {
-    flexDirection: 'row',
-    gap: 5,
-    padding: 4,
-    borderRadius: 999,
-    minHeight: 40,
-  },
-  pickerSeg: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    borderRadius: 999,
-  },
-});

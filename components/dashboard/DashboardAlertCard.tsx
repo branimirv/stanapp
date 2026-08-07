@@ -5,10 +5,11 @@ import {
   FileText,
   type LucideIcon,
 } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 
 export type DashboardAlertTone = 'neg' | 'warn' | 'primary';
 
@@ -35,53 +36,45 @@ export function DashboardAlertCard({
   onPress,
 }: DashboardAlertCardProps) {
   const { theme } = useAppTheme();
-  const { colors } = theme;
+  const { colors, elevation } = theme;
   const Icon = icon ?? DEFAULT_ICONS[tone];
 
   const accent =
     tone === 'neg' ? colors.neg : tone === 'warn' ? colors.chart[4] : colors.primary;
-  const tint =
-    tone === 'neg' ? colors.negTint : tone === 'warn' ? colors.chartTint[4] : colors.primaryTint;
 
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.cardBd,
-          borderRadius: theme.radius.xl,
-          ...theme.elevation.card,
-        },
-      ]}
+      className="border-card-bd bg-surface mb-3 flex-row items-center gap-3.25 rounded-xl border px-4.5 py-3.75"
+      style={elevation.card}
     >
-      <View style={[styles.iconWell, { backgroundColor: tint }]}>
+      <View
+        className={cn(
+          'h-9.5 w-9.5 items-center justify-center rounded-full',
+          tone === 'neg' && 'bg-neg-tint',
+          tone === 'warn' && 'bg-chart-4-tint',
+          tone === 'primary' && 'bg-primary-tint'
+        )}
+      >
         <Icon size={18} color={accent} strokeWidth={2} />
       </View>
-      <View style={styles.copy}>
+      <View className="flex-1">
         <Text
-          style={{
-            fontFamily: displayFontFamily(theme.name),
-            fontSize: 17,
-            letterSpacing: -0.34,
-            color: accent,
-          }}
+          className={cn(
+            'text-[17px] tracking-[-0.34px]',
+            tone === 'neg' && 'text-neg',
+            tone === 'warn' && 'text-chart-4',
+            tone === 'primary' && 'text-primary'
+          )}
+          style={{ fontFamily: displayFontFamily(theme.name) }}
           numberOfLines={2}
         >
           {title}
         </Text>
         <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: 10,
-            letterSpacing: 0.8,
-            textTransform: 'uppercase',
-            color: colors.muted,
-            marginTop: 4,
-          }}
+          className="text-muted mt-1 text-[10px] font-semibold uppercase tracking-[0.8px]"
           numberOfLines={2}
         >
           {subtitle}
@@ -96,25 +89,3 @@ export function DashboardAlertCard({
 export function DashboardUnpaidCard(props: Omit<DashboardAlertCardProps, 'tone' | 'icon'>) {
   return <DashboardAlertCard {...props} tone="neg" />;
 }
-
-const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 13,
-    paddingVertical: 15,
-    paddingHorizontal: 18,
-    borderWidth: 1,
-    marginBottom: 12,
-  },
-  iconWell: {
-    width: 38,
-    height: 38,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  copy: {
-    flex: 1,
-  },
-});

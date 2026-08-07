@@ -1,11 +1,11 @@
 import { format } from 'date-fns';
 import { enUS, hr } from 'date-fns/locale';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { HEADER_ACTION_SLOT } from '@/constants/header';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
 import type { Language } from '@/types/app.types';
 
 const dateLocales = { en: enUS, hr } as const;
@@ -38,7 +38,6 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors } = theme;
   const locale = dateLocales[language];
 
   const dateLabel = format(new Date(), 'EEEE · dd.MM.yyyy', { locale });
@@ -46,33 +45,28 @@ export function DashboardHeader({
   const displayName = firstName(name) || t('dashboard.greetingFallbackName');
 
   return (
-    <View style={styles.wrap}>
-      <View style={styles.topRow}>
+    <View>
+      <View
+        className="flex-row items-center justify-between gap-3 py-4"
+        style={{ minHeight: HEADER_ACTION_SLOT + 32 }}
+      >
         <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: 11,
-            lineHeight: 14,
-            letterSpacing: 1.54,
-            textTransform: 'uppercase',
-            color: colors.muted,
-            flex: 1,
-          }}
+          className="text-muted flex-1 text-[11px] leading-3.5 font-semibold tracking-[1.54px] uppercase"
           numberOfLines={1}
         >
           {dateLabel}
         </Text>
-        {showAdd ? <View style={styles.addClearance} /> : null}
+        {showAdd ? (
+          <View style={{ width: HEADER_ACTION_SLOT, height: HEADER_ACTION_SLOT }} />
+        ) : null}
       </View>
 
-      <View style={styles.titleBlk}>
+      <View className="mb-4.5">
         <Text
+          className="text-fg text-[32px] tracking-[-0.64px]"
           style={{
             fontFamily: displayFontFamily(theme.name),
-            fontSize: 32,
             lineHeight: 36,
-            letterSpacing: -0.64,
-            color: colors.fg,
           }}
         >
           {greetingLine}
@@ -83,25 +77,3 @@ export function DashboardHeader({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    marginBottom: 0,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    gap: 12,
-    minHeight: HEADER_ACTION_SLOT + 32,
-  },
-  addClearance: {
-    width: HEADER_ACTION_SLOT,
-    height: HEADER_ACTION_SLOT,
-  },
-  titleBlk: {
-    paddingTop: 0,
-    marginBottom: 18,
-  },
-});

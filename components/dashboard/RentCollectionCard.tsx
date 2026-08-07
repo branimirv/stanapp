@@ -1,10 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { DisplayAmount, formatDisplayNumber } from '@/components/ui/DisplayAmount';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { Typography } from '@/constants/theme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
 import type { Language } from '@/types/app.types';
 
 export interface RentCollectionCardProps {
@@ -29,7 +29,7 @@ export function RentCollectionCard({
 }: RentCollectionCardProps) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors } = theme;
+  const { elevation } = theme;
 
   const progress = expected > 0 ? Math.min(collected / expected, 1) : 0;
   const progressPct = Math.round(progress * 100);
@@ -48,27 +48,17 @@ export function RentCollectionCard({
   }
 
   return (
-    <View style={{ marginBottom: 12 }}>
-      <View style={styles.secheadRow}>
+    <View className="mb-3">
+      <View className="mb-2.75 flex-row items-baseline justify-between">
         <Text
-          style={{
-            fontFamily: displayFontFamily(theme.name),
-            fontSize: Typography.display.sectionHead.size,
-            lineHeight: Typography.display.sectionHead.lineHeight,
-            letterSpacing: Typography.display.sectionHead.letterSpacing,
-            color: colors.fg,
-          }}
+          className="text-fg text-[22px] leading-6 tracking-[-0.55px]"
+          style={{ fontFamily: displayFontFamily(theme.name) }}
         >
           {t('dashboard.rentCollection')}
         </Text>
         <Text
-          style={{
-            fontFamily: displayFontFamily(theme.name),
-            fontSize: Typography.display.rowFigure.size,
-            lineHeight: Typography.display.rowFigure.lineHeight,
-            letterSpacing: Typography.display.rowFigure.letterSpacing,
-            color: colors.primary,
-          }}
+          className="text-primary text-[18px] leading-4.5 tracking-[-0.36px]"
+          style={{ fontFamily: displayFontFamily(theme.name) }}
         >
           {progressPct} %
         </Text>
@@ -78,29 +68,17 @@ export function RentCollectionCard({
         onPress={onPress}
         disabled={!onPress}
         accessibilityRole={onPress ? 'button' : undefined}
-        style={[
-          styles.card,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.cardBd,
-            borderRadius: theme.radius.xl,
-            ...theme.elevation.card,
-          },
-        ]}
+        className="border-card-bd bg-surface rounded-xl border p-4.5"
+        style={elevation.card}
       >
-        <View style={[styles.track, { backgroundColor: colors.track }]}>
+        <View className="bg-track h-1.5 overflow-hidden rounded-full">
           <View
-            style={[
-              styles.fill,
-              {
-                width: `${progressPct}%`,
-                backgroundColor: colors.primary,
-              },
-            ]}
+            className="bg-primary h-full rounded-full"
+            style={{ width: `${progressPct}%` }}
           />
         </View>
 
-        <View style={styles.metaRow}>
+        <View className="mt-3.25 flex-row flex-wrap items-baseline gap-2.25">
           <DisplayAmount
             amount={collected}
             currency={currency}
@@ -110,14 +88,7 @@ export function RentCollectionCard({
             letterSpacing={Typography.display.amountSm.letterSpacing}
           />
           <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 10,
-              letterSpacing: 0.8,
-              textTransform: 'uppercase',
-              color: colors.muted,
-              flexShrink: 1,
-            }}
+            className="text-muted shrink text-[10px] font-semibold uppercase tracking-[0.8px]"
             numberOfLines={1}
           >
             {metaParts.join(' · ')}
@@ -127,32 +98,3 @@ export function RentCollectionCard({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  secheadRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    marginBottom: 11,
-  },
-  card: {
-    padding: 18,
-    borderWidth: 1,
-  },
-  track: {
-    height: 6,
-    borderRadius: 999,
-    overflow: 'hidden',
-  },
-  fill: {
-    height: '100%',
-    borderRadius: 999,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 9,
-    marginTop: 13,
-    flexWrap: 'wrap',
-  },
-});

@@ -27,8 +27,13 @@ function Switch({ className: _className, style, disabled, checked, ...props }: S
       checked={checked}
       disabled={disabled}
       style={[
-        styles.track,
         {
+          width: TRACK_W,
+          height: TRACK_H,
+          borderRadius: TRACK_H / 2,
+          padding: PAD,
+          borderWidth: StyleSheet.hairlineWidth,
+          justifyContent: 'center',
           backgroundColor: on ? colors.primary : colors.track,
           opacity: disabled ? 0.5 : 1,
           borderColor: on ? colors.primary : colors.bd,
@@ -38,37 +43,21 @@ function Switch({ className: _className, style, disabled, checked, ...props }: S
       {...props}
     >
       <SwitchPrimitives.Thumb
-        style={[
-          styles.thumb,
-          {
-            backgroundColor: '#FFFFFF',
-            transform: [{ translateX: on ? THUMB_TRAVEL : 0 }],
-          },
-        ]}
+        style={{
+          width: THUMB,
+          height: THUMB,
+          borderRadius: THUMB / 2,
+          backgroundColor: '#FFFFFF',
+          shadowColor: '#000',
+          shadowOpacity: 0.18,
+          shadowRadius: 2.5,
+          shadowOffset: { width: 0, height: 1 },
+          elevation: 2,
+          transform: [{ translateX: on ? THUMB_TRAVEL : 0 }],
+        }}
       />
     </SwitchPrimitives.Root>
   );
 }
-
-const styles = StyleSheet.create({
-  track: {
-    width: TRACK_W,
-    height: TRACK_H,
-    borderRadius: TRACK_H / 2,
-    padding: PAD,
-    borderWidth: StyleSheet.hairlineWidth,
-    justifyContent: 'center',
-  },
-  thumb: {
-    width: THUMB,
-    height: THUMB,
-    borderRadius: THUMB / 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 2.5,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
-  },
-});
 
 export { Switch };

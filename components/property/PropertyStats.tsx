@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { formatDisplayNumber } from '@/components/ui/DisplayAmount';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
 import type { Language } from '@/types/app.types';
 
 export interface PropertyStatsProps {
@@ -26,22 +26,15 @@ export function PropertyStats({
 }: PropertyStatsProps) {
   const { t, i18n } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors, elevation, radius } = theme;
+  const { elevation } = theme;
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
   const net = totalIncome - totalExpenses;
   const curSym = currency === 'EUR' ? '€' : currency;
 
   return (
     <View
-      style={[
-        styles.bays,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.cardBd,
-          borderRadius: radius.xl,
-          ...elevation.card,
-        },
-      ]}
+      className="border-card-bd bg-surface mb-4.5 flex-row overflow-hidden rounded-xl border"
+      style={elevation.card}
     >
       <Bay
         label={t('properties.statsExpenseBay')}
@@ -49,9 +42,9 @@ export function PropertyStats({
         currencySuffix={curSym}
         language={resolvedLanguage}
       />
-      <View style={[styles.divider, { backgroundColor: colors.bd }]} />
+      <View className="bg-bd self-stretch" style={{ width: StyleSheet.hairlineWidth }} />
       <Bay label={t('properties.statsTenantsBay')} value={tenantCount} />
-      <View style={[styles.divider, { backgroundColor: colors.bd }]} />
+      <View className="bg-bd self-stretch" style={{ width: StyleSheet.hairlineWidth }} />
       <Bay
         label={t('properties.statsNet')}
         amount={net}
@@ -76,57 +69,34 @@ function Bay({
   language?: Language;
 }) {
   const { theme } = useAppTheme();
-  const { colors } = theme;
 
   return (
-    <View style={styles.bay}>
+    <View className="flex-1 items-center px-2.75 pt-4 pb-3.75">
       <Text
-        style={{
-          fontFamily: Fonts.sans.semibold,
-          fontSize: 10,
-          letterSpacing: 0.8,
-          textTransform: 'uppercase',
-          color: colors.muted,
-          marginBottom: 9,
-          textAlign: 'center',
-        }}
+        className="text-muted mb-2.25 text-center text-[10px] font-semibold tracking-[0.8px] uppercase"
         numberOfLines={1}
       >
         {label}
       </Text>
       {amount != null ? (
         <Text
+          className="text-fg text-center text-xl tracking-[-0.5px]"
           style={{
             fontFamily: displayFontFamily(theme.name),
-            fontSize: 20,
-            letterSpacing: -0.5,
-            color: colors.fg,
-            textAlign: 'center',
             fontVariant: ['tabular-nums', 'lining-nums'],
           }}
           numberOfLines={1}
         >
           {formatDisplayNumber(amount, language)}
           {currencySuffix ? (
-            <Text
-              style={{
-                fontFamily: Fonts.sans.medium,
-                fontSize: 12,
-                color: colors.muted,
-              }}
-            >
-              {currencySuffix}
-            </Text>
+            <Text className="text-muted text-xs font-medium">{currencySuffix}</Text>
           ) : null}
         </Text>
       ) : (
         <Text
+          className="text-fg text-center text-xl tracking-[-0.5px]"
           style={{
             fontFamily: displayFontFamily(theme.name),
-            fontSize: 20,
-            letterSpacing: -0.5,
-            color: colors.fg,
-            textAlign: 'center',
             fontVariant: ['tabular-nums', 'lining-nums'],
           }}
         >
@@ -136,23 +106,3 @@ function Bay({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  bays: {
-    flexDirection: 'row',
-    overflow: 'hidden',
-    borderWidth: 1,
-    marginBottom: 18,
-  },
-  bay: {
-    flex: 1,
-    paddingTop: 16,
-    paddingHorizontal: 11,
-    paddingBottom: 15,
-    alignItems: 'center',
-  },
-  divider: {
-    width: StyleSheet.hairlineWidth,
-    alignSelf: 'stretch',
-  },
-});

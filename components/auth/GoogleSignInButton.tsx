@@ -4,10 +4,8 @@ import { useTranslation } from 'react-i18next';
 import Svg, { Path } from 'react-native-svg';
 
 import { AppButton } from '@/components/ui/AppButton';
-import { useAppTheme } from '@/hooks/useAppTheme';
 import { signInWithGoogle } from '@/lib/auth';
 import { setPendingPostAuthRoute } from '@/lib/authDeepLinks';
-import { Fonts } from '@/lib/fonts';
 import { useUiStore } from '@/stores/uiStore';
 
 /** Official multi-colour Google G — brand requirement, not a Lucide glyph. */
@@ -45,7 +43,6 @@ export function GoogleSignInButton({
   returnTo = '/(tabs)/(dashboard)',
 }: GoogleSignInButtonProps) {
   const { t } = useTranslation();
-  const { theme } = useAppTheme();
   const showToast = useUiStore((state) => state.showToast);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -82,15 +79,10 @@ export function GoogleSignInButton({
         accessibilityLabel={t('auth.continueWithGoogle')}
         className="bg-surface-2 border-bd h-11 w-full rounded-full border"
       >
-        <View style={styles.row}>
+        <View className="flex-row items-center justify-center gap-2">
           {!isSubmitting ? <GoogleMark /> : null}
           <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 15,
-              letterSpacing: -0.15,
-              color: theme.colors.fg,
-            }}
+            className="text-fg text-[15px] font-semibold tracking-[-0.15px]"
             numberOfLines={1}
           >
             {t('auth.continueWithGoogle')}
@@ -98,40 +90,19 @@ export function GoogleSignInButton({
         </View>
       </AppButton>
 
-      <View style={styles.divider}>
-        <View style={[styles.hair, { backgroundColor: theme.colors.bd }]} />
-        <Text
-          style={{
-            fontFamily: Fonts.sans.regular,
-            fontSize: 13,
-            color: theme.colors.muted,
-          }}
-          numberOfLines={1}
-        >
+      <View className="my-6 flex-row items-center gap-3">
+        <View
+          className="bg-bd flex-1 min-h-px"
+          style={{ height: StyleSheet.hairlineWidth > 0 ? StyleSheet.hairlineWidth : 1 }}
+        />
+        <Text className="text-muted text-[13px]" numberOfLines={1}>
           {t('auth.orContinueWith')}
         </Text>
-        <View style={[styles.hair, { backgroundColor: theme.colors.bd }]} />
+        <View
+          className="bg-bd flex-1 min-h-px"
+          style={{ height: StyleSheet.hairlineWidth > 0 ? StyleSheet.hairlineWidth : 1 }}
+        />
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginVertical: 24,
-  },
-  hair: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth > 0 ? StyleSheet.hairlineWidth : 1,
-    minHeight: 1,
-  },
-});

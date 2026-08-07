@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppCheckbox } from '@/components/ui/AppCheckbox';
@@ -9,7 +9,8 @@ import { AppPicker } from '@/components/ui/AppPicker';
 import { AppTextInput } from '@/components/ui/AppTextInput';
 import { MEMBERSHIP_ROLES } from '@/constants/config';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import type { InviteToPropertiesResult } from '@/services/invites';
 import type { MembershipRole, Property } from '@/types/app.types';
 import { translateFieldError } from '@/utils/formHelpers';
@@ -39,7 +40,6 @@ export function InvitePeopleForm({
 }: InvitePeopleFormProps) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors } = theme;
 
   const form = useForm<InviteFormValues>({
     resolver: zodResolver(inviteSchema as never),
@@ -75,13 +75,8 @@ export function InvitePeopleForm({
   return (
     <View>
       <Text
-        style={{
-          fontFamily: displayFontFamily(theme.name),
-          fontSize: 18,
-          letterSpacing: -0.36,
-          color: colors.fg,
-          marginBottom: 14,
-        }}
+        className="text-fg mb-3.5 text-lg tracking-[-0.36px]"
+        style={{ fontFamily: displayFontFamily(theme.name) }}
       >
         {t('members.invitePeople')}
       </Text>
@@ -114,19 +109,11 @@ export function InvitePeopleForm({
         )}
       />
 
-      <Text
-        style={{
-          fontFamily: Fonts.sans.semibold,
-          fontSize: 12.5,
-          lineHeight: 16,
-          color: colors.fg,
-          marginBottom: 12,
-        }}
-      >
+      <Text className="text-fg mb-3 text-[12.5px] leading-4 font-semibold">
         {t('members.selectProperties')}
       </Text>
 
-      <View style={styles.propertyList}>
+      <View className="mb-5.5 gap-1">
         {properties.map((property) => {
           const checked = selectedIds.includes(property.id);
           return (
@@ -150,14 +137,7 @@ export function InvitePeopleForm({
       </View>
 
       {form.formState.errors.propertyIds?.message ? (
-        <Text
-          style={{
-            fontFamily: Fonts.sans.regular,
-            fontSize: 12,
-            color: colors.neg,
-            marginBottom: 12,
-          }}
-        >
+        <Text className="text-neg mb-3 text-xs">
           {translateFieldError(t, form.formState.errors.propertyIds.message)}
         </Text>
       ) : null}
@@ -167,22 +147,12 @@ export function InvitePeopleForm({
         disabled={isInviting}
         accessibilityRole="button"
         accessibilityLabel={t('members.sendInvite')}
-        style={[
-          styles.sendBtn,
-          {
-            backgroundColor: colors.primary,
-            opacity: isInviting ? 0.7 : 1,
-          },
-        ]}
+        className={cn(
+          'bg-primary h-[50px] items-center justify-center rounded-full',
+          isInviting && 'opacity-70',
+        )}
       >
-        <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: 15,
-            letterSpacing: -0.15,
-            color: colors.onPrimary,
-          }}
-        >
+        <Text className="text-on-primary text-[15px] font-semibold tracking-[-0.15px]">
           {t('members.sendInvite')}
         </Text>
       </Pressable>
@@ -192,37 +162,11 @@ export function InvitePeopleForm({
           onPress={onCancel}
           accessibilityRole="button"
           accessibilityLabel={t('common.cancel')}
-          style={styles.cancelBtn}
+          className="mt-2.5 items-center py-2.5"
         >
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 14,
-              color: colors.muted,
-            }}
-          >
-            {t('common.cancel')}
-          </Text>
+          <Text className="text-muted text-sm font-semibold">{t('common.cancel')}</Text>
         </Pressable>
       ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  propertyList: {
-    gap: 4,
-    marginBottom: 22,
-  },
-  sendBtn: {
-    height: 50,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelBtn: {
-    marginTop: 10,
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
-});

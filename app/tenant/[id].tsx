@@ -29,14 +29,14 @@ import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
 import { listPerformanceProps } from '@/constants/list';
 import { CONTRACT_EXPIRING_DAYS } from '@/constants/config';
-import { Spacing } from '@/constants/theme';
 import { useLocale } from '@/hooks/useLocale';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperty } from '@/hooks/useProperties';
 import { useRentPayments } from '@/hooks/useRentPayments';
 import { useTenant, useTenantMutations } from '@/hooks/useTenants';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import { useUiStore } from '@/stores/uiStore';
 import type { Language, Tenant } from '@/types/app.types';
 import { getInitials } from '@/utils/avatar';
@@ -76,36 +76,16 @@ function ContractRow({
   value: string;
   isLast?: boolean;
 }) {
-  const { theme } = useAppTheme();
-  const { colors } = theme;
-
   return (
     <View
-      style={[
-        styles.lrow,
-        !isLast ? { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.bd } : null,
-      ]}
+      className={cn(
+        'flex-row items-center justify-between gap-3.25 py-3.25',
+        !isLast && 'border-bd border-b',
+      )}
+      style={!isLast ? { borderBottomWidth: StyleSheet.hairlineWidth } : undefined}
     >
-      <Text
-        style={{
-          flex: 1,
-          fontFamily: Fonts.sans.regular,
-          fontSize: 13,
-          color: colors.muted,
-        }}
-      >
-        {label}
-      </Text>
-      <Text
-        style={{
-          fontFamily: Fonts.sans.semibold,
-          fontSize: 13,
-          color: colors.fg,
-          textAlign: 'right',
-          maxWidth: '55%',
-        }}
-        numberOfLines={2}
-      >
+      <Text className="text-muted flex-1 text-[13px]">{label}</Text>
+      <Text className="text-fg max-w-[55%] text-right text-[13px] font-semibold" numberOfLines={2}>
         {value}
       </Text>
     </View>
@@ -129,22 +109,15 @@ function QuickAction({
   return (
     <Pressable
       onPress={onPress}
-      style={styles.qa}
+      className="flex-1 items-center gap-2.25"
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
     >
-      <View style={[styles.qaCircle, { backgroundColor: colors.surface2 }]}>
+      <View className="bg-surface-2 h-12 w-12 items-center justify-center rounded-full">
         <Icon size={20} color={colors.primary} strokeWidth={2} />
       </View>
       <Text
-        style={{
-          fontFamily: Fonts.sans.semibold,
-          fontSize: 10,
-          letterSpacing: 0.8,
-          textTransform: 'uppercase',
-          color: colors.muted,
-          textAlign: 'center',
-        }}
+        className="text-muted text-center text-[10px] font-semibold tracking-[0.8px] uppercase"
         numberOfLines={1}
       >
         {label}
@@ -157,7 +130,7 @@ export default function TenantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors, elevation, radius } = theme;
+  const { colors, elevation } = theme;
   const showToast = useUiStore((s) => s.showToast);
   const showConfirmDialog = useUiStore((s) => s.showConfirmDialog);
   const [paymentsExpanded, setPaymentsExpanded] = useState(false);
@@ -262,15 +235,20 @@ export default function TenantDetailScreen() {
         ? `${property.name} · ${t('properties.floor')} ${property.floor}`
         : property.name;
 
-  let chipBg = colors.posTint;
-  let chipFg = colors.pos;
-  if (contractStatus === 'expiring_soon') {
-    chipBg = colors.chartTint[4];
-    chipFg = colors.chart[4];
-  } else if (contractStatus === 'expired') {
-    chipBg = colors.negTint;
-    chipFg = colors.neg;
-  }
+  const chipClass =
+    contractStatus === 'active'
+      ? 'bg-pos-tint'
+      : contractStatus === 'expired'
+        ? 'bg-neg-tint'
+        : undefined;
+  const chipFg =
+    contractStatus === 'active'
+      ? colors.pos
+      : contractStatus === 'expired'
+        ? colors.neg
+        : colors.chart[4];
+  const chipBgStyle =
+    contractStatus === 'expiring_soon' ? { backgroundColor: colors.chartTint[4] } : undefined;
 
   const quickActions = [
     tenant.phone
@@ -339,42 +317,35 @@ export default function TenantDetailScreen() {
           />
         )}
         ListHeaderComponent={
-          <View style={styles.headerContent}>
-            <View style={styles.hero}>
-              <View style={[styles.avatar, { backgroundColor: colors.primaryTint }]}>
+          <View className="mb-1">
+            <View className="mb-4.5 flex-row items-start gap-3.5">
+              <View className="bg-primary-tint h-[58px] w-[58px] items-center justify-center rounded-full">
                 <Text
+                  className="text-primary text-[21px]"
                   style={{
                     fontFamily: displayFontFamily(theme.name),
-                    fontSize: 21,
                     fontWeight: theme.typography.displayWeight,
-                    color: colors.primary,
                   }}
                 >
                   {initials}
                 </Text>
               </View>
-              <View style={styles.heroBody}>
+              <View className="min-w-0 flex-1">
                 <Text
+                  className="text-fg text-[26px] tracking-[-0.55px]"
                   style={{
                     fontFamily: displayFontFamily(theme.name),
-                    fontSize: 26,
                     lineHeight: 30,
-                    letterSpacing: -0.55,
-                    color: colors.fg,
                   }}
                   numberOfLines={2}
                 >
                   {fullName}
                 </Text>
-                <View style={styles.heroMeta}>
-                  <View style={[styles.chip, { backgroundColor: chipBg }]}>
+                <View className="mt-2 flex-row flex-wrap items-center gap-2">
+                  <View className={cn('rounded-full px-2 py-1', chipClass)} style={chipBgStyle}>
                     <Text
-                      style={{
-                        fontFamily: Fonts.sans.semibold,
-                        fontSize: 11,
-                        letterSpacing: -0.05,
-                        color: chipFg,
-                      }}
+                      className="text-[11px] font-semibold tracking-[-0.05px]"
+                      style={{ color: chipFg }}
                     >
                       {t(STATUS_LABELS[contractStatus])}
                     </Text>
@@ -386,14 +357,7 @@ export default function TenantDetailScreen() {
                       accessibilityRole="link"
                       accessibilityLabel={propertyLabel}
                     >
-                      <Text
-                        style={{
-                          fontFamily: Fonts.sans.regular,
-                          fontSize: 12,
-                          color: colors.muted,
-                        }}
-                        numberOfLines={1}
-                      >
+                      <Text className="text-muted text-xs" numberOfLines={1}>
                         {propertyLabel}
                       </Text>
                     </Pressable>
@@ -403,7 +367,7 @@ export default function TenantDetailScreen() {
             </View>
 
             {quickActions.length > 0 ? (
-              <View style={styles.qaRow}>
+              <View className="mb-5.5 flex-row gap-1.5">
                 {quickActions.map((action) => (
                   <QuickAction
                     key={action.key}
@@ -417,26 +381,14 @@ export default function TenantDetailScreen() {
             ) : null}
 
             <Text
-              style={{
-                fontFamily: displayFontFamily(theme.name),
-                fontSize: 22,
-                letterSpacing: -0.55,
-                color: colors.fg,
-                marginBottom: 11,
-              }}
+              className="text-fg mb-2.75 text-[22px] tracking-[-0.55px]"
+              style={{ fontFamily: displayFontFamily(theme.name) }}
             >
               {t('tenants.contract')}
             </Text>
             <View
-              style={[
-                styles.card,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.cardBd,
-                  borderRadius: radius.xl,
-                  ...elevation.card,
-                },
-              ]}
+              className="border-card-bd bg-surface mb-5 rounded-xl border px-4.5 pt-1 pb-1.5"
+              style={elevation.card}
             >
               <ContractRow
                 label={t('tenants.contractStart')}
@@ -469,14 +421,8 @@ export default function TenantDetailScreen() {
             </View>
 
             <Text
-              style={{
-                fontFamily: displayFontFamily(theme.name),
-                fontSize: 22,
-                letterSpacing: -0.55,
-                color: colors.fg,
-                marginTop: 8,
-                marginBottom: 11,
-              }}
+              className="text-fg mt-2 mb-2.75 text-[22px] tracking-[-0.55px]"
+              style={{ fontFamily: displayFontFamily(theme.name) }}
             >
               {t('tenants.recentPayments')}
             </Text>
@@ -498,26 +444,20 @@ export default function TenantDetailScreen() {
                   params: { propertyId: tenant.property_id, tenantId: tenant.id },
                 })
               }
-              style={styles.emptyState}
+              className="mb-4"
             />
           )
         }
         ListFooterComponent={
-          <View style={styles.footer}>
+          <View className="mt-2 gap-2.5">
             {hasMorePayments ? (
               <Pressable
                 onPress={() => setPaymentsExpanded((current) => !current)}
-                style={[styles.ghostBtn, { backgroundColor: colors.surface2 }]}
+                className="bg-surface-2 min-h-12 flex-row items-center justify-center gap-1.5 rounded-full px-4.5"
                 accessibilityRole="button"
                 accessibilityState={{ expanded: paymentsExpanded }}
               >
-                <Text
-                  style={{
-                    fontFamily: Fonts.sans.semibold,
-                    fontSize: 14,
-                    color: colors.fg,
-                  }}
-                >
+                <Text className="text-fg text-sm font-semibold">
                   {paymentsExpanded ? t('common.showLess') : t('tenants.seeAllPayments')}
                 </Text>
                 {!paymentsExpanded ? (
@@ -529,128 +469,26 @@ export default function TenantDetailScreen() {
             {tenant.is_active ? (
               <Pressable
                 onPress={handleDeactivate}
-                style={[styles.ghostBtn, { backgroundColor: colors.surface2 }]}
+                className="bg-surface-2 min-h-12 flex-row items-center justify-center gap-1.5 rounded-full px-4.5"
                 accessibilityRole="button"
                 accessibilityLabel={t('tenants.deactivate')}
               >
-                <Text
-                  style={{
-                    fontFamily: Fonts.sans.semibold,
-                    fontSize: 14,
-                    color: colors.fg,
-                  }}
-                >
-                  {t('tenants.deactivate')}
-                </Text>
+                <Text className="text-fg text-sm font-semibold">{t('tenants.deactivate')}</Text>
               </Pressable>
             ) : null}
 
             <Pressable
               onPress={handleDelete}
-              style={[styles.ghostBtn, { backgroundColor: colors.surface2 }]}
+              className="bg-surface-2 min-h-12 flex-row items-center justify-center gap-1.5 rounded-full px-4.5"
               accessibilityRole="button"
               accessibilityLabel={t('tenants.removeTenant')}
             >
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 14,
-                  color: colors.neg,
-                }}
-              >
-                {t('tenants.removeTenant')}
-              </Text>
+              <Text className="text-neg text-sm font-semibold">{t('tenants.removeTenant')}</Text>
             </Pressable>
           </View>
         }
-        contentContainerStyle={styles.content}
+        contentContainerClassName="px-gutter pb-12"
       />
     </DetailScreenScaffold>
   );
 }
-
-const styles = StyleSheet.create({
-  content: {
-    paddingHorizontal: Spacing.gutter,
-    paddingBottom: Spacing.xxl,
-  },
-  headerContent: {
-    marginBottom: 4,
-  },
-  hero: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 14,
-    marginBottom: 18,
-  },
-  avatar: {
-    width: 58,
-    height: 58,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroBody: {
-    flex: 1,
-    minWidth: 0,
-  },
-  heroMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
-  },
-  chip: {
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  qaRow: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: 22,
-  },
-  qa: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 9,
-  },
-  qaCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  card: {
-    borderWidth: 1,
-    paddingHorizontal: 18,
-    paddingTop: 4,
-    paddingBottom: 6,
-    marginBottom: 20,
-  },
-  lrow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 13,
-    paddingVertical: 13,
-  },
-  emptyState: {
-    marginBottom: 16,
-  },
-  footer: {
-    marginTop: 8,
-    gap: 10,
-  },
-  ghostBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    minHeight: 48,
-    borderRadius: 999,
-    paddingHorizontal: 18,
-  },
-});

@@ -8,10 +8,9 @@ import {
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Text } from '@/components/ui/text';
-import { Colors } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { cn } from '@/lib/utils';
 import type { PaymentStatus } from '@/types/app.types';
-import { getStatusColor } from '@/utils/formatters';
 
 const PAYMENT_STATUS_ICONS: Record<PaymentStatus, LucideIcon> = {
   paid: CircleCheck,
@@ -40,38 +39,6 @@ export interface AppBadgeProps {
   className?: string;
 }
 
-function resolveBadgeColors(
-  variant: AppBadgeVariant,
-  customColor?: string,
-): { background: string; text: string } {
-  if (customColor) {
-    return {
-      background: `${customColor}22`,
-      text: customColor,
-    };
-  }
-
-  const paymentStatuses: PaymentStatus[] = ['paid', 'pending', 'late', 'partial'];
-  if (paymentStatuses.includes(variant as PaymentStatus)) {
-    const color = getStatusColor(variant as PaymentStatus);
-    return { background: `${color}22`, text: color };
-  }
-
-  switch (variant) {
-    case 'success':
-      return { background: `${Colors.accent}22`, text: Colors.accent };
-    case 'warning':
-      return { background: `${Colors.warning}22`, text: Colors.warning };
-    case 'error':
-      return { background: `${Colors.danger}22`, text: Colors.danger };
-    case 'info':
-      return { background: Colors.primaryLight, text: Colors.primary };
-    case 'default':
-    default:
-      return { background: Colors.surfaceVariant, text: Colors.textSecondary };
-  }
-}
-
 export function AppBadge({
   label,
   variant = 'default',
@@ -79,7 +46,29 @@ export function AppBadge({
   style,
   className,
 }: AppBadgeProps) {
-  const { background, text } = resolveBadgeColors(variant, color);
+  const { theme } = useAppTheme();
+  const { colors } = theme;
+
+  let text = colors.muted;
+  let background = colors.surface2;
+
+  if (color) {
+    text = color;
+    background = `${color}22`;
+  } else if (variant === 'paid' || variant === 'success') {
+    text = colors.pos;
+    background = colors.posTint;
+  } else if (variant === 'late' || variant === 'error') {
+    text = colors.neg;
+    background = colors.negTint;
+  } else if (variant === 'pending' || variant === 'partial' || variant === 'info') {
+    text = colors.primary;
+    background = colors.primaryTint;
+  } else if (variant === 'warning') {
+    text = colors.chart[4];
+    background = colors.chartTint[4];
+  }
+
   const StatusIcon = PAYMENT_STATUS_ICONS[variant as PaymentStatus];
 
   return (

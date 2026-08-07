@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
   type StyleProp,
@@ -11,14 +10,12 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { AppDatePicker } from '@/components/ui/AppDatePicker';
-import { Spacing } from '@/constants/theme';
 import { buildReportPeriod } from '@/hooks/useReports';
-import { useAppTheme } from '@/hooks/useAppTheme';
-import { Fonts } from '@/lib/fonts';
 import {
   isUsableCustomStartDate,
   resolveCustomReportPeriod,
 } from '@/services/reports';
+import { cn } from '@/lib/utils';
 import type { ReportPeriod, ReportPeriodPreset } from '@/types/app.types';
 
 const PRESET_OPTIONS: ReportPeriodPreset[] = [
@@ -47,6 +44,7 @@ export interface PeriodFilterProps {
   /** First financial activity (yyyy-MM-dd) for the current property scope. */
   earliestActivityDate?: string | null;
   style?: StyleProp<ViewStyle>;
+  className?: string;
 }
 
 function parseDateValue(value: string): Date | null {
@@ -69,9 +67,8 @@ export function PeriodFilter({
   propertyFilter = 'all',
   earliestActivityDate = null,
   style,
+  className,
 }: PeriodFilterProps) {
-  const { theme } = useAppTheme();
-  const { colors } = theme;
   const { t } = useTranslation();
   const [customStart, setCustomStart] = useState(value.startDate);
   const [customEnd, setCustomEnd] = useState(value.endDate);
@@ -161,11 +158,11 @@ export function PeriodFilter({
   };
 
   return (
-    <View style={[styles.container, style]}>
+    <View className={cn('gap-2', className)} style={style}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.pillRow}
+        contentContainerClassName="flex-row gap-2"
       >
         {pills.map((pill) => {
           const on = value.preset === pill.value;
@@ -173,20 +170,18 @@ export function PeriodFilter({
             <Pressable
               key={pill.value}
               onPress={() => handlePresetChange(pill.value)}
-              style={[
-                styles.pill,
-                {
-                  backgroundColor: on ? colors.primaryTint : colors.surface2,
-                },
-              ]}
+              className={cn(
+                'h-8.5 items-center justify-center rounded-full px-3.5',
+                on ? 'bg-primary-tint' : 'bg-surface-2',
+              )}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
             >
               <Text
-                style={[
-                  styles.pillLabel,
-                  { color: on ? colors.primary : colors.muted },
-                ]}
+                className={cn(
+                  'text-[12.5px] font-semibold tracking-[-0.12px]',
+                  on ? 'text-primary' : 'text-muted',
+                )}
                 numberOfLines={1}
               >
                 {pill.label}
@@ -197,53 +192,23 @@ export function PeriodFilter({
       </ScrollView>
 
       {value.preset === 'custom' ? (
-        <View style={styles.customRange}>
+        <View className="mt-1 flex-row gap-4">
           <AppDatePicker
             label={t('common.from')}
             value={parseDateValue(customStart)}
             onChange={handleCustomStartChange}
             maximumDate={parseDateValue(customEnd) ?? undefined}
-            style={styles.dateField}
+            style={{ flex: 1 }}
           />
           <AppDatePicker
             label={t('common.to')}
             value={parseDateValue(customEnd)}
             onChange={handleCustomEndChange}
             minimumDate={parseDateValue(customStart) ?? undefined}
-            style={styles.dateField}
+            style={{ flex: 1 }}
           />
         </View>
       ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    gap: Spacing.sm,
-  },
-  pillRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  pill: {
-    height: 34,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pillLabel: {
-    fontFamily: Fonts.sans.semibold,
-    fontSize: 12.5,
-    letterSpacing: -0.12,
-  },
-  customRange: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    marginTop: Spacing.xs,
-  },
-  dateField: {
-    flex: 1,
-  },
-});

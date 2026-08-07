@@ -10,7 +10,7 @@ import {
   Wrench,
 } from 'lucide-react-native';
 import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppInlineFilter } from '@/components/ui/AppInlineFilter';
@@ -60,7 +60,7 @@ export function PropertyFilters({
   );
 
   return (
-    <View style={styles.row}>
+    <View className="mb-4 flex-row flex-wrap items-center gap-2">
       <AppInlineFilter
         options={typeOptions}
         value={typeFilter}
@@ -82,13 +82,3 @@ export function PropertyFilters({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-});

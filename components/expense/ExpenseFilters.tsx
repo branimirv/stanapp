@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ExpenseFiltersSheet } from '@/components/expense/ExpenseFiltersSheet';
 import type {
@@ -192,7 +192,7 @@ export function ExpenseActiveFilterChips(props: ExpenseFiltersStateProps) {
   if (chips.length === 0) return null;
 
   return (
-    <View style={styles.container}>
+    <View className="mb-4">
       <FilterChipRow chips={chips} />
     </View>
   );
@@ -248,9 +248,3 @@ export function ExpenseFiltersSheetHost({
     />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 16,
-  },
-});

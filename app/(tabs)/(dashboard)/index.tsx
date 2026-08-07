@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { DashboardAlertCard } from '@/components/dashboard/DashboardAlertCard';
@@ -70,8 +70,8 @@ export default function DashboardScreen() {
   }, [stats]);
 
   const wrap = (children: ReactNode, showCreate = false) => (
-    <View style={styles.shell} collapsable={false}>
-      <View style={styles.content} collapsable={false}>
+    <View className="flex-1 bg-transparent" collapsable={false}>
+      <View className="flex-1" collapsable={false}>
         {children}
       </View>
       {showCreate ? <DashboardCreateActions onCreatePress={openCreateSheet} /> : null}
@@ -94,11 +94,11 @@ export default function DashboardScreen() {
 
   if ((isLoading || propertiesLoading) && !stats && !hasNoProperties) {
     return wrap(
-      <View style={[contentPad, { paddingTop: 16 }]}>
-        <SkeletonLoader count={1} height={56} style={styles.skeleton} />
-        <SkeletonLoader count={1} height={48} style={styles.skeleton} />
-        <SkeletonLoader count={1} height={120} style={styles.skeleton} />
-        <SkeletonLoader count={2} height={100} style={styles.skeleton} />
+      <View className="pt-4" style={contentPad}>
+        <SkeletonLoader count={1} height={56} className="mb-4" />
+        <SkeletonLoader count={1} height={48} className="mb-4" />
+        <SkeletonLoader count={1} height={120} className="mb-4" />
+        <SkeletonLoader count={2} height={100} className="mb-4" />
       </View>,
     );
   }
@@ -238,16 +238,3 @@ export default function DashboardScreen() {
     true,
   );
 }
-
-const styles = StyleSheet.create({
-  shell: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  content: {
-    flex: 1,
-  },
-  skeleton: {
-    marginBottom: 16,
-  },
-});

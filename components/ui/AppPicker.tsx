@@ -2,7 +2,6 @@ import { ChevronDown, type LucideIcon } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import {
   Pressable,
-  StyleSheet,
   View,
   type StyleProp,
   type ViewStyle,
@@ -11,9 +10,8 @@ import { useTranslation } from 'react-i18next';
 
 import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
 import { Text } from '@/components/ui/text';
-import { Spacing, Typography } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { Fonts } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 
 export interface PickerOption<T extends string = string> {
   label: string;
@@ -30,6 +28,7 @@ export interface AppPickerProps<T extends string = string> {
   error?: string;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  className?: string;
   /** Notify host when the option sheet opens/closes (for BlurOverlay sibling). */
   onVisibilityChange?: (open: boolean) => void;
 }
@@ -43,6 +42,7 @@ export function AppPicker<T extends string = string>({
   error,
   disabled = false,
   style,
+  className,
   onVisibilityChange,
 }: AppPickerProps<T>) {
   const { theme } = useAppTheme();
@@ -75,20 +75,10 @@ export function AppPicker<T extends string = string>({
     [dismissSheet, onValueChange],
   );
 
-  const borderColor = error ? colors.neg : colors.bd;
-
   return (
-    <View style={[styles.container, style]}>
+    <View className={cn('w-full', className)} style={style}>
       {label ? (
-        <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: Typography.text.fieldLabel.size,
-            lineHeight: 17,
-            color: colors.fg,
-            marginBottom: 8,
-          }}
-        >
+        <Text className="text-fg mb-2 text-[13px] leading-gutter font-semibold">
           {label}
         </Text>
       ) : null}
@@ -96,14 +86,11 @@ export function AppPicker<T extends string = string>({
       <Pressable
         onPress={openPicker}
         disabled={disabled}
-        style={[
-          styles.field,
-          {
-            backgroundColor: colors.surface2,
-            borderColor,
-            opacity: disabled ? 0.6 : 1,
-          },
-        ]}
+        className={cn(
+          'bg-surface-2 border-bd min-h-12 flex-row items-center justify-between gap-2 rounded-md border px-3.5',
+          error && 'border-neg',
+          disabled && 'opacity-60',
+        )}
         accessibilityRole="button"
         accessibilityLabel={label ?? t('common.select')}
       >
@@ -117,16 +104,7 @@ export function AppPicker<T extends string = string>({
       </Pressable>
 
       {error ? (
-        <Text
-          style={{
-            fontFamily: Fonts.sans.regular,
-            fontSize: 14,
-            color: colors.neg,
-            marginTop: 6,
-          }}
-        >
-          {error}
-        </Text>
+        <Text className="text-neg mt-1.5 text-sm">{error}</Text>
       ) : null}
 
       <AppBottomSheet
@@ -134,90 +112,49 @@ export function AppPicker<T extends string = string>({
         onDismiss={dismissSheet}
         title={label ?? t('common.select')}
         scrollable
-        contentStyle={styles.options}
       >
-        {options.map((option) => {
-          const selected = option.value === value;
-          const Icon = option.icon;
-          return (
-            <Pressable
-              key={option.value}
-              onPress={() => handleSelect(option.value)}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              style={[
-                styles.optionRow,
-                {
-                  backgroundColor: selected ? colors.primaryTint : colors.surface2,
-                },
-              ]}
-            >
-              {Icon ? (
-                <View
-                  style={[
-                    styles.iconWell,
-                    {
-                      backgroundColor: selected ? colors.surface : colors.surface3,
-                    },
-                  ]}
-                >
-                  <Icon
-                    size={18}
-                    color={selected ? colors.primary : colors.muted}
-                    strokeWidth={2}
-                  />
-                </View>
-              ) : null}
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 15,
-                  letterSpacing: -0.15,
-                  color: selected ? colors.primary : colors.fg,
-                  flex: 1,
-                }}
+        <View className="gap-2.5 pb-1">
+          {options.map((option) => {
+            const selected = option.value === value;
+            const Icon = option.icon;
+            return (
+              <Pressable
+                key={option.value}
+                onPress={() => handleSelect(option.value)}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                className={cn(
+                  'min-h-13 flex-row items-center gap-3 rounded-lg px-3.5',
+                  selected ? 'bg-primary-tint' : 'bg-surface-2',
+                )}
               >
-                {option.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+                {Icon ? (
+                  <View
+                    className={cn(
+                      'h-9 w-9 items-center justify-center rounded-full',
+                      selected ? 'bg-surface' : 'bg-surface-3',
+                    )}
+                  >
+                    <Icon
+                      size={18}
+                      color={selected ? colors.primary : colors.muted}
+                      strokeWidth={2}
+                    />
+                  </View>
+                ) : null}
+                <Text
+                  className={cn(
+                    'flex-1 text-[15px] font-semibold tracking-[-0.15px]',
+                    selected ? 'text-primary' : 'text-fg',
+                  )}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </AppBottomSheet>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-  },
-  field: {
-    minHeight: 48,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.sm,
-  },
-  options: {
-    gap: 10,
-    paddingBottom: 4,
-  },
-  optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    minHeight: 52,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-  },
-  iconWell: {
-    width: 36,
-    height: 36,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

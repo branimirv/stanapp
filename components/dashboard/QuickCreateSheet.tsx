@@ -5,7 +5,7 @@ import {
   Receipt,
   type LucideIcon,
 } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -13,7 +13,7 @@ import {
   APP_BOTTOM_SHEET_CLOSE_MS,
 } from '@/components/ui/AppBottomSheet';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { Fonts } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 
 interface QuickCreateSheetProps {
   visible: boolean;
@@ -63,9 +63,9 @@ export function QuickCreateSheet({ visible, onDismiss }: QuickCreateSheetProps) 
   const { colors } = theme;
 
   const tintFor = (tint: 'primary' | 'neg' | 'pos') => {
-    if (tint === 'neg') return { bg: colors.negTint, fg: colors.neg };
-    if (tint === 'pos') return { bg: colors.posTint, fg: colors.pos };
-    return { bg: colors.primaryTint, fg: colors.primary };
+    if (tint === 'neg') return { well: 'bg-neg-tint' as const, fg: colors.neg };
+    if (tint === 'pos') return { well: 'bg-pos-tint' as const, fg: colors.pos };
+    return { well: 'bg-primary-tint' as const, fg: colors.primary };
   };
 
   return (
@@ -74,7 +74,7 @@ export function QuickCreateSheet({ visible, onDismiss }: QuickCreateSheetProps) 
       onDismiss={onDismiss}
       title={t('dashboard.quickActions')}
     >
-      <View style={styles.actions}>
+      <View className="gap-2.5">
         {ACTIONS.map((action) => {
           const Icon = action.icon;
           const tint = tintFor(action.tint);
@@ -87,20 +87,17 @@ export function QuickCreateSheet({ visible, onDismiss }: QuickCreateSheetProps) 
               }}
               accessibilityRole="button"
               accessibilityLabel={t(action.labelKey)}
-              style={[styles.actionRow, { backgroundColor: colors.surface2 }]}
+              className="bg-surface-2 h-14 flex-row items-center gap-3.5 rounded-full px-3.5"
             >
-              <View style={[styles.iconWell, { backgroundColor: tint.bg }]}>
+              <View
+                className={cn(
+                  'h-10 w-10 items-center justify-center rounded-full',
+                  tint.well,
+                )}
+              >
                 <Icon size={20} color={tint.fg} strokeWidth={2} />
               </View>
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 15,
-                  letterSpacing: -0.15,
-                  color: colors.fg,
-                  flex: 1,
-                }}
-              >
+              <Text className="text-fg flex-1 text-[15px] font-semibold tracking-[-0.15px]">
                 {t(action.labelKey)}
               </Text>
             </Pressable>
@@ -110,24 +107,3 @@ export function QuickCreateSheet({ visible, onDismiss }: QuickCreateSheetProps) 
     </AppBottomSheet>
   );
 }
-
-const styles = StyleSheet.create({
-  actions: {
-    gap: 10,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    height: 56,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-  },
-  iconWell: {
-    width: 40,
-    height: 40,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

@@ -4,7 +4,6 @@ import {
   Modal,
   Pressable,
   ScrollView,
-  StyleSheet,
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +12,7 @@ import { AppDatePicker } from '@/components/ui/AppDatePicker';
 import { AppTextInput } from '@/components/ui/AppTextInput';
 import { Text } from '@/components/ui/text';
 import { CategoryBadge } from '@/components/expense/CategoryBadge';
-import { Spacing } from '@/constants/theme';
+import { cn } from '@/lib/utils';
 import type { ExpenseCategory } from '@/types/app.types';
 import {
   defaultRecurringForType,
@@ -109,15 +108,14 @@ export function QuickAddExpenseSheet({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
-      <Pressable style={styles.overlay} onPress={onDismiss}>
+      <Pressable className="flex-1 justify-end bg-black/45" onPress={onDismiss}>
         <Pressable
-          style={styles.content}
-          className="bg-card"
+          className="bg-surface max-h-[85%] gap-2 rounded-t-2xl px-6 pt-2 pb-8"
           onPress={(event) => event.stopPropagation()}
         >
-          <View style={styles.handle} className="bg-border" />
+          <View className="bg-bd mb-2 h-1 w-9 self-center rounded-sm" />
 
-          <Text className="mb-1 text-center text-lg font-medium">
+          <Text className="text-fg mb-1 text-center text-lg font-medium">
             {t('expenses.quickAddTitle')}
           </Text>
 
@@ -130,13 +128,13 @@ export function QuickAddExpenseSheet({
             autoFocus
           />
 
-          <Text className="text-muted-foreground mt-1 text-sm font-semibold">
+          <Text className="text-muted mt-1 text-sm font-semibold">
             {t('expenses.category')}
           </Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipRow}
+            contentContainerClassName="flex-row gap-2 py-1"
           >
             {regularCategories.map((category) => {
               const selected = category.id === categoryId;
@@ -144,8 +142,10 @@ export function QuickAddExpenseSheet({
                 <Pressable
                   key={category.id}
                   onPress={() => setCategoryId(category.id)}
-                  style={styles.chip}
-                  className={selected ? 'border-primary border-2' : undefined}
+                  className={cn(
+                    'rounded-full border',
+                    selected ? 'border-primary border-2' : 'border-transparent',
+                  )}
                   accessibilityRole="button"
                   accessibilityState={{ selected }}
                 >
@@ -175,7 +175,7 @@ export function QuickAddExpenseSheet({
             numberOfLines={2}
           />
 
-          <View style={styles.actions}>
+          <View className="mt-4 flex-row items-center justify-between">
             <AppButton mode="text" onPress={handleMoreDetails}>
               {t('expenses.moreDetails')}
             </AppButton>
@@ -193,43 +193,3 @@ export function QuickAddExpenseSheet({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-  },
-  content: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.sm,
-    maxHeight: '85%',
-  },
-  handle: {
-    alignSelf: 'center',
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    marginBottom: Spacing.sm,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    paddingVertical: Spacing.xs,
-  },
-  chip: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: Spacing.md,
-  },
-});

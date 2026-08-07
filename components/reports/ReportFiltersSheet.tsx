@@ -2,7 +2,6 @@ import { useMemo, type ReactNode } from 'react';
 import {
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
   type StyleProp,
@@ -14,8 +13,7 @@ import { PeriodFilter } from '@/components/reports/PeriodFilter';
 import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
 import { AppPicker, type PickerOption } from '@/components/ui/AppPicker';
 import { useEarliestReportActivity } from '@/hooks/useEarliestReportActivity';
-import { useAppTheme } from '@/hooks/useAppTheme';
-import { Fonts } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import type { ReportCategoryTypeFilter, ReportPeriod } from '@/types/app.types';
 
 export interface ReportFiltersSheetProps {
@@ -42,40 +40,33 @@ function FilterChipRow<T extends string>({
   options,
   value,
   onChange,
-  style,
+  className,
 }: {
   options: FilterChipOption<T>[];
   value: T;
   onChange: (value: T) => void;
-  style?: StyleProp<ViewStyle>;
+  className?: string;
 }) {
-  const { theme } = useAppTheme();
-  const { colors } = theme;
-
   return (
-    <View style={[styles.chipRow, style]}>
+    <View className={cn('flex-row flex-wrap gap-2', className)}>
       {options.map((option) => {
         const on = option.value === value;
         return (
           <Pressable
             key={option.value}
             onPress={() => onChange(option.value)}
-            style={[
-              styles.chip,
-              {
-                backgroundColor: on ? colors.primaryTint : colors.surface2,
-              },
-            ]}
+            className={cn(
+              'h-8.5 items-center justify-center rounded-full px-3.5',
+              on ? 'bg-primary-tint' : 'bg-surface-2',
+            )}
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
           >
             <Text
-              style={{
-                fontFamily: Fonts.sans.semibold,
-                fontSize: 12.5,
-                letterSpacing: -0.12,
-                color: on ? colors.primary : colors.muted,
-              }}
+              className={cn(
+                'text-[12.5px] font-semibold tracking-[-0.12px]',
+                on ? 'text-primary' : 'text-muted',
+              )}
               numberOfLines={1}
             >
               {option.label}
@@ -90,28 +81,17 @@ function FilterChipRow<T extends string>({
 function FilterGroup({
   label,
   children,
+  className,
   style,
 }: {
   label: string;
   children: ReactNode;
+  className?: string;
   style?: StyleProp<ViewStyle>;
 }) {
-  const { theme } = useAppTheme();
-  const { colors } = theme;
-
   return (
-    <View style={[styles.group, style]}>
-      <Text
-        style={{
-          fontFamily: Fonts.sans.semibold,
-          fontSize: 11,
-          lineHeight: 14,
-          letterSpacing: 1.54,
-          textTransform: 'uppercase',
-          color: colors.muted,
-          marginBottom: 10,
-        }}
-      >
+    <View className={cn('mb-4.5', className)} style={style}>
+      <Text className="text-muted mb-2.5 text-[11px] leading-3.5 font-semibold tracking-[1.54px] uppercase">
         {label}
       </Text>
       {children}
@@ -134,8 +114,6 @@ export function ReportFiltersSheet({
   onClearFilters,
 }: ReportFiltersSheetProps) {
   const { t } = useTranslation();
-  const { theme } = useAppTheme();
-  const { colors } = theme;
   const { earliestActivityDate } = useEarliestReportActivity(propertyFilter);
 
   const activeCount = useMemo(() => {
@@ -163,8 +141,8 @@ export function ReportFiltersSheet({
   return (
     <AppBottomSheet visible={visible} onDismiss={onDismiss} title={t('reports.filters')}>
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        className="max-h-105 grow-0"
+        contentContainerClassName="pb-1"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         bounces={false}
@@ -187,7 +165,7 @@ export function ReportFiltersSheet({
           />
         </FilterGroup>
 
-        <FilterGroup label={t('reports.filterType')} style={styles.groupTight}>
+        <FilterGroup label={t('reports.filterType')} className="mb-2.5">
           <FilterChipRow
             options={typeOptions}
             value={categoryTypeFilter}
@@ -195,35 +173,19 @@ export function ReportFiltersSheet({
           />
         </FilterGroup>
 
-        <Text
-          style={{
-            fontFamily: Fonts.sans.regular,
-            fontSize: 11.5,
-            lineHeight: 18,
-            color: colors.muted,
-            marginBottom: 22,
-          }}
-        >
+        <Text className="text-muted mb-5.5 text-[11.5px] leading-4.5">
           {t('reports.expenseFilterHint')}
         </Text>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View className="flex-row gap-2.25">
         <Pressable
           onPress={handleClear}
           accessibilityRole="button"
           accessibilityLabel={t('common.clearFilters')}
-          style={[styles.footerBtn, styles.clearBtn, { backgroundColor: colors.surface2 }]}
+          className="bg-surface-2 h-11 flex-1 flex-row items-center justify-center gap-1.5 rounded-full px-4"
         >
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 14,
-              letterSpacing: -0.14,
-              color: colors.fg,
-            }}
-            numberOfLines={1}
-          >
+          <Text className="text-fg text-sm font-semibold tracking-[-0.14px]" numberOfLines={1}>
             {t('common.clearFilters')}
           </Text>
         </Pressable>
@@ -232,16 +194,9 @@ export function ReportFiltersSheet({
           onPress={onDismiss}
           accessibilityRole="button"
           accessibilityLabel={doneLabel}
-          style={[styles.footerBtn, styles.doneBtn, { backgroundColor: colors.primary }]}
+          className="bg-primary h-11 flex-2 flex-row items-center justify-center gap-1.5 rounded-full px-4"
         >
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 14,
-              letterSpacing: -0.14,
-              color: colors.onPrimary,
-            }}
-          >
+          <Text className="text-on-primary text-sm font-semibold tracking-[-0.14px]">
             {doneLabel}
           </Text>
         </Pressable>
@@ -249,50 +204,3 @@ export function ReportFiltersSheet({
     </AppBottomSheet>
   );
 }
-
-const styles = StyleSheet.create({
-  scroll: {
-    flexGrow: 0,
-    maxHeight: 420,
-  },
-  scrollContent: {
-    paddingBottom: 4,
-  },
-  group: {
-    marginBottom: 18,
-  },
-  groupTight: {
-    marginBottom: 10,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chip: {
-    height: 34,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  footer: {
-    flexDirection: 'row',
-    gap: 9,
-  },
-  footerBtn: {
-    height: 44,
-    borderRadius: 999,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-  },
-  clearBtn: {
-    flex: 1,
-  },
-  doneBtn: {
-    flex: 2,
-  },
-});

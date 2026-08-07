@@ -1,10 +1,10 @@
 import { ChevronRight } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { Typography } from '@/constants/theme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 
 export interface OccupancyCardProps {
   rentedCount: number;
@@ -22,42 +22,34 @@ export function OccupancyCard({
 }: OccupancyCardProps) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors } = theme;
+  const { colors, elevation } = theme;
 
   const occupancyPct = totalCount > 0 ? Math.round((rentedCount / totalCount) * 100) : 0;
 
   return (
-    <View style={{ marginBottom: 16 }}>
+    <View className="mb-4">
       <Pressable
         onPress={onPress}
         disabled={!onPress}
         accessibilityRole={onPress ? 'button' : undefined}
       >
-        <View style={styles.secheadRow}>
+        <View className="mb-2.75 flex-row items-baseline gap-2">
           <Text
-            style={{
-              fontFamily: displayFontFamily(theme.name),
-              fontSize: Typography.display.sectionHead.size,
-              lineHeight: Typography.display.sectionHead.lineHeight,
-              letterSpacing: Typography.display.sectionHead.letterSpacing,
-              color: colors.fg,
-              flex: 1,
-            }}
+            className="text-fg flex-1 text-[22px] leading-6 tracking-[-0.55px]"
+            style={{ fontFamily: displayFontFamily(theme.name) }}
           >
             {t('dashboard.occupancy')}
           </Text>
           <Text
-            style={{
-              fontFamily: displayFontFamily(theme.name),
-              fontSize: Typography.display.rowFigure.size,
-              letterSpacing: Typography.display.rowFigure.letterSpacing,
-              color: colors.primary,
-            }}
+            className="text-primary text-[18px] tracking-[-0.36px]"
+            style={{ fontFamily: displayFontFamily(theme.name) }}
           >
             {occupancyPct} %
           </Text>
           {onPress ? (
-            <ChevronRight size={16} color={colors.muted} strokeWidth={2} style={{ marginLeft: 4 }} />
+            <View className="ml-1">
+              <ChevronRight size={16} color={colors.muted} strokeWidth={2} />
+            </View>
           ) : null}
         </View>
       </Pressable>
@@ -65,29 +57,22 @@ export function OccupancyCard({
       <Pressable
         onPress={onPress}
         disabled={!onPress}
-        style={[
-          styles.bays,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.cardBd,
-            borderRadius: theme.radius.xl,
-            ...theme.elevation.card,
-          },
-        ]}
+        className="border-card-bd bg-surface flex-row overflow-hidden rounded-xl border"
+        style={elevation.card}
       >
         <Bay
           value={rentedCount}
           label={t('dashboard.rented')}
-          valueColor={colors.pos}
+          valueClassName="text-pos"
         />
-        <View style={[styles.divider, { backgroundColor: colors.bd }]} />
+        <View className="bg-bd w-px self-stretch" />
         <Bay
           value={vacantCount}
           label={t('dashboard.vacant')}
-          valueColor={vacantCount > 0 ? colors.chart[4] : colors.fg}
+          valueClassName={vacantCount > 0 ? 'text-chart-4' : 'text-fg'}
         />
-        <View style={[styles.divider, { backgroundColor: colors.bd }]} />
-        <Bay value={totalCount} label={t('dashboard.total')} valueColor={colors.fg} />
+        <View className="bg-bd w-px self-stretch" />
+        <Bay value={totalCount} label={t('dashboard.total')} valueClassName="text-fg" />
       </Pressable>
     </View>
   );
@@ -96,65 +81,25 @@ export function OccupancyCard({
 function Bay({
   value,
   label,
-  valueColor,
+  valueClassName,
 }: {
   value: number;
   label: string;
-  valueColor: string;
+  valueClassName: string;
 }) {
   const { theme } = useAppTheme();
-  const { colors } = theme;
 
   return (
-    <View style={styles.bay}>
-      <Text
-        style={{
-          fontFamily: Fonts.sans.semibold,
-          fontSize: 10,
-          letterSpacing: 0.8,
-          textTransform: 'uppercase',
-          color: colors.muted,
-          marginBottom: 8,
-        }}
-      >
+    <View className="flex-1 items-center px-3 pt-4 pb-3.75">
+      <Text className="text-muted mb-2 text-[10px] font-semibold uppercase tracking-[0.8px]">
         {label}
       </Text>
       <Text
-        style={{
-          fontFamily: displayFontFamily(theme.name),
-          fontSize: 23,
-          letterSpacing: -0.46,
-          color: valueColor,
-          fontVariant: ['tabular-nums', 'lining-nums'],
-        }}
+        className={cn('text-[23px] tracking-[-0.46px] tabular-nums', valueClassName)}
+        style={{ fontFamily: displayFontFamily(theme.name) }}
       >
         {value}
       </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  secheadRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 11,
-    gap: 8,
-  },
-  bays: {
-    flexDirection: 'row',
-    overflow: 'hidden',
-    borderWidth: 1,
-  },
-  bay: {
-    flex: 1,
-    paddingTop: 16,
-    paddingHorizontal: 12,
-    paddingBottom: 15,
-    alignItems: 'center',
-  },
-  divider: {
-    width: 1,
-    alignSelf: 'stretch',
-  },
-});

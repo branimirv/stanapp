@@ -2,12 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/ui/AppButton';
@@ -16,9 +11,8 @@ import { AppSegmentedControl } from '@/components/ui/AppSegmentedControl';
 import { useStackChromeEdgeInset } from '@/components/ui/StackScreenChrome';
 import { AppTextInput } from '@/components/ui/AppTextInput';
 import { PROPERTY_TYPES, USAGE_STATUSES } from '@/constants/config';
-import { Typography } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
 import type { Property, PropertyType, UsageStatus } from '@/types/app.types';
 import { translateFieldError } from '@/utils/formHelpers';
 import { propertySchema, type PropertyFormValues } from '@/utils/validators';
@@ -62,19 +56,8 @@ const defaultFormValues: PropertyFormValues = {
 };
 
 function FieldLab({ label }: { label: string }) {
-  const { theme } = useAppTheme();
   return (
-    <Text
-      style={{
-        fontFamily: Fonts.sans.semibold,
-        fontSize: Typography.text.fieldLabel.size,
-        lineHeight: 17,
-        color: theme.colors.fg,
-        marginBottom: 8,
-      }}
-    >
-      {label}
-    </Text>
+    <Text className="text-fg mb-2 text-[13px] leading-gutter font-semibold">{label}</Text>
   );
 }
 
@@ -92,7 +75,6 @@ export function PropertyForm({
 }: PropertyFormProps) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors } = theme;
   const insets = useSafeAreaInsets();
   const edgeInset = useStackChromeEdgeInset();
   const resolvedDefaults = { ...defaultFormValues, ...defaultValues, ...initialValues };
@@ -163,37 +145,29 @@ export function PropertyForm({
   const fieldError = (message?: string) => translateFieldError(t, message);
 
   return (
-    <View style={styles.shell}>
+    <View className="flex-1">
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingHorizontal: theme.spacing.gutter,
-            paddingTop: (edgeInset ?? 0) + 8,
-            paddingBottom: 24,
-          },
-        ]}
+        className="flex-1"
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: theme.spacing.gutter,
+          paddingTop: (edgeInset ?? 0) + 8,
+          paddingBottom: 24,
+        }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         {title ? (
           <Text
-            style={{
-              fontFamily: displayFontFamily(theme.name),
-              fontSize: 32,
-              lineHeight: 32,
-              letterSpacing: -0.8,
-              color: colors.fg,
-              marginBottom: 22,
-            }}
+            className="text-fg mb-5.5 text-[32px] leading-8 tracking-[-0.8px]"
+            style={{ fontFamily: displayFontFamily(theme.name) }}
             accessibilityRole="header"
           >
             {title}
           </Text>
         ) : null}
 
-        <View style={styles.field}>
+        <View className="mb-4.5">
           <FieldLab label={t('properties.type')} />
           <Controller
             control={control}
@@ -209,7 +183,7 @@ export function PropertyForm({
           />
         </View>
 
-        <View style={styles.field}>
+        <View className="mb-4.5">
           <FieldLab label={t('properties.usageStatus')} />
           <Controller
             control={control}
@@ -231,7 +205,6 @@ export function PropertyForm({
           label={t('properties.name')}
           placeholder={t('properties.namePlaceholder')}
           error={fieldError(errors.name?.message)}
-          containerStyle={styles.inputGap}
         />
 
         <AppTextInput
@@ -240,11 +213,10 @@ export function PropertyForm({
           label={t('properties.address')}
           placeholder={t('properties.addressPlaceholder')}
           error={fieldError(errors.address?.message)}
-          containerStyle={styles.inputGap}
         />
 
-        <View style={styles.fieldRow}>
-          <View style={styles.fieldRowItem}>
+        <View className="flex-row gap-2.5">
+          <View className="flex-1">
             <Controller
               control={control}
               name="floor"
@@ -262,12 +234,11 @@ export function PropertyForm({
                   keyboardType="number-pad"
                   editable={showFloor}
                   error={fieldError(fieldState.error?.message)}
-                  containerStyle={styles.inputGap}
                 />
               )}
             />
           </View>
-          <View style={styles.fieldRowItem}>
+          <View className="flex-1">
             <Controller
               control={control}
               name="area_sqm"
@@ -284,7 +255,6 @@ export function PropertyForm({
                   onBlur={onBlur}
                   keyboardType="decimal-pad"
                   error={fieldError(fieldState.error?.message)}
-                  containerStyle={styles.inputGap}
                 />
               )}
             />
@@ -307,18 +277,7 @@ export function PropertyForm({
                 onBlur={onBlur}
                 keyboardType="decimal-pad"
                 error={fieldError(fieldState.error?.message)}
-                containerStyle={styles.inputGap}
-                left={
-                  <Text
-                    style={{
-                      fontFamily: Fonts.sans.medium,
-                      fontSize: 14,
-                      color: colors.muted,
-                    }}
-                  >
-                    EUR
-                  </Text>
-                }
+                left={<Text className="text-muted text-sm font-medium">EUR</Text>}
               />
             )}
           />
@@ -329,7 +288,7 @@ export function PropertyForm({
             control={control}
             name="parent_property_id"
             render={({ field: { value, onChange }, fieldState }) => (
-              <View style={styles.field}>
+              <View className="mb-4.5">
                 <AppPicker
                   label={t('properties.parentProperty')}
                   placeholder={t('common.none')}
@@ -338,15 +297,7 @@ export function PropertyForm({
                   onValueChange={onChange}
                   error={fieldError(fieldState.error?.message)}
                 />
-                <Text
-                  style={{
-                    fontFamily: Fonts.sans.regular,
-                    fontSize: 12,
-                    lineHeight: 16,
-                    color: colors.muted,
-                    marginTop: 8,
-                  }}
-                >
+                <Text className="text-muted mt-2 text-xs leading-4">
                   {t('properties.parentPropertyHint')}
                 </Text>
               </View>
@@ -362,18 +313,13 @@ export function PropertyForm({
           multiline
           numberOfLines={4}
           error={fieldError(errors.notes?.message)}
-          containerStyle={[styles.inputGap, { marginBottom: 0 }]}
+          containerStyle={{ marginBottom: 0 }}
         />
       </ScrollView>
 
       <View
-        style={[
-          styles.formFoot,
-          {
-            paddingBottom: Math.max(insets.bottom, 14) + 8,
-            backgroundColor: colors.bg,
-          },
-        ]}
+        className="bg-bg px-gutter pt-3.5"
+        style={{ paddingBottom: Math.max(insets.bottom, 14) + 8 }}
       >
         <AppButton
           mode="contained"
@@ -387,32 +333,3 @@ export function PropertyForm({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  shell: {
-    flex: 1,
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  field: {
-    marginBottom: 18,
-  },
-  fieldRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  fieldRowItem: {
-    flex: 1,
-  },
-  inputGap: {
-    marginBottom: 18,
-  },
-  formFoot: {
-    paddingHorizontal: 17,
-    paddingTop: 14,
-  },
-});

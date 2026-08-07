@@ -36,7 +36,8 @@ import { buildReportPeriod, useReports } from '@/hooks/useReports';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import { useTabBarStore } from '@/stores/tabBarStore';
 import { useUiStore } from '@/stores/uiStore';
 import { getCategoryLabel } from '@/utils/expense';
@@ -86,7 +87,7 @@ function formatReportPeriodEyebrow(
 export default function ReportsScreen() {
   const { t, i18n } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors, elevation, radius } = theme;
+  const { colors, elevation } = theme;
   const showToast = useUiStore((state) => state.showToast);
   const setChromeHidden = useTabBarStore((s) => s.setChromeHidden);
   const { profile } = useProfile();
@@ -212,59 +213,48 @@ export default function ReportsScreen() {
 
   if (isLoading && !report) {
     return (
-      <View style={styles.container} className="bg-transparent">
-        <SkeletonLoader count={5} height={120} style={styles.skeleton} />
+      <View className="flex-1 bg-transparent">
+        <SkeletonLoader count={5} height={120} className="p-4" />
       </View>
     );
   }
 
   if (error && !report) {
     return (
-      <View style={styles.container} className="bg-transparent">
+      <View className="flex-1 bg-transparent">
         <ErrorState message={error} onRetry={refetch} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container} className="bg-transparent" collapsable={false}>
+    <View className="flex-1 bg-transparent" collapsable={false}>
       <ScrollView
-        style={styles.scroll}
+        className="flex-1"
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={[
-          styles.content,
           {
+            flexGrow: 1,
+            paddingTop: 0,
             paddingHorizontal: theme.spacing.gutter,
             paddingBottom: Spacing.scrollBottom,
           },
-          (!report || !hasData) && styles.contentWhenEmpty,
+          (!report || !hasData) ? { flexGrow: 0 } : null,
         ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.actionsClearance} />
+        <View style={{ height: FLOATING_ACTIONS_ROW_HEIGHT }} />
 
-        <View style={styles.titleBlk}>
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 11,
-              lineHeight: 14,
-              letterSpacing: 1.54,
-              textTransform: 'uppercase',
-              color: colors.muted,
-              marginBottom: 10,
-            }}
-          >
+        <View className="mb-4">
+          <Text className="text-muted mb-2.5 text-[11px] leading-3.5 font-semibold tracking-[1.54px] uppercase">
             {periodEyebrow}
           </Text>
           <Text
+            className="text-fg text-[34px] tracking-[-0.85px]"
             style={{
               fontFamily: displayFontFamily(theme.name),
-              fontSize: 34,
               lineHeight: 34,
-              letterSpacing: -0.85,
-              color: colors.fg,
             }}
           >
             {t('reports.title')}
@@ -274,30 +264,25 @@ export default function ReportsScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={styles.pillBleed}
-          contentContainerStyle={[
-            styles.pillRow,
-            { paddingHorizontal: theme.spacing.gutter },
-          ]}
+          className="mb-3.5 grow-0"
+          style={{ marginHorizontal: -17 }}
+          contentContainerClassName="flex-row gap-2 pb-px"
+          contentContainerStyle={{ paddingHorizontal: theme.spacing.gutter }}
         >
           <Pressable
             onPress={() => handlePropertyPill('all')}
-            style={[
-              styles.pill,
-              {
-                backgroundColor:
-                  propertyFilter === 'all' ? colors.primaryTint : colors.surface2,
-              },
-            ]}
+            className={cn(
+              'h-8.5 items-center justify-center rounded-full px-3.5',
+              propertyFilter === 'all' ? 'bg-primary-tint' : 'bg-surface-2',
+            )}
             accessibilityRole="button"
             accessibilityState={{ selected: propertyFilter === 'all' }}
           >
             <Text
-              style={{
-                fontFamily: Fonts.sans.semibold,
-                fontSize: 13,
-                color: propertyFilter === 'all' ? colors.primary : colors.muted,
-              }}
+              className={cn(
+                'text-[13px] font-semibold',
+                propertyFilter === 'all' ? 'text-primary' : 'text-muted',
+              )}
             >
               {t('reports.allProperties')}
             </Text>
@@ -308,21 +293,15 @@ export default function ReportsScreen() {
               <Pressable
                 key={property.id}
                 onPress={() => handlePropertyPill(property.id)}
-                style={[
-                  styles.pill,
-                  {
-                    backgroundColor: on ? colors.primaryTint : colors.surface2,
-                  },
-                ]}
+                className={cn(
+                  'h-8.5 items-center justify-center rounded-full px-3.5',
+                  on ? 'bg-primary-tint' : 'bg-surface-2',
+                )}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
               >
                 <Text
-                  style={{
-                    fontFamily: Fonts.sans.semibold,
-                    fontSize: 13,
-                    color: on ? colors.primary : colors.muted,
-                  }}
+                  className={cn('text-[13px] font-semibold', on ? 'text-primary' : 'text-muted')}
                   numberOfLines={1}
                 >
                   {property.name}
@@ -342,24 +321,16 @@ export default function ReportsScreen() {
             ctaLabel={t('expenses.addNew')}
             ctaIcon={Plus}
             onCtaPress={handleAddExpense}
-            style={styles.emptyState}
+            className="mt-1"
           />
         ) : (
           <>
             {report.hasMixedCurrencies ? (
               <View
-                style={[
-                  styles.warningBanner,
-                  { backgroundColor: colors.surface2, borderColor: colors.bd },
-                ]}
+                className="border-bd bg-surface-2 mb-3 rounded-md border p-3.5"
+                style={{ borderWidth: StyleSheet.hairlineWidth }}
               >
-                <Text
-                  style={{
-                    fontFamily: Fonts.sans.regular,
-                    fontSize: 13,
-                    color: colors.muted,
-                  }}
-                >
+                <Text className="text-muted text-[13px]">
                   {t('reports.mixedCurrencyWarning')}
                 </Text>
               </View>
@@ -374,15 +345,8 @@ export default function ReportsScreen() {
             />
 
             <View
-              style={[
-                styles.bays,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.cardBd,
-                  borderRadius: radius.xl,
-                  ...elevation.card,
-                },
-              ]}
+              className="border-card-bd bg-surface mb-5 flex-row overflow-hidden rounded-xl border"
+              style={[{ borderWidth: StyleSheet.hairlineWidth }, elevation.card]}
             >
               {(
                 [
@@ -403,21 +367,12 @@ export default function ReportsScreen() {
                   },
                 ] as const
               ).map((bay, index) => (
-                <View key={bay.label} style={styles.bayCell}>
+                <View key={bay.label} className="flex-1 flex-row">
                   {index > 0 ? (
-                    <View style={[styles.bayDivider, { backgroundColor: colors.bd }]} />
+                    <View className="bg-bd" style={{ width: StyleSheet.hairlineWidth }} />
                   ) : null}
-                  <View style={styles.bay}>
-                    <Text
-                      style={{
-                        fontFamily: Fonts.sans.semibold,
-                        fontSize: 10,
-                        letterSpacing: 0.8,
-                        textTransform: 'uppercase',
-                        color: colors.muted,
-                        marginBottom: 9,
-                      }}
-                    >
+                  <View className="flex-1 px-3 py-4">
+                    <Text className="text-muted mb-2.25 text-[10px] font-semibold tracking-[0.8px] uppercase">
                       {bay.label}
                     </Text>
                     <DisplayAmount
@@ -445,7 +400,7 @@ export default function ReportsScreen() {
               data={report.categoryBreakdown}
               currency={report.currency}
               language={language}
-              style={styles.breakdown}
+              style={{ marginTop: 22, marginBottom: 8 }}
             />
           </>
         )}
@@ -474,76 +429,3 @@ export default function ReportsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    flexGrow: 1,
-    paddingTop: 0,
-  },
-  /** Avoid horizontal pill ScrollView eating leftover vertical space. */
-  contentWhenEmpty: {
-    flexGrow: 0,
-  },
-  skeleton: {
-    padding: Spacing.md,
-  },
-  actionsClearance: {
-    height: FLOATING_ACTIONS_ROW_HEIGHT,
-  },
-  titleBlk: {
-    marginBottom: 16,
-  },
-  pillBleed: {
-    flexGrow: 0,
-    marginHorizontal: -17,
-    marginBottom: 14,
-  },
-  pillRow: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingBottom: 1,
-  },
-  pill: {
-    height: 34,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyState: {
-    marginTop: 4,
-  },
-  warningBanner: {
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 14,
-    marginBottom: 12,
-  },
-  bays: {
-    flexDirection: 'row',
-    borderWidth: StyleSheet.hairlineWidth,
-    marginBottom: 20,
-    overflow: 'hidden',
-  },
-  bayCell: {
-    flex: 1,
-    flexDirection: 'row',
-  },
-  bayDivider: {
-    width: StyleSheet.hairlineWidth,
-  },
-  bay: {
-    flex: 1,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-  },
-  breakdown: {
-    marginTop: 22,
-    marginBottom: 8,
-  },
-});

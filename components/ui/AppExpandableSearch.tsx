@@ -10,20 +10,42 @@ import {
 import {
   Platform,
   Pressable,
-  StyleSheet,
   TextInput,
   View,
   type StyleProp,
+  type TextStyle,
   type ViewStyle,
 } from 'react-native';
 
-import { Colors } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { cn } from '@/lib/utils';
 
 const INPUT_HEIGHT = 48;
 const DEBOUNCE_MS = 250;
-const HORIZONTAL_PADDING = 12;
 const ICON_SLOT = 40;
+
+/** Platform-precise TextInput geometry — keep as style. */
+const nativeInputStyle: TextStyle = {
+  lineHeight: Platform.OS === 'ios' ? undefined : 20,
+  paddingLeft: ICON_SLOT,
+  paddingRight: ICON_SLOT,
+  paddingTop: 0,
+  paddingBottom: 0,
+  margin: 0,
+  ...Platform.select<TextStyle>({
+    ios: {
+      height: INPUT_HEIGHT,
+    },
+    android: {
+      height: INPUT_HEIGHT,
+      textAlignVertical: 'center',
+      includeFontPadding: false,
+    },
+    default: {
+      height: INPUT_HEIGHT,
+    },
+  }),
+};
 
 export interface AppExpandableSearchHandle {
   isEmpty: () => boolean;
@@ -35,6 +57,7 @@ export interface AppExpandableSearchProps {
   onActiveChange?: (hasText: boolean) => void;
   placeholder: string;
   style?: StyleProp<ViewStyle>;
+  className?: string;
   expanded?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
   hideTrigger?: boolean;
@@ -49,13 +72,15 @@ export const AppExpandableSearch = forwardRef<
     onActiveChange,
     placeholder,
     style,
+    className,
     expanded = false,
     onExpandedChange,
     hideTrigger = false,
   },
   ref,
 ) {
-  const { isDark, theme } = useAppTheme();
+  const { theme } = useAppTheme();
+  const { colors } = theme;
   const inputRef = useRef<TextInput>(null);
   const didAutoFocus = useRef(false);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -64,10 +89,7 @@ export const AppExpandableSearch = forwardRef<
   const [hasText, setHasText] = useState(false);
   const [focused, setFocused] = useState(false);
 
-  const inputBackground = isDark ? Colors.backgroundDark : Colors.background;
-  const iconColor = theme.colors.onSurfaceVariant;
-  const borderColor = focused ? theme.colors.primary : theme.colors.outline;
-  const textColor = theme.colors.onSurface;
+  const iconColor = colors.muted;
 
   const syncHasText = useCallback(
     (next: string) => {
@@ -163,17 +185,14 @@ export const AppExpandableSearch = forwardRef<
   }
 
   return (
-    <View style={[styles.row, style]}>
+    <View className={cn('w-full min-h-12', className)} style={style}>
       <View
-        style={[
-          styles.field,
-          {
-            borderColor,
-            backgroundColor: inputBackground,
-          },
-        ]}
+        className={cn(
+          'bg-surface h-12 flex-row items-center rounded-sm border',
+          focused ? 'border-primary' : 'border-bd',
+        )}
       >
-        <View style={styles.leadingIcon} pointerEvents="none">
+        <View className="absolute left-3 z-1 h-4.5 w-4.5 items-center justify-center" pointerEvents="none">
           <Search size={18} color={iconColor} strokeWidth={2} />
         </View>
 
@@ -191,15 +210,16 @@ export const AppExpandableSearch = forwardRef<
           autoComplete="off"
           spellCheck={false}
           placeholderTextColor={iconColor}
-          selectionColor={Colors.primary}
-          cursorColor={Colors.primary}
-          style={[styles.nativeInput, { color: textColor }]}
+          selectionColor={colors.primary}
+          cursorColor={colors.primary}
+          className="text-fg flex-1 text-base"
+          style={nativeInputStyle}
         />
 
         <Pressable
           onPress={hasText ? clear : undefined}
           disabled={!hasText}
-          style={styles.trailingIcon}
+          className="absolute right-3 z-1 h-4.5 w-4.5 items-center justify-center"
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Clear search"
@@ -209,59 +229,4 @@ export const AppExpandableSearch = forwardRef<
       </View>
     </View>
   );
-});
-
-const styles = StyleSheet.create({
-  row: {
-    width: '100%',
-    minHeight: INPUT_HEIGHT,
-  },
-  field: {
-    height: INPUT_HEIGHT,
-    borderWidth: 1,
-    borderRadius: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  leadingIcon: {
-    position: 'absolute',
-    left: HORIZONTAL_PADDING,
-    width: 18,
-    height: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  trailingIcon: {
-    position: 'absolute',
-    right: HORIZONTAL_PADDING,
-    width: 18,
-    height: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  nativeInput: {
-    flex: 1,
-    fontSize: 16,
-    lineHeight: Platform.OS === 'ios' ? undefined : 20,
-    paddingLeft: ICON_SLOT,
-    paddingRight: ICON_SLOT,
-    paddingTop: 0,
-    paddingBottom: 0,
-    margin: 0,
-    ...Platform.select({
-      ios: {
-        height: INPUT_HEIGHT,
-      },
-      android: {
-        height: INPUT_HEIGHT,
-        textAlignVertical: 'center',
-        includeFontPadding: false,
-      },
-      default: {
-        height: INPUT_HEIGHT,
-      },
-    }),
-  },
 });

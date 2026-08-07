@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import { Lock, Mail } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AuthFooter, AuthScreen, AuthTitleBlock } from '@/components/auth/AuthScreen';
@@ -156,7 +155,7 @@ export default function RegisterScreen() {
             returnKeyType="done"
             placeholder="••••••••"
             onSubmitEditing={handleSubmit(onSubmit)}
-            containerStyle={styles.lastField}
+            containerStyle={{ marginBottom: 24 }}
             left={<Lock size={16} color={colors.primary} strokeWidth={2} />}
             right={
               <PasswordVisibilityToggle
@@ -186,9 +185,3 @@ export default function RegisterScreen() {
     </AuthScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  lastField: {
-    marginBottom: 24,
-  },
-});

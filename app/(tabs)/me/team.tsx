@@ -14,7 +14,7 @@ import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useMyMemberships, useOwnedPendingInvites } from '@/hooks/useMembers';
 import { useProperties } from '@/hooks/useProperties';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
 import { useUiStore } from '@/stores/uiStore';
 
 export default function TeamAccessScreen() {
@@ -83,7 +83,7 @@ export default function TeamAccessScreen() {
   if (isLoading && selectableProperties.length === 0) {
     return (
       <StackScreenChrome title={t('members.teamTitle')} hideHeaderTitle edgeToEdge>
-        <SkeletonLoader count={4} style={styles.loader} />
+        <SkeletonLoader count={4} className="p-4" />
       </StackScreenChrome>
     );
   }
@@ -169,7 +169,7 @@ function TeamScroll({
 
   return (
     <ScrollView
-      style={styles.flex}
+      className="flex-1"
       contentContainerStyle={{
         paddingHorizontal: Spacing.gutter,
         paddingTop: edgeInset + Spacing.sm,
@@ -179,13 +179,10 @@ function TeamScroll({
       showsVerticalScrollIndicator={false}
     >
       <Text
+        className="text-fg mb-6 text-[32px] tracking-[-0.8px]"
         style={{
           fontFamily: displayFontFamily(themeName),
-          fontSize: 32,
           lineHeight: 32,
-          letterSpacing: -0.8,
-          color: colors.fg,
-          marginBottom: 24,
         }}
       >
         {t('members.teamTitle')}
@@ -202,53 +199,24 @@ function TeamScroll({
       />
 
       <Text
-        style={{
-          fontFamily: displayFontFamily(themeName),
-          fontSize: 18,
-          letterSpacing: -0.36,
-          color: colors.fg,
-          marginTop: 28,
-          marginBottom: 4,
-        }}
+        className="text-fg mt-7 mb-1 text-lg tracking-[-0.36px]"
+        style={{ fontFamily: displayFontFamily(themeName) }}
       >
         {t('members.pendingInvites')}
       </Text>
 
       {invites.length === 0 ? (
-        <Text
-          style={{
-            fontFamily: Fonts.sans.regular,
-            fontSize: 12.5,
-            color: colors.muted,
-            paddingVertical: 10,
-          }}
-        >
-          {t('members.noPending')}
-        </Text>
+        <Text className="text-muted py-2.5 text-[12.5px]">{t('members.noPending')}</Text>
       ) : (
         invites.map((inviteItem) => (
           <View
             key={inviteItem.id}
-            style={[styles.row, { borderBottomColor: colors.bd }]}
+            className="border-bd flex-row items-center justify-between gap-2 py-3"
+            style={{ borderBottomWidth: StyleSheet.hairlineWidth }}
           >
-            <View style={styles.rowText}>
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.medium,
-                  fontSize: 14,
-                  color: colors.fg,
-                }}
-              >
-                {inviteItem.email}
-              </Text>
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.regular,
-                  fontSize: 12,
-                  color: colors.muted,
-                  marginTop: 2,
-                }}
-              >
+            <View className="flex-1">
+              <Text className="text-fg text-sm font-medium">{inviteItem.email}</Text>
+              <Text className="text-muted mt-0.5 text-xs">
                 {t(`members.roles.${inviteItem.role}`)}
                 {inviteItem.property?.name ? ` · ${inviteItem.property.name}` : ''}
               </Text>
@@ -268,22 +236,3 @@ function TeamScroll({
   );
 }
 
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  loader: {
-    padding: Spacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.sm,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  rowText: {
-    flex: 1,
-  },
-});

@@ -3,7 +3,6 @@ import { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
   RefreshControl,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -22,7 +21,6 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { FLOATING_ACTIONS_ROW_HEIGHT } from '@/components/ui/FloatingScreenActions';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { listPerformanceProps } from '@/constants/list';
-import { Colors, Spacing, Typography } from '@/constants/theme';
 import { useMyMemberships } from '@/hooks/useMembers';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
@@ -31,7 +29,7 @@ import { useRefetchOnFocus } from '@/hooks/useRefetchOnFocus';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { SearchableTabActions } from '@/hooks/useSearchableTabHeader';
 import { useTenants } from '@/hooks/useTenants';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
 import { useAuthStore } from '@/stores/authStore';
 import { useTabBarStore } from '@/stores/tabBarStore';
 import { useUiStore } from '@/stores/uiStore';
@@ -182,27 +180,28 @@ export default function PropertiesScreen() {
     (id: string, canArchive: boolean, canDelete: boolean) => {
       if (!canArchive && !canDelete) return null;
       return (
-        <View style={styles.swipeActions}>
+        <View className="mb-3 flex-row items-stretch pl-2">
           {canArchive ? (
             <TouchableOpacity
-              style={[styles.swipeButton, styles.swipeArchive]}
+              className="min-w-[88px] items-center justify-center px-4"
+              style={{ backgroundColor: colors.chart[4] }}
               onPress={() => handleArchive(id)}
             >
-              <Text style={styles.swipeLabel}>{t('common.archive')}</Text>
+              <Text className="text-center text-[11px] font-medium text-white">{t('common.archive')}</Text>
             </TouchableOpacity>
           ) : null}
           {canDelete ? (
             <TouchableOpacity
-              style={[styles.swipeButton, styles.swipeDelete]}
+              className="bg-neg min-w-[88px] items-center justify-center px-4"
               onPress={() => handleDelete(id)}
             >
-              <Text style={styles.swipeLabel}>{t('common.delete')}</Text>
+              <Text className="text-center text-[11px] font-medium text-white">{t('common.delete')}</Text>
             </TouchableOpacity>
           ) : null}
         </View>
       );
     },
-    [handleArchive, handleDelete, t],
+    [colors.chart, handleArchive, handleDelete, t],
   );
 
   const handlePropertyPress = useCallback(
@@ -248,32 +247,20 @@ export default function PropertiesScreen() {
 
   const listHeader = (
     <View>
-      <View style={styles.actionsClearance} />
+      <View style={{ height: FLOATING_ACTIONS_ROW_HEIGHT }} />
 
-      <View style={styles.titleBlk}>
-        <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: 11,
-            lineHeight: 14,
-            letterSpacing: 1.54,
-            textTransform: 'uppercase',
-            color: colors.muted,
-            marginBottom: 10,
-          }}
-        >
+      <View className="mb-4">
+        <Text className="text-muted mb-2.5 text-[11px] leading-3.5 font-semibold tracking-[1.54px] uppercase">
           {t('properties.objectsUnits', {
             objects: objectCount,
             units: properties.length,
           })}
         </Text>
         <Text
+          className="text-fg text-[34px] tracking-[-0.85px]"
           style={{
             fontFamily: displayFontFamily(theme.name),
-            fontSize: 34,
             lineHeight: 34,
-            letterSpacing: -0.85,
-            color: colors.fg,
           }}
         >
           {t('properties.title')}
@@ -283,7 +270,7 @@ export default function PropertiesScreen() {
       <AppExpandableSearch
         {...searchBarControlProps}
         placeholder={t('properties.searchPlaceholder')}
-        style={styles.searchBar}
+        className="mb-3"
       />
 
       <PropertyFilters
@@ -299,18 +286,7 @@ export default function PropertiesScreen() {
 
   const listFooter =
     filteredProperties.length > 0 ? (
-      <Text
-        style={{
-          fontFamily: Fonts.sans.semibold,
-          fontSize: 10,
-          letterSpacing: 0.8,
-          textTransform: 'uppercase',
-          color: colors.muted,
-          textAlign: 'center',
-          marginTop: 18,
-          marginBottom: 8,
-        }}
-      >
+      <Text className="text-muted mt-4.5 mb-2 text-center text-[10px] font-semibold tracking-[0.8px] uppercase">
         {t('properties.showingOf', {
           shown: filteredProperties.length,
           total: properties.length,
@@ -323,8 +299,8 @@ export default function PropertiesScreen() {
 
   if (isLoading && properties.length === 0) {
     return (
-      <View className="flex-1 bg-transparent" style={styles.pad}>
-        <SkeletonLoader count={5} height={160} style={styles.skeleton} />
+      <View className="flex-1 bg-transparent px-4">
+        <SkeletonLoader count={5} height={160} className="mb-4" />
       </View>
     );
   }
@@ -339,21 +315,21 @@ export default function PropertiesScreen() {
 
   return (
     <View className="flex-1 bg-transparent" collapsable={false}>
-      <View style={styles.list} collapsable={false}>
+      <View className="flex-1" collapsable={false}>
         <FlatList
-          style={styles.list}
+          className="flex-1"
           contentInsetAdjustmentBehavior="automatic"
           data={filteredProperties}
           keyExtractor={(item) => item.id}
           {...listKeyboardProps}
           {...listPerformanceProps}
           contentContainerStyle={[
-            styles.listContent,
             {
+              paddingTop: 0,
               paddingHorizontal: theme.spacing.gutter,
               paddingBottom: theme.spacing.scrollBottom,
             },
-            filteredProperties.length === 0 && styles.listEmpty,
+            filteredProperties.length === 0 ? { flexGrow: 1 } : null,
           ]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           ListHeaderComponent={listHeader}
@@ -394,51 +370,3 @@ export default function PropertiesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  list: {
-    flex: 1,
-  },
-  pad: {
-    paddingHorizontal: Spacing.md,
-  },
-  skeleton: {
-    marginBottom: Spacing.md,
-  },
-  listContent: {
-    paddingTop: 0,
-  },
-  listEmpty: {
-    flexGrow: 1,
-  },
-  actionsClearance: {
-    height: FLOATING_ACTIONS_ROW_HEIGHT,
-  },
-  titleBlk: {
-    marginBottom: 16,
-  },
-  searchBar: {
-    marginBottom: 12,
-  },
-  swipeActions: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    paddingLeft: Spacing.sm,
-    marginBottom: 12,
-  },
-  swipeButton: {
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.md,
-    minWidth: 88,
-  },
-  swipeArchive: {
-    backgroundColor: '#F59E0B',
-  },
-  swipeDelete: {
-    backgroundColor: '#EF4444',
-  },
-  swipeLabel: {
-    ...Typography.labelMedium,
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-});

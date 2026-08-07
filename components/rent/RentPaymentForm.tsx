@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -11,10 +11,9 @@ import { AppPicker } from '@/components/ui/AppPicker';
 import { useStackChromeEdgeInset } from '@/components/ui/StackScreenChrome';
 import { AppTextInput } from '@/components/ui/AppTextInput';
 import { PAYMENT_STATUSES } from '@/constants/config';
-import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocale } from '@/hooks/useLocale';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
 import type { PaymentStatus, Property, Tenant } from '@/types/app.types';
 import { parseDateString, toDateString, translateFieldError } from '@/utils/formHelpers';
 import { formatMonthName } from '@/utils/formatters';
@@ -62,7 +61,6 @@ export function RentPaymentForm({
   const { t } = useTranslation();
   const { language } = useLocale();
   const { theme } = useAppTheme();
-  const { colors } = theme;
   const insets = useSafeAreaInsets();
   const edgeInset = useStackChromeEdgeInset();
 
@@ -120,44 +118,28 @@ export function RentPaymentForm({
   const fieldError = (message?: string) => translateFieldError(t, message);
 
   return (
-    <View style={styles.shell}>
+    <View className="flex-1">
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingHorizontal: theme.spacing.gutter,
-            paddingTop: (edgeInset ?? 0) + 8,
-            paddingBottom: 24,
-          },
-        ]}
+        className="flex-1"
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: theme.spacing.gutter,
+          paddingTop: (edgeInset ?? 0) + 8,
+          paddingBottom: 24,
+        }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         {title ? (
-          <View style={styles.titleBlk}>
+          <View className="mb-5.5">
             {eyebrow ? (
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 11,
-                  letterSpacing: 1.54,
-                  textTransform: 'uppercase',
-                  color: colors.muted,
-                  marginBottom: 10,
-                }}
-              >
+              <Text className="text-muted mb-2.5 text-[11px] font-semibold tracking-[1.54px] uppercase">
                 {eyebrow}
               </Text>
             ) : null}
             <Text
-              style={{
-                fontFamily: displayFontFamily(theme.name),
-                fontSize: 32,
-                lineHeight: 32,
-                letterSpacing: -0.8,
-                color: colors.fg,
-              }}
+              className="text-fg text-[32px] leading-8 tracking-[-0.8px]"
+              style={{ fontFamily: displayFontFamily(theme.name) }}
               accessibilityRole="header"
             >
               {title}
@@ -180,7 +162,7 @@ export function RentPaymentForm({
                   setValue('tenant_id', '');
                 }}
                 error={fieldError(fieldState.error?.message)}
-                style={styles.field}
+                style={{ marginBottom: 18 }}
                 onVisibilityChange={onSheetVisibilityChange}
               />
             )}
@@ -199,7 +181,7 @@ export function RentPaymentForm({
               onValueChange={onChange}
               disabled={!selectedPropertyId}
               error={fieldError(fieldState.error?.message)}
-              style={styles.field}
+              style={{ marginBottom: 18 }}
               onVisibilityChange={onSheetVisibilityChange}
             />
           )}
@@ -219,25 +201,14 @@ export function RentPaymentForm({
               onBlur={onBlur}
               keyboardType="decimal-pad"
               error={fieldError(fieldState.error?.message)}
-              containerStyle={styles.inputGap}
-              className="pl-[52px]"
-              left={
-                <Text
-                  style={{
-                    fontFamily: Fonts.sans.medium,
-                    fontSize: 14,
-                    color: colors.muted,
-                  }}
-                >
-                  EUR
-                </Text>
-              }
+              className="pl-13"
+              left={<Text className="text-muted text-sm font-medium">EUR</Text>}
             />
           )}
         />
 
-        <View style={styles.fieldRow}>
-          <View style={styles.fieldRowItem}>
+        <View className="mb-4.5 flex-row gap-2.5">
+          <View className="flex-1">
             <Controller
               control={control}
               name="period_month"
@@ -254,7 +225,7 @@ export function RentPaymentForm({
             />
           </View>
 
-          <View style={styles.fieldRowItem}>
+          <View className="flex-1">
             <Controller
               control={control}
               name="period_year"
@@ -287,7 +258,7 @@ export function RentPaymentForm({
               value={value}
               onValueChange={(next) => onChange(next as PaymentStatus)}
               error={fieldError(fieldState.error?.message)}
-              style={styles.field}
+              style={{ marginBottom: 18 }}
               onVisibilityChange={onSheetVisibilityChange}
             />
           )}
@@ -302,7 +273,7 @@ export function RentPaymentForm({
               value={parseDateString(value)}
               onChange={(date) => onChange(date ? toDateString(date) : null)}
               error={fieldError(fieldState.error?.message)}
-              style={styles.field}
+              style={{ marginBottom: 18 }}
               onVisibilityChange={onSheetVisibilityChange}
             />
           )}
@@ -316,18 +287,13 @@ export function RentPaymentForm({
           multiline
           numberOfLines={4}
           error={fieldError(errors.notes?.message)}
-          containerStyle={[styles.inputGap, { marginBottom: 0 }]}
+          containerStyle={{ marginBottom: 0 }}
         />
       </ScrollView>
 
       <View
-        style={[
-          styles.formFoot,
-          {
-            paddingBottom: Math.max(insets.bottom, 14) + 8,
-            backgroundColor: colors.bg,
-          },
-        ]}
+        className="bg-bg px-gutter pt-3.5"
+        style={{ paddingBottom: Math.max(insets.bottom, 14) + 8 }}
       >
         <AppButton
           mode="contained"
@@ -342,36 +308,3 @@ export function RentPaymentForm({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  shell: {
-    flex: 1,
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  titleBlk: {
-    marginBottom: 22,
-  },
-  field: {
-    marginBottom: 18,
-  },
-  fieldRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 18,
-  },
-  fieldRowItem: {
-    flex: 1,
-  },
-  inputGap: {
-    marginBottom: 18,
-  },
-  formFoot: {
-    paddingHorizontal: Spacing.gutter,
-    paddingTop: 14,
-  },
-});

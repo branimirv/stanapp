@@ -6,7 +6,6 @@ import {
   Modal,
   Platform,
   Pressable,
-  StyleSheet,
   Text,
   View,
   type StyleProp,
@@ -16,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
 import { formatPeriod } from '@/utils/formatters';
 import type { DashboardPeriod, Language } from '@/types/app.types';
@@ -118,31 +117,26 @@ export function DashboardPeriodFilter({
   const canConfirmMonth = !isFutureMonth(pickerMonth, pickerYear);
 
   return (
-    <View className={className} style={[{ marginBottom: 14 }, style]}>
-      <View style={styles.mrow}>
+    <View className={cn('mb-3.5', className)} style={style}>
+      <View className="flex-row items-center gap-2">
         <Pressable
           onPress={handlePrev}
           accessibilityRole="button"
           accessibilityLabel={t('common.previous')}
-          style={[styles.mb, { backgroundColor: colors.surface2 }]}
+          className="bg-surface-2 h-9 w-9 items-center justify-center rounded-full"
         >
           <ChevronLeft size={15} color={colors.muted} strokeWidth={2} />
         </Pressable>
 
         <Pressable
           onPress={openPicker}
-          style={[styles.ml, { backgroundColor: colors.surface2 }]}
+          className="bg-surface-2 flex-1 items-center justify-center rounded-full py-2.25"
           accessibilityRole="button"
           accessibilityLabel={t('dashboard.selectPeriod')}
         >
           <Text
-            style={{
-              fontFamily: displayFontFamily(theme.name),
-              fontSize: 15,
-              letterSpacing: -0.3,
-              color: colors.fg,
-              textAlign: 'center',
-            }}
+            className="text-fg text-center text-[15px] tracking-[-0.3px]"
+            style={{ fontFamily: displayFontFamily(theme.name) }}
             numberOfLines={1}
           >
             {displayLabel}
@@ -152,11 +146,10 @@ export function DashboardPeriodFilter({
         <Pressable
           onPress={handleNext}
           disabled={!canStepForward}
-          style={[
-            styles.mb,
-            { backgroundColor: colors.surface2 },
-            !canStepForward && { opacity: 0.35 },
-          ]}
+          className={cn(
+            'bg-surface-2 h-9 w-9 items-center justify-center rounded-full',
+            !canStepForward && 'opacity-35',
+          )}
           accessibilityRole="button"
           accessibilityLabel={t('common.next')}
         >
@@ -167,24 +160,10 @@ export function DashboardPeriodFilter({
       <Modal visible={showPicker} transparent animationType="slide" onRequestClose={closePicker}>
         <View className="flex-1 justify-end bg-black/45">
           <View
-            style={{
-              backgroundColor: colors.surface,
-              borderTopLeftRadius: 26,
-              borderTopRightRadius: 26,
-              paddingHorizontal: 24,
-              paddingTop: 24,
-              paddingBottom: Platform.OS === 'ios' ? 40 : 32,
-            }}
+            className="bg-surface rounded-t-2xl px-6 pt-6"
+            style={{ paddingBottom: Platform.OS === 'ios' ? 40 : 32 }}
           >
-            <Text
-              style={{
-                fontFamily: Fonts.sans.semibold,
-                fontSize: 16,
-                textAlign: 'center',
-                color: colors.fg,
-                marginBottom: 16,
-              }}
-            >
+            <Text className="text-fg mb-4 text-center text-base font-semibold">
               {t('dashboard.selectPeriod')}
             </Text>
 
@@ -192,15 +171,7 @@ export function DashboardPeriodFilter({
               <Pressable onPress={() => handleYearStep(-1)} className="p-1" accessibilityRole="button">
                 <ChevronLeft size={22} color={colors.fg} strokeWidth={2} />
               </Pressable>
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 20,
-                  minWidth: 72,
-                  textAlign: 'center',
-                  color: colors.fg,
-                }}
-              >
+              <Text className="text-fg min-w-18 text-center text-xl font-semibold">
                 {pickerYear}
               </Text>
               <Pressable
@@ -223,18 +194,18 @@ export function DashboardPeriodFilter({
                     key={month}
                     onPress={() => handleMonthSelect(month)}
                     disabled={isDisabled}
-                    className={cn('grow items-center rounded-md py-2', isDisabled && 'opacity-35')}
-                    style={{
-                      width: '30%',
-                      backgroundColor: isSelected ? colors.primary : colors.surface2,
-                    }}
+                    className={cn(
+                      'grow items-center rounded-md py-2',
+                      isSelected ? 'bg-primary' : 'bg-surface-2',
+                      isDisabled && 'opacity-35',
+                    )}
+                    style={{ width: '30%' }}
                   >
                     <Text
-                      style={{
-                        fontFamily: Fonts.sans.medium,
-                        fontSize: 14,
-                        color: isSelected ? colors.onPrimary : colors.fg,
-                      }}
+                      className={cn(
+                        'text-sm font-medium',
+                        isSelected ? 'text-on-primary' : 'text-fg',
+                      )}
                     >
                       {monthLabels[index]}
                     </Text>
@@ -257,25 +228,3 @@ export function DashboardPeriodFilter({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  mrow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  mb: {
-    width: 36,
-    height: 36,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ml: {
-    flex: 1,
-    paddingVertical: 9,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

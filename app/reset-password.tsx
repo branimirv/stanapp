@@ -3,7 +3,7 @@ import { Lock } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { ActivityIndicator, StyleSheet } from 'react-native';
+import { ActivityIndicator } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AuthScreen, AuthTitleBlock } from '@/components/auth/AuthScreen';
@@ -133,7 +133,7 @@ export default function ResetPasswordScreen() {
             returnKeyType="done"
             placeholder="••••••••"
             onSubmitEditing={handleSubmit(onSubmit)}
-            containerStyle={styles.lastField}
+            containerStyle={{ marginBottom: 24 }}
             left={<Lock size={16} color={colors.primary} strokeWidth={2} />}
             right={
               <PasswordVisibilityToggle
@@ -157,9 +157,3 @@ export default function ResetPasswordScreen() {
     </AuthScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  lastField: {
-    marginBottom: 24,
-  },
-});

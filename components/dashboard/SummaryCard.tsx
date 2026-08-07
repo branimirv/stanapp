@@ -1,11 +1,11 @@
 import { TrendingDown, TrendingUp } from 'lucide-react-native';
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { DisplayAmount, formatDisplayNumber } from '@/components/ui/DisplayAmount';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { Typography } from '@/constants/theme';
-import { Fonts } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import type { Language } from '@/types/app.types';
 
 function formatDeltaPct(delta: number): string {
@@ -42,35 +42,19 @@ export function NetIncomeCard({
 }: NetIncomeCardProps) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors } = theme;
+  const { colors, elevation } = theme;
   const prev =
     previousAmount ??
     (deltaPct !== undefined ? previousFromDelta(amount, deltaPct ?? null) : null);
   const showChip = deltaPct !== null && deltaPct !== undefined;
+  const isPositive = showChip && deltaPct! >= 0;
 
   return (
     <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.cardBd,
-          borderRadius: theme.radius.xl,
-          ...theme.elevation.card,
-        },
-        style,
-      ]}
+      className="border-card-bd bg-surface mb-2.5 rounded-xl border px-4.5 pt-5 pb-4.5"
+      style={[elevation.card, style]}
     >
-      <Text
-        style={{
-          fontFamily: Fonts.sans.semibold,
-          fontSize: 11,
-          letterSpacing: 1.54,
-          textTransform: 'uppercase',
-          color: colors.muted,
-          marginBottom: 11,
-        }}
-      >
+      <Text className="text-muted mb-2.75 text-[11px] font-semibold uppercase tracking-[1.54px]">
         {title}
       </Text>
 
@@ -83,53 +67,33 @@ export function NetIncomeCard({
         letterSpacing={Typography.display.hero.letterSpacing}
       />
 
-      <View style={styles.deltaRow}>
+      <View className="mt-3.5 flex-row flex-wrap items-center gap-2.25">
         {showChip ? (
           <View
-            style={[
-              styles.chip,
-              {
-                backgroundColor: deltaPct! >= 0 ? colors.posTint : colors.negTint,
-              },
-            ]}
+            className={cn(
+              'flex-row items-center gap-1.5 rounded-full px-2.75 py-1.25',
+              isPositive ? 'bg-pos-tint' : 'bg-neg-tint'
+            )}
           >
-            {deltaPct! >= 0 ? (
+            {isPositive ? (
               <TrendingUp size={12} color={colors.pos} strokeWidth={2} />
             ) : (
               <TrendingDown size={12} color={colors.neg} strokeWidth={2} />
             )}
             <Text
-              style={{
-                fontFamily: Fonts.sans.semibold,
-                fontSize: 11,
-                letterSpacing: -0.055,
-                color: deltaPct! >= 0 ? colors.pos : colors.neg,
-              }}
+              className={cn(
+                'text-[11px] font-semibold tracking-[-0.055px]',
+                isPositive ? 'text-pos' : 'text-neg'
+              )}
             >
               {formatDeltaPct(deltaPct!)}
             </Text>
           </View>
         ) : (
-          <Text
-            style={{
-              fontFamily: Fonts.sans.regular,
-              fontSize: 11.5,
-              color: colors.muted,
-            }}
-          >
-            {t('dashboard.noComparison')}
-          </Text>
+          <Text className="text-muted text-[11.5px]">{t('dashboard.noComparison')}</Text>
         )}
         {prev !== null ? (
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 10,
-              letterSpacing: 0.8,
-              textTransform: 'uppercase',
-              color: colors.muted,
-            }}
-          >
+          <Text className="text-muted text-[10px] font-semibold uppercase tracking-[0.8px]">
             {t('dashboard.previousMonthShort', {
               amount: `${formatDisplayNumber(prev, language)} ${currency === 'EUR' ? '€' : currency}`,
             })}
@@ -164,20 +128,12 @@ export function IncomeExpenseBays({
   style,
 }: IncomeExpenseBaysProps) {
   const { theme } = useAppTheme();
-  const { colors } = theme;
+  const { elevation } = theme;
 
   return (
     <View
-      style={[
-        styles.bays,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.cardBd,
-          borderRadius: theme.radius.xl,
-          ...theme.elevation.card,
-        },
-        style,
-      ]}
+      className="border-card-bd bg-surface mb-4 flex-row overflow-hidden rounded-xl border"
+      style={[elevation.card, style]}
     >
       <Bay
         label={incomeLabel}
@@ -186,7 +142,7 @@ export function IncomeExpenseBays({
         currency={currency}
         language={language}
       />
-      <View style={[styles.bayDivider, { backgroundColor: colors.bd }]} />
+      <View className="bg-bd w-px self-stretch" />
       <Bay
         label={expenseLabel}
         amount={expenseAmount}
@@ -214,34 +170,23 @@ function Bay({
   language: Language;
   invertDelta?: boolean;
 }) {
-  const { theme } = useAppTheme();
-  const { colors } = theme;
   const hasDelta = deltaPct !== null && deltaPct !== undefined;
   const isGood = hasDelta
     ? invertDelta
       ? deltaPct! < 0
       : deltaPct! > 0
     : false;
-  const deltaColor = !hasDelta
-    ? colors.muted
+  const deltaClassName = !hasDelta
+    ? 'text-muted'
     : deltaPct === 0
-      ? colors.muted
+      ? 'text-muted'
       : isGood
-        ? colors.pos
-        : colors.neg;
+        ? 'text-pos'
+        : 'text-neg';
 
   return (
-    <View style={styles.bay}>
-      <Text
-        style={{
-          fontFamily: Fonts.sans.semibold,
-          fontSize: 10,
-          letterSpacing: 0.8,
-          textTransform: 'uppercase',
-          color: colors.muted,
-          marginBottom: 9,
-        }}
-      >
+    <View className="flex-1 px-4 pt-4 pb-3.75">
+      <Text className="text-muted mb-2.25 text-[10px] font-semibold uppercase tracking-[0.8px]">
         {label}
       </Text>
       <DisplayAmount
@@ -253,58 +198,10 @@ function Bay({
         letterSpacing={Typography.display.amountSm.letterSpacing}
       />
       {hasDelta ? (
-        <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: 12,
-            marginTop: 7,
-            color: deltaColor,
-          }}
-        >
+        <Text className={cn('mt-1.75 text-xs font-semibold', deltaClassName)}>
           {formatDeltaPct(deltaPct!)}
         </Text>
       ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    paddingTop: 20,
-    paddingHorizontal: 18,
-    paddingBottom: 18,
-    marginBottom: 10,
-    borderWidth: 1,
-  },
-  deltaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
-    marginTop: 14,
-    flexWrap: 'wrap',
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 5,
-    paddingHorizontal: 11,
-    borderRadius: 999,
-  },
-  bays: {
-    flexDirection: 'row',
-    overflow: 'hidden',
-    marginBottom: 16,
-    borderWidth: 1,
-  },
-  bay: {
-    flex: 1,
-    paddingTop: 16,
-    paddingHorizontal: 16,
-    paddingBottom: 15,
-  },
-  bayDivider: {
-    width: StyleSheet.hairlineWidth > 0 ? 1 : 1,
-    alignSelf: 'stretch',
-  },
-});

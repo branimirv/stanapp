@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { DisplayAmount } from '@/components/ui/DisplayAmount';
 import { Typography } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
 import type { Language, PropertyReportSummary } from '@/types/app.types';
 
 export interface PropertyNetListProps {
@@ -17,70 +17,50 @@ export interface PropertyNetListProps {
 export function PropertyNetList({ summaries, language = 'hr' }: PropertyNetListProps) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors, elevation, radius } = theme;
+  const { colors, elevation } = theme;
 
   const maxNet = Math.max(...summaries.map((s) => Math.abs(s.net)), 1);
 
   if (summaries.length === 0) return null;
 
   return (
-    <View style={styles.wrap}>
+    <View className="mb-2">
       <Text
-        style={{
-          fontFamily: displayFontFamily(theme.name),
-          fontSize: Typography.display.sectionHead.size,
-          lineHeight: Typography.display.sectionHead.lineHeight,
-          letterSpacing: Typography.display.sectionHead.letterSpacing,
-          color: colors.fg,
-          marginBottom: 11,
-        }}
+        className="text-fg mb-2.75 text-[22px] leading-6 tracking-[-0.55px]"
+        style={{ fontFamily: displayFontFamily(theme.name) }}
       >
         {t('reports.perProperty')}
       </Text>
 
       <View
-        style={[
-          styles.card,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.cardBd,
-            borderRadius: radius.xl,
-            ...elevation.card,
-          },
-        ]}
+        className="border-card-bd bg-surface rounded-xl border px-4.5 pt-1 pb-1.5"
+        style={[{ borderWidth: StyleSheet.hairlineWidth }, elevation.card]}
       >
         {summaries.map((summary, index) => {
           const ratio = Math.min(Math.abs(summary.net) / maxNet, 1);
           return (
             <View key={summary.propertyId}>
               {index > 0 ? (
-                <View style={[styles.divider, { backgroundColor: colors.bd }]} />
+                <View
+                  className="bg-bd ml-[51px]"
+                  style={{ height: StyleSheet.hairlineWidth }}
+                />
               ) : null}
-              <View style={styles.row}>
-                <View style={[styles.well, { backgroundColor: colors.surface2 }]}>
+              <View className="flex-row items-center gap-3.25 py-3.25">
+                <View className="bg-surface-2 h-9.5 w-9.5 items-center justify-center rounded-full">
                   <Building2 size={18} color={colors.muted} strokeWidth={2} />
                 </View>
-                <View style={styles.body}>
-                  <Text
-                    style={{
-                      fontFamily: Fonts.sans.semibold,
-                      fontSize: Typography.text.listRow.size,
-                      color: colors.fg,
-                    }}
-                    numberOfLines={1}
-                  >
+                <View className="min-w-0 flex-1">
+                  <Text className="text-fg text-[15px] font-semibold" numberOfLines={1}>
                     {summary.propertyName}
                   </Text>
-                  <View style={[styles.track, { backgroundColor: colors.track }]}>
+                  <View className="bg-track mt-1.75 h-1 overflow-hidden rounded-full">
                     <View
-                      style={[
-                        styles.fill,
-                        {
-                          width: `${Math.max(ratio * 100, summary.net === 0 ? 0 : 4)}%`,
-                          backgroundColor:
-                            summary.net >= 0 ? colors.primary : colors.neg,
-                        },
-                      ]}
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.max(ratio * 100, summary.net === 0 ? 0 : 4)}%`,
+                        backgroundColor: summary.net >= 0 ? colors.primary : colors.neg,
+                      }}
                     />
                   </View>
                 </View>
@@ -100,46 +80,3 @@ export function PropertyNetList({ summaries, language = 'hr' }: PropertyNetListP
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    marginBottom: 8,
-  },
-  card: {
-    paddingHorizontal: 18,
-    paddingTop: 4,
-    paddingBottom: 6,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    marginLeft: 51,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 13,
-    paddingVertical: 13,
-  },
-  well: {
-    width: 38,
-    height: 38,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  body: {
-    flex: 1,
-    minWidth: 0,
-  },
-  track: {
-    height: 4,
-    borderRadius: 999,
-    overflow: 'hidden',
-    marginTop: 7,
-  },
-  fill: {
-    height: '100%',
-    borderRadius: 999,
-  },
-});

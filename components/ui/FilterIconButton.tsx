@@ -1,10 +1,9 @@
 import { SlidersHorizontal } from 'lucide-react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { HeaderBtnIco } from '@/components/ui/HeaderActionsPill';
 import { HEADER_ICON_SIZE } from '@/constants/header';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { Fonts } from '@/lib/fonts';
 
 interface FilterIconButtonProps {
   activeCount?: number;
@@ -26,7 +25,7 @@ export function FilterIconButton({
   const active = activeCount > 0;
 
   return (
-    <View style={styles.wrap}>
+    <View className="relative">
       <HeaderBtnIco
         onPress={onPress}
         accessibilityLabel={accessibilityLabel}
@@ -40,37 +39,12 @@ export function FilterIconButton({
       </HeaderBtnIco>
       {active ? (
         <View
-          style={[styles.fcount, { backgroundColor: colors.primary }]}
+          className="bg-primary absolute -top-0.75 -right-0.75 h-4 min-w-4 items-center justify-center rounded-full px-1"
           pointerEvents="none"
         >
-          <Text
-            style={{
-              fontFamily: Fonts.sans.bold,
-              fontSize: 9.5,
-              color: colors.onPrimary,
-            }}
-          >
-            {activeCount}
-          </Text>
+          <Text className="text-on-primary text-[9.5px] font-bold">{activeCount}</Text>
         </View>
       ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    position: 'relative',
-  },
-  fcount: {
-    position: 'absolute',
-    top: -3,
-    right: -3,
-    minWidth: 16,
-    height: 16,
-    paddingHorizontal: 4,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

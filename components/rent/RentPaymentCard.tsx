@@ -1,13 +1,12 @@
 import { Calendar, CheckCircle, Trash2 } from 'lucide-react-native';
 import { memo, useRef } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 
 import { DisplayAmount } from '@/components/ui/DisplayAmount';
-import { Colors, Typography } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { Fonts } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import { formatDate, formatPeriod } from '@/utils/formatters';
 import type { Language, PaymentStatus, RentPayment } from '@/types/app.types';
 
@@ -22,39 +21,45 @@ export interface RentPaymentCardProps {
   onDelete?: (paymentId: string) => void;
 }
 
+function statusTone(status: PaymentStatus): 'pos' | 'neg' | 'primary' | 'muted' {
+  if (status === 'paid') return 'pos';
+  if (status === 'late') return 'neg';
+  if (status === 'pending' || status === 'partial') return 'primary';
+  return 'muted';
+}
+
 function StatusChip({ status, label }: { status: PaymentStatus; label: string }) {
   const { theme } = useAppTheme();
   const { colors } = theme;
-
-  let backgroundColor = colors.surface2;
-  let color = colors.muted;
-
-  if (status === 'paid') {
-    backgroundColor = colors.posTint;
-    color = colors.pos;
-  } else if (status === 'late') {
-    backgroundColor = colors.negTint;
-    color = colors.neg;
-  } else if (status === 'pending') {
-    backgroundColor = colors.primaryTint;
-    color = colors.primary;
-  } else if (status === 'partial') {
-    backgroundColor = colors.primaryTint;
-    color = colors.primary;
-  }
+  const tone = statusTone(status);
+  const color =
+    tone === 'pos'
+      ? colors.pos
+      : tone === 'neg'
+        ? colors.neg
+        : tone === 'primary'
+          ? colors.primary
+          : colors.muted;
 
   return (
-    <View style={[styles.chip, { backgroundColor }]}>
-      {status === 'paid' ? (
-        <CheckCircle size={12} color={color} strokeWidth={2} />
-      ) : null}
+    <View
+      className={cn(
+        'shrink-0 flex-row items-center gap-1.5 rounded-full px-2.75 py-1.25',
+        tone === 'pos' && 'bg-pos-tint',
+        tone === 'neg' && 'bg-neg-tint',
+        tone === 'primary' && 'bg-primary-tint',
+        tone === 'muted' && 'bg-surface-2',
+      )}
+    >
+      {status === 'paid' ? <CheckCircle size={12} color={color} strokeWidth={2} /> : null}
       <Text
-        style={{
-          fontFamily: Fonts.sans.semibold,
-          fontSize: 11,
-          letterSpacing: -0.05,
-          color,
-        }}
+        className={cn(
+          'text-[11px] font-semibold tracking-[-0.05px]',
+          tone === 'pos' && 'text-pos',
+          tone === 'neg' && 'text-neg',
+          tone === 'primary' && 'text-primary',
+          tone === 'muted' && 'text-muted',
+        )}
         numberOfLines={1}
       >
         {label}
@@ -74,7 +79,7 @@ function RentPaymentCardComponent({
   onDelete,
 }: RentPaymentCardProps) {
   const { theme } = useAppTheme();
-  const { colors, elevation, radius } = theme;
+  const { colors, elevation } = theme;
   const { t, i18n } = useTranslation();
   const swipeableRef = useRef<Swipeable>(null);
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
@@ -92,10 +97,10 @@ function RentPaymentCardComponent({
   })();
 
   const renderRightActions = () => (
-    <View style={styles.swipeActions}>
+    <View className="mb-3 flex-row">
       {!isPaid && onMarkPaid ? (
         <Pressable
-          style={[styles.swipeBtn, { backgroundColor: Colors.accent }]}
+          className="bg-pos ml-1 w-22 items-center justify-center gap-1 rounded-sm px-2"
           onPress={() => {
             swipeableRef.current?.close();
             onMarkPaid(payment.id);
@@ -103,15 +108,13 @@ function RentPaymentCardComponent({
           accessibilityRole="button"
           accessibilityLabel={t('rent.markPaid')}
         >
-          <CheckCircle size={20} color={Colors.textInverse} strokeWidth={2} />
-          <Text style={[styles.swipeLabel, { color: Colors.textInverse }]}>
-            {t('rent.markPaid')}
-          </Text>
+          <CheckCircle size={20} color="#FFFFFF" strokeWidth={2} />
+          <Text className="text-center text-[11px] font-medium text-white">{t('rent.markPaid')}</Text>
         </Pressable>
       ) : null}
       {onDelete ? (
         <Pressable
-          style={[styles.swipeBtn, { backgroundColor: Colors.danger }]}
+          className="bg-neg ml-1 w-22 items-center justify-center gap-1 rounded-sm px-2"
           onPress={() => {
             swipeableRef.current?.close();
             onDelete(payment.id);
@@ -119,10 +122,8 @@ function RentPaymentCardComponent({
           accessibilityRole="button"
           accessibilityLabel={t('common.delete')}
         >
-          <Trash2 size={20} color={Colors.textInverse} strokeWidth={2} />
-          <Text style={[styles.swipeLabel, { color: Colors.textInverse }]}>
-            {t('common.delete')}
-          </Text>
+          <Trash2 size={20} color="#FFFFFF" strokeWidth={2} />
+          <Text className="text-center text-[11px] font-medium text-white">{t('common.delete')}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -132,26 +133,11 @@ function RentPaymentCardComponent({
     <Pressable
       onPress={handlePress}
       disabled={!handlePress}
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.cardBd,
-          borderRadius: radius.xl,
-          ...elevation.card,
-        },
-      ]}
+      className="border-card-bd bg-surface mb-3 rounded-xl border px-4.5 py-4"
+      style={elevation.card}
     >
-      <View style={styles.top}>
-        <Text
-          style={{
-            flex: 1,
-            fontFamily: Fonts.sans.semibold,
-            fontSize: Typography.text.rowTitle.size,
-            color: colors.fg,
-          }}
-          numberOfLines={1}
-        >
+      <View className="flex-row items-start justify-between gap-2">
+        <Text className="text-fg flex-1 text-base font-semibold" numberOfLines={1}>
           {formatPeriod(payment.period_month, payment.period_year, resolvedLanguage).replace(
             /^./,
             (ch) => ch.toLocaleUpperCase(resolvedLanguage === 'en' ? 'en' : 'hr'),
@@ -161,27 +147,14 @@ function RentPaymentCardComponent({
       </View>
 
       {propertyName ? (
-        <Text
-          style={{
-            fontFamily: Fonts.sans.regular,
-            fontSize: Typography.text.caption.size,
-            color: colors.muted,
-            marginTop: 4,
-          }}
-          numberOfLines={1}
-        >
+        <Text className="text-muted mt-1 text-sm" numberOfLines={1}>
           {propertyName}
         </Text>
       ) : null}
 
       {tenantName ? (
         <Text
-          style={{
-            fontFamily: Fonts.sans.regular,
-            fontSize: 12.5,
-            color: colors.muted,
-            marginTop: propertyName ? 2 : 4,
-          }}
+          className={cn('text-muted text-[12.5px]', propertyName ? 'mt-0.5' : 'mt-1')}
           numberOfLines={1}
         >
           {tenantName}
@@ -197,17 +170,9 @@ function RentPaymentCardComponent({
       />
 
       {dateLine ? (
-        <View style={styles.dateRow}>
+        <View className="mt-3 flex-row items-center gap-1.5">
           <Calendar size={13} color={colors.muted} strokeWidth={2} />
-          <Text
-            style={{
-              flex: 1,
-              fontFamily: Fonts.sans.regular,
-              fontSize: 11.5,
-              color: colors.muted,
-            }}
-            numberOfLines={1}
-          >
+          <Text className="text-muted flex-1 text-[11.5px]" numberOfLines={1}>
             {dateLine}
           </Text>
         </View>
@@ -227,52 +192,3 @@ function RentPaymentCardComponent({
 }
 
 export const RentPaymentCard = memo(RentPaymentCardComponent);
-
-const styles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-    paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 16,
-    marginBottom: 12,
-  },
-  top: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 5,
-    paddingHorizontal: 11,
-    borderRadius: 999,
-    flexShrink: 0,
-  },
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 12,
-  },
-  swipeActions: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  swipeBtn: {
-    marginLeft: 4,
-    width: 88,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    borderRadius: 12,
-    paddingHorizontal: 8,
-  },
-  swipeLabel: {
-    fontFamily: Fonts.sans.medium,
-    fontSize: 11,
-    textAlign: 'center',
-  },
-});

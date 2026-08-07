@@ -2,7 +2,6 @@ import { forwardRef, type ComponentRef, type ReactElement } from 'react';
 import { Controller, type Control, type FieldPath, type FieldValues } from 'react-hook-form';
 import {
   Platform,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -64,25 +63,23 @@ const AppTextInputInner = forwardRef<ComponentRef<typeof TextInput>, BaseAppText
     const isMultiline = Boolean(multiline);
 
     return (
-      <View style={[{ marginBottom: 18, width: '100%' }, containerStyle]}>
+      <View className="mb-4.5 w-full" style={containerStyle}>
         {label ? (
           <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: Typography.text.fieldLabel.size,
-              lineHeight: 17,
-              color: theme.colors.fg,
-              marginBottom: 8,
-            }}
+            className="text-fg mb-2 text-[13px] leading-gutter font-semibold"
+            style={{ fontFamily: Fonts.sans.semibold }}
           >
             {label}
           </Text>
         ) : null}
-        <View style={styles.fieldWrap}>
+        <View className="relative w-full">
           {hasLeft ? (
             <View
               pointerEvents="none"
-              style={[styles.leftAdorn, isMultiline && styles.leftAdornMultiline]}
+              className={cn(
+                'absolute left-3.5 z-10 justify-center',
+                isMultiline ? 'top-3' : 'inset-y-0',
+              )}
             >
               {left}
             </View>
@@ -127,17 +124,16 @@ const AppTextInputInner = forwardRef<ComponentRef<typeof TextInput>, BaseAppText
             aria-invalid={hasError}
             {...rest}
           />
-          {hasRight ? <View style={styles.rightAdorn}>{right}</View> : null}
+          {hasRight ? (
+            <View className="absolute inset-y-0 right-1 z-10 w-8.5 items-center justify-center">
+              {right}
+            </View>
+          ) : null}
         </View>
         {hasError ? (
           <Text
-            style={{
-              fontFamily: Fonts.sans.regular,
-              fontSize: 14,
-              lineHeight: 18,
-              color: theme.colors.neg,
-              marginTop: 6,
-            }}
+            className="text-neg mt-1.5 text-sm leading-4.5"
+            style={{ fontFamily: Fonts.sans.regular }}
           >
             {error}
           </Text>
@@ -187,33 +183,3 @@ export const AppTextInput = forwardRef(function AppTextInput<
     ref?: React.Ref<ComponentRef<typeof TextInput>>;
   },
 ) => ReactElement | null;
-
-const styles = StyleSheet.create({
-  fieldWrap: {
-    position: 'relative',
-    width: '100%',
-  },
-  leftAdorn: {
-    position: 'absolute',
-    left: 14,
-    top: 0,
-    bottom: 0,
-    zIndex: 10,
-    justifyContent: 'center',
-  },
-  leftAdornMultiline: {
-    top: 12,
-    bottom: undefined,
-    justifyContent: 'flex-start',
-  },
-  rightAdorn: {
-    position: 'absolute',
-    right: 4,
-    top: 0,
-    bottom: 0,
-    zIndex: 10,
-    width: 34,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});

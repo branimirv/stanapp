@@ -6,11 +6,10 @@ import {
   Receipt,
   type LucideIcon,
 } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { Fonts } from '@/lib/fonts';
 
 interface QuickAction {
   key: string;
@@ -52,29 +51,22 @@ export function DashboardQuickActions() {
   ];
 
   return (
-    <View style={styles.row}>
+    <View className="mb-5 flex-row gap-1.5">
       {actions.map((action) => {
         const Icon = action.icon;
         return (
           <Pressable
             key={action.key}
             onPress={action.onPress}
-            style={styles.qa}
+            className="flex-1 items-center gap-2.25"
             accessibilityRole="button"
             accessibilityLabel={t(action.labelKey)}
           >
-            <View style={[styles.circle, { backgroundColor: colors.surface2 }]}>
+            <View className="bg-surface-2 h-12 w-12 items-center justify-center rounded-full">
               <Icon size={20} color={colors.primary} strokeWidth={2} />
             </View>
             <Text
-              style={{
-                fontFamily: Fonts.sans.semibold,
-                fontSize: 10,
-                letterSpacing: 0.8,
-                textTransform: 'uppercase',
-                color: colors.muted,
-                textAlign: 'center',
-              }}
+              className="text-muted text-center text-[10px] font-semibold uppercase tracking-[0.8px]"
               numberOfLines={1}
             >
               {t(action.labelKey)}
@@ -85,23 +77,3 @@ export function DashboardQuickActions() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: 20,
-  },
-  qa: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 9,
-  },
-  circle: {
-    width: 48,
-    height: 48,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

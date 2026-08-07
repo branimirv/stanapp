@@ -15,7 +15,6 @@ import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
 import { DisplayAmount } from '@/components/ui/DisplayAmount';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
-import { Spacing } from '@/constants/theme';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useExpense, useExpenseMutations } from '@/hooks/useExpenses';
 import { useLocale } from '@/hooks/useLocale';
@@ -23,7 +22,8 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperty } from '@/hooks/useProperties';
 import { cancelExpenseReminders } from '@/lib/notifications';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import { useUiStore } from '@/stores/uiStore';
 import { resolveCurrency } from '@/utils/currency';
 import { getCategoryLabel } from '@/utils/expense';
@@ -38,38 +38,16 @@ function DetailRow({
   value: string;
   isLast?: boolean;
 }) {
-  const { theme } = useAppTheme();
-  const { colors } = theme;
-
   return (
     <View
-      style={[
-        styles.lrow,
-        !isLast
-          ? { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.bd }
-          : null,
-      ]}
+      className={cn(
+        'flex-row items-start justify-between gap-3 py-3.5',
+        !isLast && 'border-bd border-b',
+      )}
+      style={!isLast ? { borderBottomWidth: StyleSheet.hairlineWidth } : undefined}
     >
-      <Text
-        style={{
-          flex: 1,
-          fontFamily: Fonts.sans.regular,
-          fontSize: 13,
-          color: colors.muted,
-        }}
-      >
-        {label}
-      </Text>
-      <Text
-        style={{
-          fontFamily: Fonts.sans.semibold,
-          fontSize: 13,
-          color: colors.fg,
-          textAlign: 'right',
-          maxWidth: '55%',
-        }}
-        numberOfLines={3}
-      >
+      <Text className="text-muted flex-1 text-[13px]">{label}</Text>
+      <Text className="text-fg max-w-[55%] text-right text-[13px] font-semibold" numberOfLines={3}>
         {value}
       </Text>
     </View>
@@ -80,7 +58,7 @@ export default function ExpenseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors, elevation, radius } = theme;
+  const { colors, elevation } = theme;
   const showToast = useUiStore((s) => s.showToast);
   const showConfirmDialog = useUiStore((s) => s.showConfirmDialog);
 
@@ -219,16 +197,16 @@ export default function ExpenseDetailScreen() {
       )}
     >
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerClassName="px-gutter pb-12"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.hero}>
+        <View className="mb-4.5 flex-row items-start gap-3.5">
           <View
-            style={[
-              styles.well,
-              { backgroundColor: paid ? colors.posTint : colors.negTint },
-            ]}
+            className={cn(
+              'relative h-[58px] w-[58px] items-center justify-center rounded-full',
+              paid ? 'bg-pos-tint' : 'bg-neg-tint',
+            )}
             accessibilityRole="image"
             accessibilityLabel={wellA11y}
           >
@@ -238,38 +216,21 @@ export default function ExpenseDetailScreen() {
               <CircleAlert size={22} color={colors.neg} strokeWidth={2} />
             )}
             {expense.is_recurring ? (
-              <View
-                style={[
-                  styles.recurring,
-                  { backgroundColor: colors.surface, borderColor: colors.bd },
-                ]}
-              >
+              <View className="border-bd bg-surface absolute -right-0.5 -bottom-0.5 h-[18px] w-[18px] items-center justify-center rounded-full border-2">
                 <Repeat size={9} color={colors.muted} strokeWidth={2.75} />
               </View>
             ) : null}
           </View>
 
-          <View style={styles.heroBody}>
-            <Text
-              style={{
-                fontFamily: Fonts.sans.semibold,
-                fontSize: 11,
-                lineHeight: 14,
-                letterSpacing: 1.54,
-                textTransform: 'uppercase',
-                color: colors.muted,
-                marginBottom: 8,
-              }}
-            >
+          <View className="min-w-0 flex-1 justify-center pt-1">
+            <Text className="text-muted mb-2 text-[11px] leading-3.5 font-semibold tracking-[1.54px] uppercase">
               {t('expenses.expenseDetails')}
             </Text>
             <Text
+              className="text-fg text-[28px] tracking-[-0.6px]"
               style={{
                 fontFamily: displayFontFamily(theme.name),
-                fontSize: 28,
                 lineHeight: 32,
-                letterSpacing: -0.6,
-                color: colors.fg,
               }}
               numberOfLines={2}
             >
@@ -279,26 +240,10 @@ export default function ExpenseDetailScreen() {
         </View>
 
         <View
-          style={[
-            styles.amountCard,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.cardBd,
-              borderRadius: radius.xl,
-              ...elevation.card,
-            },
-          ]}
+          className="border-card-bd bg-surface mb-5.5 rounded-xl border px-4.5 pt-4.5 pb-4"
+          style={elevation.card}
         >
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 10,
-              letterSpacing: 0.8,
-              textTransform: 'uppercase',
-              color: colors.muted,
-              marginBottom: 10,
-            }}
-          >
+          <Text className="text-muted mb-2.5 text-[10px] font-semibold tracking-[0.8px] uppercase">
             {t('expenses.amount')}
           </Text>
           <DisplayAmount
@@ -312,21 +257,13 @@ export default function ExpenseDetailScreen() {
           {property ? (
             <Pressable
               onPress={() => router.push(`/property/${property.id}`)}
-              style={styles.propertyLink}
+              className="mt-3.5 flex-row items-center gap-1.5"
               accessibilityRole="link"
               accessibilityLabel={property.name}
               hitSlop={6}
             >
               <Building2 size={13} color={colors.muted} strokeWidth={2} />
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.regular,
-                  fontSize: 13,
-                  color: colors.muted,
-                  flex: 1,
-                }}
-                numberOfLines={1}
-              >
+              <Text className="text-muted flex-1 text-[13px]" numberOfLines={1}>
                 {property.name}
               </Text>
             </Pressable>
@@ -334,26 +271,14 @@ export default function ExpenseDetailScreen() {
         </View>
 
         <Text
-          style={{
-            fontFamily: displayFontFamily(theme.name),
-            fontSize: 22,
-            letterSpacing: -0.55,
-            color: colors.fg,
-            marginBottom: 11,
-          }}
+          className="text-fg mb-2.75 text-[22px] tracking-[-0.55px]"
+          style={{ fontFamily: displayFontFamily(theme.name) }}
         >
           {t('common.details')}
         </Text>
         <View
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.cardBd,
-              borderRadius: radius.xl,
-              ...elevation.card,
-            },
-          ]}
+          className="border-card-bd bg-surface mb-5 rounded-xl border px-4.5 pt-1 pb-1.5"
+          style={elevation.card}
         >
           {detailRows.map((row, index) => (
             <DetailRow
@@ -368,53 +293,33 @@ export default function ExpenseDetailScreen() {
         {expense.receipt_photo_url ? (
           <>
             <Text
-              style={{
-                fontFamily: displayFontFamily(theme.name),
-                fontSize: 22,
-                letterSpacing: -0.55,
-                color: colors.fg,
-                marginTop: 8,
-                marginBottom: 11,
-              }}
+              className="text-fg mt-2 mb-2.75 text-[22px] tracking-[-0.55px]"
+              style={{ fontFamily: displayFontFamily(theme.name) }}
             >
               {t('expenses.receipt')}
             </Text>
             <View
-              style={[
-                styles.receiptCard,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.cardBd,
-                  borderRadius: radius.xl,
-                  ...elevation.card,
-                },
-              ]}
+              className="border-card-bd bg-surface mb-5 overflow-hidden rounded-xl border"
+              style={elevation.card}
             >
               <Image
                 source={{ uri: expense.receipt_photo_url }}
-                style={styles.receipt}
+                className="h-[220px] w-full"
                 contentFit="cover"
               />
             </View>
           </>
         ) : null}
 
-        <View style={styles.actions}>
+        <View className="mt-1 gap-2.5">
           {!paid ? (
             <Pressable
               onPress={handleMarkPaid}
               accessibilityRole="button"
               accessibilityLabel={t('expenses.markPaid')}
-              style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
+              className="bg-primary h-12 items-center justify-center rounded-full"
             >
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 15,
-                  letterSpacing: -0.15,
-                  color: colors.onPrimary,
-                }}
-              >
+              <Text className="text-on-primary text-[15px] font-semibold tracking-[-0.15px]">
                 {t('expenses.markPaid')}
               </Text>
             </Pressable>
@@ -424,110 +329,12 @@ export default function ExpenseDetailScreen() {
             onPress={handleDelete}
             accessibilityRole="button"
             accessibilityLabel={t('common.delete')}
-            style={[styles.ghostBtn, { backgroundColor: colors.surface2 }]}
+            className="bg-surface-2 h-12 items-center justify-center rounded-full"
           >
-            <Text
-              style={{
-                fontFamily: Fonts.sans.semibold,
-                fontSize: 14,
-                color: colors.neg,
-              }}
-            >
-              {t('common.delete')}
-            </Text>
+            <Text className="text-neg text-sm font-semibold">{t('common.delete')}</Text>
           </Pressable>
         </View>
       </ScrollView>
     </DetailScreenScaffold>
   );
 }
-
-const styles = StyleSheet.create({
-  content: {
-    paddingHorizontal: Spacing.gutter,
-    paddingBottom: Spacing.xxl,
-  },
-  hero: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 14,
-    marginBottom: 18,
-  },
-  well: {
-    position: 'relative',
-    width: 58,
-    height: 58,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  recurring: {
-    position: 'absolute',
-    right: -2,
-    bottom: -2,
-    width: 18,
-    height: 18,
-    borderRadius: 999,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroBody: {
-    flex: 1,
-    minWidth: 0,
-    justifyContent: 'center',
-    paddingTop: 4,
-  },
-  amountCard: {
-    borderWidth: 1,
-    paddingTop: 18,
-    paddingHorizontal: 18,
-    paddingBottom: 16,
-    marginBottom: 22,
-  },
-  propertyLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 14,
-  },
-  card: {
-    borderWidth: 1,
-    paddingHorizontal: 18,
-    paddingTop: 4,
-    paddingBottom: 6,
-    marginBottom: 20,
-  },
-  lrow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 12,
-    paddingVertical: 14,
-  },
-  receiptCard: {
-    borderWidth: 1,
-    overflow: 'hidden',
-    marginBottom: 20,
-  },
-  receipt: {
-    width: '100%',
-    height: 220,
-  },
-  actions: {
-    gap: 10,
-    marginTop: 4,
-  },
-  primaryBtn: {
-    height: 48,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ghostBtn: {
-    height: 48,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

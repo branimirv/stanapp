@@ -1,8 +1,9 @@
 import { Eye, EyeOff } from 'lucide-react-native';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { cn } from '@/lib/utils';
 
 interface PasswordVisibilityToggleProps {
   visible: boolean;
@@ -26,16 +27,10 @@ export function PasswordVisibilityToggle({ visible, onToggle }: PasswordVisibili
       hitSlop={4}
     >
       <View
-        style={[
-          styles.hit,
-          isDark
-            ? { backgroundColor: '#FFFFFF' }
-            : {
-                backgroundColor: '#FFFFFF',
-                borderWidth: 1,
-                borderColor: theme.colors.bdStrong,
-              },
-        ]}
+        className={cn(
+          'h-[34px] w-[34px] items-center justify-center overflow-hidden rounded-full bg-white',
+          !isDark && 'border-bd-strong border',
+        )}
       >
         {visible ? (
           <Eye size={16} color={theme.colors.muted} strokeWidth={2} />
@@ -46,14 +41,3 @@ export function PasswordVisibilityToggle({ visible, onToggle }: PasswordVisibili
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  hit: {
-    width: 34,
-    height: 34,
-    borderRadius: 999,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

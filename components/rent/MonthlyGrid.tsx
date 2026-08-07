@@ -1,10 +1,11 @@
 import { CircleCheck } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import { formatMonthName } from '@/utils/formatters';
 import type { Language, PaymentStatus, RentPayment } from '@/types/app.types';
 
@@ -73,12 +74,10 @@ function StatDot({
 
   return (
     <View
+      className="items-center justify-center rounded-full"
       style={{
         width: size,
         height: size,
-        borderRadius: 999,
-        alignItems: 'center',
-        justifyContent: 'center',
         backgroundColor,
         borderWidth: 1.5,
         borderColor,
@@ -95,7 +94,7 @@ function StatDot({
  */
 export function MonthlyGrid({ year, payments, language = 'hr', onMonthPress }: MonthlyGridProps) {
   const { theme } = useAppTheme();
-  const { colors, elevation, radius } = theme;
+  const { colors, elevation } = theme;
   const { t, i18n } = useTranslation();
   const { width: windowWidth } = useWindowDimensions();
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
@@ -117,58 +116,31 @@ export function MonthlyGrid({ year, payments, language = 'hr', onMonthPress }: M
 
   return (
     <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.cardBd,
-          borderRadius: radius.xl,
-          ...elevation.card,
-        },
-      ]}
+      className="border-card-bd bg-surface mb-4.5 rounded-xl border px-4 pt-4.5 pb-4"
+      style={elevation.card}
     >
-      <View style={styles.header}>
+      <View className="mb-0.5 flex-row items-baseline justify-between">
         <Text
-          style={{
-            fontFamily: displayFontFamily(theme.name),
-            fontSize: 19,
-            letterSpacing: -0.4,
-            color: colors.fg,
-          }}
+          className="text-fg text-[19px] tracking-[-0.4px]"
+          style={{ fontFamily: displayFontFamily(theme.name) }}
         >
           {t('rent.monthlyGrid')}
         </Text>
-        <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: 11,
-            letterSpacing: 1.1,
-            textTransform: 'uppercase',
-            color: colors.muted,
-          }}
-        >
+        <Text className="text-muted text-[11px] font-semibold tracking-[1.1px] uppercase">
           {year}
         </Text>
       </View>
 
-      <View style={styles.legend}>
+      <View className="mt-3 flex-row flex-wrap gap-x-4 gap-y-2">
         {LEGEND_STATUSES.map((status) => (
-          <View key={status} style={styles.legendItem}>
+          <View key={status} className="flex-row items-center gap-1.5">
             <StatDot status={status} />
-            <Text
-              style={{
-                fontFamily: Fonts.sans.regular,
-                fontSize: 11.5,
-                color: colors.muted,
-              }}
-            >
-              {t(statusLabelKey(status))}
-            </Text>
+            <Text className="text-muted text-[11.5px]">{t(statusLabelKey(status))}</Text>
           </View>
         ))}
       </View>
 
-      <View style={styles.grid}>
+      <View className="mt-4 flex-row flex-wrap gap-2">
         {months.map(({ month, payment }) => {
           const status: GridStatus = payment?.status ?? 'empty';
           const label = t(statusLabelKey(status));
@@ -178,12 +150,14 @@ export function MonthlyGrid({ year, payments, language = 'hr', onMonthPress }: M
           return (
             <Pressable
               key={month}
+              className={cn(
+                'bg-surface-2 items-center rounded-lg pt-3.25 pb-3',
+                isCurrent ? 'border-primary' : 'border-transparent',
+              )}
               style={({ pressed }) => [
-                styles.cell,
                 {
                   width: cellWidth,
-                  backgroundColor: colors.surface2,
-                  borderColor: isCurrent ? colors.primary : 'transparent',
+                  borderWidth: 1.5,
                   opacity: pressed ? 0.75 : 1,
                 },
               ]}
@@ -194,14 +168,7 @@ export function MonthlyGrid({ year, payments, language = 'hr', onMonthPress }: M
               accessibilityState={{ selected: isCurrent }}
             >
               <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 12,
-                  color: colors.fg,
-                  marginBottom: 10,
-                  textAlign: 'center',
-                  paddingHorizontal: 4,
-                }}
+                className="text-fg mb-2.5 px-1 text-center text-xs font-semibold"
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.75}
@@ -216,44 +183,3 @@ export function MonthlyGrid({ year, payments, language = 'hr', onMonthPress }: M
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-    paddingHorizontal: CARD_PAD,
-    paddingTop: 18,
-    paddingBottom: 16,
-    marginBottom: 18,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    marginBottom: 2,
-  },
-  legend: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    rowGap: 8,
-    columnGap: 16,
-    marginTop: 12,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: CELL_GAP,
-    marginTop: 16,
-  },
-  cell: {
-    borderRadius: 16,
-    paddingTop: 13,
-    paddingBottom: 12,
-    alignItems: 'center',
-    borderWidth: 1.5,
-  },
-});

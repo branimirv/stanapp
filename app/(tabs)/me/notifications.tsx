@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Spacing, Typography } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { requestNotificationPermissions } from '@/lib/notifications';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
 import { useUiStore } from '@/stores/uiStore';
 import {
   loadNotificationPreferences,
@@ -19,7 +19,7 @@ import {
 export default function NotificationSettingsScreen() {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors, elevation, radius } = theme;
+  const { colors, elevation } = theme;
   const showToast = useUiStore((s) => s.showToast);
 
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
@@ -72,7 +72,7 @@ export default function NotificationSettingsScreen() {
   if (isLoading || !preferences) {
     return (
       <StackScreenChrome title={t('settings.notificationPreferences')} hideHeaderTitle edgeToEdge>
-        <SkeletonLoader count={4} style={styles.loader} />
+        <SkeletonLoader count={4} className="p-4" />
       </StackScreenChrome>
     );
   }
@@ -107,7 +107,6 @@ export default function NotificationSettingsScreen() {
         isSaving={isSaving}
         colors={colors}
         elevation={elevation}
-        radius={radius}
         themeName={theme.name}
         onToggle={updatePreference}
         onSave={handleSave}
@@ -123,7 +122,6 @@ function NotificationBody({
   isSaving,
   colors,
   elevation,
-  radius,
   themeName,
   onToggle,
   onSave,
@@ -134,7 +132,6 @@ function NotificationBody({
   isSaving: boolean;
   colors: ReturnType<typeof useAppTheme>['theme']['colors'];
   elevation: ReturnType<typeof useAppTheme>['theme']['elevation'];
-  radius: ReturnType<typeof useAppTheme>['theme']['radius'];
   themeName: 'dark' | 'light';
   onToggle: (key: keyof NotificationPreferences, value: boolean) => void;
   onSave: () => void;
@@ -152,53 +149,37 @@ function NotificationBody({
       showsVerticalScrollIndicator={false}
     >
       <Text
+        className="text-fg mb-6 text-[32px] tracking-[-0.8px]"
         style={{
           fontFamily: displayFontFamily(themeName),
-          fontSize: 32,
           lineHeight: 32,
-          letterSpacing: -0.8,
-          color: colors.fg,
-          marginBottom: 24,
         }}
       >
         {t('settings.notifications')}
       </Text>
 
       <View
-        style={[
-          styles.card,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.cardBd,
-            borderRadius: radius.xl,
-            ...elevation.card,
-          },
-        ]}
+        className="border-card-bd bg-surface mb-5.5 rounded-xl border px-4.5 py-1"
+        style={[{ borderWidth: StyleSheet.hairlineWidth }, elevation.card]}
       >
         {items.map((item, index) => (
           <View key={item.key}>
             {index > 0 ? (
-              <View style={[styles.divider, { backgroundColor: colors.bd }]} />
+              <View className="bg-bd" style={{ height: StyleSheet.hairlineWidth }} />
             ) : null}
-            <View style={styles.row}>
-              <View style={styles.rowText}>
+            <View className="flex-row items-center gap-3 py-3.5">
+              <View className="min-w-0 flex-1">
                 <Text
-                  style={{
-                    fontFamily: Fonts.sans.medium,
-                    fontSize: Typography.text.settingsRow.size,
-                    letterSpacing: -0.15,
-                    color: colors.fg,
-                  }}
+                  className="text-fg font-medium tracking-[-0.15px]"
+                  style={{ fontSize: Typography.text.settingsRow.size }}
                 >
                   {item.title}
                 </Text>
                 <Text
+                  className="text-muted mt-0.75"
                   style={{
-                    fontFamily: Fonts.sans.regular,
                     fontSize: Typography.text.caption.size,
                     lineHeight: 16,
-                    color: colors.muted,
-                    marginTop: 3,
                   }}
                 >
                   {item.hint}
@@ -218,53 +199,13 @@ function NotificationBody({
         disabled={isSaving}
         accessibilityRole="button"
         accessibilityLabel={t('common.save')}
-        style={[
-          styles.saveBtn,
-          { backgroundColor: colors.primary, opacity: isSaving ? 0.7 : 1 },
-        ]}
+        className="bg-primary h-[50px] items-center justify-center rounded-full"
+        style={{ opacity: isSaving ? 0.7 : 1 }}
       >
-        <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: 15,
-            letterSpacing: -0.15,
-            color: colors.onPrimary,
-          }}
-        >
+        <Text className="text-on-primary text-[15px] font-semibold tracking-[-0.15px]">
           {t('common.save')}
         </Text>
       </Pressable>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  loader: {
-    padding: Spacing.md,
-  },
-  card: {
-    paddingHorizontal: 18,
-    paddingVertical: 4,
-    borderWidth: StyleSheet.hairlineWidth,
-    marginBottom: 22,
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 14,
-  },
-  rowText: {
-    flex: 1,
-    minWidth: 0,
-  },
-  saveBtn: {
-    height: 50,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

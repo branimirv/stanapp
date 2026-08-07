@@ -13,53 +13,44 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
-import { Typography } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 
 interface SettingsGroupProps {
   title?: string;
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
+  className?: string;
 }
 
 /** Naslov settings card: Fraunces sechead + surface card of `.lrow.stgrow` rows. */
-export function SettingsGroup({ title, children, style }: SettingsGroupProps) {
+export function SettingsGroup({ title, children, style, className }: SettingsGroupProps) {
   const { theme } = useAppTheme();
-  const { colors, elevation, radius } = theme;
+  const { elevation } = theme;
   const items = Children.toArray(children).filter((child) => isValidElement(child));
 
   return (
-    <View style={[styles.group, style]}>
+    <View className={cn('mb-5.5', className)} style={style}>
       {title ? (
         <Text
+          className="text-fg mb-2.75 text-xl tracking-[-0.4px]"
           style={{
             fontFamily: displayFontFamily(theme.name),
-            fontSize: 20,
             lineHeight: 24,
-            letterSpacing: -0.4,
-            color: colors.fg,
-            marginBottom: 11,
           }}
         >
           {title}
         </Text>
       ) : null}
       <View
-        style={[
-          styles.card,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.cardBd,
-            borderRadius: radius.xl,
-            ...elevation.card,
-          },
-        ]}
+        className="border-card-bd bg-surface overflow-hidden rounded-xl border px-4.5 pt-1 pb-1.5"
+        style={[elevation.card, { borderWidth: StyleSheet.hairlineWidth }]}
       >
         {items.map((child, index) => (
           <View key={index}>
             {index > 0 ? (
-              <View style={[styles.divider, { backgroundColor: colors.bd }]} />
+              <View className="bg-bd ml-11" style={{ height: StyleSheet.hairlineWidth }} />
             ) : null}
             {child}
           </View>
@@ -103,22 +94,22 @@ export function SettingsRow({
   const chevronVisible = showChevron ?? Boolean(onPress);
   const isInteractive = Boolean(onPress) && !disabled && !loading;
 
-  const badgeBg =
+  const badgeClass =
     badgeTone === 'primary'
-      ? colors.primaryTint
+      ? 'bg-primary-tint'
       : badgeTone === 'accent'
-        ? colors.posTint
-        : colors.surface2;
-  const badgeFg =
+        ? 'bg-pos-tint'
+        : 'bg-surface-2';
+  const badgeTextClass =
     badgeTone === 'primary'
-      ? colors.primary
+      ? 'text-primary'
       : badgeTone === 'accent'
-        ? colors.pos
-        : colors.muted;
+        ? 'text-pos'
+        : 'text-muted';
 
   const content = (
-    <View style={styles.row}>
-      <View style={[styles.iconWell, { backgroundColor: colors.surface2 }]}>
+    <View className="flex-row items-center gap-2.75 py-3.25">
+      <View className="bg-surface-2 h-8.25 w-8.25 items-center justify-center rounded-full">
         <Icon
           size={15}
           color={destructive ? colors.neg : colors.muted}
@@ -126,29 +117,18 @@ export function SettingsRow({
         />
       </View>
 
-      <View style={styles.rowBody}>
+      <View className="min-w-0 flex-1">
         <Text
-          style={{
-            fontFamily: Fonts.sans.medium,
-            fontSize: Typography.text.settingsRow.size,
-            letterSpacing: -0.15,
-            color: destructive ? colors.neg : colors.fg,
-          }}
+          className={cn(
+            'text-[15px] font-medium tracking-[-0.15px]',
+            destructive ? 'text-neg' : 'text-fg',
+          )}
           numberOfLines={1}
         >
           {label}
         </Text>
         {subtitle ? (
-          <Text
-            style={{
-              fontFamily: Fonts.sans.regular,
-              fontSize: Typography.text.caption.size,
-              lineHeight: 16,
-              color: colors.muted,
-              marginTop: 2,
-            }}
-            numberOfLines={2}
-          >
+          <Text className="text-muted mt-0.5 text-[12.5px] leading-4" numberOfLines={2}>
             {subtitle}
           </Text>
         ) : null}
@@ -157,14 +137,9 @@ export function SettingsRow({
       {loading ? <ActivityIndicator size="small" color={colors.muted} /> : null}
 
       {!loading && badge ? (
-        <View style={[styles.chip, { backgroundColor: badgeBg }]}>
+        <View className={cn('rounded-full px-2.25 py-1', badgeClass)}>
           <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: Typography.text.chipSm.size,
-              letterSpacing: -0.05,
-              color: badgeFg,
-            }}
+            className={cn('text-[11px] font-semibold tracking-[-0.05px]', badgeTextClass)}
             numberOfLines={1}
           >
             {badge}
@@ -174,13 +149,7 @@ export function SettingsRow({
 
       {!loading && value && !badge ? (
         <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: Typography.text.chipSm.size,
-            letterSpacing: 0.8,
-            textTransform: 'uppercase',
-            color: colors.muted,
-          }}
+          className="text-muted text-[11px] font-semibold tracking-[0.8px] uppercase"
           numberOfLines={1}
         >
           {value}
@@ -236,12 +205,10 @@ export function SettingsOptionSheet<T extends string = string>({
   onClose,
 }: SettingsOptionSheetProps<T>) {
   const { t } = useTranslation();
-  const { theme } = useAppTheme();
-  const { colors } = theme;
 
   return (
     <AppBottomSheet visible={visible} onDismiss={onClose} title={title}>
-      <View style={styles.optionList}>
+      <View className="mb-3 gap-1">
         {options.map((option) => {
           const selected = option.value === value;
           return (
@@ -251,22 +218,18 @@ export function SettingsOptionSheet<T extends string = string>({
                 onSelect(option.value);
                 onClose();
               }}
-              style={[
-                styles.optionRow,
-                {
-                  backgroundColor: selected ? colors.primaryTint : 'transparent',
-                },
-              ]}
+              className={cn(
+                'min-h-12 justify-center rounded-md px-3.5',
+                selected ? 'bg-primary-tint' : 'bg-transparent',
+              )}
               accessibilityRole="button"
               accessibilityState={{ selected }}
             >
               <Text
-                style={{
-                  fontFamily: selected ? Fonts.sans.semibold : Fonts.sans.medium,
-                  fontSize: 15,
-                  letterSpacing: -0.15,
-                  color: selected ? colors.primary : colors.fg,
-                }}
+                className={cn(
+                  'text-[15px] tracking-[-0.15px]',
+                  selected ? 'text-primary font-semibold' : 'text-fg font-medium',
+                )}
               >
                 {option.label}
               </Text>
@@ -278,74 +241,12 @@ export function SettingsOptionSheet<T extends string = string>({
         onPress={onClose}
         accessibilityRole="button"
         accessibilityLabel={t('common.cancel')}
-        style={[styles.cancelBtn, { backgroundColor: colors.surface2 }]}
+        className="bg-surface-2 h-11 items-center justify-center rounded-full"
       >
-        <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: 14,
-            letterSpacing: -0.14,
-            color: colors.fg,
-          }}
-        >
+        <Text className="text-fg text-sm font-semibold tracking-[-0.14px]">
           {t('common.cancel')}
         </Text>
       </Pressable>
     </AppBottomSheet>
   );
 }
-
-const styles = StyleSheet.create({
-  group: {
-    marginBottom: 22,
-  },
-  card: {
-    paddingHorizontal: 18,
-    paddingTop: 4,
-    paddingBottom: 6,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    marginLeft: 44,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11,
-    paddingVertical: 13,
-  },
-  iconWell: {
-    width: 33,
-    height: 33,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowBody: {
-    flex: 1,
-    minWidth: 0,
-  },
-  chip: {
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  optionList: {
-    gap: 4,
-    marginBottom: 12,
-  },
-  optionRow: {
-    minHeight: 48,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    justifyContent: 'center',
-  },
-  cancelBtn: {
-    height: 44,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

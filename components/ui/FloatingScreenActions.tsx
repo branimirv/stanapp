@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HEADER_ACTION_SLOT, HEADER_EDGE_INSET } from '@/constants/header';
@@ -34,25 +34,16 @@ export function FloatingScreenActions({
   return (
     <View
       pointerEvents="box-none"
-      style={[
-        styles.container,
-        {
-          top: insets.top + 4,
-          ...(align === 'left'
-            ? { left: HEADER_EDGE_INSET }
-            : { right: HEADER_EDGE_INSET }),
-        },
-      ]}
+      className="absolute z-20"
+      style={{
+        top: insets.top + 4,
+        elevation: 20,
+        ...(align === 'left'
+          ? { left: HEADER_EDGE_INSET }
+          : { right: HEADER_EDGE_INSET }),
+      }}
     >
       {children}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    zIndex: 20,
-    elevation: 20,
-  },
-});

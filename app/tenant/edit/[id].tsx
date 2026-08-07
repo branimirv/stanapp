@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { TenantForm } from '@/components/tenant/TenantForm';
@@ -54,7 +54,7 @@ export default function EditTenantScreen() {
   if (isLoading) {
     return (
       <StackScreenChrome title={t('tenants.editTenant')} hideHeaderTitle edgeToEdge>
-        <SkeletonLoader count={6} style={styles.loader} />
+        <SkeletonLoader count={6} className="p-4" />
       </StackScreenChrome>
     );
   }
@@ -98,9 +98,3 @@ export default function EditTenantScreen() {
     </StackScreenChrome>
   );
 }
-
-const styles = StyleSheet.create({
-  loader: {
-    padding: 16,
-  },
-});

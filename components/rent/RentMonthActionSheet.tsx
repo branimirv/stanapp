@@ -1,11 +1,11 @@
 import { Banknote, CheckCircle, FileEdit, PieChart } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
 import { DisplayAmount } from '@/components/ui/DisplayAmount';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { Fonts } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import type { Language, PaymentStatus, RentPayment } from '@/types/app.types';
 import { formatPeriod } from '@/utils/formatters';
 
@@ -27,32 +27,31 @@ function StatusChip({ status, label }: { status: PaymentStatus | 'empty'; label:
   const { theme } = useAppTheme();
   const { colors } = theme;
 
-  let backgroundColor = colors.surface2;
-  let color = colors.muted;
+  let iconColor = colors.muted;
+  let toneClass = 'bg-surface-2';
+  let textClass = 'text-muted';
 
   if (status === 'paid') {
-    backgroundColor = colors.posTint;
-    color = colors.pos;
+    iconColor = colors.pos;
+    toneClass = 'bg-pos-tint';
+    textClass = 'text-pos';
   } else if (status === 'late') {
-    backgroundColor = colors.negTint;
-    color = colors.neg;
+    iconColor = colors.neg;
+    toneClass = 'bg-neg-tint';
+    textClass = 'text-neg';
   } else if (status === 'pending' || status === 'partial') {
-    backgroundColor = colors.primaryTint;
-    color = colors.primary;
+    iconColor = colors.primary;
+    toneClass = 'bg-primary-tint';
+    textClass = 'text-primary';
   }
 
   return (
-    <View style={[styles.chip, { backgroundColor }]}>
+    <View className={cn('shrink-0 flex-row items-center gap-1.5 rounded-full px-2.75 py-1.25', toneClass)}>
       {status === 'paid' ? (
-        <CheckCircle size={12} color={color} strokeWidth={2} />
+        <CheckCircle size={12} color={iconColor} strokeWidth={2} />
       ) : null}
       <Text
-        style={{
-          fontFamily: Fonts.sans.semibold,
-          fontSize: 11,
-          letterSpacing: -0.05,
-          color,
-        }}
+        className={cn('text-[11px] font-semibold tracking-[-0.05px]', textClass)}
         numberOfLines={1}
       >
         {label}
@@ -94,7 +93,8 @@ export function RentMonthActionSheet({
             key: 'markPaid',
             label: t('rent.markPaid'),
             icon: CheckCircle,
-            tint: { bg: colors.posTint, fg: colors.pos },
+            well: 'bg-pos-tint' as const,
+            fg: colors.pos,
             onPress: () => {
               onDismiss();
               onMarkPaid();
@@ -104,7 +104,8 @@ export function RentMonthActionSheet({
             key: 'partial',
             label: t('rent.partialPayment'),
             icon: PieChart,
-            tint: { bg: colors.primaryTint, fg: colors.primary },
+            well: 'bg-primary-tint' as const,
+            fg: colors.primary,
             onPress: () => {
               onDismiss();
               onPartialPayment();
@@ -116,7 +117,8 @@ export function RentMonthActionSheet({
       key: 'details',
       label: payment ? t('rent.editPayment') : t('rent.addDetails'),
       icon: payment ? FileEdit : Banknote,
-      tint: { bg: colors.primaryTint, fg: colors.primary },
+      well: 'bg-primary-tint' as const,
+      fg: colors.primary,
       onPress: () => {
         onDismiss();
         onAddDetails();
@@ -126,7 +128,7 @@ export function RentMonthActionSheet({
 
   return (
     <AppBottomSheet visible={visible} onDismiss={onDismiss} title={periodLabel}>
-      <View style={styles.summary}>
+      <View className="mb-4 flex-row items-center justify-between gap-3">
         <DisplayAmount
           amount={Number(displayAmount)}
           currency={currency}
@@ -143,7 +145,7 @@ export function RentMonthActionSheet({
         )}
       </View>
 
-      <View style={styles.actions}>
+      <View className="gap-2.5">
         {actions.map((action) => {
           const Icon = action.icon;
           return (
@@ -152,20 +154,17 @@ export function RentMonthActionSheet({
               onPress={action.onPress}
               accessibilityRole="button"
               accessibilityLabel={action.label}
-              style={[styles.actionRow, { backgroundColor: colors.surface2 }]}
+              className="bg-surface-2 h-14 flex-row items-center gap-3.5 rounded-full px-3.5"
             >
-              <View style={[styles.iconWell, { backgroundColor: action.tint.bg }]}>
-                <Icon size={20} color={action.tint.fg} strokeWidth={2} />
-              </View>
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 15,
-                  letterSpacing: -0.15,
-                  color: colors.fg,
-                  flex: 1,
-                }}
+              <View
+                className={cn(
+                  'h-10 w-10 items-center justify-center rounded-full',
+                  action.well,
+                )}
               >
+                <Icon size={20} color={action.fg} strokeWidth={2} />
+              </View>
+              <Text className="text-fg flex-1 text-[15px] font-semibold tracking-[-0.15px]">
                 {action.label}
               </Text>
             </Pressable>
@@ -175,40 +174,3 @@ export function RentMonthActionSheet({
     </AppBottomSheet>
   );
 }
-
-const styles = StyleSheet.create({
-  summary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 16,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 5,
-    paddingHorizontal: 11,
-    borderRadius: 999,
-    flexShrink: 0,
-  },
-  actions: {
-    gap: 10,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    height: 56,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-  },
-  iconWell: {
-    width: 40,
-    height: 40,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

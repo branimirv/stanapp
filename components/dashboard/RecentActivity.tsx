@@ -1,10 +1,11 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { DisplayAmount } from '@/components/ui/DisplayAmount';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { Typography } from '@/constants/theme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import { formatDate } from '@/utils/formatters';
 import type { Language, RecentActivityItem } from '@/types/app.types';
 
@@ -28,50 +29,31 @@ function getItemDetail(
 export function RecentActivity({ items, language = 'hr', onItemPress }: RecentActivityProps) {
   const { t, i18n } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors } = theme;
+  const { colors, elevation } = theme;
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
 
   return (
-    <View style={{ marginBottom: 16 }}>
+    <View className="mb-4">
       <Text
-        style={{
-          fontFamily: displayFontFamily(theme.name),
-          fontSize: Typography.display.sectionHead.size,
-          lineHeight: Typography.display.sectionHead.lineHeight,
-          letterSpacing: Typography.display.sectionHead.letterSpacing,
-          color: colors.fg,
-          marginBottom: 11,
-        }}
+        className="text-fg mb-2.75 text-[22px] leading-6 tracking-[-0.55px]"
+        style={{ fontFamily: displayFontFamily(theme.name) }}
       >
         {t('dashboard.recentActivity')}
       </Text>
 
       <View
-        style={[
-          styles.card,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.cardBd,
-            borderRadius: theme.radius.xl,
-            ...theme.elevation.card,
-          },
-        ]}
+        className="border-card-bd bg-surface rounded-xl border px-4.5 py-1"
+        style={elevation.card}
       >
         {items.length === 0 ? (
-          <Text
-            style={{
-              fontFamily: Fonts.sans.regular,
-              fontSize: Typography.text.listRow.size,
-              color: colors.muted,
-              paddingVertical: 8,
-            }}
-          >
+          <Text className="text-muted py-2 text-[15px]">
             {t('dashboard.noRecentActivity')}
           </Text>
         ) : (
           items.map((item, index) => {
             const isIncome = item.type === 'rent_payment';
             const accentColor = isIncome ? colors.pos : colors.neg;
+            const accentClass = isIncome ? 'text-pos' : 'text-neg';
             const typeLabel = isIncome
               ? t('dashboard.activityRent')
               : t('dashboard.activityExpense');
@@ -80,62 +62,26 @@ export function RecentActivity({ items, language = 'hr', onItemPress }: RecentAc
 
             const row = (
               <View
-                style={[
-                  styles.row,
-                  !isLast && { borderBottomWidth: 1, borderBottomColor: colors.bd },
-                ]}
+                className={cn(
+                  'flex-row items-center gap-3 py-3.25',
+                  !isLast && 'border-bd border-b'
+                )}
               >
-                <View style={styles.copy}>
+                <View className="min-w-0 flex-1">
                   <Text numberOfLines={1}>
-                    <Text
-                      style={{
-                        fontFamily: Fonts.sans.semibold,
-                        fontSize: Typography.text.listRow.size,
-                        color: accentColor,
-                      }}
-                    >
+                    <Text className={cn('text-[15px] font-semibold', accentClass)}>
                       {typeLabel}
                     </Text>
-                    <Text
-                      style={{
-                        fontFamily: Fonts.sans.regular,
-                        fontSize: Typography.text.listRow.size,
-                        color: colors.muted,
-                      }}
-                    >
-                      {' · '}
-                    </Text>
-                    <Text
-                      style={{
-                        fontFamily: Fonts.sans.semibold,
-                        fontSize: Typography.text.listRow.size,
-                        color: colors.fg,
-                      }}
-                    >
-                      {detail}
-                    </Text>
+                    <Text className="text-muted text-[15px]">{' · '}</Text>
+                    <Text className="text-fg text-[15px] font-semibold">{detail}</Text>
                   </Text>
-                  <Text
-                    style={{
-                      fontFamily: Fonts.sans.regular,
-                      fontSize: Typography.text.caption.size,
-                      color: colors.muted,
-                      marginTop: 3,
-                    }}
-                  >
+                  <Text className="text-muted mt-0.75 text-[12.5px]">
                     {formatDate(item.created_at, resolvedLanguage)}
                   </Text>
                 </View>
 
-                <View style={styles.amount}>
-                  <Text
-                    style={{
-                      fontFamily: Fonts.sans.semibold,
-                      fontSize: Typography.text.chip.size,
-                      color: accentColor,
-                      marginRight: 2,
-                    }}
-                  >
+                <View className="shrink-0 flex-row items-baseline">
+                  <Text className={cn('mr-0.5 text-xs font-semibold', accentClass)}>
                     {isIncome ? '+' : '−'}
                   </Text>
                   <DisplayAmount
@@ -170,26 +116,3 @@ export function RecentActivity({ items, language = 'hr', onItemPress }: RecentAc
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    paddingHorizontal: 18,
-    paddingVertical: 4,
-    borderWidth: 1,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 13,
-  },
-  copy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  amount: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    flexShrink: 0,
-  },
-});

@@ -1,14 +1,12 @@
 import { formatDistanceStrict, parseISO } from 'date-fns';
 import { enUS, hr } from 'date-fns/locale';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { UsageStatusBadge } from '@/components/property/UsageStatusBadge';
 import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
-import { useAppTheme } from '@/hooks/useAppTheme';
 import { usePropertyStatusHistory } from '@/hooks/usePropertyStatusHistory';
-import { Fonts } from '@/lib/fonts';
 import type { Language } from '@/types/app.types';
 import { formatDate } from '@/utils/formatters';
 
@@ -31,8 +29,6 @@ export function UsageHistorySheet({
   language,
 }: UsageHistorySheetProps) {
   const { t } = useTranslation();
-  const { theme } = useAppTheme();
-  const { colors, radius } = theme;
   const { history, isLoading, error } = usePropertyStatusHistory(propertyId, visible);
 
   return (
@@ -45,41 +41,15 @@ export function UsageHistorySheet({
       {isLoading ? (
         <SkeletonLoader count={3} />
       ) : error ? (
-        <Text
-          style={{
-            fontFamily: Fonts.sans.regular,
-            fontSize: 14,
-            color: colors.neg,
-            textAlign: 'center',
-            paddingVertical: 28,
-          }}
-        >
-          {error}
-        </Text>
+        <Text className="text-neg py-7 text-center text-sm">{error}</Text>
       ) : history.length === 0 ? (
-        <View
-          style={[
-            styles.empty,
-            {
-              backgroundColor: colors.surface2,
-              borderRadius: radius.lg,
-            },
-          ]}
-        >
-          <Text
-            style={{
-              fontFamily: Fonts.sans.regular,
-              fontSize: 13,
-              lineHeight: 20,
-              color: colors.muted,
-              textAlign: 'center',
-            }}
-          >
+        <View className="bg-surface-2 items-center rounded-lg px-4.5 py-7">
+          <Text className="text-muted text-center text-[13px] leading-5">
             {t('properties.usageHistoryEmpty')}
           </Text>
         </View>
       ) : (
-        <View style={styles.list}>
+        <View className="gap-2.5 pb-1">
           {history.map((entry) => {
             const start = parseISO(entry.started_at);
             const end = entry.ended_at ? parseISO(entry.ended_at) : new Date();
@@ -95,36 +65,14 @@ export function UsageHistorySheet({
             return (
               <View
                 key={entry.id}
-                style={[
-                  styles.row,
-                  {
-                    backgroundColor: colors.surface2,
-                    borderRadius: radius.lg,
-                  },
-                ]}
+                className="bg-surface-2 flex-row items-center gap-3.5 rounded-lg px-3.5 py-3.5"
               >
                 <UsageStatusBadge status={entry.status} />
-                <View style={styles.meta}>
-                  <Text
-                    style={{
-                      fontFamily: Fonts.sans.semibold,
-                      fontSize: 14,
-                      letterSpacing: -0.14,
-                      color: colors.fg,
-                    }}
-                  >
+                <View className="min-w-0 flex-1">
+                  <Text className="text-fg text-sm font-semibold tracking-[-0.14px]">
                     {rangeLabel}
                   </Text>
-                  <Text
-                    style={{
-                      fontFamily: Fonts.sans.regular,
-                      fontSize: 12,
-                      color: colors.muted,
-                      marginTop: 2,
-                    }}
-                  >
-                    {duration}
-                  </Text>
+                  <Text className="text-muted mt-0.5 text-xs">{duration}</Text>
                 </View>
               </View>
             );
@@ -134,26 +82,3 @@ export function UsageHistorySheet({
     </AppBottomSheet>
   );
 }
-
-const styles = StyleSheet.create({
-  list: {
-    gap: 10,
-    paddingBottom: 4,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-  },
-  meta: {
-    flex: 1,
-    minWidth: 0,
-  },
-  empty: {
-    paddingVertical: 28,
-    paddingHorizontal: 18,
-    alignItems: 'center',
-  },
-});

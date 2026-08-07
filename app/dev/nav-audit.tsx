@@ -3,10 +3,8 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { Text } from '@/components/ui/text';
-import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProperties } from '@/hooks/useProperties';
-
 const TAB_LINKS: { title: string; href: string }[] = [
   { title: 'Dashboard', href: '/(tabs)/(dashboard)' },
   { title: 'Properties (tab)', href: '/(tabs)/properties' },
@@ -17,8 +15,8 @@ const TAB_LINKS: { title: string; href: string }[] = [
 
 function NavListSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <View style={styles.section}>
-      <Text variant="small" className="text-muted-foreground uppercase" style={styles.sectionTitle}>
+    <View className="gap-1">
+      <Text variant="small" className="text-muted-foreground mb-1 uppercase">
         {title}
       </Text>
       {children}
@@ -41,14 +39,18 @@ function NavListItem({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
+      className="border-bd px-1 py-2"
       style={({ pressed }) => [
-        styles.item,
-        { borderColor: theme.colors.outline, opacity: pressed ? 0.6 : 1 },
+        {
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderColor: theme.colors.outline,
+          opacity: pressed ? 0.6 : 1,
+        },
       ]}
     >
       <Text>{title}</Text>
       {description ? (
-        <Text variant="muted" style={styles.itemDescription}>
+        <Text variant="muted" className="mt-0.5">
           {description}
         </Text>
       ) : null}
@@ -61,8 +63,8 @@ export default function NavAuditScreen() {
 
   return (
     <StackScreenChrome title="Nav audit">
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text variant="muted" style={styles.hint}>
+      <ScrollView contentContainerClassName="gap-2 p-4">
+        <Text variant="muted" className="mb-2">
           Dev-only: jump to routes for navigation chrome screenshots.
         </Text>
         <NavListSection title="Tab roots">
@@ -90,27 +92,3 @@ export default function NavAuditScreen() {
     </StackScreenChrome>
   );
 }
-
-const styles = StyleSheet.create({
-  content: {
-    padding: Spacing.md,
-    gap: Spacing.sm,
-  },
-  hint: {
-    marginBottom: Spacing.sm,
-  },
-  section: {
-    gap: Spacing.xs,
-  },
-  sectionTitle: {
-    marginBottom: Spacing.xs,
-  },
-  item: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.xs,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  itemDescription: {
-    marginTop: 2,
-  },
-});

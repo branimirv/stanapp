@@ -3,7 +3,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   View,
   type StyleProp,
@@ -18,7 +17,7 @@ import { HeaderBtnIco } from '@/components/ui/HeaderActionsPill';
 import { HEADER_ICON_SIZE } from '@/constants/header';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { Typography } from '@/constants/theme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
 
 /**
  * Auth shell — flat Naslov `--bg` (no ScreenAmbient).
@@ -37,16 +36,19 @@ export function AuthScreen({
   const { t } = useTranslation();
 
   return (
-    <View style={[styles.root, { backgroundColor: theme.colors.bg }]}>
-      <SafeAreaView style={styles.flex} edges={['top', 'right', 'bottom', 'left']}>
+    <View className="bg-bg flex-1">
+      <SafeAreaView className="flex-1" edges={['top', 'right', 'bottom', 'left']}>
         <KeyboardAvoidingView
-          style={styles.flex}
+          className="flex-1"
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <ScrollView
             contentContainerStyle={[
-              styles.scroll,
-              { paddingHorizontal: theme.spacing.gutter },
+              {
+                flexGrow: 1,
+                paddingBottom: 40,
+                paddingHorizontal: theme.spacing.gutter,
+              },
               contentStyle,
             ]}
             keyboardShouldPersistTaps="handled"
@@ -56,7 +58,7 @@ export function AuthScreen({
               <HeaderBtnIco
                 onPress={() => router.back()}
                 accessibilityLabel={t('common.back')}
-                style={styles.back}
+                style={{ marginTop: 8, marginBottom: 8 }}
               >
                 <ChevronLeft size={HEADER_ICON_SIZE} color={theme.colors.fg} strokeWidth={2} />
               </HeaderBtnIco>
@@ -85,48 +87,27 @@ export function AuthTitleBlock({
   style?: StyleProp<ViewStyle>;
 }) {
   const { theme } = useAppTheme();
-  const { colors } = theme;
   const titleTok = Typography.display.screenTitle;
 
   return (
-    <View style={[styles.titleBlk, style]}>
+    <View className="mb-6.5 pt-1.5" style={style}>
       {eyebrow ? (
-        <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: 12,
-            lineHeight: 16,
-            letterSpacing: 1.68,
-            textTransform: 'uppercase',
-            color: colors.primary,
-            marginBottom: 12,
-          }}
-        >
+        <Text className="text-primary mb-3 text-xs leading-4 font-semibold tracking-[1.68px] uppercase">
           {eyebrow}
         </Text>
       ) : null}
       <Text
+        className="text-fg mb-2.5"
         style={{
           fontFamily: displayFontFamily(theme.name),
           fontSize: titleTok.size,
           lineHeight: Math.round(titleTok.size * 1.1),
           letterSpacing: titleTok.letterSpacing,
-          color: colors.fg,
-          marginBottom: 10,
         }}
       >
         {title}
       </Text>
-      <Text
-        style={{
-          fontFamily: Fonts.sans.regular,
-          fontSize: 15,
-          lineHeight: 22,
-          color: colors.muted,
-        }}
-      >
-        {subtitle}
-      </Text>
+      <Text className="text-muted text-[15px] leading-5.5">{subtitle}</Text>
     </View>
   );
 }
@@ -140,56 +121,18 @@ export function AuthFooter({
   actionLabel: string;
   href: '/(auth)/login' | '/(auth)/register';
 }) {
-  const { theme } = useAppTheme();
-
   return (
-    <View style={styles.footer}>
-      <Text
-        style={{
-          fontFamily: Fonts.sans.regular,
-          fontSize: 14,
-          lineHeight: 20,
-          color: theme.colors.muted,
-        }}
-      >
+    <View className="mt-6.5 flex-row flex-wrap items-center justify-center">
+      <Text className="text-muted text-sm leading-5">
         {prompt}{' '}
       </Text>
       <Text
         onPress={() => router.push(href)}
         accessibilityRole="link"
-        style={{
-          fontFamily: Fonts.sans.semibold,
-          fontSize: 14,
-          lineHeight: 20,
-          color: theme.colors.primary,
-        }}
+        className="text-primary text-sm leading-5 font-semibold"
       >
         {actionLabel}
       </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  flex: { flex: 1 },
-  scroll: {
-    flexGrow: 1,
-    paddingBottom: 40,
-  },
-  titleBlk: {
-    paddingTop: 6,
-    marginBottom: 26,
-  },
-  back: {
-    marginTop: 8,
-    marginBottom: 8,
-  },
-  footer: {
-    marginTop: 26,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-  },
-});

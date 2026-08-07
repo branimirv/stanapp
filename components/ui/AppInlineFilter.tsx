@@ -1,13 +1,13 @@
 import { ChevronDown } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { Text } from '@/components/ui/text';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { Fonts } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 
 export interface AppInlineFilterProps<T extends string = string> {
   options: PickerOption<T>[];
@@ -20,6 +20,7 @@ export interface AppInlineFilterProps<T extends string = string> {
   showChevron?: boolean;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  className?: string;
   onOpen?: () => void;
   /** Notify host when the option sheet opens/closes (for blur + tab chrome). */
   onVisibilityChange?: (open: boolean) => void;
@@ -35,6 +36,7 @@ export function AppInlineFilter<T extends string = string>({
   showChevron = true,
   disabled = false,
   style,
+  className,
   onOpen,
   onVisibilityChange,
 }: AppInlineFilterProps<T>) {
@@ -48,7 +50,6 @@ export function AppInlineFilter<T extends string = string>({
     [options, value],
   );
 
-  const labelColor = accent ? colors.primary : colors.fg;
   const chevronColor = accent ? colors.primary : colors.muted;
 
   const openPicker = useCallback(() => {
@@ -81,24 +82,21 @@ export function AppInlineFilter<T extends string = string>({
       <Pressable
         onPress={openPicker}
         disabled={disabled}
-        style={[
-          styles.fpill,
-          {
-            backgroundColor: accent ? colors.primaryTint : colors.surface2,
-            opacity: disabled ? 0.5 : 1,
-          },
-          style,
-        ]}
+        className={cn(
+          'h-9 shrink-0 flex-row items-center gap-1.5 rounded-full pr-3 pl-3.5',
+          accent ? 'bg-primary-tint' : 'bg-surface-2',
+          disabled && 'opacity-50',
+          className,
+        )}
+        style={style}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
       >
         <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: 12.5,
-            letterSpacing: -0.125,
-            color: labelColor,
-          }}
+          className={cn(
+            'text-[12.5px] font-semibold tracking-[-0.125px]',
+            accent ? 'text-primary' : 'text-fg',
+          )}
           numberOfLines={1}
         >
           {prefixLabel ? `${prefixLabel} · ${displayLabel}` : displayLabel}
@@ -111,87 +109,49 @@ export function AppInlineFilter<T extends string = string>({
         onDismiss={dismissSheet}
         title={title ?? t('common.select')}
         scrollable
-        contentStyle={styles.options}
       >
-        {options.map((option) => {
-          const selected = option.value === value;
-          const Icon = option.icon;
-          return (
-            <Pressable
-              key={option.value}
-              onPress={() => handleSelect(option.value)}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              style={[
-                styles.optionRow,
-                {
-                  backgroundColor: selected ? colors.primaryTint : colors.surface2,
-                },
-              ]}
-            >
-              {Icon ? (
-                <View
-                  style={[
-                    styles.iconWell,
-                    {
-                      backgroundColor: selected ? colors.surface : colors.surface3,
-                    },
-                  ]}
-                >
-                  <Icon
-                    size={18}
-                    color={selected ? colors.primary : colors.muted}
-                    strokeWidth={2}
-                  />
-                </View>
-              ) : null}
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 15,
-                  letterSpacing: -0.15,
-                  color: selected ? colors.primary : colors.fg,
-                  flex: 1,
-                }}
+        <View className="gap-2.5 pb-1">
+          {options.map((option) => {
+            const selected = option.value === value;
+            const Icon = option.icon;
+            return (
+              <Pressable
+                key={option.value}
+                onPress={() => handleSelect(option.value)}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                className={cn(
+                  'h-14 flex-row items-center gap-3.5 rounded-full px-3.5',
+                  selected ? 'bg-primary-tint' : 'bg-surface-2',
+                )}
               >
-                {option.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+                {Icon ? (
+                  <View
+                    className={cn(
+                      'h-10 w-10 items-center justify-center rounded-full',
+                      selected ? 'bg-surface' : 'bg-surface-3',
+                    )}
+                  >
+                    <Icon
+                      size={18}
+                      color={selected ? colors.primary : colors.muted}
+                      strokeWidth={2}
+                    />
+                  </View>
+                ) : null}
+                <Text
+                  className={cn(
+                    'flex-1 text-[15px] font-semibold tracking-[-0.15px]',
+                    selected ? 'text-primary' : 'text-fg',
+                  )}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </AppBottomSheet>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  fpill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    height: 36,
-    paddingLeft: 14,
-    paddingRight: 12,
-    borderRadius: 999,
-    flexShrink: 0,
-  },
-  options: {
-    gap: 10,
-    paddingBottom: 4,
-  },
-  optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    height: 56,
-    borderRadius: 999,
-    paddingHorizontal: 14,
-  },
-  iconWell: {
-    width: 40,
-    height: 40,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

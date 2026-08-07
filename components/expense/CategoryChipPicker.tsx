@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef } from 'react';
 import {
   Pressable,
   ScrollView,
-  StyleSheet,
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -12,9 +11,8 @@ import { useTranslation } from 'react-i18next';
 
 import { CategoryBadge } from '@/components/expense/CategoryBadge';
 import { Text } from '@/components/ui/text';
-import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { Fonts } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import type { ExpenseCategory } from '@/types/app.types';
 
 export interface CategoryChipPickerProps {
@@ -107,42 +105,27 @@ export function CategoryChipPicker({
   };
 
   return (
-    <View style={styles.container}>
+    <View className="w-full overflow-visible">
       {label ? (
-        <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: 12.5,
-            lineHeight: 16,
-            color: colors.fg,
-            marginBottom: 8,
-          }}
-        >
-          {label}
-        </Text>
+        <Text className="text-fg mb-2 text-[12.5px] leading-4 font-semibold">{label}</Text>
       ) : null}
 
       {categories.length === 0 && !onAddCustom ? (
-        <Text
-          style={{
-            fontFamily: Fonts.sans.regular,
-            fontSize: 14,
-            color: colors.muted,
-            paddingVertical: 8,
-          }}
-        >
-          {t('expenses.noCategories')}
-        </Text>
+        <Text className="text-muted py-2 text-sm">{t('expenses.noCategories')}</Text>
       ) : (
         <ScrollView
           ref={scrollRef}
           horizontal
           showsHorizontalScrollIndicator={false}
           style={{ marginHorizontal: -gutter }}
-          contentContainerStyle={[
-            styles.chipRow,
-            { paddingLeft: gutter, paddingRight: gutter + 28 },
-          ]}
+          contentContainerStyle={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            paddingVertical: 2,
+            paddingLeft: gutter,
+            paddingRight: gutter + 28,
+          }}
           keyboardShouldPersistTaps="handled"
           decelerationRate="fast"
           onLayout={handleViewportLayout}
@@ -156,13 +139,13 @@ export function CategoryChipPicker({
                 key={category.id}
                 onPress={() => handleSelect(category.id)}
                 onLayout={(event) => handleChipLayout(category.id, event)}
-                style={[
-                  styles.chip,
-                  {
-                    borderColor: selected ? colors.primary : 'transparent',
-                    backgroundColor: selected ? colors.primaryTint : `${category.color}22`,
-                  },
-                ]}
+                className={cn(
+                  'shrink-0 rounded-full border-[1.5px]',
+                  selected ? 'border-primary' : 'border-transparent',
+                )}
+                style={{
+                  backgroundColor: selected ? colors.primaryTint : `${category.color}22`,
+                }}
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
               >
@@ -179,17 +162,11 @@ export function CategoryChipPicker({
           {onAddCustom ? (
             <Pressable
               onPress={onAddCustom}
-              style={[styles.addCustomChip, { borderColor: colors.primary }]}
+              className="border-primary shrink-0 items-center justify-center self-center rounded-full border px-2.5 py-1"
               accessibilityRole="button"
               accessibilityLabel={t('expenses.addCustomCategory')}
             >
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 12,
-                  color: colors.primary,
-                }}
-              >
+              <Text className="text-primary text-xs font-semibold">
                 + {t('expenses.addCustomCategory')}
               </Text>
             </Pressable>
@@ -197,45 +174,7 @@ export function CategoryChipPicker({
         </ScrollView>
       )}
 
-      {error ? (
-        <Text
-          style={{
-            fontFamily: Fonts.sans.regular,
-            fontSize: 14,
-            color: colors.neg,
-            marginTop: 6,
-          }}
-        >
-          {error}
-        </Text>
-      ) : null}
+      {error ? <Text className="text-neg mt-1.5 text-sm">{error}</Text> : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    overflow: 'visible',
-  },
-  chipRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 2,
-  },
-  chip: {
-    borderRadius: 999,
-    borderWidth: 1.5,
-    flexShrink: 0,
-  },
-  addCustomChip: {
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: Spacing.sm + 2,
-    paddingVertical: Spacing.xs,
-    justifyContent: 'center',
-    alignSelf: 'center',
-    flexShrink: 0,
-  },
-});

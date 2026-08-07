@@ -8,7 +8,6 @@ import { useCallback, useMemo, useState } from 'react';
 import {
   Platform,
   Pressable,
-  StyleSheet,
   View,
   type StyleProp,
   type ViewStyle,
@@ -18,9 +17,8 @@ import { useTranslation } from 'react-i18next';
 import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
 import { AppButton } from '@/components/ui/AppButton';
 import { Text } from '@/components/ui/text';
-import { Spacing, Typography } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { Fonts } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 
 const dateLocales = { en: enUS, hr } as const;
 
@@ -34,6 +32,7 @@ export interface AppDatePickerProps {
   error?: string;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  className?: string;
   /** Notify host when the sheet opens/closes (for BlurOverlay sibling). */
   onVisibilityChange?: (open: boolean) => void;
 }
@@ -48,6 +47,7 @@ export function AppDatePicker({
   error,
   disabled = false,
   style,
+  className,
   onVisibilityChange,
 }: AppDatePickerProps) {
   const { theme } = useAppTheme();
@@ -98,33 +98,20 @@ export function AppDatePicker({
     dismissSheet();
   }, [dismissSheet, onChange]);
 
-  const borderColor = error ? colors.neg : colors.bd;
-
   return (
-    <View style={[styles.container, style]}>
-      <Text
-        style={{
-          fontFamily: Fonts.sans.semibold,
-          fontSize: Typography.text.fieldLabel.size,
-          lineHeight: 17,
-          color: colors.fg,
-          marginBottom: 8,
-        }}
-      >
+    <View className={cn('w-full', className)} style={style}>
+      <Text className="text-fg mb-2 text-[13px] leading-gutter font-semibold">
         {displayLabel}
       </Text>
 
       <Pressable
         onPress={openPicker}
         disabled={disabled}
-        style={[
-          styles.field,
-          {
-            backgroundColor: colors.surface2,
-            borderColor,
-            opacity: disabled ? 0.6 : 1,
-          },
-        ]}
+        className={cn(
+          'bg-surface-2 border-bd min-h-12 flex-row items-center gap-2 rounded-md border px-3.5',
+          error && 'border-neg',
+          disabled && 'opacity-60',
+        )}
         accessibilityRole="button"
         accessibilityLabel={displayLabel}
         accessibilityHint={t('ui.selectDate')}
@@ -136,16 +123,7 @@ export function AppDatePicker({
       </Pressable>
 
       {error ? (
-        <Text
-          style={{
-            fontFamily: Fonts.sans.regular,
-            fontSize: 14,
-            color: colors.neg,
-            marginTop: 6,
-          }}
-        >
-          {error}
-        </Text>
+        <Text className="text-neg mt-1.5 text-sm">{error}</Text>
       ) : null}
 
       {Platform.OS === 'android' && sheetVisible ? (
@@ -164,58 +142,32 @@ export function AppDatePicker({
           visible={sheetVisible}
           onDismiss={dismissSheet}
           title={t('ui.selectDate')}
-          contentStyle={styles.sheetBody}
         >
-          <DateTimePicker
-            value={tempDate}
-            mode="date"
-            display="spinner"
-            onChange={(_, selectedDate) => {
-              if (selectedDate) setTempDate(selectedDate);
-            }}
-            minimumDate={minimumDate}
-            maximumDate={maximumDate}
-            locale={i18n.language}
-            style={styles.picker}
-          />
+          <View className="items-stretch">
+            <DateTimePicker
+              value={tempDate}
+              mode="date"
+              display="spinner"
+              onChange={(_, selectedDate) => {
+                if (selectedDate) setTempDate(selectedDate);
+              }}
+              minimumDate={minimumDate}
+              maximumDate={maximumDate}
+              locale={i18n.language}
+              style={{ alignSelf: 'center' }}
+            />
 
-          <View style={styles.actions}>
-            <AppButton mode="text" onPress={handleClear} className="flex-1">
-              {t('common.clear')}
-            </AppButton>
-            <AppButton mode="contained" onPress={handleConfirm} className="flex-1">
-              {t('common.done')}
-            </AppButton>
+            <View className="mt-4 flex-row items-center gap-2.5">
+              <AppButton mode="text" onPress={handleClear} className="flex-1">
+                {t('common.clear')}
+              </AppButton>
+              <AppButton mode="contained" onPress={handleConfirm} className="flex-1">
+                {t('common.done')}
+              </AppButton>
+            </View>
           </View>
         </AppBottomSheet>
       ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-  },
-  field: {
-    minHeight: 48,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  sheetBody: {
-    alignItems: 'stretch',
-  },
-  picker: {
-    alignSelf: 'center',
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: Spacing.md,
-  },
-});

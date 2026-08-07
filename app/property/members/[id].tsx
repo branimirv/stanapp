@@ -11,7 +11,8 @@ import { Spacing, Typography } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useMyMembership, usePropertyInvites, usePropertyMembers } from '@/hooks/useMembers';
 import { useProperty } from '@/hooks/useProperties';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import { getErrorMessage } from '@/utils/errors';
@@ -20,7 +21,7 @@ export default function PropertyMembersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors, elevation, radius } = theme;
+  const { colors, elevation } = theme;
   const showToast = useUiStore((s) => s.showToast);
   const showConfirmDialog = useUiStore((s) => s.showConfirmDialog);
   const user = useAuthStore((s) => s.user);
@@ -90,7 +91,7 @@ export default function PropertyMembersScreen() {
   if (isLoading && members.length === 0) {
     return (
       <StackScreenChrome title={t('members.title')} hideHeaderTitle edgeToEdge>
-        <SkeletonLoader count={4} style={styles.loader} />
+        <SkeletonLoader count={4} className="p-4" />
       </StackScreenChrome>
     );
   }
@@ -128,7 +129,6 @@ export default function PropertyMembersScreen() {
         propertyId={id}
         colors={colors}
         elevation={elevation}
-        radius={radius}
         themeName={theme.name}
         onRevokeMember={handleRevokeMember}
         onRevokeInvite={handleRevokeInvite}
@@ -146,7 +146,6 @@ function MembersBody({
   propertyId,
   colors,
   elevation,
-  radius,
   themeName,
   onRevokeMember,
   onRevokeInvite,
@@ -159,7 +158,6 @@ function MembersBody({
   propertyId?: string;
   colors: ReturnType<typeof useAppTheme>['theme']['colors'];
   elevation: ReturnType<typeof useAppTheme>['theme']['elevation'];
-  radius: ReturnType<typeof useAppTheme>['theme']['radius'];
   themeName: 'dark' | 'light';
   onRevokeMember: (memberId: string, name: string) => void;
   onRevokeInvite: (inviteId: string, email: string) => void;
@@ -168,266 +166,152 @@ function MembersBody({
   const edgeInset = useStackChromeEdgeInset() ?? 0;
 
   return (
-      <ScrollView
-        style={styles.flex}
-        contentContainerStyle={{
-          paddingHorizontal: Spacing.gutter,
-          paddingTop: edgeInset + Spacing.sm,
-          paddingBottom: Spacing.scrollBottom,
+    <ScrollView
+      className="flex-1"
+      contentContainerStyle={{
+        paddingHorizontal: Spacing.gutter,
+        paddingTop: edgeInset + Spacing.sm,
+        paddingBottom: Spacing.scrollBottom,
+      }}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+    >
+      <Text
+        className="text-fg mb-5.5 text-[32px] tracking-[-0.8px]"
+        style={{
+          fontFamily: displayFontFamily(themeName),
+          lineHeight: 32,
         }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
       >
-        <Text
-          style={{
-            fontFamily: displayFontFamily(themeName),
-            fontSize: 32,
-            lineHeight: 32,
-            letterSpacing: -0.8,
-            color: colors.fg,
-            marginBottom: 22,
-          }}
-        >
-          {t('members.title')}
-        </Text>
+        {t('members.title')}
+      </Text>
 
-        <Text
-          style={{
-            fontFamily: displayFontFamily(themeName),
-            fontSize: 18,
-            letterSpacing: -0.36,
-            color: colors.fg,
-            marginBottom: 11,
-          }}
-        >
-          {t('members.membersSection')}
-        </Text>
+      <Text
+        className="text-fg mb-2.75 text-lg tracking-[-0.36px]"
+        style={{ fontFamily: displayFontFamily(themeName) }}
+      >
+        {t('members.membersSection')}
+      </Text>
 
-        {members.length === 0 ? (
-          <EmptyState icon={Users} title={t('members.noMembers')} />
-        ) : (
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.cardBd,
-                borderRadius: radius.xl,
-                ...elevation.card,
-              },
-            ]}
-          >
-            {members.map((member, index) => {
-              const name = member.profile?.full_name ?? t('members.unknownUser');
-              const isSelf = member.user_id === userId;
-              const isPrimaryOwner = primaryOwnerId != null && member.user_id === primaryOwnerId;
-              const isLastOwner = member.role === 'owner' && activeOwnerCount <= 1;
-              const canRevoke = !isSelf && !isPrimaryOwner && !isLastOwner;
-              const isLast = index === members.length - 1;
-              return (
-                <View
-                  key={member.id}
-                  style={[
-                    styles.row,
-                    !isLast
-                      ? {
-                          borderBottomWidth: StyleSheet.hairlineWidth,
-                          borderBottomColor: colors.bd,
-                        }
-                      : null,
-                  ]}
-                >
-                  <View style={styles.rowText}>
-                    <Text
-                      style={{
-                        fontFamily: Fonts.sans.medium,
-                        fontSize: Typography.text.settingsRow.size,
-                        letterSpacing: -0.15,
-                        color: colors.fg,
-                      }}
-                    >
-                      {name}
-                    </Text>
-                    <Text
-                      style={{
-                        fontFamily: Fonts.sans.regular,
-                        fontSize: Typography.text.caption.size,
-                        color: colors.muted,
-                        marginTop: 3,
-                      }}
-                    >
-                      {t(`members.roles.${member.role}`)}
-                      {isSelf ? ` · ${t('members.you')}` : ''}
-                      {isPrimaryOwner ? ` · ${t('members.primaryOwner')}` : ''}
-                    </Text>
-                  </View>
-                  {canRevoke ? (
-                    <Pressable
-                      onPress={() => onRevokeMember(member.id, name)}
-                      hitSlop={8}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('common.remove')}
-                      style={[styles.iconBtn, { backgroundColor: colors.negTint }]}
-                    >
-                      <Trash2 size={16} color={colors.neg} strokeWidth={2} />
-                    </Pressable>
-                  ) : null}
+      {members.length === 0 ? (
+        <EmptyState icon={Users} title={t('members.noMembers')} />
+      ) : (
+        <View
+          className="border-card-bd bg-surface rounded-xl border px-4.5 py-1"
+          style={[{ borderWidth: StyleSheet.hairlineWidth }, elevation.card]}
+        >
+          {members.map((member, index) => {
+            const name = member.profile?.full_name ?? t('members.unknownUser');
+            const isSelf = member.user_id === userId;
+            const isPrimaryOwner = primaryOwnerId != null && member.user_id === primaryOwnerId;
+            const isLastOwner = member.role === 'owner' && activeOwnerCount <= 1;
+            const canRevoke = !isSelf && !isPrimaryOwner && !isLastOwner;
+            const isLast = index === members.length - 1;
+            return (
+              <View
+                key={member.id}
+                className={cn('flex-row items-center gap-3 py-3.5', !isLast && 'border-bd border-b')}
+                style={!isLast ? { borderBottomWidth: StyleSheet.hairlineWidth } : undefined}
+              >
+                <View className="min-w-0 flex-1">
+                  <Text
+                    className="text-fg font-medium tracking-[-0.15px]"
+                    style={{ fontSize: Typography.text.settingsRow.size }}
+                  >
+                    {name}
+                  </Text>
+                  <Text
+                    className="text-muted mt-0.75"
+                    style={{ fontSize: Typography.text.caption.size }}
+                  >
+                    {t(`members.roles.${member.role}`)}
+                    {isSelf ? ` · ${t('members.you')}` : ''}
+                    {isPrimaryOwner ? ` · ${t('members.primaryOwner')}` : ''}
+                  </Text>
                 </View>
-              );
-            })}
-          </View>
-        )}
-
-        <Text
-          style={{
-            fontFamily: displayFontFamily(themeName),
-            fontSize: 18,
-            letterSpacing: -0.36,
-            color: colors.fg,
-            marginTop: 22,
-            marginBottom: 11,
-          }}
-        >
-          {t('members.pendingInvites')}
-        </Text>
-
-        {invites.length === 0 ? (
-          <Text
-            style={{
-              fontFamily: Fonts.sans.regular,
-              fontSize: 12.5,
-              color: colors.muted,
-              paddingVertical: 6,
-              marginBottom: 18,
-            }}
-          >
-            {t('members.noPending')}
-          </Text>
-        ) : (
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.cardBd,
-                borderRadius: radius.xl,
-                ...elevation.card,
-                marginBottom: 18,
-              },
-            ]}
-          >
-            {invites.map((inviteItem, index) => {
-              const isLast = index === invites.length - 1;
-              return (
-                <View
-                  key={inviteItem.id}
-                  style={[
-                    styles.row,
-                    !isLast
-                      ? {
-                          borderBottomWidth: StyleSheet.hairlineWidth,
-                          borderBottomColor: colors.bd,
-                        }
-                      : null,
-                  ]}
-                >
-                  <View style={styles.rowText}>
-                    <Text
-                      style={{
-                        fontFamily: Fonts.sans.medium,
-                        fontSize: Typography.text.settingsRow.size,
-                        letterSpacing: -0.15,
-                        color: colors.fg,
-                      }}
-                    >
-                      {inviteItem.email}
-                    </Text>
-                    <Text
-                      style={{
-                        fontFamily: Fonts.sans.regular,
-                        fontSize: Typography.text.caption.size,
-                        color: colors.muted,
-                        marginTop: 3,
-                      }}
-                    >
-                      {t(`members.roles.${inviteItem.role}`)}
-                    </Text>
-                  </View>
+                {canRevoke ? (
                   <Pressable
-                    onPress={() => onRevokeInvite(inviteItem.id, inviteItem.email)}
+                    onPress={() => onRevokeMember(member.id, name)}
                     hitSlop={8}
                     accessibilityRole="button"
                     accessibilityLabel={t('common.remove')}
-                    style={[styles.iconBtn, { backgroundColor: colors.negTint }]}
+                    className="bg-neg-tint h-8.5 w-8.5 items-center justify-center rounded-full"
                   >
                     <Trash2 size={16} color={colors.neg} strokeWidth={2} />
                   </Pressable>
-                </View>
-              );
-            })}
-          </View>
-        )}
+                ) : null}
+              </View>
+            );
+          })}
+        </View>
+      )}
 
-        <Pressable
-          onPress={() =>
-            router.push({
-              pathname: '/(tabs)/me/team',
-              params: propertyId ? { propertyId } : undefined,
-            })
-          }
-          accessibilityRole="button"
-          accessibilityLabel={t('members.invitePeople')}
-          style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
+      <Text
+        className="text-fg mt-5.5 mb-2.75 text-lg tracking-[-0.36px]"
+        style={{ fontFamily: displayFontFamily(themeName) }}
+      >
+        {t('members.pendingInvites')}
+      </Text>
+
+      {invites.length === 0 ? (
+        <Text className="text-muted mb-4.5 py-1.5 text-[12.5px]">{t('members.noPending')}</Text>
+      ) : (
+        <View
+          className="border-card-bd bg-surface mb-4.5 rounded-xl border px-4.5 py-1"
+          style={[{ borderWidth: StyleSheet.hairlineWidth }, elevation.card]}
         >
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 15,
-              letterSpacing: -0.15,
-              color: colors.onPrimary,
-            }}
-          >
-            {t('members.invitePeople')}
-          </Text>
-        </Pressable>
-      </ScrollView>
+          {invites.map((inviteItem, index) => {
+            const isLast = index === invites.length - 1;
+            return (
+              <View
+                key={inviteItem.id}
+                className={cn('flex-row items-center gap-3 py-3.5', !isLast && 'border-bd border-b')}
+                style={!isLast ? { borderBottomWidth: StyleSheet.hairlineWidth } : undefined}
+              >
+                <View className="min-w-0 flex-1">
+                  <Text
+                    className="text-fg font-medium tracking-[-0.15px]"
+                    style={{ fontSize: Typography.text.settingsRow.size }}
+                  >
+                    {inviteItem.email}
+                  </Text>
+                  <Text
+                    className="text-muted mt-0.75"
+                    style={{ fontSize: Typography.text.caption.size }}
+                  >
+                    {t(`members.roles.${inviteItem.role}`)}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => onRevokeInvite(inviteItem.id, inviteItem.email)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.remove')}
+                  className="bg-neg-tint h-8.5 w-8.5 items-center justify-center rounded-full"
+                >
+                  <Trash2 size={16} color={colors.neg} strokeWidth={2} />
+                </Pressable>
+              </View>
+            );
+          })}
+        </View>
+      )}
+
+      <Pressable
+        onPress={() =>
+          router.push({
+            pathname: '/(tabs)/me/team',
+            params: propertyId ? { propertyId } : undefined,
+          })
+        }
+        accessibilityRole="button"
+        accessibilityLabel={t('members.invitePeople')}
+        className="bg-primary mt-2 h-[50px] items-center justify-center rounded-full"
+      >
+        <Text className="text-on-primary text-[15px] font-semibold tracking-[-0.15px]">
+          {t('members.invitePeople')}
+        </Text>
+      </Pressable>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  loader: {
-    padding: Spacing.md,
-  },
-  card: {
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 18,
-    paddingVertical: 4,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 14,
-  },
-  rowText: {
-    flex: 1,
-    minWidth: 0,
-  },
-  iconBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryBtn: {
-    height: 50,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-});

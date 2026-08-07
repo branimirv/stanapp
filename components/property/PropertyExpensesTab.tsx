@@ -20,7 +20,8 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import type { Expense, ExpenseCategory, Language } from '@/types/app.types';
 import { formatPeriod } from '@/utils/formatters';
 
@@ -72,7 +73,7 @@ function PropertyExpensesTabComponent({
 }: PropertyExpensesTabProps) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors, elevation, radius } = theme;
+  const { colors, elevation } = theme;
   const insets = useSafeAreaInsets();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('current_month');
   const [expanded, setExpanded] = useState(false);
@@ -119,20 +120,26 @@ function PropertyExpensesTabComponent({
   }, []);
 
   if (isLoading) {
-    return <SkeletonLoader count={4} style={[styles.content, { paddingTop: listTopPad }]} />;
+    return (
+      <SkeletonLoader
+        count={4}
+        style={{ paddingHorizontal: Spacing.gutter, paddingTop: listTopPad }}
+      />
+    );
   }
 
   return (
-    <View style={styles.shell}>
+    <View className="flex-1">
       <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: listTopPad, paddingBottom: listBottomPad },
-        ]}
+        contentContainerStyle={{
+          paddingHorizontal: Spacing.gutter,
+          paddingTop: listTopPad,
+          paddingBottom: listBottomPad,
+        }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.segsTrack, { backgroundColor: colors.surface2 }]}>
+        <View className="bg-surface-2 mb-4.5 min-h-10 flex-row gap-1.25 rounded-full p-1">
           {(
             [
               { value: 'current_month' as const, label: t('properties.expensePeriodThisMonth') },
@@ -144,18 +151,18 @@ function PropertyExpensesTabComponent({
               <Pressable
                 key={seg.value}
                 onPress={() => handlePeriodChange(seg.value)}
-                style={[styles.seg, on ? { backgroundColor: colors.surface3 } : null]}
+                className={cn(
+                  'flex-1 items-center justify-center rounded-full px-1 py-2',
+                  on && 'bg-surface-3',
+                )}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
               >
                 <Text
-                  style={{
-                    fontFamily: Fonts.sans.semibold,
-                    fontSize: 12,
-                    letterSpacing: -0.12,
-                    color: on ? colors.fg : colors.muted,
-                    textAlign: 'center',
-                  }}
+                  className={cn(
+                    'text-center text-xs font-semibold tracking-[-0.12px]',
+                    on ? 'text-fg' : 'text-muted',
+                  )}
                 >
                   {seg.label}
                 </Text>
@@ -179,32 +186,17 @@ function PropertyExpensesTabComponent({
               onCtaPress={canManage ? onAddExpense : undefined}
             />
             {lastExpenseShortDate ? (
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 10,
-                  letterSpacing: 0.8,
-                  textTransform: 'uppercase',
-                  color: colors.muted,
-                  textAlign: 'center',
-                  marginTop: 24,
-                }}
-              >
+              <Text className="text-muted mt-6 text-center text-[10px] font-semibold tracking-[0.8px] uppercase">
                 {t('expenses.lastExpenseRecorded', { date: lastExpenseShortDate })}
               </Text>
             ) : null}
           </>
         ) : (
           <>
-            <View style={styles.secHead}>
+            <View className="mb-3 flex-row items-baseline justify-between gap-3">
               <Text
-                style={{
-                  flex: 1,
-                  fontFamily: displayFontFamily(theme.name),
-                  fontSize: 19,
-                  letterSpacing: -0.4,
-                  color: colors.fg,
-                }}
+                className="text-fg flex-1 text-[19px] tracking-[-0.4px]"
+                style={{ fontFamily: displayFontFamily(theme.name) }}
                 numberOfLines={1}
               >
                 {headerTitle}
@@ -218,15 +210,8 @@ function PropertyExpensesTabComponent({
             </View>
 
             <View
-              style={[
-                styles.card,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.cardBd,
-                  borderRadius: radius.xl,
-                  ...elevation.card,
-                },
-              ]}
+              className="border-card-bd bg-surface mb-3.5 rounded-xl border px-4.5 pt-1 pb-1.5"
+              style={elevation.card}
             >
               {visibleExpenses.map((expense, index) => (
                 <ExpenseListRow
@@ -244,17 +229,11 @@ function PropertyExpensesTabComponent({
             {hasMore ? (
               <Pressable
                 onPress={() => setExpanded((current) => !current)}
-                style={[styles.ghostBtn, { backgroundColor: colors.surface2 }]}
+                className="bg-surface-2 mb-2 min-h-12 flex-row items-center justify-center gap-1.5 rounded-full px-4.5"
                 accessibilityRole="button"
                 accessibilityState={{ expanded }}
               >
-                <Text
-                  style={{
-                    fontFamily: Fonts.sans.semibold,
-                    fontSize: 14,
-                    color: colors.fg,
-                  }}
-                >
+                <Text className="text-fg text-sm font-semibold">
                   {expanded ? t('common.showLess') : t('properties.seeAllExpenses')}
                 </Text>
                 {!expanded ? (
@@ -278,16 +257,9 @@ function PropertyExpensesTabComponent({
             accessibilityLabel={t('dashboard.addExpense')}
             style={styles.ctaShadow}
           >
-            <View style={styles.ctaInner}>
+            <View className="flex-row items-center justify-center gap-2">
               <Plus size={18} color={colors.onPrimary} strokeWidth={2.5} />
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 15,
-                  letterSpacing: -0.15,
-                  color: colors.onPrimary,
-                }}
-              >
+              <Text className="text-on-primary text-[15px] font-semibold tracking-[-0.15px]">
                 {t('dashboard.addExpense')}
               </Text>
             </View>
@@ -301,52 +273,6 @@ function PropertyExpensesTabComponent({
 export const PropertyExpensesTab = memo(PropertyExpensesTabComponent);
 
 const styles = StyleSheet.create({
-  shell: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: Spacing.gutter,
-  },
-  segsTrack: {
-    flexDirection: 'row',
-    gap: 5,
-    padding: 4,
-    borderRadius: 999,
-    minHeight: 40,
-    marginBottom: 18,
-  },
-  seg: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    borderRadius: 999,
-  },
-  secHead: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 12,
-  },
-  card: {
-    borderWidth: 1,
-    paddingHorizontal: 18,
-    paddingTop: 4,
-    paddingBottom: 6,
-    marginBottom: 14,
-  },
-  ghostBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    minHeight: 48,
-    borderRadius: 999,
-    paddingHorizontal: 18,
-    marginBottom: 8,
-  },
   ctaWrap: {
     position: 'absolute',
     left: 0,
@@ -361,11 +287,5 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 8 },
     elevation: 8,
-  },
-  ctaInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
   },
 });

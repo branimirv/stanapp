@@ -1,7 +1,8 @@
 import { Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
+
 import { AppBadge, type AppBadgeVariant } from '@/components/ui/AppBadge';
-import { Colors } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import type { UsageStatus } from '@/types/app.types';
 
 const STATUS_VARIANTS: Record<UsageStatus, AppBadgeVariant> = {
@@ -11,10 +12,6 @@ const STATUS_VARIANTS: Record<UsageStatus, AppBadgeVariant> = {
   in_renovation: 'default',
 };
 
-const STATUS_COLORS: Partial<Record<UsageStatus, string>> = {
-  in_renovation: Colors.statusPartial,
-};
-
 export interface UsageStatusBadgeProps {
   status: UsageStatus;
   onPress?: () => void;
@@ -22,12 +19,14 @@ export interface UsageStatusBadgeProps {
 
 export function UsageStatusBadge({ status, onPress }: UsageStatusBadgeProps) {
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
+  const renovationColor = status === 'in_renovation' ? theme.colors.chart[5] : undefined;
 
   const badge = (
     <AppBadge
       label={t(`usageStatus.${status}`)}
       variant={STATUS_VARIANTS[status]}
-      color={STATUS_COLORS[status]}
+      color={renovationColor}
     />
   );
 

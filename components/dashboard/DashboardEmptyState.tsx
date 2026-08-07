@@ -6,12 +6,12 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { Fonts } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 
 const STEPS: { icon: LucideIcon; titleKey: string; hintKey: string }[] = [
   {
@@ -35,7 +35,7 @@ const STEPS: { icon: LucideIcon; titleKey: string; hintKey: string }[] = [
 export function DashboardEmptyState() {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors } = theme;
+  const { colors, elevation } = theme;
 
   return (
     <View>
@@ -46,19 +46,12 @@ export function DashboardEmptyState() {
         ctaLabel={t('properties.addNew')}
         ctaIcon={Plus}
         onCtaPress={() => router.push('/property/new')}
-        style={styles.emptyState}
+        className="mb-4"
       />
 
       <View
-        style={[
-          styles.stepsCard,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.cardBd,
-            borderRadius: theme.radius.xl,
-            ...theme.elevation.card,
-          },
-        ]}
+        className="border-card-bd bg-surface rounded-xl border px-4.5 py-4"
+        style={elevation.card}
       >
         {STEPS.map((step, index) => {
           const Icon = step.icon;
@@ -66,31 +59,16 @@ export function DashboardEmptyState() {
           return (
             <View
               key={step.titleKey}
-              style={[styles.stepRow, !isLast && { marginBottom: 14 }]}
+              className={cn('flex-row items-start gap-3', !isLast && 'mb-3.5')}
             >
-              <View style={[styles.stepIcon, { backgroundColor: colors.surface3 }]}>
+              <View className="bg-surface-3 h-9.5 w-9.5 items-center justify-center rounded-full">
                 <Icon size={18} color={colors.muted} strokeWidth={2} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontFamily: Fonts.sans.semibold,
-                    fontSize: 13.5,
-                    color: colors.fg,
-                    marginBottom: 2,
-                  }}
-                >
+              <View className="flex-1">
+                <Text className="text-fg mb-0.5 text-[13.5px] font-semibold">
                   {t(step.titleKey)}
                 </Text>
-                <Text
-                  style={{
-                    fontFamily: Fonts.sans.semibold,
-                    fontSize: 10,
-                    letterSpacing: 0.8,
-                    textTransform: 'uppercase',
-                    color: colors.muted,
-                  }}
-                >
+                <Text className="text-muted text-[10px] font-semibold tracking-[0.8px] uppercase">
                   {t(step.hintKey)}
                 </Text>
               </View>
@@ -101,26 +79,3 @@ export function DashboardEmptyState() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  emptyState: {
-    marginBottom: 16,
-  },
-  stepsCard: {
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-    borderWidth: 1,
-  },
-  stepRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  stepIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

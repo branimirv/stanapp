@@ -1,7 +1,7 @@
 import { parseISO } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { ExpenseForm } from '@/components/expense/ExpenseForm';
@@ -74,7 +74,7 @@ export default function EditExpenseScreen() {
   if (isLoading) {
     return (
       <StackScreenChrome title={t('expenses.editExpense')} hideHeaderTitle edgeToEdge>
-        <SkeletonLoader count={6} style={styles.loader} />
+        <SkeletonLoader count={6} className="p-4" />
       </StackScreenChrome>
     );
   }
@@ -120,9 +120,3 @@ export default function EditExpenseScreen() {
     </StackScreenChrome>
   );
 }
-
-const styles = StyleSheet.create({
-  loader: {
-    padding: 16,
-  },
-});

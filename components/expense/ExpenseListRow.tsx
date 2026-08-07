@@ -7,6 +7,7 @@ import { formatDisplayNumber } from '@/components/ui/DisplayAmount';
 import { Typography } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import type { Expense, ExpenseCategory, Language } from '@/types/app.types';
 import { getCategoryLabel } from '@/utils/expense';
 
@@ -49,74 +50,37 @@ function ExpenseListRowComponent({
     <Pressable
       onPress={onPress ? () => onPress(expense.id) : undefined}
       disabled={!onPress}
-      style={[
-        styles.row,
-        showDivider ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.bd } : null,
-      ]}
+      className={cn('flex-row items-center gap-3.25 py-3.5', showDivider && 'border-bd border-t')}
+      style={showDivider ? { borderTopWidth: StyleSheet.hairlineWidth } : undefined}
       accessibilityRole={onPress ? 'button' : undefined}
     >
       <View
-        style={[
-          styles.well,
-          { backgroundColor: isPaid ? colors.posTint : colors.negTint },
-        ]}
+        className={cn(
+          'relative h-9 w-9 items-center justify-center rounded-full',
+          isPaid ? 'bg-pos-tint' : 'bg-neg-tint',
+        )}
       >
-        <StatusIcon
-          size={16}
-          color={isPaid ? colors.pos : colors.neg}
-          strokeWidth={2}
-        />
+        <StatusIcon size={16} color={isPaid ? colors.pos : colors.neg} strokeWidth={2} />
         {expense.is_recurring ? (
-          <View
-            style={[
-              styles.recurring,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.bd,
-              },
-            ]}
-          >
+          <View className="border-bd bg-surface absolute -right-0.5 -bottom-0.5 h-3.75 w-3.75 items-center justify-center rounded-full border">
             <Repeat size={8} color={colors.muted} strokeWidth={2.75} />
           </View>
         ) : null}
       </View>
 
-      <View style={styles.body}>
-        <Text
-          style={{
-            fontFamily: Fonts.sans.semibold,
-            fontSize: Typography.text.listRow.size,
-            color: colors.fg,
-          }}
-          numberOfLines={1}
-        >
+      <View className="min-w-0 flex-1">
+        <Text className="text-fg text-base font-semibold" numberOfLines={1}>
           {title}
         </Text>
         {note ? (
-          <Text
-            style={{
-              fontFamily: Fonts.sans.regular,
-              fontSize: Typography.text.caption.size,
-              color: colors.muted,
-              marginTop: 3,
-            }}
-            numberOfLines={1}
-          >
+          <Text className="text-muted mt-0.75 text-sm" numberOfLines={1}>
             {note}
           </Text>
         ) : null}
         {propertyName ? (
-          <View style={styles.propertyRow}>
+          <View className="mt-0.75 flex-row items-center gap-1.25">
             <Building2 size={12} color={colors.muted} strokeWidth={2} />
-            <Text
-              style={{
-                flex: 1,
-                fontFamily: Fonts.sans.regular,
-                fontSize: Typography.text.caption.size,
-                color: colors.muted,
-              }}
-              numberOfLines={1}
-            >
+            <Text className="text-muted flex-1 text-sm" numberOfLines={1}>
               {propertyName}
             </Text>
           </View>
@@ -124,20 +88,20 @@ function ExpenseListRowComponent({
       </View>
 
       <Text
+        className="text-fg"
         style={{
           fontFamily: displayFontFamily(theme.name),
           fontSize: Typography.display.listFigure.size,
           letterSpacing: Typography.display.listFigure.letterSpacing,
-          color: colors.fg,
           fontVariant: ['tabular-nums', 'lining-nums'],
         }}
       >
         {formatDisplayNumber(Number(expense.amount), language)}
         <Text
+          className="text-muted"
           style={{
             fontFamily: Fonts.sans.medium,
             fontSize: Typography.text.chip.size,
-            color: colors.muted,
           }}
         >
           {curSym}
@@ -148,41 +112,3 @@ function ExpenseListRowComponent({
 }
 
 export const ExpenseListRow = memo(ExpenseListRowComponent);
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 13,
-    paddingVertical: 14,
-  },
-  well: {
-    width: 36,
-    height: 36,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  recurring: {
-    position: 'absolute',
-    right: -2,
-    bottom: -2,
-    width: 15,
-    height: 15,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  body: {
-    flex: 1,
-    minWidth: 0,
-  },
-  propertyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 3,
-  },
-});

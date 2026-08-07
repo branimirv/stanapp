@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Mail } from 'lucide-react-native';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AuthScreen, AuthTitleBlock } from '@/components/auth/AuthScreen';
@@ -11,7 +11,6 @@ import { AppTextInput } from '@/components/ui/AppTextInput';
 import { Text } from '@/components/ui/text';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { resetPassword } from '@/lib/auth';
-import { Fonts } from '@/lib/fonts';
 import { useUiStore } from '@/stores/uiStore';
 import { translateFieldError } from '@/utils/formHelpers';
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from '@/utils/validators';
@@ -57,21 +56,8 @@ export default function ForgotPasswordScreen() {
       />
 
       {isSubmitted ? (
-        <View
-          style={[
-            styles.success,
-            { backgroundColor: colors.primaryTint, borderRadius: theme.radius.xl },
-          ]}
-        >
-          <Text
-            style={{
-              fontFamily: Fonts.sans.regular,
-              fontSize: 14,
-              lineHeight: 21,
-              color: colors.fg,
-              textAlign: 'center',
-            }}
-          >
+        <View className="bg-primary-tint rounded-xl p-6">
+          <Text className="text-fg text-center text-sm leading-[21px]">
             {t('auth.resetLinkSent')}
           </Text>
         </View>
@@ -95,7 +81,7 @@ export default function ForgotPasswordScreen() {
                 returnKeyType="done"
                 placeholder="ime@example.com"
                 onSubmitEditing={handleSubmit(onSubmit)}
-                containerStyle={styles.lastField}
+                containerStyle={{ marginBottom: 24 }}
                 left={<Mail size={16} color={colors.primary} strokeWidth={2} />}
               />
             )}
@@ -115,12 +101,3 @@ export default function ForgotPasswordScreen() {
     </AuthScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  lastField: {
-    marginBottom: 24,
-  },
-  success: {
-    padding: 24,
-  },
-});

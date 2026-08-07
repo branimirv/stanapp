@@ -5,14 +5,14 @@ import { useTranslation } from 'react-i18next';
 
 import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
 import { DisplayAmount } from '@/components/ui/DisplayAmount';
-import { Spacing } from '@/constants/theme';
 import { useLocale } from '@/hooks/useLocale';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperty } from '@/hooks/useProperties';
 import { useRentPayment, useRentPaymentMutations } from '@/hooks/useRentPayments';
 import { useTenant } from '@/hooks/useTenants';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 import { useUiStore } from '@/stores/uiStore';
 import { resolveCurrency } from '@/utils/currency';
 import { formatDate, formatPeriod } from '@/utils/formatters';
@@ -28,18 +28,12 @@ function DetailRow({
   isLast?: boolean;
   onPress?: () => void;
 }) {
-  const { theme } = useAppTheme();
-  const { colors } = theme;
-
   const valueNode = (
     <Text
-      style={{
-        fontFamily: Fonts.sans.semibold,
-        fontSize: 13,
-        color: onPress ? colors.primary : colors.fg,
-        textAlign: 'right',
-        flexShrink: 1,
-      }}
+      className={cn(
+        'shrink text-right text-[13px] font-semibold',
+        onPress ? 'text-primary' : 'text-fg',
+      )}
       numberOfLines={2}
     >
       {value}
@@ -48,30 +42,19 @@ function DetailRow({
 
   return (
     <View
-      style={[
-        styles.lrow,
-        !isLast
-          ? { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.bd }
-          : null,
-      ]}
+      className={cn(
+        'flex-row items-start justify-between gap-3 py-3.5',
+        !isLast && 'border-bd border-b',
+      )}
+      style={!isLast ? { borderBottomWidth: StyleSheet.hairlineWidth } : undefined}
     >
-      <Text
-        style={{
-          fontFamily: Fonts.sans.regular,
-          fontSize: 13,
-          color: colors.muted,
-          marginRight: 12,
-          flexShrink: 0,
-        }}
-      >
-        {label}
-      </Text>
+      <Text className="text-muted mr-3 shrink-0 text-[13px]">{label}</Text>
       {onPress ? (
         <Pressable
           onPress={onPress}
           accessibilityRole="link"
           hitSlop={6}
-          style={styles.valueHit}
+          className="shrink items-end"
         >
           {valueNode}
         </Pressable>
@@ -86,7 +69,7 @@ export default function RentPaymentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors, elevation, radius } = theme;
+  const { colors, elevation } = theme;
   const showToast = useUiStore((s) => s.showToast);
   const showConfirmDialog = useUiStore((s) => s.showConfirmDialog);
 
@@ -204,22 +187,16 @@ export default function RentPaymentDetailScreen() {
       onRetry={loadPayment}
     >
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerClassName="px-gutter pb-12"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.hero}>
+        <View className="mb-4.5 flex-row items-start gap-3.5">
           <View
-            style={[
-              styles.well,
-              {
-                backgroundColor: paid
-                  ? colors.posTint
-                  : late
-                    ? colors.negTint
-                    : colors.primaryTint,
-              },
-            ]}
+            className={cn(
+              'h-[58px] w-[58px] items-center justify-center rounded-full',
+              paid ? 'bg-pos-tint' : late ? 'bg-neg-tint' : 'bg-primary-tint',
+            )}
             accessibilityRole="image"
             accessibilityLabel={t(`rent.${payment.status}`)}
           >
@@ -234,27 +211,15 @@ export default function RentPaymentDetailScreen() {
             )}
           </View>
 
-          <View style={styles.heroBody}>
-            <Text
-              style={{
-                fontFamily: Fonts.sans.semibold,
-                fontSize: 11,
-                lineHeight: 14,
-                letterSpacing: 1.54,
-                textTransform: 'uppercase',
-                color: colors.muted,
-                marginBottom: 8,
-              }}
-            >
+          <View className="min-w-0 flex-1 justify-center pt-1">
+            <Text className="text-muted mb-2 text-[11px] leading-3.5 font-semibold tracking-[1.54px] uppercase">
               {t('rent.paymentDetails')}
             </Text>
             <Text
+              className="text-fg text-[28px] tracking-[-0.6px]"
               style={{
                 fontFamily: displayFontFamily(theme.name),
-                fontSize: 28,
                 lineHeight: 32,
-                letterSpacing: -0.6,
-                color: colors.fg,
               }}
               numberOfLines={2}
             >
@@ -264,26 +229,10 @@ export default function RentPaymentDetailScreen() {
         </View>
 
         <View
-          style={[
-            styles.amountCard,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.cardBd,
-              borderRadius: radius.xl,
-              ...elevation.card,
-            },
-          ]}
+          className="border-card-bd bg-surface mb-5.5 rounded-xl border px-4.5 pt-4.5 pb-4"
+          style={elevation.card}
         >
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 10,
-              letterSpacing: 0.8,
-              textTransform: 'uppercase',
-              color: colors.muted,
-              marginBottom: 10,
-            }}
-          >
+          <Text className="text-muted mb-2.5 text-[10px] font-semibold tracking-[0.8px] uppercase">
             {t('rent.amount')}
           </Text>
           <DisplayAmount
@@ -297,21 +246,13 @@ export default function RentPaymentDetailScreen() {
           {property ? (
             <Pressable
               onPress={() => router.push(`/property/${property.id}`)}
-              style={styles.linkRow}
+              className="mt-3 flex-row items-center gap-1.5"
               accessibilityRole="link"
               accessibilityLabel={property.name}
               hitSlop={6}
             >
               <Building2 size={13} color={colors.muted} strokeWidth={2} />
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.regular,
-                  fontSize: 13,
-                  color: colors.muted,
-                  flex: 1,
-                }}
-                numberOfLines={1}
-              >
+              <Text className="text-muted flex-1 text-[13px]" numberOfLines={1}>
                 {property.name}
               </Text>
             </Pressable>
@@ -319,21 +260,13 @@ export default function RentPaymentDetailScreen() {
           {tenantName && tenant ? (
             <Pressable
               onPress={() => router.push(`/tenant/${tenant.id}`)}
-              style={styles.linkRow}
+              className="mt-3 flex-row items-center gap-1.5"
               accessibilityRole="link"
               accessibilityLabel={tenantName}
               hitSlop={6}
             >
               <User size={13} color={colors.muted} strokeWidth={2} />
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.regular,
-                  fontSize: 13,
-                  color: colors.muted,
-                  flex: 1,
-                }}
-                numberOfLines={1}
-              >
+              <Text className="text-muted flex-1 text-[13px]" numberOfLines={1}>
                 {tenantName}
               </Text>
             </Pressable>
@@ -341,26 +274,14 @@ export default function RentPaymentDetailScreen() {
         </View>
 
         <Text
-          style={{
-            fontFamily: displayFontFamily(theme.name),
-            fontSize: 22,
-            letterSpacing: -0.55,
-            color: colors.fg,
-            marginBottom: 11,
-          }}
+          className="text-fg mb-2.75 text-[22px] tracking-[-0.55px]"
+          style={{ fontFamily: displayFontFamily(theme.name) }}
         >
           {t('common.details')}
         </Text>
         <View
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.cardBd,
-              borderRadius: radius.xl,
-              ...elevation.card,
-            },
-          ]}
+          className="border-card-bd bg-surface mb-5 rounded-xl border px-4.5 pt-1 pb-1.5"
+          style={elevation.card}
         >
           {detailRows.map((row, index) => (
             <DetailRow
@@ -373,22 +294,15 @@ export default function RentPaymentDetailScreen() {
           ))}
         </View>
 
-        <View style={styles.actions}>
+        <View className="mt-1 gap-2.5">
           {!paid ? (
             <Pressable
               onPress={handleMarkPaid}
               accessibilityRole="button"
               accessibilityLabel={t('rent.markPaid')}
-              style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
+              className="bg-primary h-12 items-center justify-center rounded-full"
             >
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 15,
-                  letterSpacing: -0.15,
-                  color: colors.onPrimary,
-                }}
-              >
+              <Text className="text-on-primary text-[15px] font-semibold tracking-[-0.15px]">
                 {t('rent.markPaid')}
               </Text>
             </Pressable>
@@ -398,93 +312,12 @@ export default function RentPaymentDetailScreen() {
             onPress={handleDelete}
             accessibilityRole="button"
             accessibilityLabel={t('common.delete')}
-            style={[styles.ghostBtn, { backgroundColor: colors.surface2 }]}
+            className="bg-surface-2 h-12 items-center justify-center rounded-full"
           >
-            <Text
-              style={{
-                fontFamily: Fonts.sans.semibold,
-                fontSize: 14,
-                color: colors.neg,
-              }}
-            >
-              {t('common.delete')}
-            </Text>
+            <Text className="text-neg text-sm font-semibold">{t('common.delete')}</Text>
           </Pressable>
         </View>
       </ScrollView>
     </DetailScreenScaffold>
   );
 }
-
-const styles = StyleSheet.create({
-  content: {
-    paddingHorizontal: Spacing.gutter,
-    paddingBottom: Spacing.xxl,
-  },
-  hero: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 14,
-    marginBottom: 18,
-  },
-  well: {
-    width: 58,
-    height: 58,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroBody: {
-    flex: 1,
-    minWidth: 0,
-    justifyContent: 'center',
-    paddingTop: 4,
-  },
-  amountCard: {
-    borderWidth: 1,
-    paddingTop: 18,
-    paddingHorizontal: 18,
-    paddingBottom: 16,
-    marginBottom: 22,
-  },
-  linkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 12,
-  },
-  card: {
-    borderWidth: 1,
-    paddingHorizontal: 18,
-    paddingTop: 4,
-    paddingBottom: 6,
-    marginBottom: 20,
-  },
-  lrow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 12,
-    paddingVertical: 14,
-  },
-  valueHit: {
-    flexShrink: 1,
-    alignItems: 'flex-end',
-  },
-  actions: {
-    gap: 10,
-    marginTop: 4,
-  },
-  primaryBtn: {
-    height: 48,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ghostBtn: {
-    height: 48,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

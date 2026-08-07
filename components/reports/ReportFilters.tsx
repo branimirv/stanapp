@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { ReportFiltersSheet } from '@/components/reports/ReportFiltersSheet';
@@ -131,7 +131,7 @@ export function ReportActiveFilterChips(props: ReportFiltersStateProps) {
   if (chips.length === 0) return null;
 
   return (
-    <View style={styles.container}>
+    <View className="mb-4">
       <FilterChipRow chips={chips} />
     </View>
   );
@@ -174,9 +174,3 @@ export function ReportFiltersSheetHost({
     />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 16,
-  },
-});

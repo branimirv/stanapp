@@ -8,7 +8,6 @@ import { AppBadge } from '@/components/ui/AppBadge';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { CONTRACT_EXPIRING_DAYS } from '@/constants/config';
-import { Colors } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { getAvatarColor, getInitials } from '@/utils/avatar';
@@ -55,7 +54,7 @@ function TenantCardComponent({
   language = 'hr',
   onPress,
 }: TenantCardProps) {
-  const { isDark, theme } = useAppTheme();
+  const { theme } = useAppTheme();
   const { t, i18n } = useTranslation();
   const resolvedLanguage = language ?? (i18n.language === 'en' ? 'en' : 'hr');
   const contractStatus = getContractStatus(tenant);
@@ -64,15 +63,11 @@ function TenantCardComponent({
   const initials = getInitials(tenant.first_name, tenant.last_name);
   const handlePress = onPress ? () => onPress(tenant.id) : undefined;
   const actionIconColor = theme.colors.primary;
-  const metaIconColor = theme.colors.onSurfaceVariant;
-  const actionButtonBg = isDark ? Colors.surfaceVariantDark : Colors.surfaceVariant;
+  const metaIconColor = theme.colors.muted;
 
   return (
     <Pressable onPress={handlePress} disabled={!handlePress}>
-      <Card
-        className="mb-2 gap-2 rounded-xl p-4"
-        style={{ backgroundColor: isDark ? Colors.surfaceDark : Colors.surface }}
-      >
+      <Card className="border-card-bd bg-surface mb-2 gap-2 rounded-xl border p-4">
         <View className="flex-row items-center gap-2">
           <View
             className="h-11 w-11 items-center justify-center rounded-full"
@@ -95,8 +90,7 @@ function TenantCardComponent({
             {tenant.phone ? (
               <Pressable
                 onPress={() => openUrl(`tel:${tenant.phone}`)}
-                className="h-8 w-8 items-center justify-center rounded-full"
-                style={{ backgroundColor: actionButtonBg }}
+                className="bg-surface-2 h-8 w-8 items-center justify-center rounded-full"
                 accessibilityRole="button"
                 accessibilityLabel={t('tenants.callTenant')}
               >
@@ -106,8 +100,7 @@ function TenantCardComponent({
             {tenant.email ? (
               <Pressable
                 onPress={() => openUrl(`mailto:${tenant.email}`)}
-                className="h-8 w-8 items-center justify-center rounded-full"
-                style={{ backgroundColor: actionButtonBg }}
+                className="bg-surface-2 h-8 w-8 items-center justify-center rounded-full"
                 accessibilityRole="button"
                 accessibilityLabel={t('tenants.emailTenant')}
               >
@@ -117,8 +110,7 @@ function TenantCardComponent({
             {tenant.phone ? (
               <Pressable
                 onPress={() => openUrl(`sms:${tenant.phone}`)}
-                className="h-8 w-8 items-center justify-center rounded-full"
-                style={{ backgroundColor: actionButtonBg }}
+                className="bg-surface-2 h-8 w-8 items-center justify-center rounded-full"
                 accessibilityRole="button"
                 accessibilityLabel={t('tenants.messageTenant')}
               >
@@ -130,7 +122,7 @@ function TenantCardComponent({
 
         <View className="flex-row items-center gap-1">
           <Calendar size={14} color={metaIconColor} strokeWidth={2} />
-          <Text className="text-muted-foreground flex-1 text-sm">
+          <Text className="text-muted flex-1 text-sm">
             {formatDate(tenant.contract_start, resolvedLanguage)}
             {' — '}
             {tenant.contract_end
@@ -142,7 +134,7 @@ function TenantCardComponent({
         {tenant.email ? (
           <View className="flex-row items-center gap-1">
             <Mail size={14} color={metaIconColor} strokeWidth={2} />
-            <Text className="text-muted-foreground flex-1 text-sm" numberOfLines={1}>
+            <Text className="text-muted flex-1 text-sm" numberOfLines={1}>
               {tenant.email}
             </Text>
           </View>
@@ -151,7 +143,7 @@ function TenantCardComponent({
         {tenant.phone ? (
           <View className="flex-row items-center gap-1">
             <Phone size={14} color={metaIconColor} strokeWidth={2} />
-            <Text className="text-muted-foreground flex-1 text-sm">{tenant.phone}</Text>
+            <Text className="text-muted flex-1 text-sm">{tenant.phone}</Text>
           </View>
         ) : null}
 

@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { PropertyForm } from '@/components/property/PropertyForm';
@@ -66,7 +66,7 @@ export default function EditPropertyScreen() {
   if (isLoading) {
     return (
       <StackScreenChrome title={pageTitle} hideHeaderTitle edgeToEdge>
-        <SkeletonLoader count={6} style={styles.loader} />
+        <SkeletonLoader count={6} className="mt-20 p-4" />
       </StackScreenChrome>
     );
   }
@@ -105,10 +105,3 @@ export default function EditPropertyScreen() {
     </StackScreenChrome>
   );
 }
-
-const styles = StyleSheet.create({
-  loader: {
-    padding: 16,
-    marginTop: 80,
-  },
-});

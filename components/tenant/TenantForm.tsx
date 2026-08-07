@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -8,9 +8,8 @@ import { AppButton } from '@/components/ui/AppButton';
 import { AppDatePicker } from '@/components/ui/AppDatePicker';
 import { useStackChromeEdgeInset } from '@/components/ui/StackScreenChrome';
 import { AppTextInput } from '@/components/ui/AppTextInput';
-import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
 import {
   joinPersonName,
   parseDateString,
@@ -54,7 +53,6 @@ export function TenantForm({
 }: TenantFormProps) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors } = theme;
   const insets = useSafeAreaInsets();
   const edgeInset = useStackChromeEdgeInset();
 
@@ -88,30 +86,23 @@ export function TenantForm({
   });
 
   return (
-    <View style={styles.shell}>
+    <View className="flex-1">
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingHorizontal: theme.spacing.gutter,
-            paddingTop: (edgeInset ?? 0) + 8,
-            paddingBottom: 24,
-          },
-        ]}
+        className="flex-1"
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: theme.spacing.gutter,
+          paddingTop: (edgeInset ?? 0) + 8,
+          paddingBottom: 24,
+        }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         {title ? (
-          <View style={styles.titleBlk}>
+          <View className="mb-5.5">
             <Text
-              style={{
-                fontFamily: displayFontFamily(theme.name),
-                fontSize: 32,
-                lineHeight: 32,
-                letterSpacing: -0.8,
-                color: colors.fg,
-              }}
+              className="text-fg text-[32px] leading-8 tracking-[-0.8px]"
+              style={{ fontFamily: displayFontFamily(theme.name) }}
               accessibilityRole="header"
             >
               {title}
@@ -126,7 +117,6 @@ export function TenantForm({
           placeholder={t('tenants.fullName')}
           autoCapitalize="words"
           error={fieldError(errors.full_name?.message)}
-          containerStyle={styles.inputGap}
         />
 
         <AppTextInput
@@ -137,7 +127,6 @@ export function TenantForm({
           keyboardType="email-address"
           autoCapitalize="none"
           error={fieldError(errors.email?.message)}
-          containerStyle={styles.inputGap}
         />
 
         <AppTextInput
@@ -147,11 +136,10 @@ export function TenantForm({
           placeholder={t('tenants.phonePlaceholder')}
           keyboardType="phone-pad"
           error={fieldError(errors.phone?.message)}
-          containerStyle={styles.inputGap}
         />
 
-        <View style={styles.fieldRow}>
-          <View style={styles.fieldRowItem}>
+        <View className="mb-4.5 flex-row gap-2.5">
+          <View className="flex-1">
             <Controller
               control={control}
               name="contract_start"
@@ -167,7 +155,7 @@ export function TenantForm({
               )}
             />
           </View>
-          <View style={styles.fieldRowItem}>
+          <View className="flex-1">
             <Controller
               control={control}
               name="contract_end"
@@ -199,19 +187,8 @@ export function TenantForm({
               onBlur={onBlur}
               keyboardType="decimal-pad"
               error={fieldError(fieldState.error?.message)}
-              containerStyle={styles.inputGap}
               className="pl-13"
-              left={
-                <Text
-                  style={{
-                    fontFamily: Fonts.sans.medium,
-                    fontSize: 14,
-                    color: colors.muted,
-                  }}
-                >
-                  EUR
-                </Text>
-              }
+              left={<Text className="text-muted text-sm font-medium">EUR</Text>}
             />
           )}
         />
@@ -224,18 +201,13 @@ export function TenantForm({
           multiline
           numberOfLines={4}
           error={fieldError(errors.notes?.message)}
-          containerStyle={[styles.inputGap, { marginBottom: 0 }]}
+          containerStyle={{ marginBottom: 0 }}
         />
       </ScrollView>
 
       <View
-        style={[
-          styles.formFoot,
-          {
-            paddingBottom: Math.max(insets.bottom, 14) + 8,
-            backgroundColor: colors.bg,
-          },
-        ]}
+        className="bg-bg px-gutter pt-3.5"
+        style={{ paddingBottom: Math.max(insets.bottom, 14) + 8 }}
       >
         <AppButton
           mode="contained"
@@ -250,33 +222,3 @@ export function TenantForm({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  shell: {
-    flex: 1,
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  titleBlk: {
-    marginBottom: 22,
-  },
-  fieldRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 18,
-  },
-  fieldRowItem: {
-    flex: 1,
-  },
-  inputGap: {
-    marginBottom: 18,
-  },
-  formFoot: {
-    paddingHorizontal: Spacing.gutter,
-    paddingTop: 14,
-  },
-});

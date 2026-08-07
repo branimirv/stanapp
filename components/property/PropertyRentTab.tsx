@@ -20,7 +20,7 @@ import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { listPerformanceProps } from '@/constants/list';
 import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { displayFontFamily, Fonts } from '@/lib/fonts';
+import { displayFontFamily } from '@/lib/fonts';
 import type { Language, RentPayment, Tenant } from '@/types/app.types';
 
 const PREVIEW_COUNT = 3;
@@ -101,19 +101,25 @@ function PropertyRentTabComponent({
   );
 
   if (isLoading) {
-    return <SkeletonLoader count={3} style={[styles.content, { paddingTop: listTopPad }]} />;
+    return (
+      <SkeletonLoader
+        count={3}
+        style={{ paddingHorizontal: Spacing.gutter, paddingTop: listTopPad }}
+      />
+    );
   }
 
   return (
-    <View style={styles.shell}>
+    <View className="flex-1">
       <FlatList
         data={visiblePayments}
         keyExtractor={keyExtractor}
         renderItem={renderPayment}
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: listTopPad, paddingBottom: listBottomPad },
-        ]}
+        contentContainerStyle={{
+          paddingHorizontal: Spacing.gutter,
+          paddingTop: listTopPad,
+          paddingBottom: listBottomPad,
+        }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         {...listPerformanceProps}
         ListHeaderComponent={
@@ -126,13 +132,8 @@ function PropertyRentTabComponent({
             />
             {sortedPayments.length > 0 ? (
               <Text
-                style={{
-                  fontFamily: displayFontFamily(theme.name),
-                  fontSize: 22,
-                  letterSpacing: -0.55,
-                  color: colors.fg,
-                  marginBottom: 11,
-                }}
+                className="text-fg mb-2.75 text-[22px] tracking-[-0.55px]"
+                style={{ fontFamily: displayFontFamily(theme.name) }}
               >
                 {t('rent.title')}
               </Text>
@@ -143,32 +144,18 @@ function PropertyRentTabComponent({
           hasMore ? (
             <Pressable
               onPress={() => setExpanded((current) => !current)}
-              style={[styles.ghostBtn, { backgroundColor: colors.surface2 }]}
+              className="bg-surface-2 mb-2 min-h-12 flex-row items-center justify-center gap-1.5 rounded-full px-4.5"
               accessibilityRole="button"
               accessibilityState={{ expanded }}
             >
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 14,
-                  color: colors.fg,
-                }}
-              >
+              <Text className="text-fg text-sm font-semibold">
                 {expanded ? t('common.showLess') : t('common.showMore')}
               </Text>
             </Pressable>
           ) : null
         }
         ListEmptyComponent={
-          <View
-            style={[
-              styles.empty,
-              {
-                backgroundColor: colors.surface2,
-                borderRadius: theme.radius.xl,
-              },
-            ]}
-          >
+          <View className="bg-surface-2 rounded-xl px-2 py-4">
             <EmptyState
               title={t('empty.noRentPayments')}
               subtitle={t('empty.noRentPaymentsHint')}
@@ -189,16 +176,9 @@ function PropertyRentTabComponent({
             accessibilityLabel={t('rent.addPayment')}
             style={styles.ctaShadow}
           >
-            <View style={styles.ctaInner}>
+            <View className="flex-row items-center justify-center gap-2">
               <Plus size={18} color={colors.onPrimary} strokeWidth={2.5} />
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 15,
-                  letterSpacing: -0.15,
-                  color: colors.onPrimary,
-                }}
-              >
+              <Text className="text-on-primary text-[15px] font-semibold tracking-[-0.15px]">
                 {t('rent.addPayment')}
               </Text>
             </View>
@@ -212,26 +192,6 @@ function PropertyRentTabComponent({
 export const PropertyRentTab = memo(PropertyRentTabComponent);
 
 const styles = StyleSheet.create({
-  shell: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: Spacing.gutter,
-  },
-  empty: {
-    paddingHorizontal: 8,
-    paddingVertical: 16,
-  },
-  ghostBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    minHeight: 48,
-    borderRadius: 999,
-    paddingHorizontal: 18,
-    marginBottom: 8,
-  },
   ctaWrap: {
     position: 'absolute',
     left: 0,
@@ -246,11 +206,5 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 8 },
     elevation: 8,
-  },
-  ctaInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
   },
 });

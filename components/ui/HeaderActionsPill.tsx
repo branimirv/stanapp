@@ -1,35 +1,47 @@
 import { Children, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { GlassSurface } from '@/components/ui/GlassSurface';
 import { HEADER_ACTION_SLOT } from '@/constants/header';
-import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { cn } from '@/lib/utils';
 
 interface HeaderActionsPillProps {
   children?: ReactNode;
   style?: StyleProp<ViewStyle>;
+  className?: string;
 }
+
+const btnIcoSize = {
+  width: HEADER_ACTION_SLOT,
+  height: HEADER_ACTION_SLOT,
+} as const;
+
+const btnIcoContent = {
+  flex: 1,
+  alignItems: 'center' as const,
+  justifyContent: 'center' as const,
+};
 
 /**
  * Row of Naslov `btn-ico` circles (docs, edit, etc.).
  * Children should be icon presses (e.g. HeaderIconButton) — each sits on liquid glass.
  */
-export function HeaderActionsPill({ children, style }: HeaderActionsPillProps) {
+export function HeaderActionsPill({ children, style, className }: HeaderActionsPillProps) {
   const actions = Children.toArray(children).filter(Boolean);
   if (actions.length === 0) {
     return null;
   }
 
   return (
-    <View style={[styles.row, style]}>
+    <View className={cn('flex-row items-center gap-2', className)} style={style}>
       {actions.map((child, index) => (
         <GlassSurface
           key={index}
           shape="circle"
           interactive
-          style={styles.btnIco}
-          contentStyle={styles.btnIcoContent}
+          style={btnIcoSize}
+          contentStyle={btnIcoContent}
         >
           {child}
         </GlassSurface>
@@ -61,9 +73,9 @@ export function HeaderBtnIco({
     <GlassSurface
       shape="circle"
       interactive={!disabled}
-      style={[styles.btnIco, disabled ? styles.disabled : null, style]}
+      style={[btnIcoSize, disabled ? { opacity: 0.45 } : null, style]}
       contentStyle={[
-        styles.btnIcoContent,
+        btnIcoContent,
         active ? { backgroundColor: theme.colors.primaryTint } : null,
       ]}
     >
@@ -73,7 +85,7 @@ export function HeaderBtnIco({
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         accessibilityState={{ selected: active, disabled }}
-        style={styles.pressable}
+        className="w-full flex-1 items-center justify-center"
         hitSlop={4}
       >
         {children}
@@ -81,29 +93,3 @@ export function HeaderBtnIco({
     </GlassSurface>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  btnIco: {
-    width: HEADER_ACTION_SLOT,
-    height: HEADER_ACTION_SLOT,
-  },
-  btnIcoContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pressable: {
-    flex: 1,
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  disabled: {
-    opacity: 0.45,
-  },
-});

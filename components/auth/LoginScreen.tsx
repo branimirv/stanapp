@@ -3,7 +3,7 @@ import { Link, useLocalSearchParams } from 'expo-router';
 import { Lock, Mail } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AuthFooter, AuthScreen, AuthTitleBlock } from '@/components/auth/AuthScreen';
@@ -15,7 +15,6 @@ import { AppTextInput } from '@/components/ui/AppTextInput';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { signIn } from '@/lib/auth';
 import { resolveAuthReturnTo, setPendingPostAuthRoute } from '@/lib/authDeepLinks';
-import { Fonts } from '@/lib/fonts';
 import { useUiStore } from '@/stores/uiStore';
 import { translateFieldError } from '@/utils/formHelpers';
 import { loadLoginPreferences, saveLoginPreferences } from '@/utils/loginPreferences';
@@ -91,12 +90,13 @@ export function LoginScreen() {
   const { colors } = theme;
 
   return (
-    <AuthScreen contentStyle={styles.content}>
+    <AuthScreen contentStyle={{ paddingTop: 0 }}>
       <AuthTitleBlock
         eyebrow={t('common.appName')}
         title={t('auth.loginTitle')}
         subtitle={t('auth.loginSubtitle')}
-        style={styles.titleBlock}
+        // naslov-theme.html Prijava: titleblk margin-top 64
+        style={{ marginTop: 64 }}
       />
 
       <GoogleSignInButton disabled={isSubmitting} returnTo={returnTo} />
@@ -140,7 +140,7 @@ export function LoginScreen() {
             returnKeyType="done"
             placeholder="••••••••"
             onSubmitEditing={handleSubmit(onSubmit)}
-            containerStyle={styles.passwordField}
+            containerStyle={{ marginBottom: 0 }}
             left={<Lock size={16} color={colors.primary} strokeWidth={2} />}
             right={
               <PasswordVisibilityToggle
@@ -152,22 +152,14 @@ export function LoginScreen() {
         )}
       />
 
-      <View style={styles.chkRow}>
+      <View className="mt-4 mb-6 flex-row items-center justify-between">
         <AppCheckbox
           checked={rememberMe}
           onChange={handleRememberMeChange}
           label={t('auth.rememberMe')}
         />
         <Link href="/(auth)/forgot-password">
-          <Text
-            style={{
-              fontFamily: Fonts.sans.semibold,
-              fontSize: 14,
-              color: colors.primary,
-            }}
-          >
-            {t('auth.forgotPassword')}
-          </Text>
+          <Text className="text-primary text-sm font-semibold">{t('auth.forgotPassword')}</Text>
         </Link>
       </View>
 
@@ -189,23 +181,3 @@ export function LoginScreen() {
     </AuthScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  content: {
-    paddingTop: 0,
-  },
-  titleBlock: {
-    // naslov-theme.html Prijava: titleblk margin-top 64
-    marginTop: 64,
-  },
-  passwordField: {
-    marginBottom: 0,
-  },
-  chkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 16,
-    marginBottom: 24,
-  },
-});
