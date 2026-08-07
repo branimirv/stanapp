@@ -60,15 +60,19 @@ coverage/
 .vscode/*.local.*
 .vscode/launch.json
 
-# Temporary files
+# Temporary files (throwaway captures — durable before/after lives in screenshots/)
 tmp/
 temp/
 *.tmp
 
-# AI prompts (local only)
+# AI prompts (local only — not app architecture)
 prompts/
 
-# Documentation
-docs/
+# Documentation — commit thin shared plans; ignore heavy local/handoff docs
+docs/**
+!docs/plans/
+!docs/plans/**
+!docs/project-structure.md
+!docs/optimization-plan.md
 CONTEXT.md
 .cursor/
