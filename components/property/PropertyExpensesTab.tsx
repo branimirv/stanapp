@@ -190,7 +190,11 @@ function PropertyExpensesTabComponent({
                   marginBottom: 8,
                 }}
               >
-                {t('empty.noExpenses')}
+                {t(
+                  periodFilter === 'current_month'
+                    ? 'properties.noExpensesThisMonth'
+                    : 'empty.noExpenses',
+                )}
               </Text>
               <Text
                 style={{
