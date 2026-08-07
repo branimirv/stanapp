@@ -1,15 +1,16 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
-import { buildDefaultReportPeriod, fetchReportData } from '@/services/reports';
+import { fetchReportData } from '@/services/reports';
 import { useAuthStore } from '@/stores/authStore';
 import type {
   ReportCategoryTypeFilter,
   ReportPeriod,
 } from '@/types/app.types';
 import { queryErrorMessage } from '@/utils/errors';
+import { buildDefaultReportPeriod, buildReportPeriod } from '@/utils/reportPeriod';
 
-export { buildReportPeriod } from '@/services/reports';
+export { buildReportPeriod };
 
 interface UseReportsOptions {
   period?: ReportPeriod;

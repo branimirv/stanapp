@@ -10,13 +10,14 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { AppDatePicker } from '@/components/ui/AppDatePicker';
-import { buildReportPeriod } from '@/hooks/useReports';
-import {
-  isUsableCustomStartDate,
-  resolveCustomReportPeriod,
-} from '@/services/reports';
 import { cn } from '@/lib/utils';
 import type { ReportPeriod, ReportPeriodPreset } from '@/types/app.types';
+import {
+  buildReportPeriod,
+  isUsableCustomStartDate,
+  resolveCustomReportPeriod,
+} from '@/utils/reportPeriod';
+
 
 const PRESET_OPTIONS: ReportPeriodPreset[] = [
   'all_time',
