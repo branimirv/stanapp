@@ -431,19 +431,72 @@ CREATE POLICY "Owners and managers can update tenants" ON tenants
   FOR UPDATE USING (is_property_member(property_id, ARRAY['owner', 'manager'])) WITH CHECK (is_property_member(property_id, ARRAY['owner', 'manager']));
 CREATE POLICY "Owners and managers can delete tenants" ON tenants FOR DELETE USING (is_property_member(property_id, ARRAY['owner', 'manager']));
 
-CREATE POLICY "Members can view expenses" ON expenses FOR SELECT USING (is_property_member(property_id));
+CREATE POLICY "Owners and managers can view expenses" ON expenses FOR SELECT USING (is_property_member(property_id, ARRAY['owner', 'manager']));
 CREATE POLICY "Owners and managers can insert expenses" ON expenses FOR INSERT WITH CHECK (is_property_member(property_id, ARRAY['owner', 'manager']));
 CREATE POLICY "Owners and managers can update expenses" ON expenses
   FOR UPDATE USING (is_property_member(property_id, ARRAY['owner', 'manager'])) WITH CHECK (is_property_member(property_id, ARRAY['owner', 'manager']));
 CREATE POLICY "Owners and managers can delete expenses" ON expenses FOR DELETE USING (is_property_member(property_id, ARRAY['owner', 'manager']));
 
-CREATE POLICY "Members can view rent payments" ON rent_payments FOR SELECT USING (is_property_member(property_id));
+CREATE POLICY "Owners and managers can view rent payments" ON rent_payments FOR SELECT USING (is_property_member(property_id, ARRAY['owner', 'manager']));
 CREATE POLICY "Owners and managers can insert rent payments" ON rent_payments FOR INSERT WITH CHECK (is_property_member(property_id, ARRAY['owner', 'manager']));
 CREATE POLICY "Owners and managers can update rent payments" ON rent_payments
   FOR UPDATE USING (is_property_member(property_id, ARRAY['owner', 'manager'])) WITH CHECK (is_property_member(property_id, ARRAY['owner', 'manager']));
 CREATE POLICY "Owners and managers can delete rent payments" ON rent_payments FOR DELETE USING (is_property_member(property_id, ARRAY['owner', 'manager']));
 
 CREATE POLICY "Members can view status history" ON property_status_history FOR SELECT USING (is_property_member(property_id));
+
+CREATE OR REPLACE FUNCTION protect_property_member_changes()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  primary_owner_id UUID;
+  active_owner_count INTEGER;
+BEGIN
+  SELECT p.user_id INTO primary_owner_id
+  FROM properties p
+  WHERE p.id = OLD.property_id;
+
+  IF primary_owner_id IS NOT NULL AND OLD.user_id = primary_owner_id THEN
+    IF NEW.status = 'revoked' AND OLD.status IS DISTINCT FROM 'revoked' THEN
+      RAISE EXCEPTION 'Cannot revoke the primary property owner'
+        USING ERRCODE = 'P0001';
+    END IF;
+    IF NEW.role IS DISTINCT FROM 'owner' AND OLD.role = 'owner' THEN
+      RAISE EXCEPTION 'Cannot demote the primary property owner'
+        USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+
+  IF OLD.role = 'owner' AND OLD.status = 'active'
+     AND (
+       (NEW.status = 'revoked' AND OLD.status IS DISTINCT FROM 'revoked')
+       OR (NEW.role IS DISTINCT FROM 'owner')
+     ) THEN
+    SELECT count(*)::INTEGER INTO active_owner_count
+    FROM property_members pm
+    WHERE pm.property_id = OLD.property_id
+      AND pm.status = 'active'
+      AND pm.role = 'owner'
+      AND pm.id IS DISTINCT FROM OLD.id;
+
+    IF active_owner_count = 0 THEN
+      RAISE EXCEPTION 'Cannot remove the last property owner'
+        USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS protect_property_member_changes ON property_members;
+CREATE TRIGGER protect_property_member_changes
+  BEFORE UPDATE ON property_members
+  FOR EACH ROW
+  EXECUTE FUNCTION protect_property_member_changes();
 
 GRANT SELECT ON property_status_history TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON property_members TO authenticated;

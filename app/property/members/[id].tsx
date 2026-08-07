@@ -10,9 +10,11 @@ import { StackScreenChrome, useStackChromeEdgeInset } from '@/components/ui/Stac
 import { Spacing, Typography } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useMyMembership, usePropertyInvites, usePropertyMembers } from '@/hooks/useMembers';
+import { useProperty } from '@/hooks/useProperties';
 import { displayFontFamily, Fonts } from '@/lib/fonts';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
+import { getErrorMessage } from '@/utils/errors';
 
 export default function PropertyMembersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,6 +26,7 @@ export default function PropertyMembersScreen() {
   const user = useAuthStore((s) => s.user);
 
   const { isOwner, isLoading: membershipLoading } = useMyMembership(id);
+  const { property } = useProperty(id);
   const {
     members,
     isLoading: membersLoading,
@@ -39,6 +42,9 @@ export default function PropertyMembersScreen() {
     revoke: revokeInvite,
   } = usePropertyInvites(id);
 
+  const primaryOwnerId = property?.user_id;
+  const activeOwnerCount = members.filter((m) => m.role === 'owner').length;
+
   const handleRevokeMember = (memberId: string, name: string) => {
     showConfirmDialog({
       title: t('confirm.revokeMemberTitle'),
@@ -51,7 +57,7 @@ export default function PropertyMembersScreen() {
           showToast({ message: t('members.memberRemoved'), type: 'success' });
         } catch (err) {
           showToast({
-            message: err instanceof Error ? err.message : t('members.memberRemoveFailed'),
+            message: getErrorMessage(err, t('members.memberRemoveFailed')),
             type: 'error',
           });
         }
@@ -117,6 +123,8 @@ export default function PropertyMembersScreen() {
         members={members}
         invites={invites}
         userId={user?.id}
+        primaryOwnerId={primaryOwnerId}
+        activeOwnerCount={activeOwnerCount}
         propertyId={id}
         colors={colors}
         elevation={elevation}
@@ -133,6 +141,8 @@ function MembersBody({
   members,
   invites,
   userId,
+  primaryOwnerId,
+  activeOwnerCount,
   propertyId,
   colors,
   elevation,
@@ -144,6 +154,8 @@ function MembersBody({
   members: ReturnType<typeof usePropertyMembers>['members'];
   invites: ReturnType<typeof usePropertyInvites>['invites'];
   userId?: string;
+  primaryOwnerId?: string;
+  activeOwnerCount: number;
   propertyId?: string;
   colors: ReturnType<typeof useAppTheme>['theme']['colors'];
   elevation: ReturnType<typeof useAppTheme>['theme']['elevation'];
@@ -208,6 +220,9 @@ function MembersBody({
             {members.map((member, index) => {
               const name = member.profile?.full_name ?? t('members.unknownUser');
               const isSelf = member.user_id === userId;
+              const isPrimaryOwner = primaryOwnerId != null && member.user_id === primaryOwnerId;
+              const isLastOwner = member.role === 'owner' && activeOwnerCount <= 1;
+              const canRevoke = !isSelf && !isPrimaryOwner && !isLastOwner;
               const isLast = index === members.length - 1;
               return (
                 <View
@@ -243,9 +258,10 @@ function MembersBody({
                     >
                       {t(`members.roles.${member.role}`)}
                       {isSelf ? ` · ${t('members.you')}` : ''}
+                      {isPrimaryOwner ? ` · ${t('members.primaryOwner')}` : ''}
                     </Text>
                   </View>
-                  {!isSelf ? (
+                  {canRevoke ? (
                     <Pressable
                       onPress={() => onRevokeMember(member.id, name)}
                       hitSlop={8}
