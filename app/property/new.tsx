@@ -9,6 +9,7 @@ import { useProperties } from '@/hooks/useProperties';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import type { UsageStatus } from '@/types/app.types';
+import { getErrorMessage } from '@/utils/errors';
 import type { PropertyFormValues } from '@/utils/validators';
 
 export default function NewPropertyScreen() {
@@ -48,7 +49,7 @@ export default function NewPropertyScreen() {
       router.replace(`/property/${property.id}`);
     } catch (err) {
       showToast({
-        message: err instanceof Error ? err.message : t('properties.saveFailed'),
+        message: getErrorMessage(err, t('properties.saveFailed')),
         type: 'error',
       });
     } finally {

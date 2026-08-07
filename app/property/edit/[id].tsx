@@ -10,6 +10,7 @@ import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { useProperties, useProperty } from '@/hooks/useProperties';
 import { useUiStore } from '@/stores/uiStore';
 import type { UsageStatus } from '@/types/app.types';
+import { getErrorMessage } from '@/utils/errors';
 import type { PropertyFormValues } from '@/utils/validators';
 
 export default function EditPropertyScreen() {
@@ -50,7 +51,7 @@ export default function EditPropertyScreen() {
       router.back();
     } catch (err) {
       showToast({
-        message: err instanceof Error ? err.message : t('properties.saveFailed'),
+        message: getErrorMessage(err, t('properties.saveFailed')),
         type: 'error',
       });
     } finally {

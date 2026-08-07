@@ -1,5 +1,10 @@
 import { supabase } from '@/lib/supabase';
 import type { Property, PropertyInsert, PropertyUpdate } from '@/types/app.types';
+import { getErrorMessage } from '@/utils/errors';
+
+function throwQueryError(error: unknown): never {
+  throw new Error(getErrorMessage(error, 'Request failed'));
+}
 
 export async function fetchProperties(): Promise<Property[]> {
   const { data, error } = await supabase
@@ -8,21 +13,21 @@ export async function fetchProperties(): Promise<Property[]> {
     .eq('is_archived', false)
     .order('created_at', { ascending: false });
 
-  if (error) throw error;
+  if (error) throwQueryError(error);
   return data ?? [];
 }
 
 export async function fetchProperty(id: string): Promise<Property> {
   const { data, error } = await supabase.from('properties').select('*').eq('id', id).single();
 
-  if (error) throw error;
+  if (error) throwQueryError(error);
   return data;
 }
 
 export async function createProperty(values: PropertyInsert): Promise<Property> {
   const { data, error } = await supabase.from('properties').insert(values).select().single();
 
-  if (error) throw error;
+  if (error) throwQueryError(error);
   return data;
 }
 
@@ -34,11 +39,11 @@ export async function updateProperty(id: string, values: PropertyUpdate): Promis
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) throwQueryError(error);
   return data;
 }
 
 export async function deleteProperty(id: string): Promise<void> {
   const { error } = await supabase.from('properties').delete().eq('id', id);
-  if (error) throw error;
+  if (error) throwQueryError(error);
 }
