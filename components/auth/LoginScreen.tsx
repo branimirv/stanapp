@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, router } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import { Lock, Mail } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -14,6 +14,7 @@ import { AppCheckbox } from '@/components/ui/AppCheckbox';
 import { AppTextInput } from '@/components/ui/AppTextInput';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { signIn } from '@/lib/auth';
+import { resolveAuthReturnTo, setPendingPostAuthRoute } from '@/lib/authDeepLinks';
 import { Fonts } from '@/lib/fonts';
 import { useUiStore } from '@/stores/uiStore';
 import { translateFieldError } from '@/utils/formHelpers';
@@ -23,6 +24,8 @@ import { loginSchema, type LoginFormValues } from '@/utils/validators';
 export function LoginScreen() {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
+  const { returnTo: returnToParam } = useLocalSearchParams<{ returnTo?: string }>();
+  const returnTo = resolveAuthReturnTo(returnToParam);
   const showToast = useUiStore((state) => state.showToast);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -41,6 +44,10 @@ export function LoginScreen() {
     },
     mode: 'onChange',
   });
+
+  useEffect(() => {
+    setPendingPostAuthRoute(returnToParam);
+  }, [returnToParam]);
 
   useEffect(() => {
     loadLoginPreferences().then((preferences) => {
@@ -63,6 +70,7 @@ export function LoginScreen() {
 
   const onSubmit = async (values: LoginFormValues) => {
     setIsSubmitting(true);
+    setPendingPostAuthRoute(returnTo);
     const { error } = await signIn(values.email.trim(), values.password);
     setIsSubmitting(false);
 
@@ -77,7 +85,7 @@ export function LoginScreen() {
     });
 
     showToast({ message: t('auth.loginSuccess'), type: 'success' });
-    router.replace('/(tabs)/(dashboard)');
+    // Boot / auth Stack remount navigates via consumePendingPostAuthRoute.
   };
 
   const { colors } = theme;
@@ -91,7 +99,7 @@ export function LoginScreen() {
         style={styles.titleBlock}
       />
 
-      <GoogleSignInButton disabled={isSubmitting} />
+      <GoogleSignInButton disabled={isSubmitting} returnTo={returnTo} />
 
       <Controller
         control={control}

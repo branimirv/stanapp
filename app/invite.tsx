@@ -10,6 +10,7 @@ import { Text } from '@/components/ui/text';
 import { queryKeys } from '@/lib/queryKeys';
 import { acceptPendingInvites } from '@/services/invites';
 import { useAuthStore } from '@/stores/authStore';
+import { getErrorMessage } from '@/utils/errors';
 
 export default function InviteAcceptScreen() {
   const { t } = useTranslation();
@@ -39,7 +40,7 @@ export default function InviteAcceptScreen() {
         setStatus('success');
       } catch (err) {
         if (cancelled) return;
-        setErrorMessage(err instanceof Error ? err.message : t('members.acceptFailed'));
+        setErrorMessage(getErrorMessage(err, t('members.acceptFailed')));
         setStatus('error');
       }
     })();
@@ -61,7 +62,12 @@ export default function InviteAcceptScreen() {
       {status === 'auth' ? (
         <>
           <Text className="text-center text-lg font-semibold">{t('members.signInToAccept')}</Text>
-          <AppButton mode="contained" onPress={() => router.replace('/')}>
+          <AppButton
+            mode="contained"
+            onPress={() =>
+              router.replace({ pathname: '/(auth)/login', params: { returnTo: '/invite' } })
+            }
+          >
             {t('auth.signIn')}
           </AppButton>
         </>

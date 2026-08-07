@@ -108,6 +108,16 @@ export const forgotPasswordSchema = z.object({
   email: z.string().email('validation.invalidEmail'),
 });
 
+export const resetPasswordSchema = z
+  .object({
+    password: z.string().min(8, 'validation.minLength'),
+    confirm_password: z.string(),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    message: 'validation.passwordsMatch',
+    path: ['confirm_password'],
+  });
+
 export type PropertyFormValues = z.infer<typeof propertySchema>;
 export type TenantFormValues = z.infer<typeof tenantSchema>;
 export type TenantFormUiValues = z.infer<typeof tenantFormSchema>;
@@ -117,3 +127,4 @@ export type ProfileFormValues = z.infer<typeof profileSchema>;
 export type LoginFormValues = z.infer<typeof loginSchema>;
 export type RegisterFormValues = z.infer<typeof registerSchema>;
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;

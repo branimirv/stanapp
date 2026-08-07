@@ -1,10 +1,12 @@
 import { Redirect } from 'expo-router';
+import { useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { LoginScreen } from '@/components/auth/LoginScreen';
 import { Text } from '@/components/ui/text';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { consumePendingPostAuthRoute } from '@/lib/authDeepLinks';
 import { useAuthStore } from '@/stores/authStore';
 
 /**
@@ -16,6 +18,7 @@ export default function Index() {
   const { theme } = useAppTheme();
   const session = useAuthStore((state) => state.session);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const postAuthHref = useRef<string | null>(null);
 
   if (isLoading) {
     return (
@@ -27,7 +30,10 @@ export default function Index() {
   }
 
   if (session) {
-    return <Redirect href="/(tabs)/(dashboard)" />;
+    if (postAuthHref.current === null) {
+      postAuthHref.current = consumePendingPostAuthRoute();
+    }
+    return <Redirect href={postAuthHref.current as '/(tabs)/(dashboard)'} />;
   }
 
   return <LoginScreen />;

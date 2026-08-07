@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +6,7 @@ import Svg, { Path } from 'react-native-svg';
 import { AppButton } from '@/components/ui/AppButton';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { signInWithGoogle } from '@/lib/auth';
+import { setPendingPostAuthRoute } from '@/lib/authDeepLinks';
 import { Fonts } from '@/lib/fonts';
 import { useUiStore } from '@/stores/uiStore';
 
@@ -36,9 +36,14 @@ function GoogleMark({ size = 18 }: { size?: number }) {
 
 interface GoogleSignInButtonProps {
   disabled?: boolean;
+  /** Safe post-login path (e.g. `/invite`). Defaults to dashboard. */
+  returnTo?: string;
 }
 
-export function GoogleSignInButton({ disabled = false }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({
+  disabled = false,
+  returnTo = '/(tabs)/(dashboard)',
+}: GoogleSignInButtonProps) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
   const showToast = useUiStore((state) => state.showToast);
@@ -46,6 +51,7 @@ export function GoogleSignInButton({ disabled = false }: GoogleSignInButtonProps
 
   const handlePress = async () => {
     setIsSubmitting(true);
+    setPendingPostAuthRoute(returnTo);
     const { error, cancelled } = await signInWithGoogle();
     setIsSubmitting(false);
 
@@ -63,7 +69,7 @@ export function GoogleSignInButton({ disabled = false }: GoogleSignInButtonProps
     }
 
     showToast({ message: t('auth.loginSuccess'), type: 'success' });
-    router.replace('/(tabs)/(dashboard)');
+    // Boot / auth Stack remount navigates via consumePendingPostAuthRoute.
   };
 
   return (

@@ -22,9 +22,11 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import { useBootstrap } from '@/hooks/useBootstrap';
 import { useProfile } from '@/hooks/useProfile';
 import { onAuthStateChange } from '@/lib/auth';
+import { subscribeToAuthDeepLinks, consumePendingPostAuthRoute, setPendingPostAuthRoute } from '@/lib/authDeepLinks';
 import { queryClient } from '@/lib/queryClient';
 import { NAV_THEME } from '@/lib/theme';
 import { useAuthStore } from '@/stores/authStore';
+import { useUiStore } from '@/stores/uiStore';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -32,6 +34,9 @@ export const unstable_settings = {
   // Always-available fallback when protected app routes become inaccessible.
   initialRouteName: 'index',
 };
+
+/** Routes that signed-out users may stay on (no boot eject to login). */
+const PUBLIC_ROOT_SEGMENTS = new Set(['(auth)', 'invite', 'reset-password']);
 
 // Module scope — must run before the first render.
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -44,6 +49,7 @@ SplashScreen.setOptions({ duration: 260, fade: true });
 export default function RootLayout() {
   const setSession = useAuthStore((state) => state.setSession);
   const isAuthenticated = useAuthStore((state) => Boolean(state.session));
+  const showToast = useUiStore((state) => state.showToast);
   const boot = useBootstrap();
   const router = useRouter();
   const segments = useSegments();
@@ -59,6 +65,34 @@ export default function RootLayout() {
     return () => subscription.unsubscribe();
   }, [setSession]);
 
+  useEffect(() => {
+    return subscribeToAuthDeepLinks((url, result) => {
+      if (result.error) {
+        showToast({ message: result.error, type: 'error' });
+      }
+
+      if (result.path === 'reset-password') {
+        setPendingPostAuthRoute('/reset-password');
+      } else if (result.path === 'invite' || url.includes('invite')) {
+        setPendingPostAuthRoute('/invite');
+      }
+
+      // Session is also pushed via onAuthStateChange; setSession keeps store warm
+      // if the listener races ahead of the auth event.
+      if (result.session) {
+        setSession(result.session);
+      }
+
+      if (result.path === 'reset-password') {
+        router.replace('/reset-password');
+        return;
+      }
+      if (result.path === 'invite' || url.includes('invite')) {
+        router.replace('/invite');
+      }
+    });
+  }, [router, setSession, showToast]);
+
   /** BootScreen has painted, so the native layer can go. */
   const onBootLaidOut = useCallback(() => {
     SplashScreen.hideAsync().catch(() => {});
@@ -68,11 +102,13 @@ export default function RootLayout() {
   useEffect(() => {
     if (boot.status === 'loading') return;
 
-    const inAuthGroup = segments[0] === '(auth)';
+    const root = segments[0];
+    const inAuthGroup = root === '(auth)';
+    const isPublicRoot = typeof root === 'string' && PUBLIC_ROOT_SEGMENTS.has(root);
 
     if (boot.status === 'ready' && boot.authenticated && inAuthGroup) {
-      router.replace('/(tabs)/(dashboard)');
-    } else if (boot.status === 'ready' && !boot.authenticated && !inAuthGroup) {
+      router.replace(consumePendingPostAuthRoute() as '/(tabs)/(dashboard)');
+    } else if (boot.status === 'ready' && !boot.authenticated && !isPublicRoot) {
       router.replace('/(auth)/login');
     } else if (boot.status === 'error') {
       // Restore failed — do not pretend they are signed out. The error panel
@@ -170,6 +206,7 @@ function RootStack({ isAuthenticated }: { isAuthenticated: boolean }) {
       </Stack.Protected>
 
       <Stack.Screen name="invite" />
+      <Stack.Screen name="reset-password" />
       <Stack.Screen name="+not-found" />
     </Stack>
   );
