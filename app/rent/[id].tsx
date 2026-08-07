@@ -194,7 +194,7 @@ export default function RentPaymentDetailScreen() {
         <View className="mb-4.5 flex-row items-start gap-3.5">
           <View
             className={cn(
-              'h-[58px] w-[58px] items-center justify-center rounded-full',
+              'h-14.5 w-14.5 items-center justify-center rounded-full',
               paid ? 'bg-pos-tint' : late ? 'bg-neg-tint' : 'bg-primary-tint',
             )}
             accessibilityRole="image"

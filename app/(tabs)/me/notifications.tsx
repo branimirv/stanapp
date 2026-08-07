@@ -199,7 +199,7 @@ function NotificationBody({
         disabled={isSaving}
         accessibilityRole="button"
         accessibilityLabel={t('common.save')}
-        className="bg-primary h-[50px] items-center justify-center rounded-full"
+        className="bg-primary h-12.5 items-center justify-center rounded-full"
         style={{ opacity: isSaving ? 0.7 : 1 }}
       >
         <Text className="text-on-primary text-[15px] font-semibold tracking-[-0.15px]">

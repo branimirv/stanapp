@@ -204,7 +204,7 @@ export default function ExpenseDetailScreen() {
         <View className="mb-4.5 flex-row items-start gap-3.5">
           <View
             className={cn(
-              'relative h-[58px] w-[58px] items-center justify-center rounded-full',
+              'relative h-14.5 w-14.5 items-center justify-center rounded-full',
               paid ? 'bg-pos-tint' : 'bg-neg-tint',
             )}
             accessibilityRole="image"
@@ -216,7 +216,7 @@ export default function ExpenseDetailScreen() {
               <CircleAlert size={22} color={colors.neg} strokeWidth={2} />
             )}
             {expense.is_recurring ? (
-              <View className="border-bd bg-surface absolute -right-0.5 -bottom-0.5 h-[18px] w-[18px] items-center justify-center rounded-full border-2">
+              <View className="border-bd bg-surface absolute -right-0.5 -bottom-0.5 h-4.5 w-4.5 items-center justify-center rounded-full border-2">
                 <Repeat size={9} color={colors.muted} strokeWidth={2.75} />
               </View>
             ) : null}
@@ -304,7 +304,7 @@ export default function ExpenseDetailScreen() {
             >
               <Image
                 source={{ uri: expense.receipt_photo_url }}
-                className="h-[220px] w-full"
+                className="h-55 w-full"
                 contentFit="cover"
               />
             </View>

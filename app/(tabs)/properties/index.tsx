@@ -183,7 +183,7 @@ export default function PropertiesScreen() {
         <View className="mb-3 flex-row items-stretch pl-2">
           {canArchive ? (
             <TouchableOpacity
-              className="min-w-[88px] items-center justify-center px-4"
+              className="min-w-22 items-center justify-center px-4"
               style={{ backgroundColor: colors.chart[4] }}
               onPress={() => handleArchive(id)}
             >
@@ -192,7 +192,7 @@ export default function PropertiesScreen() {
           ) : null}
           {canDelete ? (
             <TouchableOpacity
-              className="bg-neg min-w-[88px] items-center justify-center px-4"
+              className="bg-neg min-w-22 items-center justify-center px-4"
               onPress={() => handleDelete(id)}
             >
               <Text className="text-center text-[11px] font-medium text-white">{t('common.delete')}</Text>
@@ -369,4 +369,3 @@ export default function PropertiesScreen() {
     </View>
   );
 }
-

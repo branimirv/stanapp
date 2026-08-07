@@ -372,7 +372,7 @@ export default function ExpensesScreen() {
               <Pressable
                 onPress={() => handlePropertyPill('all')}
                 className={cn(
-                  'h-8.5 max-w-[180px] items-center justify-center rounded-full px-3.5',
+                  'h-8.5 max-w-45 items-center justify-center rounded-full px-3.5',
                   propertyFilter === 'all' ? 'bg-primary-tint' : 'bg-surface-2',
                 )}
                 accessibilityRole="button"
@@ -394,7 +394,7 @@ export default function ExpensesScreen() {
                     key={property.id}
                     onPress={() => handlePropertyPill(property.id)}
                     className={cn(
-                      'h-8.5 max-w-[180px] items-center justify-center rounded-full px-3.5',
+                      'h-8.5 max-w-45 items-center justify-center rounded-full px-3.5',
                       on ? 'bg-primary-tint' : 'bg-surface-2',
                     )}
                     accessibilityRole="button"
@@ -422,7 +422,7 @@ export default function ExpensesScreen() {
           )}
           style={elevation.card}
         >
-          <View className="flex-1 px-4 pt-4 pb-[15px]">
+          <View className="flex-1 px-4 pt-4 pb-3.75">
             <Text className="text-muted mb-2.25 text-[10px] font-semibold tracking-[0.8px] uppercase">
               {t('expenses.thisMonthBay')}
             </Text>
@@ -436,7 +436,7 @@ export default function ExpensesScreen() {
             />
           </View>
           <View className="bg-bd w-px self-stretch" />
-          <View className="flex-1 px-4 pt-4 pb-[15px]">
+          <View className="flex-1 px-4 pt-4 pb-3.75">
             <Text className="text-muted mb-2.25 text-[10px] font-semibold tracking-[0.8px] uppercase">
               {t('expenses.avgSixMonthsBay')}
             </Text>
@@ -562,4 +562,3 @@ export default function ExpensesScreen() {
     </View>
   );
 }
-

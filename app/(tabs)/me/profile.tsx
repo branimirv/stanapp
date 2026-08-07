@@ -175,8 +175,8 @@ function ProfileEditBody({
           {t('settings.editProfile')}
         </Text>
 
-        <View className="mb-6.5 h-[76px] w-[76px] self-center">
-          <View className="bg-primary-tint h-[76px] w-[76px] items-center justify-center rounded-full">
+        <View className="mb-6.5 h-19 w-19 self-center">
+          <View className="bg-primary-tint h-19 w-19 items-center justify-center rounded-full">
             <Text
               className="text-primary text-[26px]"
               style={{ fontFamily: displayFontFamily(themeName) }}
@@ -185,7 +185,7 @@ function ProfileEditBody({
             </Text>
           </View>
           <View
-            className="bg-surface-3 border-bg absolute -right-1 -bottom-1 h-[30px] w-[30px] items-center justify-center rounded-full border-2"
+            className="bg-surface-3 border-bg absolute -right-1 -bottom-1 h-7.5 w-7.5 items-center justify-center rounded-full border-2"
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           >
@@ -238,7 +238,7 @@ function ProfileEditBody({
           disabled={isSaving}
           accessibilityRole="button"
           accessibilityLabel={t('settings.saveChanges')}
-          className="bg-primary h-[50px] items-center justify-center rounded-full"
+          className="bg-primary h-12.5 items-center justify-center rounded-full"
           style={{ opacity: isSaving ? 0.7 : 1 }}
         >
           <Text className="text-on-primary text-[15px] font-semibold tracking-[-0.15px]">

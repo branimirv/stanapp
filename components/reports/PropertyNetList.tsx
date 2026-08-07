@@ -42,7 +42,7 @@ export function PropertyNetList({ summaries, language = 'hr' }: PropertyNetListP
             <View key={summary.propertyId}>
               {index > 0 ? (
                 <View
-                  className="bg-bd ml-[51px]"
+                  className="bg-bd ml-12.75"
                   style={{ height: StyleSheet.hairlineWidth }}
                 />
               ) : null}

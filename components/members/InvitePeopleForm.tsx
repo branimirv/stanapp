@@ -148,7 +148,7 @@ export function InvitePeopleForm({
         accessibilityRole="button"
         accessibilityLabel={t('members.sendInvite')}
         className={cn(
-          'bg-primary h-[50px] items-center justify-center rounded-full',
+          'bg-primary h-12.5 items-center justify-center rounded-full',
           isInviting && 'opacity-70',
         )}
       >

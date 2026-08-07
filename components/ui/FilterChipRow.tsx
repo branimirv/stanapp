@@ -31,7 +31,7 @@ export function FilterChipRow({ chips }: FilterChipRowProps) {
       {chips.map((chip) => (
         <View
           key={chip.key}
-          className="border-primary bg-primary-tint h-[30px] max-w-full shrink-0 flex-row items-center gap-1.25 rounded-full border py-0 pr-1.5 pl-3"
+          className="border-primary bg-primary-tint h-7.5 max-w-full shrink-0 flex-row items-center gap-1.25 rounded-full border py-0 pr-1.5 pl-3"
         >
           <Text
             className="text-primary shrink text-xs font-semibold tracking-[-0.12px]"

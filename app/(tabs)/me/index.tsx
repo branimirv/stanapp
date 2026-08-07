@@ -310,7 +310,7 @@ export default function MeScreen() {
                 </Text>
               ) : null}
             </View>
-            <View className="bg-primary-tint h-[58px] w-[58px] items-center justify-center rounded-full">
+            <View className="bg-primary-tint h-14.5 w-14.5 items-center justify-center rounded-full">
               <Text
                 className="text-primary text-[21px]"
                 style={{ fontFamily: displayFontFamily(theme.name) }}

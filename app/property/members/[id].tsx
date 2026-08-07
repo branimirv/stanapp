@@ -306,7 +306,7 @@ function MembersBody({
         }
         accessibilityRole="button"
         accessibilityLabel={t('members.invitePeople')}
-        className="bg-primary mt-2 h-[50px] items-center justify-center rounded-full"
+        className="bg-primary mt-2 h-12.5 items-center justify-center rounded-full"
       >
         <Text className="text-on-primary text-[15px] font-semibold tracking-[-0.15px]">
           {t('members.invitePeople')}
