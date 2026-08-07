@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 
 const STEPS: { icon: LucideIcon; titleKey: string; hintKey: string }[] = [
@@ -45,7 +46,7 @@ export function DashboardEmptyState() {
         subtitle={t('empty.noPropertiesHint')}
         ctaLabel={t('properties.addNew')}
         ctaIcon={Plus}
-        onCtaPress={() => router.push('/property/new')}
+        onCtaPress={() => router.push(routes.property.new)}
         className="mb-4"
       />
 

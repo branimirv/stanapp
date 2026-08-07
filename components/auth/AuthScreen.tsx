@@ -18,6 +18,7 @@ import { HEADER_ICON_SIZE } from '@/constants/header';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { Typography } from '@/constants/theme';
 import { displayFontFamily } from '@/lib/fonts';
+import { routes } from '@/lib/routes';
 
 /**
  * Auth shell — flat Naslov `--bg` (no ScreenAmbient).
@@ -119,7 +120,7 @@ export function AuthFooter({
 }: {
   prompt: string;
   actionLabel: string;
-  href: '/(auth)/login' | '/(auth)/register';
+  href: typeof routes.auth.login | typeof routes.auth.register;
 }) {
   return (
     <View className="mt-6.5 flex-row flex-wrap items-center justify-center">

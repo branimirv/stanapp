@@ -1,6 +1,7 @@
 import * as Linking from 'expo-linking';
 import type { Session } from '@supabase/supabase-js';
 
+import { routes } from '@/lib/routes';
 import { supabase } from '@/lib/supabase';
 
 export type AuthDeepLinkPath = 'invite' | 'reset-password' | null;
@@ -83,13 +84,13 @@ export async function createSessionFromUrl(url: string): Promise<AuthDeepLinkRes
 /** Safe post-login destinations only — blocks open redirects. */
 export function resolveAuthReturnTo(returnTo: string | string[] | undefined): string {
   const value = Array.isArray(returnTo) ? returnTo[0] : returnTo;
-  if (!value) return '/(tabs)/(dashboard)';
-  if (value === '/invite') return '/invite';
-  if (value.startsWith('/(tabs)')) return value;
-  return '/(tabs)/(dashboard)';
+  if (!value) return routes.tabs.dashboard;
+  if (value === routes.invite) return routes.invite;
+  if (value.startsWith(routes.tabs.root)) return value;
+  return routes.tabs.dashboard;
 }
 
-const DEFAULT_POST_AUTH = '/(tabs)/(dashboard)';
+const DEFAULT_POST_AUTH = routes.tabs.dashboard;
 
 let pendingPostAuthRoute: string | null = null;
 

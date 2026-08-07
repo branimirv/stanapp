@@ -7,6 +7,7 @@ import { LoginScreen } from '@/components/auth/LoginScreen';
 import { Text } from '@/components/ui/text';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { consumePendingPostAuthRoute } from '@/lib/authDeepLinks';
+import { routes } from '@/lib/routes';
 import { useAuthStore } from '@/stores/authStore';
 
 /**
@@ -33,7 +34,7 @@ export default function Index() {
     if (postAuthHref.current === null) {
       postAuthHref.current = consumePendingPostAuthRoute();
     }
-    return <Redirect href={postAuthHref.current as '/(tabs)/(dashboard)'} />;
+    return <Redirect href={postAuthHref.current as typeof routes.tabs.dashboard} />;
   }
 
   return <LoginScreen />;

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { HeaderBtnIco } from '@/components/ui/HeaderActionsPill';
 import { HEADER_ICON_SIZE } from '@/constants/header';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { routes } from '@/lib/routes';
 
 /**
  * Back button for stack screens. Always visible — if there is no history
@@ -21,7 +22,7 @@ export function HeaderBackButton() {
       router.back();
       return;
     }
-    router.replace('/(tabs)');
+    router.replace(routes.tabs.dashboard);
   };
 
   return (

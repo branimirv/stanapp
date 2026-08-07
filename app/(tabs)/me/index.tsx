@@ -48,6 +48,7 @@ import { useTabBarPreference, type TabBarLabelMode } from '@/hooks/useTabBarPref
 import { useTenants } from '@/hooks/useTenants';
 import i18n from '@/i18n';
 import { displayFontFamily } from '@/lib/fonts';
+import { routes } from '@/lib/routes';
 import { useAuthStore } from '@/stores/authStore';
 import { useTabBarStore } from '@/stores/tabBarStore';
 import { useUiStore } from '@/stores/uiStore';
@@ -355,14 +356,14 @@ export default function MeScreen() {
           <SettingsRow
             icon={Pencil}
             label={t('settings.editProfile')}
-            onPress={() => router.push('/(tabs)/me/profile')}
+            onPress={() => router.push(routes.tabs.me.profile)}
           />
           {ownsAnyProperty ? (
             <SettingsRow
               icon={Users}
               label={t('members.teamTitle')}
               subtitle={t('members.teamHint')}
-              onPress={() => router.push('/(tabs)/me/team')}
+              onPress={() => router.push(routes.tabs.me.team)}
             />
           ) : null}
         </SettingsGroup>
@@ -385,7 +386,7 @@ export default function MeScreen() {
             label={t('settings.notifications')}
             badge={notificationsBadge}
             badgeTone={notificationsEnabledCount > 0 ? 'accent' : 'muted'}
-            onPress={() => router.push('/(tabs)/me/notifications')}
+            onPress={() => router.push(routes.tabs.me.notifications)}
           />
           <SettingsRow
             icon={LayoutGrid}
@@ -426,7 +427,7 @@ export default function MeScreen() {
 
       <FloatingScreenActions align="right">
         <HeaderBtnIco
-          onPress={() => router.push('/(tabs)/me/notifications')}
+          onPress={() => router.push(routes.tabs.me.notifications)}
           accessibilityLabel={t('settings.notifications')}
         >
           <Bell size={HEADER_ICON_SIZE} color={colors.fg} strokeWidth={2} />

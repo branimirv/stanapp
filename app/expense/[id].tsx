@@ -23,6 +23,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useProperty } from '@/hooks/useProperties';
 import { cancelExpenseReminders } from '@/lib/notifications';
 import { displayFontFamily } from '@/lib/fonts';
+import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { useUiStore } from '@/stores/uiStore';
 import { resolveCurrency } from '@/utils/currency';
@@ -190,7 +191,7 @@ export default function ExpenseDetailScreen() {
         <StackHeaderActions>
           <HeaderIconButton
             icon={Pencil}
-            onPress={() => router.push(`/expense/edit/${expense.id}`)}
+            onPress={() => router.push(routes.expense.edit(expense.id))}
             accessibilityLabel={t('common.edit')}
           />
         </StackHeaderActions>
@@ -256,7 +257,7 @@ export default function ExpenseDetailScreen() {
           />
           {property ? (
             <Pressable
-              onPress={() => router.push(`/property/${property.id}`)}
+              onPress={() => router.push(routes.property.detail(property.id))}
               className="mt-3.5 flex-row items-center gap-1.5"
               accessibilityRole="link"
               accessibilityLabel={property.name}

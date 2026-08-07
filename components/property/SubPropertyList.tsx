@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { PropertyTypeBadge } from '@/components/property/PropertyTypeBadge';
 import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
+import { routes } from '@/lib/routes';
 import type { Property } from '@/types/app.types';
 
 export interface SubPropertyListProps {
@@ -28,7 +29,7 @@ export function SubPropertyList({
       onPropertyPress(propertyId);
       return;
     }
-    router.push({ pathname: '/property/[id]', params: { id: propertyId } });
+    router.push(routes.property.detail(propertyId));
   };
 
   if (items.length === 0) {

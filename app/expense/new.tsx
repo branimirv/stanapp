@@ -13,6 +13,7 @@ import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useExpenseMutations } from '@/hooks/useExpenses';
 import { useProperties } from '@/hooks/useProperties';
 import { scheduleExpenseDueReminder } from '@/lib/notifications';
+import { routes } from '@/lib/routes';
 import { useUiStore } from '@/stores/uiStore';
 import { getCategoryLabel } from '@/utils/expense';
 import { toDateString } from '@/utils/formHelpers';
@@ -63,7 +64,7 @@ export default function NewExpenseScreen() {
       }
 
       showToast({ message: t('expenses.saveSuccess'), type: 'success' });
-      router.replace(`/expense/${expense.id}`);
+      router.replace(routes.expense.detail(expense.id));
     } catch (err) {
       showToast({
         message: err instanceof Error ? err.message : t('expenses.saveFailed'),

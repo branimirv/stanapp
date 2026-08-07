@@ -27,6 +27,7 @@ import { DashboardCreateActions } from '@/hooks/useDashboardCreateHeader';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
 import { useTabBarStore } from '@/stores/tabBarStore';
+import { routes } from '@/lib/routes';
 import type { DashboardPeriod, Language } from '@/types/app.types';
 
 function getInitialPeriod(): DashboardPeriod {
@@ -172,7 +173,7 @@ export default function DashboardScreen() {
           expected={stats.expectedRent}
           currency={stats.currency}
           language={language}
-          onPress={() => router.push('/(tabs)/properties')}
+          onPress={() => router.push(routes.tabs.properties)}
         />
       ) : null}
 
@@ -181,7 +182,7 @@ export default function DashboardScreen() {
           tone="neg"
           title={t('dashboard.unpaidRentCount', { count: stats.unpaidRentCount })}
           subtitle={t('dashboard.unpaidRentAlert')}
-          onPress={() => router.push('/(tabs)/properties')}
+          onPress={() => router.push(routes.tabs.properties)}
         />
       ) : null}
 
@@ -191,7 +192,7 @@ export default function DashboardScreen() {
           title={t('dashboard.overdueCount', { count: stats.overdueExpensesCount })}
           subtitle={t('dashboard.overdueAlert')}
           onPress={() =>
-            router.push({ pathname: '/(tabs)/expenses', params: { filter: 'overdue' } })
+            router.push({ pathname: routes.tabs.expenses, params: { filter: 'overdue' } })
           }
         />
       ) : null}
@@ -202,7 +203,7 @@ export default function DashboardScreen() {
           title={t('dashboard.upcomingDueCount', { count: stats.upcomingDueCount })}
           subtitle={t('dashboard.upcomingDueAlert')}
           onPress={() =>
-            router.push({ pathname: '/(tabs)/expenses', params: { filter: 'unpaid' } })
+            router.push({ pathname: routes.tabs.expenses, params: { filter: 'unpaid' } })
           }
         />
       ) : null}
@@ -212,7 +213,7 @@ export default function DashboardScreen() {
           tone="primary"
           title={t('dashboard.contractsExpiringCount', { count: stats.contractsExpiringCount })}
           subtitle={t('dashboard.contractsExpiringAlert')}
-          onPress={() => router.push('/(tabs)/properties')}
+          onPress={() => router.push(routes.tabs.properties)}
         />
       ) : null}
 
@@ -220,7 +221,7 @@ export default function DashboardScreen() {
         rentedCount={stats.rentedCount}
         vacantCount={stats.vacantCount}
         totalCount={stats.totalPropertiesCount}
-        onPress={() => router.push('/(tabs)/properties')}
+        onPress={() => router.push(routes.tabs.properties)}
       />
 
       <RecentActivity
@@ -228,9 +229,9 @@ export default function DashboardScreen() {
         language={language}
         onItemPress={(item) => {
           if (item.type === 'rent_payment') {
-            router.push(`/rent/${item.id}`);
+            router.push(routes.rent.detail(item.id));
           } else {
-            router.push(`/expense/${item.id}`);
+            router.push(routes.expense.detail(item.id));
           }
         }}
       />

@@ -6,6 +6,7 @@ import Svg, { Path } from 'react-native-svg';
 import { AppButton } from '@/components/ui/AppButton';
 import { signInWithGoogle } from '@/lib/auth';
 import { setPendingPostAuthRoute } from '@/lib/authDeepLinks';
+import { routes } from '@/lib/routes';
 import { useUiStore } from '@/stores/uiStore';
 
 /** Official multi-colour Google G — brand requirement, not a Lucide glyph. */
@@ -40,7 +41,7 @@ interface GoogleSignInButtonProps {
 
 export function GoogleSignInButton({
   disabled = false,
-  returnTo = '/(tabs)/(dashboard)',
+  returnTo = routes.tabs.dashboard,
 }: GoogleSignInButtonProps) {
   const { t } = useTranslation();
   const showToast = useUiStore((state) => state.showToast);

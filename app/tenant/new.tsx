@@ -11,6 +11,7 @@ import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { useProperty } from '@/hooks/useProperties';
 import { useTenantMutations } from '@/hooks/useTenants';
+import { routes } from '@/lib/routes';
 import { useUiStore } from '@/stores/uiStore';
 import type { TenantFormValues } from '@/utils/validators';
 
@@ -53,7 +54,7 @@ export default function NewTenantScreen() {
       });
 
       showToast({ message: t('tenants.saveSuccess'), type: 'success' });
-      router.replace(`/tenant/${tenant.id}`);
+      router.replace(routes.tenant.detail(tenant.id));
     } catch (err) {
       showToast({
         message: err instanceof Error ? err.message : t('tenants.saveFailed'),

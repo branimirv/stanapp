@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { PropertyForm } from '@/components/property/PropertyForm';
 import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { useProperties } from '@/hooks/useProperties';
+import { routes } from '@/lib/routes';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import type { UsageStatus } from '@/types/app.types';
@@ -46,7 +47,7 @@ export default function NewPropertyScreen() {
       });
 
       showToast({ message: t('properties.saveSuccess'), type: 'success' });
-      router.replace(`/property/${property.id}`);
+      router.replace(routes.property.detail(property.id));
     } catch (err) {
       showToast({
         message: getErrorMessage(err, t('properties.saveFailed')),

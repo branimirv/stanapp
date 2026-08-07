@@ -38,6 +38,7 @@ import { resolveCurrency } from '@/utils/currency';
 import { getCurrentMonthRange, isDateInRange } from '@/utils/dateRange';
 import { openAddressInMaps } from '@/utils/maps';
 import { Fonts } from '@/lib/fonts';
+import { routes } from '@/lib/routes';
 import { formatDateOnly } from '@/utils/formatters';
 
 const PARENT_BANNER_HEIGHT = 44;
@@ -154,7 +155,7 @@ export default function PropertyDetailScreen() {
 
   useRefetchOnFocus(refetchTabData);
 
-  const routes = useMemo<PropertyRoute[]>(() => {
+  const tabRoutes = useMemo<PropertyRoute[]>(() => {
     const base: PropertyRoute[] = [{ key: 'overview', title: t('properties.overview') }];
     if (isRented) base.push({ key: 'rent', title: t('properties.rentTab') });
     base.push({ key: 'expenses', title: t('properties.expensesTab') });
@@ -169,8 +170,8 @@ export default function PropertyDetailScreen() {
   const activeTenant = activeTenants[0];
 
   const rentTabIndex = useMemo(
-    () => routes.findIndex((route) => route.key === 'rent'),
-    [routes],
+    () => tabRoutes.findIndex((route) => route.key === 'rent'),
+    [tabRoutes],
   );
 
   const goToRentTab = useCallback(() => {
@@ -180,8 +181,8 @@ export default function PropertyDetailScreen() {
   }, [rentTabIndex]);
 
   const tenantsTabIndex = useMemo(
-    () => routes.findIndex((route) => route.key === 'tenants'),
-    [routes],
+    () => tabRoutes.findIndex((route) => route.key === 'tenants'),
+    [tabRoutes],
   );
 
   const goToTenantsTab = useCallback(() => {
@@ -221,7 +222,7 @@ export default function PropertyDetailScreen() {
           }
         } else if (!activeTenant) {
           router.push({
-            pathname: '/rent/new',
+            pathname: routes.rent.new,
             params: {
               propertyId: id!,
               periodMonth: String(month),
@@ -270,7 +271,7 @@ export default function PropertyDetailScreen() {
   const handleRentPartialPayment = useCallback(() => {
     const { month, year } = rentSheet;
     router.push({
-      pathname: '/rent/new',
+      pathname: routes.rent.new,
       params: {
         propertyId: id!,
         ...(activeTenant ? { tenantId: activeTenant.id } : {}),
@@ -283,11 +284,11 @@ export default function PropertyDetailScreen() {
   const handleRentAddDetails = useCallback(() => {
     const { month, year, payment } = rentSheet;
     if (payment) {
-      router.push(`/rent/${payment.id}`);
+      router.push(routes.rent.detail(payment.id));
       return;
     }
     router.push({
-      pathname: '/rent/new',
+      pathname: routes.rent.new,
       params: {
         propertyId: id!,
         ...(activeTenant ? { tenantId: activeTenant.id } : {}),
@@ -306,19 +307,19 @@ export default function PropertyDetailScreen() {
   );
 
   const handleSelectExpense = useCallback((expenseId: string) => {
-    router.push(`/expense/${expenseId}`);
+    router.push(routes.expense.detail(expenseId));
   }, []);
 
   const handleSelectTenant = useCallback((tenantId: string) => {
-    router.push(`/tenant/${tenantId}`);
+    router.push(routes.tenant.detail(tenantId));
   }, []);
 
   const handleAddTenant = useCallback(() => {
-    router.push({ pathname: '/tenant/new', params: { propertyId: id! } });
+    router.push({ pathname: routes.tenant.new, params: { propertyId: id! } });
   }, [id]);
 
   const handleAddRentPayment = useCallback(() => {
-    router.push({ pathname: '/rent/new', params: { propertyId: id! } });
+    router.push({ pathname: routes.rent.new, params: { propertyId: id! } });
   }, [id]);
 
   const handleShowUsageHistory = useCallback(() => {
@@ -334,7 +335,7 @@ export default function PropertyDetailScreen() {
   }, [currentMonthRange.month, currentMonthRange.year, currentMonthRentPayment, openRentSheet]);
 
   const handleAddExpense = useCallback(() => {
-    router.push({ pathname: '/expense/new', params: { propertyId: id! } });
+    router.push({ pathname: routes.expense.new, params: { propertyId: id! } });
   }, [id]);
 
   const overlayTop = headerInset;
@@ -367,7 +368,7 @@ export default function PropertyDetailScreen() {
             onShowUsageHistory={handleShowUsageHistory}
             onGoToRent={goToRentTab}
             onGoToTenants={goToTenantsTab}
-            onOpenMembers={() => router.push(`/property/members/${property!.id}`)}
+            onOpenMembers={() => router.push(routes.property.members(property!.id))}
             onSelectTenant={handleSelectTenant}
             onRecordPayment={handleRecordPayment}
             onAddExpense={handleAddExpense}
@@ -470,7 +471,7 @@ export default function PropertyDetailScreen() {
           {canManage ? (
             <HeaderIconButton
               icon={Pencil}
-              onPress={() => router.push(`/property/edit/${property.id}`)}
+              onPress={() => router.push(routes.property.edit(property.id))}
               accessibilityLabel={t('common.edit')}
             />
           ) : null}
@@ -478,7 +479,7 @@ export default function PropertyDetailScreen() {
       )}
     >
       <TabView
-        navigationState={{ index, routes }}
+        navigationState={{ index, routes: tabRoutes }}
         renderScene={renderScene}
         onIndexChange={setIndex}
         initialLayout={{ width: layout.width }}
@@ -494,7 +495,7 @@ export default function PropertyDetailScreen() {
             {parentProperty ? (
               <View style={styles.parentWrap}>
                 <Pressable
-                  onPress={() => router.push(`/property/${parentProperty.id}`)}
+                  onPress={() => router.push(routes.property.detail(parentProperty.id))}
                   accessibilityRole="link"
                   accessibilityLabel={t('properties.linkedTo', {
                     name: parentProperty.name,

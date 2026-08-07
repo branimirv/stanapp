@@ -13,6 +13,7 @@ import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { useProperties } from '@/hooks/useProperties';
 import { useRentPaymentMutations } from '@/hooks/useRentPayments';
 import { useTenants } from '@/hooks/useTenants';
+import { routes } from '@/lib/routes';
 import { useUiStore } from '@/stores/uiStore';
 import { toDateString } from '@/utils/formHelpers';
 import type { RentPaymentFormValues } from '@/utils/validators';
@@ -53,7 +54,7 @@ export default function NewRentPaymentScreen() {
       });
 
       showToast({ message: t('rent.saveSuccess'), type: 'success' });
-      router.replace(`/rent/${payment.id}`);
+      router.replace(routes.rent.detail(payment.id));
     } catch (err) {
       showToast({
         message: err instanceof Error ? err.message : t('rent.saveFailed'),

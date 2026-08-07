@@ -10,6 +10,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { routes } from '@/lib/routes';
 
 interface QuickAction {
   key: string;
@@ -28,25 +29,25 @@ export function DashboardQuickActions() {
       key: 'property',
       labelKey: 'dashboard.qaProperty',
       icon: Building2,
-      onPress: () => router.push('/property/new'),
+      onPress: () => router.push(routes.property.new),
     },
     {
       key: 'collect',
       labelKey: 'dashboard.qaCollect',
       icon: ArrowDownToLine,
-      onPress: () => router.push('/rent/new'),
+      onPress: () => router.push(routes.rent.new),
     },
     {
       key: 'expense',
       labelKey: 'dashboard.qaExpense',
       icon: Receipt,
-      onPress: () => router.push('/expense/new'),
+      onPress: () => router.push(routes.expense.new),
     },
     {
       key: 'reports',
       labelKey: 'dashboard.qaReports',
       icon: ChartColumn,
-      onPress: () => router.push('/(tabs)/reports'),
+      onPress: () => router.push(routes.tabs.reports),
     },
   ];
 

@@ -13,6 +13,7 @@ import { AppTextInput } from '@/components/ui/AppTextInput';
 import { Text } from '@/components/ui/text';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { updatePassword } from '@/lib/auth';
+import { routes } from '@/lib/routes';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import { translateFieldError } from '@/utils/formHelpers';
@@ -48,7 +49,7 @@ export default function ResetPasswordScreen() {
       // auth store settles, then send unsigned users to request a new link.
       const id = setTimeout(() => {
         if (!useAuthStore.getState().session) {
-          router.replace('/(auth)/forgot-password');
+          router.replace(routes.auth.forgotPassword);
         }
       }, 800);
       return () => clearTimeout(id);
@@ -66,7 +67,7 @@ export default function ResetPasswordScreen() {
     }
 
     showToast({ message: t('auth.passwordChanged'), type: 'success' });
-    router.replace('/(tabs)/(dashboard)');
+    router.replace(routes.tabs.dashboard);
   };
 
   const { colors } = theme;

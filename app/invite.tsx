@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { AppButton } from '@/components/ui/AppButton';
 import { Text } from '@/components/ui/text';
 import { queryKeys } from '@/lib/queryKeys';
+import { routes } from '@/lib/routes';
 import { acceptPendingInvites } from '@/services/invites';
 import { useAuthStore } from '@/stores/authStore';
 import { getErrorMessage } from '@/utils/errors';
@@ -65,7 +66,10 @@ export default function InviteAcceptScreen() {
           <AppButton
             mode="contained"
             onPress={() =>
-              router.replace({ pathname: '/(auth)/login', params: { returnTo: '/invite' } })
+              router.replace({
+                pathname: routes.auth.login,
+                params: { returnTo: routes.invite },
+              })
             }
           >
             {t('auth.signIn')}
@@ -79,7 +83,7 @@ export default function InviteAcceptScreen() {
           <Text className="text-muted-foreground text-center text-sm">
             {t('members.acceptSuccessCount', { count: acceptedCount })}
           </Text>
-          <AppButton mode="contained" onPress={() => router.replace('/(tabs)/properties')}>
+          <AppButton mode="contained" onPress={() => router.replace(routes.tabs.properties)}>
             {t('members.viewProperties')}
           </AppButton>
         </>
@@ -91,7 +95,7 @@ export default function InviteAcceptScreen() {
           {errorMessage ? (
             <Text className="text-destructive text-center text-sm">{errorMessage}</Text>
           ) : null}
-          <AppButton mode="contained" onPress={() => router.replace('/(tabs)/properties')}>
+          <AppButton mode="contained" onPress={() => router.replace(routes.tabs.properties)}>
             {t('common.goHome')}
           </AppButton>
         </>

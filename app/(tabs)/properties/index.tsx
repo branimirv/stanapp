@@ -28,6 +28,7 @@ import { useExpandableSearchState } from '@/hooks/useExpandableSearch';
 import { useRefetchOnFocus } from '@/hooks/useRefetchOnFocus';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { SearchableTabActions } from '@/hooks/useSearchableTabHeader';
+import { routes } from '@/lib/routes';
 import { useTenants } from '@/hooks/useTenants';
 import { displayFontFamily } from '@/lib/fonts';
 import { useAuthStore } from '@/stores/authStore';
@@ -62,7 +63,7 @@ export default function PropertiesScreen() {
   }, [memberships]);
 
   const handleCreatePress = useCallback(() => {
-    router.push('/property/new');
+    router.push(routes.property.new);
   }, []);
 
   const {
@@ -207,7 +208,7 @@ export default function PropertiesScreen() {
   const handlePropertyPress = useCallback(
     (propertyId: string) => {
       dismissSearchIfEmpty();
-      router.push(`/property/${propertyId}`);
+      router.push(routes.property.detail(propertyId));
     },
     [dismissSearchIfEmpty],
   );

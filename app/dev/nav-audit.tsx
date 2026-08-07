@@ -5,12 +5,14 @@ import { StackScreenChrome } from '@/components/ui/StackScreenChrome';
 import { Text } from '@/components/ui/text';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProperties } from '@/hooks/useProperties';
+import { routes } from '@/lib/routes';
+
 const TAB_LINKS: { title: string; href: string }[] = [
-  { title: 'Dashboard', href: '/(tabs)/(dashboard)' },
-  { title: 'Properties (tab)', href: '/(tabs)/properties' },
-  { title: 'Expenses (tab)', href: '/(tabs)/expenses' },
-  { title: 'Reports (tab)', href: '/(tabs)/reports' },
-  { title: 'Me (tab)', href: '/(tabs)/me' },
+  { title: 'Dashboard', href: routes.tabs.dashboard },
+  { title: 'Properties (tab)', href: routes.tabs.properties },
+  { title: 'Expenses (tab)', href: routes.tabs.expenses },
+  { title: 'Reports (tab)', href: routes.tabs.reports },
+  { title: 'Me (tab)', href: routes.tabs.me.index },
 ];
 
 function NavListSection({ title, children }: { title: string; children: React.ReactNode }) {
@@ -83,7 +85,7 @@ export default function NavAuditScreen() {
                 key={property.id}
                 title={property.name}
                 description={property.id}
-                onPress={() => router.push(`/property/${property.id}`)}
+                onPress={() => router.push(routes.property.detail(property.id))}
               />
             ))}
           </NavListSection>

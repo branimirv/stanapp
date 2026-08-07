@@ -12,6 +12,7 @@ import { AppDatePicker } from '@/components/ui/AppDatePicker';
 import { AppTextInput } from '@/components/ui/AppTextInput';
 import { Text } from '@/components/ui/text';
 import { CategoryBadge } from '@/components/expense/CategoryBadge';
+import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import type { ExpenseCategory } from '@/types/app.types';
 import {
@@ -95,7 +96,7 @@ export function QuickAddExpenseSheet({
   const handleMoreDetails = () => {
     onDismiss();
     router.push({
-      pathname: '/expense/new',
+      pathname: routes.expense.new,
       params: {
         propertyId,
         ...(categoryId ? { categoryId } : {}),

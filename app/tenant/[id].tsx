@@ -36,6 +36,7 @@ import { useProperty } from '@/hooks/useProperties';
 import { useRentPayments } from '@/hooks/useRentPayments';
 import { useTenant, useTenantMutations } from '@/hooks/useTenants';
 import { displayFontFamily } from '@/lib/fonts';
+import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { useUiStore } from '@/stores/uiStore';
 import type { Language, Tenant } from '@/types/app.types';
@@ -299,7 +300,7 @@ export default function TenantDetailScreen() {
         <StackHeaderActions>
           <HeaderIconButton
             icon={Pencil}
-            onPress={() => router.push(`/tenant/edit/${tenant.id}`)}
+            onPress={() => router.push(routes.tenant.edit(tenant.id))}
             accessibilityLabel={t('common.edit')}
           />
         </StackHeaderActions>
@@ -352,7 +353,7 @@ export default function TenantDetailScreen() {
                   </View>
                   {propertyLabel ? (
                     <Pressable
-                      onPress={() => router.push(`/property/${property!.id}`)}
+                      onPress={() => router.push(routes.property.detail(property!.id))}
                       hitSlop={6}
                       accessibilityRole="link"
                       accessibilityLabel={propertyLabel}
@@ -440,7 +441,7 @@ export default function TenantDetailScreen() {
               ctaIcon={Plus}
               onCtaPress={() =>
                 router.push({
-                  pathname: '/rent/new',
+                  pathname: routes.rent.new,
                   params: { propertyId: tenant.property_id, tenantId: tenant.id },
                 })
               }

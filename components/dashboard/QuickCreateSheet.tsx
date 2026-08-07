@@ -13,6 +13,7 @@ import {
   APP_BOTTOM_SHEET_CLOSE_MS,
 } from '@/components/ui/AppBottomSheet';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 
 interface QuickCreateSheetProps {
@@ -24,28 +25,31 @@ const ACTIONS: {
   key: string;
   labelKey: string;
   icon: LucideIcon;
-  route: '/property/new' | '/expense/new' | '/rent/new';
+  route:
+    | typeof routes.property.new
+    | typeof routes.expense.new
+    | typeof routes.rent.new;
   tint: 'primary' | 'neg' | 'pos';
 }[] = [
   {
     key: 'property',
     labelKey: 'dashboard.addProperty',
     icon: Building2,
-    route: '/property/new',
+    route: routes.property.new,
     tint: 'primary',
   },
   {
     key: 'expense',
     labelKey: 'dashboard.addExpense',
     icon: Receipt,
-    route: '/expense/new',
+    route: routes.expense.new,
     tint: 'neg',
   },
   {
     key: 'payment',
     labelKey: 'dashboard.addPayment',
     icon: ArrowDownToLine,
-    route: '/rent/new',
+    route: routes.rent.new,
     tint: 'pos',
   },
 ];

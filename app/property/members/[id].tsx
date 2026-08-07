@@ -12,6 +12,7 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import { useMyMembership, usePropertyInvites, usePropertyMembers } from '@/hooks/useMembers';
 import { useProperty } from '@/hooks/useProperties';
 import { displayFontFamily } from '@/lib/fonts';
+import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
@@ -300,7 +301,7 @@ function MembersBody({
       <Pressable
         onPress={() =>
           router.push({
-            pathname: '/(tabs)/me/team',
+            pathname: routes.tabs.me.team,
             params: propertyId ? { propertyId } : undefined,
           })
         }

@@ -37,6 +37,7 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
 import { displayFontFamily } from '@/lib/fonts';
+import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { useTabBarStore } from '@/stores/tabBarStore';
 import { useUiStore } from '@/stores/uiStore';
@@ -205,10 +206,10 @@ export default function ReportsScreen() {
 
   const handleAddExpense = useCallback(() => {
     if (propertyFilter !== 'all') {
-      router.push({ pathname: '/expense/new', params: { propertyId: propertyFilter } });
+      router.push({ pathname: routes.expense.new, params: { propertyId: propertyFilter } });
       return;
     }
-    router.push('/expense/new');
+    router.push(routes.expense.new);
   }, [propertyFilter]);
 
   if (isLoading && !report) {

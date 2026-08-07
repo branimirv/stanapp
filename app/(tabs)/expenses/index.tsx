@@ -45,6 +45,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
 import { SearchableTabActions } from '@/hooks/useSearchableTabHeader';
 import { displayFontFamily } from '@/lib/fonts';
+import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { useTabBarStore } from '@/stores/tabBarStore';
 import type { Language } from '@/types/app.types';
@@ -76,7 +77,7 @@ export default function ExpensesScreen() {
   const setChromeHidden = useTabBarStore((s) => s.setChromeHidden);
 
   const handleCreatePress = useCallback(() => {
-    router.push('/expense/new');
+    router.push(routes.expense.new);
   }, []);
 
   const {
@@ -284,7 +285,7 @@ export default function ExpensesScreen() {
   const handleExpensePress = useCallback(
     (expenseId: string) => {
       dismissSearchIfEmpty();
-      router.push(`/expense/${expenseId}`);
+      router.push(routes.expense.detail(expenseId));
     },
     [dismissSearchIfEmpty],
   );

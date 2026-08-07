@@ -12,6 +12,7 @@ import { useProperty } from '@/hooks/useProperties';
 import { useRentPayment, useRentPaymentMutations } from '@/hooks/useRentPayments';
 import { useTenant } from '@/hooks/useTenants';
 import { displayFontFamily } from '@/lib/fonts';
+import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { useUiStore } from '@/stores/uiStore';
 import { resolveCurrency } from '@/utils/currency';
@@ -245,7 +246,7 @@ export default function RentPaymentDetailScreen() {
           />
           {property ? (
             <Pressable
-              onPress={() => router.push(`/property/${property.id}`)}
+              onPress={() => router.push(routes.property.detail(property.id))}
               className="mt-3 flex-row items-center gap-1.5"
               accessibilityRole="link"
               accessibilityLabel={property.name}
@@ -259,7 +260,7 @@ export default function RentPaymentDetailScreen() {
           ) : null}
           {tenantName && tenant ? (
             <Pressable
-              onPress={() => router.push(`/tenant/${tenant.id}`)}
+              onPress={() => router.push(routes.tenant.detail(tenant.id))}
               className="mt-3 flex-row items-center gap-1.5"
               accessibilityRole="link"
               accessibilityLabel={tenantName}

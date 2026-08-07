@@ -12,6 +12,7 @@ import { AppButton } from '@/components/ui/AppButton';
 import { AppTextInput } from '@/components/ui/AppTextInput';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { signUp } from '@/lib/auth';
+import { routes } from '@/lib/routes';
 import { useUiStore } from '@/stores/uiStore';
 import { translateFieldError } from '@/utils/formHelpers';
 import { registerSchema, type RegisterFormValues } from '@/utils/validators';
@@ -59,7 +60,7 @@ export default function RegisterScreen() {
       showToast({ message: t('auth.registerSuccess'), type: 'success' });
     }
 
-    router.replace('/');
+    router.replace(routes.home);
   };
 
   const { colors } = theme;
@@ -180,7 +181,7 @@ export default function RegisterScreen() {
       <AuthFooter
         prompt={t('auth.haveAccount')}
         actionLabel={t('auth.signInLink')}
-        href="/(auth)/login"
+        href={routes.auth.login}
       />
     </AuthScreen>
   );

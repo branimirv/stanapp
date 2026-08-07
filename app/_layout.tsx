@@ -24,6 +24,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { onAuthStateChange } from '@/lib/auth';
 import { subscribeToAuthDeepLinks, consumePendingPostAuthRoute, setPendingPostAuthRoute } from '@/lib/authDeepLinks';
 import { queryClient } from '@/lib/queryClient';
+import { routes } from '@/lib/routes';
 import { NAV_THEME } from '@/lib/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
@@ -72,9 +73,9 @@ export default function RootLayout() {
       }
 
       if (result.path === 'reset-password') {
-        setPendingPostAuthRoute('/reset-password');
+        setPendingPostAuthRoute(routes.resetPassword);
       } else if (result.path === 'invite' || url.includes('invite')) {
-        setPendingPostAuthRoute('/invite');
+        setPendingPostAuthRoute(routes.invite);
       }
 
       // Session is also pushed via onAuthStateChange; setSession keeps store warm
@@ -84,11 +85,11 @@ export default function RootLayout() {
       }
 
       if (result.path === 'reset-password') {
-        router.replace('/reset-password');
+        router.replace(routes.resetPassword);
         return;
       }
       if (result.path === 'invite' || url.includes('invite')) {
-        router.replace('/invite');
+        router.replace(routes.invite);
       }
     });
   }, [router, setSession, showToast]);
@@ -107,9 +108,9 @@ export default function RootLayout() {
     const isPublicRoot = typeof root === 'string' && PUBLIC_ROOT_SEGMENTS.has(root);
 
     if (boot.status === 'ready' && boot.authenticated && inAuthGroup) {
-      router.replace(consumePendingPostAuthRoute() as '/(tabs)/(dashboard)');
+      router.replace(consumePendingPostAuthRoute() as typeof routes.tabs.dashboard);
     } else if (boot.status === 'ready' && !boot.authenticated && !isPublicRoot) {
-      router.replace('/(auth)/login');
+      router.replace(routes.auth.login);
     } else if (boot.status === 'error') {
       // Restore failed — do not pretend they are signed out. The error panel
       // offers a retry; keep the overlay up.

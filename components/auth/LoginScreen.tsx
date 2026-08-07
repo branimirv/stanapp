@@ -15,6 +15,7 @@ import { AppTextInput } from '@/components/ui/AppTextInput';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { signIn } from '@/lib/auth';
 import { resolveAuthReturnTo, setPendingPostAuthRoute } from '@/lib/authDeepLinks';
+import { routes } from '@/lib/routes';
 import { useUiStore } from '@/stores/uiStore';
 import { translateFieldError } from '@/utils/formHelpers';
 import { loadLoginPreferences, saveLoginPreferences } from '@/utils/loginPreferences';
@@ -158,7 +159,7 @@ export function LoginScreen() {
           onChange={handleRememberMeChange}
           label={t('auth.rememberMe')}
         />
-        <Link href="/(auth)/forgot-password">
+        <Link href={routes.auth.forgotPassword}>
           <Text className="text-primary text-sm font-semibold">{t('auth.forgotPassword')}</Text>
         </Link>
       </View>
@@ -176,7 +177,7 @@ export function LoginScreen() {
       <AuthFooter
         prompt={t('auth.noAccount')}
         actionLabel={t('auth.signUp')}
-        href="/(auth)/register"
+        href={routes.auth.register}
       />
     </AuthScreen>
   );
