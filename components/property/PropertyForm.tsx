@@ -342,9 +342,9 @@ export function PropertyForm({
                   style={{
                     fontFamily: Fonts.sans.regular,
                     fontSize: 12,
+                    lineHeight: 16,
                     color: colors.muted,
-                    marginTop: -8,
-                    marginBottom: 10,
+                    marginTop: 8,
                   }}
                 >
                   {t('properties.parentPropertyHint')}

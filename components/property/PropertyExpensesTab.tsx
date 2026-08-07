@@ -1,3 +1,4 @@
+import { format as formatDateFns, parseISO } from 'date-fns';
 import { ChevronRight, Plus, Receipt } from 'lucide-react-native';
 import { memo, useCallback, useMemo, useState } from 'react';
 import {
@@ -15,7 +16,6 @@ import { ExpenseListRow } from '@/components/expense/ExpenseListRow';
 import { PROPERTY_SCENE_TOP_GAP } from '@/components/property/PropertyTabBar';
 import { AppButton } from '@/components/ui/AppButton';
 import { DisplayAmount } from '@/components/ui/DisplayAmount';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -79,13 +79,15 @@ function PropertyExpensesTabComponent({
 
   const listTopPad = (contentTopInset || 0) + PROPERTY_SCENE_TOP_GAP;
   const ctaBottom = Math.max(insets.bottom, 12) + 10;
-  const listBottomPad = canManage ? 72 + ctaBottom : Spacing.xxl;
 
   const sortedAll = useMemo(() => {
     return [...expenses].sort((a, b) => b.billing_date.localeCompare(a.billing_date));
   }, [expenses]);
 
   const sourceList = periodFilter === 'current_month' ? monthExpenses : sortedAll;
+  const isEmptyList = sourceList.length === 0;
+  const listBottomPad =
+    canManage && !isEmptyList ? 72 + ctaBottom : Spacing.xxl;
 
   const visibleExpenses = useMemo(() => {
     if (expanded || sourceList.length <= PREVIEW_COUNT) return sourceList;
@@ -101,6 +103,15 @@ function PropertyExpensesTabComponent({
     periodFilter === 'current_month'
       ? capitalizePeriod(formatPeriod(month, year, language), language)
       : t('properties.expensePeriodAll');
+
+  const lastExpenseShortDate = useMemo(() => {
+    if (expenses.length === 0) return null;
+    let latest = expenses[0].billing_date;
+    for (const expense of expenses) {
+      if (expense.billing_date > latest) latest = expense.billing_date;
+    }
+    return formatDateFns(parseISO(latest), 'dd.MM.');
+  }, [expenses]);
 
   const handlePeriodChange = useCallback((next: PeriodFilter) => {
     setPeriodFilter(next);
@@ -153,26 +164,84 @@ function PropertyExpensesTabComponent({
           })}
         </View>
 
-        {sourceList.length === 0 ? (
-          <View
-            style={[
-              styles.empty,
-              {
-                backgroundColor: colors.surface2,
-                borderRadius: radius.xl,
-              },
-            ]}
-          >
-            <EmptyState
-              icon={Receipt}
-              title={
-                periodFilter === 'current_month'
-                  ? t('properties.noExpensesThisMonth')
-                  : t('empty.noExpenses')
-              }
-              subtitle={t('empty.noExpensesHint')}
-            />
-          </View>
+        {isEmptyList ? (
+          <>
+            <View
+              style={[
+                styles.emptyCard,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.cardBd,
+                  borderRadius: radius.xl,
+                  ...elevation.card,
+                },
+              ]}
+            >
+              <View style={[styles.emptyIc, { backgroundColor: colors.primaryTint }]}>
+                <Receipt size={25} color={colors.primary} strokeWidth={2} />
+              </View>
+              <Text
+                style={{
+                  fontFamily: displayFontFamily(theme.name),
+                  fontSize: 23,
+                  letterSpacing: -0.46,
+                  color: colors.fg,
+                  textAlign: 'center',
+                  marginBottom: 8,
+                }}
+              >
+                {t('empty.noExpenses')}
+              </Text>
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.regular,
+                  fontSize: 12.5,
+                  lineHeight: 20,
+                  color: colors.muted,
+                  textAlign: 'center',
+                  maxWidth: 210,
+                  marginBottom: canManage ? 22 : 0,
+                }}
+              >
+                {t('empty.noExpensesHint')}
+              </Text>
+              {canManage ? (
+                <Pressable
+                  onPress={onAddExpense}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('expenses.addNew')}
+                  style={[styles.emptyCta, { backgroundColor: colors.primary }]}
+                >
+                  <Plus size={18} color={colors.onPrimary} strokeWidth={2} />
+                  <Text
+                    style={{
+                      fontFamily: Fonts.sans.semibold,
+                      fontSize: 14,
+                      letterSpacing: -0.14,
+                      color: colors.onPrimary,
+                    }}
+                  >
+                    {t('expenses.addNew')}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+            {lastExpenseShortDate ? (
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.semibold,
+                  fontSize: 10,
+                  letterSpacing: 0.8,
+                  textTransform: 'uppercase',
+                  color: colors.muted,
+                  textAlign: 'center',
+                  marginTop: 24,
+                }}
+              >
+                {t('expenses.lastExpenseRecorded', { date: lastExpenseShortDate })}
+              </Text>
+            ) : null}
+          </>
         ) : (
           <>
             <View style={styles.secHead}>
@@ -245,7 +314,7 @@ function PropertyExpensesTabComponent({
         )}
       </ScrollView>
 
-      {canManage ? (
+      {canManage && !isEmptyList ? (
         <View
           pointerEvents="box-none"
           style={[styles.ctaWrap, { paddingBottom: ctaBottom }]}
@@ -316,9 +385,28 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     marginBottom: 14,
   },
-  empty: {
-    paddingHorizontal: 8,
-    paddingVertical: 16,
+  emptyCard: {
+    paddingTop: 38,
+    paddingHorizontal: 20,
+    paddingBottom: 34,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  emptyIc: {
+    width: 60,
+    height: 60,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  emptyCta: {
+    height: 44,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   ghostBtn: {
     flexDirection: 'row',
