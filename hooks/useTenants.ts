@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { invalidateTenantDomain } from '@/lib/queryInvalidation';
 import { queryKeys } from '@/lib/queryKeys';
 import {
   createTenant,
@@ -15,8 +16,7 @@ import { queryErrorMessage } from '@/utils/errors';
 function useInvalidateTenants() {
   const queryClient = useQueryClient();
   return useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.tenants.all });
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+    invalidateTenantDomain(queryClient);
   }, [queryClient]);
 }
 

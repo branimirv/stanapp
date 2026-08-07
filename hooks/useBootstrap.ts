@@ -23,6 +23,7 @@ import {
 } from '@expo-google-fonts/fraunces';
 
 import { supabase } from '@/lib/supabase';
+import { syncPendingInvites } from '@/lib/syncPendingInvites';
 import { useAuthStore } from '@/stores/authStore';
 import { getErrorMessage, throwQueryError } from '@/utils/errors';
 
@@ -108,6 +109,7 @@ export function useBootstrap(): BootState & { retry: () => void } {
         // make a failed restore look identical to signed out.
         if (!cancelled) {
           useAuthStore.getState().setSession(data.session);
+          void syncPendingInvites(data.session);
         }
       } catch (e) {
         // A failed restore is not the same as "signed out" — surface it so

@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import type { AuthError, Session, User } from '@supabase/supabase-js';
 import { signOutGoogle } from '@/lib/auth';
-import { acceptPendingInvites } from '@/services/invites';
 import { queryClient } from '@/lib/queryClient';
 import { supabase } from '@/lib/supabase';
 
@@ -15,15 +14,6 @@ interface AuthState {
   initialize: () => Promise<void>;
 }
 
-async function syncPendingInvites(session: Session | null) {
-  if (!session?.user) return;
-  try {
-    await acceptPendingInvites();
-  } catch {
-    // Invite accept is best-effort; membership still works on next login/deep link.
-  }
-}
-
 export const useAuthStore = create<AuthState>((set) => ({
   session: null,
   user: null,
@@ -35,7 +25,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       user: session?.user ?? null,
       isLoading: false,
     });
-    void syncPendingInvites(session);
   },
 
   setLoading: (isLoading) => set({ isLoading }),
@@ -60,6 +49,5 @@ export const useAuthStore = create<AuthState>((set) => ({
       user: session?.user ?? null,
       isLoading: false,
     });
-    void syncPendingInvites(session);
   },
 }));

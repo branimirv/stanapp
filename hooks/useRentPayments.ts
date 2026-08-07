@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { invalidateRentDomain } from '@/lib/queryInvalidation';
 import { queryKeys, type RentPaymentListFilters } from '@/lib/queryKeys';
 import {
   createRentPayment,
@@ -16,9 +17,7 @@ import { queryErrorMessage } from '@/utils/errors';
 function useInvalidateRentPayments() {
   const queryClient = useQueryClient();
   return useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.rentPayments.all });
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
-    queryClient.invalidateQueries({ queryKey: queryKeys.reports.all });
+    invalidateRentDomain(queryClient);
   }, [queryClient]);
 }
 

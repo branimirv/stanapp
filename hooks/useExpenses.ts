@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { invalidateExpenseDomain } from '@/lib/queryInvalidation';
 import { queryKeys, type ExpenseListFilters } from '@/lib/queryKeys';
 import {
   createExpense,
@@ -15,9 +16,7 @@ import { queryErrorMessage } from '@/utils/errors';
 function useInvalidateExpenses() {
   const queryClient = useQueryClient();
   return useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.expenses.all });
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
-    queryClient.invalidateQueries({ queryKey: queryKeys.reports.all });
+    invalidateExpenseDomain(queryClient);
   }, [queryClient]);
 }
 
