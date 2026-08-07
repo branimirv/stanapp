@@ -51,15 +51,15 @@ export function useTenantMutations() {
   return { create, update, remove };
 }
 
-export function useTenants(options: { propertyId?: string } = {}) {
-  const { propertyId } = options;
+export function useTenants(options: { propertyId?: string; enabled?: boolean } = {}) {
+  const { propertyId, enabled = true } = options;
   const { user } = useAuthStore();
   const mutations = useTenantMutations();
 
   const query = useQuery({
     queryKey: queryKeys.tenants.list(propertyId),
     queryFn: () => fetchTenants(propertyId),
-    enabled: Boolean(user),
+    enabled: Boolean(user) && enabled,
   });
 
   return {

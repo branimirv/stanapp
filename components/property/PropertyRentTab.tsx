@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -20,25 +21,22 @@ import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { listPerformanceProps } from '@/constants/list';
 import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useRefetchOnFocus } from '@/hooks/useRefetchOnFocus';
+import { useRentPayments } from '@/hooks/useRentPayments';
+import { useTenants } from '@/hooks/useTenants';
 import { displayFontFamily } from '@/lib/fonts';
-import type { Language, RentPayment, Tenant } from '@/types/app.types';
+import { routes } from '@/lib/routes';
+import type { Language, RentPayment } from '@/types/app.types';
 
 const PREVIEW_COUNT = 3;
 
 export interface PropertyRentTabProps {
-  rentPayments: RentPayment[];
-  tenantMap: Map<string, Tenant>;
-  year: number;
-  isLoading: boolean;
+  propertyId: string;
   canManage: boolean;
   currency: string;
   language: Language;
-  refreshing: boolean;
-  onRefresh: () => void;
-  onMonthPress: (month: number, payment?: RentPayment) => void;
-  onAddPayment: () => void;
-  /** Clears floating header + tabs; content still peeks under glass. */
   contentTopInset?: number;
+  onMonthPress: (month: number, payment?: RentPayment) => void;
 }
 
 function keyExtractor(payment: RentPayment) {
@@ -46,24 +44,45 @@ function keyExtractor(payment: RentPayment) {
 }
 
 function PropertyRentTabComponent({
-  rentPayments,
-  tenantMap,
-  year,
-  isLoading,
+  propertyId,
   canManage,
   currency,
   language,
-  refreshing,
-  onRefresh,
-  onMonthPress,
-  onAddPayment,
   contentTopInset = 0,
+  onMonthPress,
 }: PropertyRentTabProps) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
   const { colors } = theme;
   const insets = useSafeAreaInsets();
   const [expanded, setExpanded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const year = useMemo(() => new Date().getFullYear(), []);
+
+  const { rentPayments, isLoading, refetch: refetchRent } = useRentPayments({ propertyId });
+  const { tenants, refetch: refetchTenants } = useTenants({ propertyId });
+
+  const refetchAll = useCallback(async () => {
+    await Promise.all([refetchRent(), refetchTenants()]);
+  }, [refetchRent, refetchTenants]);
+
+  useRefetchOnFocus(refetchAll);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetchAll();
+    setRefreshing(false);
+  }, [refetchAll]);
+
+  const handleAddPayment = useCallback(() => {
+    router.push({ pathname: routes.rent.new, params: { propertyId } });
+  }, [propertyId]);
+
+  const tenantMap = useMemo(
+    () => new Map(tenants.map((tenant) => [tenant.id, tenant])),
+    [tenants],
+  );
 
   const listTopPad = (contentTopInset || 0) + PROPERTY_SCENE_TOP_GAP;
   const ctaBottom = Math.max(insets.bottom, 12) + 10;
@@ -171,7 +190,7 @@ function PropertyRentTabComponent({
         >
           <AppButton
             mode="contained"
-            onPress={onAddPayment}
+            onPress={handleAddPayment}
             className="h-12 w-full"
             accessibilityLabel={t('rent.addPayment')}
             style={styles.ctaShadow}

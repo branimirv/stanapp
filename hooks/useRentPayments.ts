@@ -62,14 +62,18 @@ export function useRentPaymentMutations() {
   return { create, update, remove, markAsPaid };
 }
 
-export function useRentPayments(filters: RentPaymentListFilters = {}) {
+export function useRentPayments(
+  filters: RentPaymentListFilters = {},
+  options: { enabled?: boolean } = {},
+) {
+  const { enabled = true } = options;
   const { user } = useAuthStore();
   const mutations = useRentPaymentMutations();
 
   const query = useQuery({
     queryKey: queryKeys.rentPayments.list(filters),
     queryFn: () => fetchRentPayments(filters),
-    enabled: Boolean(user),
+    enabled: Boolean(user) && enabled,
   });
 
   return {

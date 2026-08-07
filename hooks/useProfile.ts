@@ -6,7 +6,8 @@ import { useAuthStore } from '@/stores/authStore';
 import type { Language, ProfileUpdate, Theme } from '@/types/app.types';
 import { queryErrorMessage } from '@/utils/errors';
 
-export function useProfile() {
+export function useProfile(options: { enabled?: boolean } = {}) {
+  const { enabled = true } = options;
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const userId = user?.id;
@@ -14,7 +15,7 @@ export function useProfile() {
   const query = useQuery({
     queryKey: userId ? queryKeys.profile(userId) : ['profile', 'anonymous'],
     queryFn: () => fetchProfile(userId as string),
-    enabled: Boolean(userId),
+    enabled: Boolean(userId) && enabled,
   });
 
   const mutation = useMutation({

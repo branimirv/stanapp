@@ -57,14 +57,18 @@ export function useExpenseMutations() {
   return { create, update, remove, markAsPaid };
 }
 
-export function useExpenses(filters: ExpenseListFilters = {}) {
+export function useExpenses(
+  filters: ExpenseListFilters = {},
+  options: { enabled?: boolean } = {},
+) {
+  const { enabled = true } = options;
   const { user } = useAuthStore();
   const mutations = useExpenseMutations();
 
   const query = useQuery({
     queryKey: queryKeys.expenses.list(filters),
     queryFn: () => fetchExpenses(filters),
-    enabled: Boolean(user),
+    enabled: Boolean(user) && enabled,
   });
 
   return {

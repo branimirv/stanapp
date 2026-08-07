@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -19,21 +20,18 @@ import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { listPerformanceProps } from '@/constants/list';
 import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useRefetchOnFocus } from '@/hooks/useRefetchOnFocus';
+import { useTenants } from '@/hooks/useTenants';
+import { routes } from '@/lib/routes';
 import type { Language, Tenant } from '@/types/app.types';
 
 const PREVIEW_COUNT = 3;
 
 export interface PropertyTenantsTabProps {
-  tenants: Tenant[];
-  isLoading: boolean;
+  propertyId: string;
   canManage: boolean;
   currency: string;
   language: Language;
-  refreshing: boolean;
-  onRefresh: () => void;
-  onSelectTenant: (tenantId: string) => void;
-  onAddTenant: () => void;
-  /** Clears floating header + tabs; content still peeks under glass. */
   contentTopInset?: number;
 }
 
@@ -42,14 +40,9 @@ function keyExtractor(tenant: Tenant) {
 }
 
 function PropertyTenantsTabComponent({
-  tenants,
-  isLoading,
+  propertyId,
   canManage,
   language,
-  refreshing,
-  onRefresh,
-  onSelectTenant,
-  onAddTenant,
   contentTopInset = 0,
 }: PropertyTenantsTabProps) {
   const { t } = useTranslation();
@@ -57,6 +50,25 @@ function PropertyTenantsTabComponent({
   const { colors } = theme;
   const insets = useSafeAreaInsets();
   const [expanded, setExpanded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const { tenants, isLoading, refetch } = useTenants({ propertyId });
+
+  useRefetchOnFocus(refetch);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
+
+  const handleSelectTenant = useCallback((tenantId: string) => {
+    router.push(routes.tenant.detail(tenantId));
+  }, []);
+
+  const handleAddTenant = useCallback(() => {
+    router.push({ pathname: routes.tenant.new, params: { propertyId } });
+  }, [propertyId]);
 
   const listTopPad = (contentTopInset || 0) + PROPERTY_SCENE_TOP_GAP;
   const ctaBottom = Math.max(insets.bottom, 12) + 10;
@@ -86,10 +98,10 @@ function PropertyTenantsTabComponent({
       <PropertyTenantCard
         tenant={item}
         language={language}
-        onPress={onSelectTenant}
+        onPress={handleSelectTenant}
       />
     ),
-    [language, onSelectTenant],
+    [handleSelectTenant, language],
   );
 
   if (isLoading) {
@@ -146,7 +158,7 @@ function PropertyTenantsTabComponent({
         >
           <AppButton
             mode="contained"
-            onPress={onAddTenant}
+            onPress={handleAddTenant}
             className="h-12 w-full"
             accessibilityLabel={t('tenants.addNew')}
             style={styles.ctaShadow}

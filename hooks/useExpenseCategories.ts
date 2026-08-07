@@ -8,14 +8,15 @@ import {
 import { useAuthStore } from '@/stores/authStore';
 import { queryErrorMessage } from '@/utils/errors';
 
-export function useExpenseCategories() {
+export function useExpenseCategories(options: { enabled?: boolean } = {}) {
+  const { enabled = true } = options;
   const { user, isLoading: authLoading } = useAuthStore();
   const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: queryKeys.expenseCategories.list(),
     queryFn: fetchExpenseCategories,
-    enabled: !authLoading,
+    enabled: !authLoading && enabled,
   });
 
   const createMutation = useMutation({

@@ -4,7 +4,7 @@ import {
   Plus,
   Users,
 } from 'lucide-react-native';
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import {
   Pressable,
   RefreshControl,
@@ -13,6 +13,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { PropertyRentCard } from '@/components/property/PropertyRentCard';
@@ -21,86 +22,155 @@ import { SubPropertyList } from '@/components/property/SubPropertyList';
 import { PROPERTY_SCENE_TOP_GAP } from '@/components/property/PropertyTabBar';
 import { AppButton } from '@/components/ui/AppButton';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useExpenses } from '@/hooks/useExpenses';
+import { useChildProperties, useProperty } from '@/hooks/useProperties';
+import { useRefetchOnFocus } from '@/hooks/useRefetchOnFocus';
+import { useRentPayments } from '@/hooks/useRentPayments';
+import { useTenants } from '@/hooks/useTenants';
 import { displayFontFamily } from '@/lib/fonts';
+import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
-import type {
-  Language,
-  Property,
-  RentPayment,
-  Tenant,
-} from '@/types/app.types';
+import { useUiStore } from '@/stores/uiStore';
+import type { Language } from '@/types/app.types';
+import { getCurrentMonthRange, isDateInRange } from '@/utils/dateRange';
 import { formatDate } from '@/utils/formatters';
+import { openAddressInMaps } from '@/utils/maps';
 
 export interface PropertyOverviewTabProps {
-  property: Property;
-  childProperties: Property[];
-  isRented: boolean;
+  propertyId: string;
   canManage: boolean;
   isOwner: boolean;
   currency: string;
   language: Language;
-  month: number;
-  year: number;
-  monthExpenseTotal: number;
-  monthIncome: number;
-  rentPayment?: RentPayment;
-  activeTenants: Tenant[];
-  refreshing: boolean;
-  onRefresh: () => void;
-  onOpenAddress: () => void;
-  onShowUsageHistory: () => void;
+  contentTopInset?: number;
   onGoToRent: () => void;
   onGoToTenants: () => void;
-  onOpenMembers: () => void;
-  onSelectTenant: (tenantId: string) => void;
+  onShowUsageHistory: () => void;
   onRecordPayment: () => void;
-  onAddExpense: () => void;
-  contentTopInset?: number;
 }
 
 function PropertyOverviewTabComponent({
-  property,
-  childProperties,
-  isRented,
+  propertyId,
   canManage,
   isOwner,
   currency,
   language,
-  month,
-  year,
-  monthExpenseTotal,
-  monthIncome,
-  rentPayment,
-  activeTenants,
-  refreshing,
-  onRefresh,
-  onOpenAddress,
-  onShowUsageHistory,
+  contentTopInset = 0,
   onGoToRent,
   onGoToTenants,
-  onOpenMembers,
-  onSelectTenant,
+  onShowUsageHistory,
   onRecordPayment,
-  onAddExpense,
-  contentTopInset = 0,
 }: PropertyOverviewTabProps) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
   const { colors, elevation } = theme;
-  const listTopPad = (contentTopInset || 0) + PROPERTY_SCENE_TOP_GAP;
-  const tenantCount = activeTenants.length;
-  const isUsageRented = property.usage_status === 'rented';
+  const showToast = useUiStore((s) => s.showToast);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const typeLabel = t(`propertyTypes.${property.type}`);
+  const { property, refetch: refetchProperty } = useProperty(propertyId);
+  const childProperties = useChildProperties(propertyId);
+  const { tenants, refetch: refetchTenants } = useTenants({ propertyId });
+  const { expenses, refetch: refetchExpenses } = useExpenses({ propertyId });
+  const { rentPayments, refetch: refetchRent } = useRentPayments({ propertyId });
+
+  const refetchAll = useCallback(async () => {
+    await Promise.all([
+      refetchProperty(),
+      refetchTenants(),
+      refetchExpenses(),
+      refetchRent(),
+    ]);
+  }, [refetchExpenses, refetchProperty, refetchRent, refetchTenants]);
+
+  useRefetchOnFocus(refetchAll);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetchAll();
+    setRefreshing(false);
+  }, [refetchAll]);
+
+  const currentMonthRange = useMemo(() => getCurrentMonthRange(), []);
+
+  const activeTenants = useMemo(
+    () => tenants.filter((tenant) => tenant.is_active),
+    [tenants],
+  );
+
+  const currentMonthExpenses = useMemo(
+    () =>
+      expenses.filter((expense) =>
+        isDateInRange(expense.billing_date, currentMonthRange.start, currentMonthRange.end),
+      ),
+    [currentMonthRange.end, currentMonthRange.start, expenses],
+  );
+
+  const monthExpenseTotal = useMemo(
+    () => currentMonthExpenses.reduce((sum, expense) => sum + expense.amount, 0),
+    [currentMonthExpenses],
+  );
+
+  const monthIncome = useMemo(
+    () =>
+      rentPayments
+        .filter(
+          (payment) =>
+            payment.status === 'paid' &&
+            payment.period_month === currentMonthRange.month &&
+            payment.period_year === currentMonthRange.year,
+        )
+        .reduce((sum, payment) => sum + payment.amount, 0),
+    [currentMonthRange.month, currentMonthRange.year, rentPayments],
+  );
+
+  const rentPayment = useMemo(
+    () =>
+      rentPayments.find(
+        (payment) =>
+          payment.period_month === currentMonthRange.month &&
+          payment.period_year === currentMonthRange.year,
+      ),
+    [currentMonthRange.month, currentMonthRange.year, rentPayments],
+  );
+
+  const handleOpenAddress = useCallback(async () => {
+    if (!property?.address) return;
+    const opened = await openAddressInMaps(property.address);
+    if (!opened) {
+      showToast({ message: t('properties.openInMapsFailed'), type: 'error' });
+    }
+  }, [property?.address, showToast, t]);
+
+  const handleSelectTenant = useCallback((tenantId: string) => {
+    router.push(routes.tenant.detail(tenantId));
+  }, []);
+
+  const handleAddExpense = useCallback(() => {
+    router.push({ pathname: routes.expense.new, params: { propertyId } });
+  }, [propertyId]);
+
+  const handleOpenMembers = useCallback(() => {
+    router.push(routes.property.members(propertyId));
+  }, [propertyId]);
+
+  const listTopPad = (contentTopInset || 0) + PROPERTY_SCENE_TOP_GAP;
+  const isRented = property?.usage_status === 'rented';
+  const tenantCount = activeTenants.length;
+  const typeLabel = property ? t(`propertyTypes.${property.type}`) : '';
 
   const eyebrow = useMemo(() => {
+    if (!property) return '';
     const parts = [typeLabel];
     if (property.floor != null) parts.push(t('properties.floorShort', { floor: property.floor }));
     if (property.area_sqm != null) {
       parts.push(t('properties.areaShort', { area: property.area_sqm }));
     }
     return parts.join(' · ');
-  }, [property.area_sqm, property.floor, t, typeLabel]);
+  }, [property, t, typeLabel]);
+
+  if (!property) {
+    return null;
+  }
 
   return (
     <ScrollView
@@ -124,7 +194,7 @@ function PropertyOverviewTabComponent({
             onPress={onShowUsageHistory}
             className={cn(
               'rounded-full px-2.75 py-1.25',
-              isUsageRented ? 'bg-pos-tint' : 'bg-surface-2',
+              isRented ? 'bg-pos-tint' : 'bg-surface-2',
             )}
             accessibilityRole="button"
             accessibilityLabel={t('properties.usageHistory')}
@@ -132,7 +202,7 @@ function PropertyOverviewTabComponent({
             <Text
               className={cn(
                 'text-[11px] font-semibold',
-                isUsageRented ? 'text-pos' : 'text-muted',
+                isRented ? 'text-pos' : 'text-muted',
               )}
             >
               {t(`usageStatus.${property.usage_status}`)}
@@ -153,7 +223,7 @@ function PropertyOverviewTabComponent({
 
       <Pressable
         className="mb-4 flex-row items-center gap-1.5"
-        onPress={onOpenAddress}
+        onPress={handleOpenAddress}
         accessibilityRole="button"
         accessibilityLabel={t('properties.openInMaps')}
       >
@@ -168,8 +238,8 @@ function PropertyOverviewTabComponent({
           rentAmount={Number(property.rent_amount)}
           currency={currency}
           language={language}
-          month={month}
-          year={year}
+          month={currentMonthRange.month}
+          year={currentMonthRange.year}
           payment={rentPayment}
           onStatusPress={onGoToRent}
         />
@@ -199,7 +269,7 @@ function PropertyOverviewTabComponent({
             </View>
           </AppButton>
           <Pressable
-            onPress={onAddExpense}
+            onPress={handleAddExpense}
             accessibilityRole="button"
             accessibilityLabel={t('expenses.addNew')}
             className="bg-surface-2 h-11 w-11 items-center justify-center rounded-full"
@@ -212,7 +282,7 @@ function PropertyOverviewTabComponent({
         <View className="mb-5.5 flex-row items-center gap-2.25">
           <AppButton
             mode="contained"
-            onPress={onAddExpense}
+            onPress={handleAddExpense}
             className="h-11 flex-1"
             accessibilityLabel={t('expenses.addNew')}
           >
@@ -242,7 +312,7 @@ function PropertyOverviewTabComponent({
               {activeTenants.map((tenant, index) => (
                 <Pressable
                   key={tenant.id}
-                  onPress={() => onSelectTenant(tenant.id)}
+                  onPress={() => handleSelectTenant(tenant.id)}
                   className={cn(
                     'flex-row items-center gap-3.25 py-3.25',
                     index > 0 && 'border-bd border-t',
@@ -289,7 +359,7 @@ function PropertyOverviewTabComponent({
 
       {isOwner ? (
         <Pressable
-          onPress={onOpenMembers}
+          onPress={handleOpenMembers}
           className="bg-surface-2 mt-2 flex-row items-center gap-3 rounded-xl px-3.5 py-3.5"
           accessibilityRole="button"
           accessibilityLabel={t('members.title')}

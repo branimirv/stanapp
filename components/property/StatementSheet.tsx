@@ -6,7 +6,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
 import { AppButton } from '@/components/ui/AppButton';
 import { Text } from '@/components/ui/text';
-import type { Expense, ExpenseCategory, Language, Property, RentPayment, Tenant } from '@/types/app.types';
+import { useExpenseCategories } from '@/hooks/useExpenseCategories';
+import { useExpenses } from '@/hooks/useExpenses';
+import { useProfile } from '@/hooks/useProfile';
+import { useRentPayments } from '@/hooks/useRentPayments';
+import { useTenants } from '@/hooks/useTenants';
+import type { Language, Property } from '@/types/app.types';
 import { getMonthRange, isDateInRange } from '@/utils/dateRange';
 import { exportPropertyStatementPDF } from '@/utils/statement';
 import { getCategoryEffectiveType, getCategoryLabel } from '@/utils/expense';
@@ -16,11 +21,6 @@ export interface StatementSheetProps {
   visible: boolean;
   onDismiss: () => void;
   property: Property;
-  tenants: Tenant[];
-  expenses: Expense[];
-  rentPayments: RentPayment[];
-  categories: ExpenseCategory[];
-  landlordName: string;
   currency: string;
   language: Language;
   onExportSuccess?: () => void;
@@ -29,16 +29,12 @@ export interface StatementSheetProps {
 
 /**
  * Property statement export — AppBottomSheet + sibling BlurOverlay on the host screen.
+ * Fetches tenants/expenses/rent/categories/profile when visible (RQ cache-shared with tabs).
  */
 export function StatementSheet({
   visible,
   onDismiss,
   property,
-  tenants,
-  expenses,
-  rentPayments,
-  categories,
-  landlordName,
   currency,
   language,
   onExportSuccess,
@@ -49,6 +45,14 @@ export function StatementSheet({
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
   const [exporting, setExporting] = useState(false);
+
+  const { tenants } = useTenants({ propertyId: property.id, enabled: visible });
+  const { expenses } = useExpenses({ propertyId: property.id }, { enabled: visible });
+  const { rentPayments } = useRentPayments({ propertyId: property.id }, { enabled: visible });
+  const { categories } = useExpenseCategories({ enabled: visible });
+  const { profile } = useProfile({ enabled: visible });
+
+  const landlordName = profile?.full_name ?? t('statement.landlord');
 
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
