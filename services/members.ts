@@ -4,6 +4,7 @@ import type {
   PropertyMember,
   PropertyMemberWithProfile,
 } from '@/types/app.types';
+import { throwQueryError } from '@/utils/errors';
 
 export async function fetchPropertyMembers(
   propertyId: string,
@@ -15,7 +16,7 @@ export async function fetchPropertyMembers(
     .eq('status', 'active')
     .order('created_at', { ascending: true });
 
-  if (error) throw error;
+  if (error) throwQueryError(error);
   if (!members?.length) return [];
 
   const userIds = members.map((member) => member.user_id);
@@ -24,7 +25,7 @@ export async function fetchPropertyMembers(
     .select('id, full_name')
     .in('id', userIds);
 
-  if (profilesError) throw profilesError;
+  if (profilesError) throwQueryError(profilesError);
 
   const profileMap = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
 
@@ -46,7 +47,7 @@ export async function fetchMyMemberships(): Promise<PropertyMember[]> {
     .eq('user_id', user.id)
     .eq('status', 'active');
 
-  if (error) throw error;
+  if (error) throwQueryError(error);
   return data ?? [];
 }
 
@@ -66,7 +67,7 @@ export async function fetchMyMembershipForProperty(
     .eq('status', 'active')
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) throwQueryError(error);
   return data;
 }
 
@@ -81,7 +82,7 @@ export async function updateMemberRole(
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) throwQueryError(error);
   return data;
 }
 
@@ -91,5 +92,5 @@ export async function revokeMember(memberId: string): Promise<void> {
     .update({ status: 'revoked' })
     .eq('id', memberId);
 
-  if (error) throw error;
+  if (error) throwQueryError(error);
 }

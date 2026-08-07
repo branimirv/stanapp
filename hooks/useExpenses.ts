@@ -10,6 +10,7 @@ import {
 } from '@/services/expenses';
 import { useAuthStore } from '@/stores/authStore';
 import type { Expense, ExpenseInsert, ExpenseUpdate } from '@/types/app.types';
+import { queryErrorMessage } from '@/utils/errors';
 
 function useInvalidateExpenses() {
   const queryClient = useQueryClient();
@@ -69,7 +70,7 @@ export function useExpenses(filters: ExpenseListFilters = {}) {
   return {
     expenses: query.data ?? [],
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
     ...mutations,
   };
@@ -101,7 +102,7 @@ export function useExpense(id: string | undefined) {
   return {
     expense: query.data ?? null,
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
   };
 }

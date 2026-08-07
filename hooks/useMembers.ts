@@ -18,6 +18,7 @@ import {
 } from '@/services/members';
 import { useAuthStore } from '@/stores/authStore';
 import type { MembershipRole } from '@/types/app.types';
+import { queryErrorMessage } from '@/utils/errors';
 
 export function useMyMemberships() {
   const { user } = useAuthStore();
@@ -31,7 +32,7 @@ export function useMyMemberships() {
   return {
     memberships: query.data ?? [],
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
   };
 }
@@ -59,7 +60,7 @@ export function useMyMembership(propertyId: string | undefined) {
     canManage,
     isTenant,
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
   };
 }
@@ -95,7 +96,7 @@ export function usePropertyMembers(propertyId: string | undefined) {
   return {
     members: query.data ?? [],
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
     revoke: (memberId: string) => revokeMutation.mutateAsync(memberId),
     updateRole: (memberId: string, role: MembershipRole) =>
@@ -145,7 +146,7 @@ export function usePropertyInvites(propertyId: string | undefined) {
   return {
     invites: query.data ?? [],
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
     ...mutations,
   };
@@ -165,7 +166,7 @@ export function useOwnedPendingInvites() {
   return {
     invites: query.data ?? [],
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
     ...mutations,
   };

@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { MembershipRole, PropertyInvite } from '@/types/app.types';
+import { throwQueryError } from '@/utils/errors';
 
 export interface InviteToPropertiesInput {
   email: string;
@@ -38,7 +39,7 @@ export async function inviteToProperties(
         }
       }
     }
-    throw error;
+    throwQueryError(error);
   }
   if (!data) throw new Error('Invite failed');
   if (data.error) throw new Error(data.error);
@@ -47,7 +48,7 @@ export async function inviteToProperties(
 
 export async function acceptPendingInvites(): Promise<number> {
   const { data, error } = await supabase.rpc('accept_pending_invites_for_user');
-  if (error) throw error;
+  if (error) throwQueryError(error);
   return data ?? 0;
 }
 
@@ -59,7 +60,7 @@ export async function fetchPropertyInvites(propertyId: string): Promise<Property
     .eq('status', 'pending')
     .order('created_at', { ascending: false });
 
-  if (error) throw error;
+  if (error) throwQueryError(error);
   return data ?? [];
 }
 
@@ -75,7 +76,7 @@ export async function fetchOwnedPendingInvites(): Promise<OwnedPendingInvite[]> 
     .eq('status', 'pending')
     .order('created_at', { ascending: false });
 
-  if (error) throw error;
+  if (error) throwQueryError(error);
   return (data ?? []) as OwnedPendingInvite[];
 }
 
@@ -85,5 +86,5 @@ export async function revokeInvite(inviteId: string): Promise<void> {
     .update({ status: 'revoked' })
     .eq('id', inviteId);
 
-  if (error) throw error;
+  if (error) throwQueryError(error);
 }

@@ -1,10 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { Property, PropertyInsert, PropertyUpdate } from '@/types/app.types';
-import { getErrorMessage } from '@/utils/errors';
-
-function throwQueryError(error: unknown): never {
-  throw new Error(getErrorMessage(error, 'Request failed'));
-}
+import { throwQueryError } from '@/utils/errors';
 
 export async function fetchProperties(): Promise<Property[]> {
   const { data, error } = await supabase

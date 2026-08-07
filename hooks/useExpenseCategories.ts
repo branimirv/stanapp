@@ -6,6 +6,7 @@ import {
   fetchExpenseCategories,
 } from '@/services/expenseCategories';
 import { useAuthStore } from '@/stores/authStore';
+import { queryErrorMessage } from '@/utils/errors';
 
 export function useExpenseCategories() {
   const { user, isLoading: authLoading } = useAuthStore();
@@ -35,7 +36,7 @@ export function useExpenseCategories() {
   return {
     categories: query.data ?? [],
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
     createCustomCategory,
   };

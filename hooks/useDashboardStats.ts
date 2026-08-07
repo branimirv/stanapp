@@ -3,6 +3,7 @@ import { queryKeys } from '@/lib/queryKeys';
 import { fetchDashboardStats } from '@/services/dashboard';
 import { useAuthStore } from '@/stores/authStore';
 import type { DashboardPeriod } from '@/types/app.types';
+import { queryErrorMessage } from '@/utils/errors';
 
 export function useDashboardStats(period: DashboardPeriod) {
   const { user } = useAuthStore();
@@ -16,7 +17,7 @@ export function useDashboardStats(period: DashboardPeriod) {
   return {
     stats: query.data ?? null,
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
   };
 }

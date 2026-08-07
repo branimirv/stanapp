@@ -10,6 +10,7 @@ import {
 } from '@/services/properties';
 import { useAuthStore } from '@/stores/authStore';
 import type { Property, PropertyInsert, PropertyUpdate } from '@/types/app.types';
+import { queryErrorMessage } from '@/utils/errors';
 
 function useInvalidateProperties() {
   const queryClient = useQueryClient();
@@ -65,7 +66,7 @@ export function useProperties() {
   return {
     properties: query.data ?? [],
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
     create,
     update,
@@ -95,7 +96,7 @@ export function useProperty(id: string | undefined) {
   return {
     property: query.data ?? null,
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
   };
 }

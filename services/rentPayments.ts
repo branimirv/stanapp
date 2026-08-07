@@ -5,6 +5,7 @@ import type {
   RentPaymentUpdate,
 } from '@/types/app.types';
 import type { RentPaymentListFilters } from '@/lib/queryKeys';
+import { throwQueryError } from '@/utils/errors';
 
 export async function fetchRentPayments(
   filters: RentPaymentListFilters = {},
@@ -26,21 +27,21 @@ export async function fetchRentPayments(
   }
 
   const { data, error } = await query;
-  if (error) throw error;
+  if (error) throwQueryError(error);
   return data ?? [];
 }
 
 export async function fetchRentPayment(id: string): Promise<RentPayment> {
   const { data, error } = await supabase.from('rent_payments').select('*').eq('id', id).single();
 
-  if (error) throw error;
+  if (error) throwQueryError(error);
   return data;
 }
 
 export async function createRentPayment(values: RentPaymentInsert): Promise<RentPayment> {
   const { data, error } = await supabase.from('rent_payments').insert(values).select().single();
 
-  if (error) throw error;
+  if (error) throwQueryError(error);
   return data;
 }
 
@@ -55,11 +56,11 @@ export async function updateRentPayment(
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) throwQueryError(error);
   return data;
 }
 
 export async function deleteRentPayment(id: string): Promise<void> {
   const { error } = await supabase.from('rent_payments').delete().eq('id', id);
-  if (error) throw error;
+  if (error) throwQueryError(error);
 }

@@ -11,6 +11,7 @@ import {
 import { useAuthStore } from '@/stores/authStore';
 import type { RentPayment, RentPaymentInsert, RentPaymentUpdate } from '@/types/app.types';
 import { formatDateOnly } from '@/utils/formatters';
+import { queryErrorMessage } from '@/utils/errors';
 
 function useInvalidateRentPayments() {
   const queryClient = useQueryClient();
@@ -74,7 +75,7 @@ export function useRentPayments(filters: RentPaymentListFilters = {}) {
   return {
     rentPayments: query.data ?? [],
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
     ...mutations,
   };
@@ -105,7 +106,7 @@ export function useRentPayment(id: string | undefined) {
   return {
     rentPayment: query.data ?? null,
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
   };
 }

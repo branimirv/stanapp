@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { fetchPropertyStatusHistory } from '@/services/propertyStatusHistory';
 import { useAuthStore } from '@/stores/authStore';
+import { queryErrorMessage } from '@/utils/errors';
 
 export function usePropertyStatusHistory(propertyId: string | undefined, enabled = true) {
   const { user } = useAuthStore();
@@ -15,7 +16,7 @@ export function usePropertyStatusHistory(propertyId: string | undefined, enabled
   return {
     history: query.data ?? [],
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
   };
 }

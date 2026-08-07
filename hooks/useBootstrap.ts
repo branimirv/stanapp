@@ -24,6 +24,7 @@ import {
 
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
+import { getErrorMessage, throwQueryError } from '@/utils/errors';
 
 /**
  * Minimum time the boot screen stays up.
@@ -100,7 +101,7 @@ export function useBootstrap(): BootState & { retry: () => void } {
           SESSION_TIMEOUT_MS,
           'getSession',
         );
-        if (error) throw error;
+        if (error) throwQueryError(error);
         authenticated = !!data.session;
         // Sync into the auth store so Stack.Protected keeps working.
         // On failure we deliberately do NOT setSession(null) — that would
@@ -112,7 +113,7 @@ export function useBootstrap(): BootState & { retry: () => void } {
         // A failed restore is not the same as "signed out" — surface it so
         // the caller can offer a retry instead of silently bouncing the user
         // to the login form and making them think they were logged out.
-        failure = e instanceof Error ? e : new Error(String(e));
+        failure = e instanceof Error ? e : new Error(getErrorMessage(e, 'Session restore failed'));
       }
 
       // Hold the floor.

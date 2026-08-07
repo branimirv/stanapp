@@ -1,18 +1,9 @@
 import { supabase } from '@/lib/supabase';
 import type { ExpenseCategory } from '@/types/app.types';
+import { throwQueryError } from '@/utils/errors';
 
 function generateCustomCategoryKey(): string {
   return `custom_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function toError(error: unknown, fallback: string): Error {
-  if (error instanceof Error) return error;
-  if (typeof error === 'object' && error !== null && 'message' in error) {
-    const message = (error as { message?: unknown }).message;
-    if (typeof message === 'string' && message.trim()) return new Error(message);
-  }
-  if (typeof error === 'string' && error.trim()) return new Error(error);
-  return new Error(fallback);
 }
 
 export async function fetchExpenseCategories(): Promise<ExpenseCategory[]> {
@@ -21,7 +12,7 @@ export async function fetchExpenseCategories(): Promise<ExpenseCategory[]> {
     .select('*')
     .order('key', { ascending: true });
 
-  if (error) throw toError(error, 'Failed to load expense categories');
+  if (error) throwQueryError(error, 'Failed to load expense categories');
   return data ?? [];
 }
 
@@ -45,6 +36,6 @@ export async function createCustomCategory(
     .select('*')
     .single();
 
-  if (error) throw toError(error, 'Could not create custom category');
+  if (error) throwQueryError(error, 'Could not create custom category');
   return data;
 }

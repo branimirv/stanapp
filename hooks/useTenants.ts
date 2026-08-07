@@ -10,6 +10,7 @@ import {
 } from '@/services/tenants';
 import { useAuthStore } from '@/stores/authStore';
 import type { Tenant, TenantInsert, TenantUpdate } from '@/types/app.types';
+import { queryErrorMessage } from '@/utils/errors';
 
 function useInvalidateTenants() {
   const queryClient = useQueryClient();
@@ -64,7 +65,7 @@ export function useTenants(options: { propertyId?: string } = {}) {
   return {
     tenants: query.data ?? [],
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
     ...mutations,
   };
@@ -95,7 +96,7 @@ export function useTenant(id: string | undefined) {
   return {
     tenant: query.data ?? null,
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
   };
 }

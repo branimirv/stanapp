@@ -10,6 +10,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { resolveCurrency } from '@/utils/currency';
 import { getCategoryEffectiveType } from '@/utils/expense';
+import { throwQueryError } from '@/utils/errors';
 import type {
   CategoryBreakdown,
   ExpenseCategory,
@@ -107,8 +108,8 @@ export async function fetchEarliestReportActivityDate(
   }
 
   const [expensesResult, rentResult] = await Promise.all([expensesQuery, rentQuery]);
-  if (expensesResult.error) throw expensesResult.error;
-  if (rentResult.error) throw rentResult.error;
+  if (expensesResult.error) throwQueryError(expensesResult.error);
+  if (rentResult.error) throwQueryError(rentResult.error);
 
   const timestamps: number[] = [];
 
@@ -349,7 +350,7 @@ export async function fetchReportData({
     rentResult.error ??
     expensesResult.error;
 
-  if (queryError) throw queryError;
+  if (queryError) throwQueryError(queryError);
 
   const profile = profileResult.data;
   const categories = (categoriesResult.data ?? []) as ExpenseCategory[];

@@ -2,6 +2,7 @@ import { addDays, format, subMonths } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { resolveCurrency } from '@/utils/currency';
 import type { DashboardPeriod, DashboardStats, RecentActivityItem } from '@/types/app.types';
+import { throwQueryError } from '@/utils/errors';
 
 function calcDeltaPct(current: number, previous: number): number | null {
   if (previous === 0) return null;
@@ -142,7 +143,7 @@ export async function fetchDashboardStats(
     recentExpensesResult.error ??
     recentPaymentsResult.error;
 
-  if (queryError) throw queryError;
+  if (queryError) throwQueryError(queryError);
 
   const profile = profileResult.data;
   const defaultCurrency = profile?.default_currency ?? 'EUR';

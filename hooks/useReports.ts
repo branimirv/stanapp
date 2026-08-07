@@ -8,6 +8,7 @@ import type {
   ReportExpensePaymentStatus,
   ReportPeriod,
 } from '@/types/app.types';
+import { queryErrorMessage } from '@/utils/errors';
 
 export { buildReportPeriod } from '@/services/reports';
 
@@ -47,7 +48,7 @@ export function useReports(options: UseReportsOptions = {}) {
   return {
     report: query.data ?? null,
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
   };
 }

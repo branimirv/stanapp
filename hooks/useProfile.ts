@@ -4,6 +4,7 @@ import { queryKeys } from '@/lib/queryKeys';
 import { fetchProfile, updateProfile as updateProfileService } from '@/services/profile';
 import { useAuthStore } from '@/stores/authStore';
 import type { Language, ProfileUpdate, Theme } from '@/types/app.types';
+import { queryErrorMessage } from '@/utils/errors';
 
 export function useProfile() {
   const { user } = useAuthStore();
@@ -45,7 +46,7 @@ export function useProfile() {
   return {
     profile: query.data ?? null,
     isLoading: query.isLoading,
-    error: query.error ? (query.error as Error).message : null,
+    error: queryErrorMessage(query.error),
     refetch: query.refetch,
     updateProfile,
     updateLanguage,
