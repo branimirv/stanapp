@@ -158,10 +158,10 @@ export function AppDatePicker({
             />
 
             <View className="mt-4 flex-row items-center gap-2.5">
-              <AppButton mode="text" onPress={handleClear} className="flex-1">
+              <AppButton variant="ghost" onPress={handleClear} className="flex-1">
                 {t('common.clear')}
               </AppButton>
-              <AppButton mode="contained" onPress={handleConfirm} className="flex-1">
+              <AppButton variant="default" onPress={handleConfirm} className="flex-1">
                 {t('common.done')}
               </AppButton>
             </View>
