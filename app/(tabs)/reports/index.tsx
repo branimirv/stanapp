@@ -1,5 +1,6 @@
 import { parseISO } from 'date-fns';
-import { BarChart3 } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { BarChart3, Plus } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import {
   Pressable,
@@ -25,7 +26,6 @@ import { APP_BOTTOM_SHEET_CLOSE_MS } from '@/components/ui/AppBottomSheet';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { DisplayAmount } from '@/components/ui/DisplayAmount';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { FLOATING_ACTIONS_ROW_HEIGHT } from '@/components/ui/FloatingScreenActions';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
@@ -208,6 +208,14 @@ export default function ReportsScreen() {
     setPropertyFilter(value);
   }, []);
 
+  const handleAddExpense = useCallback(() => {
+    if (propertyFilter !== 'all') {
+      router.push({ pathname: '/expense/new', params: { propertyId: propertyFilter } });
+      return;
+    }
+    router.push('/expense/new');
+  }, [propertyFilter]);
+
   if (isLoading && !report) {
     return (
       <View style={styles.container} className="bg-transparent">
@@ -235,6 +243,7 @@ export default function ReportsScreen() {
             paddingHorizontal: theme.spacing.gutter,
             paddingBottom: Spacing.scrollBottom,
           },
+          (!report || !hasData) && styles.contentWhenEmpty,
         ]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
@@ -332,11 +341,64 @@ export default function ReportsScreen() {
         <ReportActiveFilterChips {...filterStateProps} />
 
         {!report || !hasData ? (
-          <EmptyState
-            icon={BarChart3}
-            title={t('empty.noReports')}
-            subtitle={t('empty.noReportsHint')}
-          />
+          <View
+            style={[
+              styles.emptyCard,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.cardBd,
+                borderRadius: radius.xl,
+                ...elevation.card,
+              },
+            ]}
+          >
+            <View style={[styles.emptyIc, { backgroundColor: colors.primaryTint }]}>
+              <BarChart3 size={25} color={colors.primary} strokeWidth={2} />
+            </View>
+            <Text
+              style={{
+                fontFamily: displayFontFamily(theme.name),
+                fontSize: 23,
+                letterSpacing: -0.46,
+                color: colors.fg,
+                textAlign: 'center',
+                marginBottom: 8,
+              }}
+            >
+              {t('empty.noReports')}
+            </Text>
+            <Text
+              style={{
+                fontFamily: Fonts.sans.regular,
+                fontSize: 12.5,
+                lineHeight: 20,
+                color: colors.muted,
+                textAlign: 'center',
+                maxWidth: 230,
+                marginBottom: 22,
+              }}
+            >
+              {t('empty.noReportsHint')}
+            </Text>
+            <Pressable
+              onPress={handleAddExpense}
+              accessibilityRole="button"
+              accessibilityLabel={t('expenses.addNew')}
+              style={[styles.emptyCta, { backgroundColor: colors.primary }]}
+            >
+              <Plus size={18} color={colors.onPrimary} strokeWidth={2} />
+              <Text
+                style={{
+                  fontFamily: Fonts.sans.semibold,
+                  fontSize: 14,
+                  letterSpacing: -0.14,
+                  color: colors.onPrimary,
+                }}
+              >
+                {t('expenses.addNew')}
+              </Text>
+            </Pressable>
+          </View>
         ) : (
           <>
             {report.hasMixedCurrencies ? (
@@ -479,6 +541,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingTop: 0,
   },
+  /** Avoid horizontal pill ScrollView eating leftover vertical space. */
+  contentWhenEmpty: {
+    flexGrow: 0,
+  },
   skeleton: {
     padding: Spacing.md,
   },
@@ -489,8 +555,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   pillBleed: {
+    flexGrow: 0,
     marginHorizontal: -17,
-    marginBottom: 10,
+    marginBottom: 14,
   },
   pillRow: {
     flexDirection: 'row',
@@ -503,6 +570,30 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  emptyCard: {
+    paddingTop: 38,
+    paddingHorizontal: 20,
+    paddingBottom: 34,
+    alignItems: 'center',
+    borderWidth: 1,
+    marginTop: 4,
+  },
+  emptyIc: {
+    width: 60,
+    height: 60,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  emptyCta: {
+    height: 44,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   warningBanner: {
     borderRadius: 14,
