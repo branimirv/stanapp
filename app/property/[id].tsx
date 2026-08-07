@@ -91,7 +91,6 @@ export default function PropertyDetailScreen() {
     expenses,
     isLoading: expensesLoading,
     refetch: refetchExpenses,
-    markAsPaid,
   } = useExpenses({ propertyId: id });
   const {
     rentPayments,
@@ -168,17 +167,6 @@ export default function PropertyDetailScreen() {
     [tenants],
   );
   const activeTenant = activeTenants[0];
-
-  const expensesTabIndex = useMemo(
-    () => routes.findIndex((route) => route.key === 'expenses'),
-    [routes],
-  );
-
-  const goToExpensesTab = useCallback(() => {
-    if (expensesTabIndex >= 0) {
-      setIndex(expensesTabIndex);
-    }
-  }, [expensesTabIndex]);
 
   const rentTabIndex = useMemo(
     () => routes.findIndex((route) => route.key === 'rent'),
@@ -317,21 +305,6 @@ export default function PropertyDetailScreen() {
     [canManage, currentYear, openRentSheet],
   );
 
-  const handleMarkExpensePaid = useCallback(
-    async (expenseId: string) => {
-      try {
-        await markAsPaid(expenseId);
-        showToast({ message: t('expenses.markedPaid'), type: 'success' });
-      } catch (err) {
-        showToast({
-          message: err instanceof Error ? err.message : t('expenses.markPaidFailed'),
-          type: 'error',
-        });
-      }
-    },
-    [markAsPaid, showToast, t],
-  );
-
   const handleSelectExpense = useCallback((expenseId: string) => {
     router.push(`/expense/${expenseId}`);
   }, []);
@@ -384,24 +357,18 @@ export default function PropertyDetailScreen() {
             language={language}
             month={currentMonthRange.month}
             year={currentMonthRange.year}
-            monthExpenses={currentMonthExpenses}
             monthExpenseTotal={currentMonthExpenseTotal}
             monthIncome={currentMonthIncome}
-            categoryMap={categoryMap}
             rentPayment={currentMonthRentPayment}
             activeTenants={activeTenants}
-            hasAnyExpenses={expenses.length > 0}
             refreshing={refreshing}
             onRefresh={onRefresh}
             onOpenAddress={handleOpenAddress}
             onShowUsageHistory={handleShowUsageHistory}
             onGoToRent={goToRentTab}
             onGoToTenants={goToTenantsTab}
-            onViewAllExpenses={goToExpensesTab}
             onOpenMembers={() => router.push(`/property/members/${property!.id}`)}
             onSelectTenant={handleSelectTenant}
-            onSelectExpense={handleSelectExpense}
-            onMarkExpensePaid={handleMarkExpensePaid}
             onRecordPayment={handleRecordPayment}
             onAddExpense={handleAddExpense}
             contentTopInset={sceneTopInset}
@@ -438,7 +405,6 @@ export default function PropertyDetailScreen() {
             refreshing={refreshing}
             onRefresh={onRefresh}
             onSelectExpense={handleSelectExpense}
-            onMarkExpensePaid={handleMarkExpensePaid}
             onAddExpense={handleAddExpense}
             contentTopInset={sceneTopInset}
           />
@@ -562,7 +528,7 @@ export default function PropertyDetailScreen() {
       />
 
       <BlurOverlay
-        visible={rentSheet.visible || historyVisible}
+        visible={rentSheet.visible || statementVisible || historyVisible}
         intensity="strong"
         tint="dark"
         duration={APP_BOTTOM_SHEET_CLOSE_MS}

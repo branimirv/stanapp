@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Modal, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 
+import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
 import { AppButton } from '@/components/ui/AppButton';
 import { Text } from '@/components/ui/text';
 import type { Expense, ExpenseCategory, Language, Property, RentPayment, Tenant } from '@/types/app.types';
@@ -26,6 +27,9 @@ export interface StatementSheetProps {
   onExportError?: (message: string) => void;
 }
 
+/**
+ * Property statement export — AppBottomSheet + sibling BlurOverlay on the host screen.
+ */
 export function StatementSheet({
   visible,
   onDismiss,
@@ -120,75 +124,71 @@ export function StatementSheet({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
-      <Pressable className="flex-1 justify-end bg-black/45" onPress={onDismiss}>
-        <Pressable
-          className="bg-card gap-4 rounded-t-[20px] px-6 pb-8 pt-2"
-          onPress={(event) => event.stopPropagation()}
-        >
-          <View className="bg-border mb-2 h-1 w-9 self-center rounded-full" />
+    <AppBottomSheet
+      visible={visible}
+      onDismiss={onDismiss}
+      title={t('statement.title')}
+      scrollable
+    >
+      <View className="gap-4">
+        <View className="flex-row items-center justify-center gap-4">
+          <Pressable
+            onPress={() => shiftMonth(-1)}
+            className="p-1"
+            accessibilityRole="button"
+            accessibilityLabel={t('common.previous')}
+          >
+            <ChevronLeft size={24} className="text-foreground" strokeWidth={2} />
+          </Pressable>
+          <Text className="min-w-35 text-center text-base font-medium">
+            {formatPeriod(month, year, language)}
+          </Text>
+          <Pressable
+            onPress={() => shiftMonth(1)}
+            className="p-1"
+            accessibilityRole="button"
+            accessibilityLabel={t('common.next')}
+          >
+            <ChevronRight size={24} className="text-foreground" strokeWidth={2} />
+          </Pressable>
+        </View>
 
-          <Text className="text-center text-base font-medium">{t('statement.title')}</Text>
+        <View className="border-border gap-2 rounded-xl border p-4">
+          <Text className="text-muted-foreground text-xs font-medium">
+            {t('statement.billTo')}
+          </Text>
+          <Text className="mb-2 text-base font-medium">{tenantName}</Text>
 
-          <View className="flex-row items-center justify-center gap-4">
-            <Pressable
-              onPress={() => shiftMonth(-1)}
-              className="p-1"
-              accessibilityRole="button"
-              accessibilityLabel={t('common.previous')}
-            >
-              <ChevronLeft size={24} className="text-foreground" strokeWidth={2} />
-            </Pressable>
-            <Text className="min-w-35 text-center text-base font-medium">
-              {formatPeriod(month, year, language)}
-            </Text>
-            <Pressable
-              onPress={() => shiftMonth(1)}
-              className="p-1"
-              accessibilityRole="button"
-              accessibilityLabel={t('common.next')}
-            >
-              <ChevronRight size={24} className="text-foreground" strokeWidth={2} />
-            </Pressable>
+          <View className="flex-row items-center justify-between gap-2">
+            <Text>{t('statement.rent')}</Text>
+            <Text>{formatCurrency(rentAmount, currency, language)}</Text>
           </View>
 
-          <View className="border-border gap-2 rounded-xl border p-4">
-            <Text className="text-muted-foreground text-xs font-medium">
-              {t('statement.billTo')}
+          {regularExpenses.map((line) => (
+            <View key={line.label} className="flex-row items-center justify-between gap-2">
+              <Text>{line.label}</Text>
+              <Text>{formatCurrency(line.amount, currency, language)}</Text>
+            </View>
+          ))}
+
+          {regularExpenses.length === 0 ? (
+            <Text className="text-muted-foreground text-xs italic">
+              {t('statement.noRegularExpenses')}
             </Text>
-            <Text className="mb-2 text-base font-medium">{tenantName}</Text>
+          ) : null}
 
-            <View className="flex-row items-center justify-between gap-2">
-              <Text>{t('statement.rent')}</Text>
-              <Text>{formatCurrency(rentAmount, currency, language)}</Text>
-            </View>
-
-            {regularExpenses.map((line) => (
-              <View key={line.label} className="flex-row items-center justify-between gap-2">
-                <Text>{line.label}</Text>
-                <Text>{formatCurrency(line.amount, currency, language)}</Text>
-              </View>
-            ))}
-
-            {regularExpenses.length === 0 ? (
-              <Text className="text-muted-foreground text-xs italic">
-                {t('statement.noRegularExpenses')}
-              </Text>
-            ) : null}
-
-            <View className="border-border mt-1 flex-row items-center justify-between gap-2 border-t pt-2">
-              <Text className="text-base font-medium">{t('statement.totalDue')}</Text>
-              <Text className="text-primary text-lg font-semibold">
-                {formatCurrency(totalDue, currency, language)}
-              </Text>
-            </View>
+          <View className="border-border mt-1 flex-row items-center justify-between gap-2 border-t pt-2">
+            <Text className="text-base font-medium">{t('statement.totalDue')}</Text>
+            <Text className="text-primary text-lg font-semibold">
+              {formatCurrency(totalDue, currency, language)}
+            </Text>
           </View>
+        </View>
 
-          <AppButton mode="contained" loading={exporting} onPress={handleExport}>
-            {t('statement.generate')}
-          </AppButton>
-        </Pressable>
-      </Pressable>
-    </Modal>
+        <AppButton mode="contained" loading={exporting} onPress={handleExport}>
+          {t('statement.generate')}
+        </AppButton>
+      </View>
+    </AppBottomSheet>
   );
 }

@@ -24,8 +24,6 @@ import { Typography } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { displayFontFamily, Fonts } from '@/lib/fonts';
 import type {
-  Expense,
-  ExpenseCategory,
   Language,
   Property,
   RentPayment,
@@ -43,24 +41,18 @@ export interface PropertyOverviewTabProps {
   language: Language;
   month: number;
   year: number;
-  monthExpenses: Expense[];
   monthExpenseTotal: number;
   monthIncome: number;
-  categoryMap: Map<string, ExpenseCategory>;
   rentPayment?: RentPayment;
   activeTenants: Tenant[];
-  hasAnyExpenses: boolean;
   refreshing: boolean;
   onRefresh: () => void;
   onOpenAddress: () => void;
   onShowUsageHistory: () => void;
   onGoToRent: () => void;
   onGoToTenants: () => void;
-  onViewAllExpenses: () => void;
   onOpenMembers: () => void;
   onSelectTenant: (tenantId: string) => void;
-  onSelectExpense: (expenseId: string) => void;
-  onMarkExpensePaid: (expenseId: string) => void;
   onRecordPayment: () => void;
   onAddExpense: () => void;
   contentTopInset?: number;

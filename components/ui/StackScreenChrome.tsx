@@ -8,7 +8,7 @@ import {
 import { GlassSurface } from '@/components/ui/GlassSurface';
 import { ScreenPageTitle } from '@/components/ui/ScreenPageTitle';
 
-/** When set, scroll shells (e.g. AppFormScroll) should pad content under the floating header. */
+/** When set, scroll shells should pad content under the floating header. */
 const StackChromeEdgeInsetContext = createContext<number | null>(null);
 
 export function useStackChromeEdgeInset() {
