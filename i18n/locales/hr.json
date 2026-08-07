@@ -623,13 +623,7 @@
     "thisPeriod": "Ovo razdoblje",
     "previousPeriod": "Prethodno razdoblje",
     "singlePeriodHint": "Odaberite dulje razdoblje za mjesečni trend.",
-    "expenseFilterHint": "Filteri kategorije i vrste primjenjuju se samo na troškove. Prihod se uvijek prikazuje u cijelosti.",
-    "filterPaymentStatus": "Plaćanje troška",
-    "paymentStatusAll": "Svi",
-    "paymentStatusPaid": "Plaćeni",
-    "paymentStatusUnpaid": "Neplaćeni",
-    "netPaidExpensesOnly": "Neto · samo plaćeni troškovi",
-    "netUnpaidExpensesOnly": "Neto · samo neplaćeni troškovi"
+    "expenseFilterHint": "Filteri kategorije i vrste primjenjuju se samo na troškove. Prihod se uvijek prikazuje u cijelosti."
   },
   "settings": {
     "title": "Postavke",

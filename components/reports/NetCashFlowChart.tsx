@@ -27,7 +27,6 @@ import { formatChartAxisMonths, formatCurrency, formatPeriodShort } from '@/util
 import type {
   Language,
   MonthlyIncomeExpense,
-  ReportExpensePaymentStatus,
   ReportPeriodComparison,
 } from '@/types/app.types';
 
@@ -37,7 +36,6 @@ export interface NetCashFlowChartProps {
   currency?: string;
   language?: Language;
   comparison?: ReportPeriodComparison | null;
-  expensePaymentStatus?: ReportExpensePaymentStatus;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -59,7 +57,6 @@ export function NetCashFlowChart({
   currency = 'EUR',
   language = 'hr',
   comparison = null,
-  expensePaymentStatus = 'all',
   style,
 }: NetCashFlowChartProps) {
   const { theme } = useAppTheme();
@@ -81,13 +78,6 @@ export function NetCashFlowChart({
   const deltaValue = comparison?.deltaPercent ?? comparison?.deltaAbsolute ?? null;
   const deltaPositive =
     comparison == null ? true : (comparison.deltaPercent ?? comparison.deltaAbsolute) >= 0;
-
-  const paymentStatusCue =
-    expensePaymentStatus === 'paid'
-      ? t('reports.netPaidExpensesOnly')
-      : expensePaymentStatus === 'unpaid'
-        ? t('reports.netUnpaidExpensesOnly')
-        : null;
 
   if (data.length === 0) {
     return (
@@ -166,19 +156,6 @@ export function NetCashFlowChart({
         lineHeight={Typography.display.heroSm.lineHeight}
         letterSpacing={Typography.display.heroSm.letterSpacing}
       />
-
-      {paymentStatusCue ? (
-        <Text
-          style={{
-            fontFamily: Fonts.sans.regular,
-            fontSize: Typography.text.caption.size,
-            color: colors.muted,
-            marginTop: 8,
-          }}
-        >
-          {paymentStatusCue}
-        </Text>
-      ) : null}
 
       {comparison && deltaValue !== null ? (
         <View style={styles.deltaRow}>

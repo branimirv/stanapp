@@ -104,9 +104,6 @@ export interface ReportPeriod {
 
 export type ReportCategoryTypeFilter = 'all' | ExpenseType;
 
-/** Cash-flow definition: which booked expenses count toward net. */
-export type ReportExpensePaymentStatus = 'all' | 'paid' | 'unpaid';
-
 export interface MonthlyIncomeExpense {
   month: number;
   year: number;
@@ -151,7 +148,6 @@ export interface ReportData {
   currency: string;
   hasMixedCurrencies: boolean;
   currenciesFound: string[];
-  expensePaymentStatus: ReportExpensePaymentStatus;
   monthlyIncomeExpense: MonthlyIncomeExpense[];
   categoryBreakdown: CategoryBreakdown[];
   propertySummaries: PropertyReportSummary[];

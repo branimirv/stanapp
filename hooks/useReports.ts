@@ -5,7 +5,6 @@ import { buildDefaultReportPeriod, fetchReportData } from '@/services/reports';
 import { useAuthStore } from '@/stores/authStore';
 import type {
   ReportCategoryTypeFilter,
-  ReportExpensePaymentStatus,
   ReportPeriod,
 } from '@/types/app.types';
 import { queryErrorMessage } from '@/utils/errors';
@@ -17,13 +16,12 @@ interface UseReportsOptions {
   propertyId?: string;
   categoryId?: string;
   categoryType?: ReportCategoryTypeFilter;
-  expensePaymentStatus?: ReportExpensePaymentStatus;
 }
 
 export function useReports(options: UseReportsOptions = {}) {
   const { user } = useAuthStore();
   const period = useMemo(() => options.period ?? buildDefaultReportPeriod(), [options.period]);
-  const { propertyId, categoryId, categoryType, expensePaymentStatus } = options;
+  const { propertyId, categoryId, categoryType } = options;
 
   const query = useQuery({
     queryKey: queryKeys.reports.data({
@@ -31,7 +29,6 @@ export function useReports(options: UseReportsOptions = {}) {
       propertyId,
       categoryId,
       categoryType,
-      expensePaymentStatus,
     }),
     queryFn: () =>
       fetchReportData({
@@ -40,7 +37,6 @@ export function useReports(options: UseReportsOptions = {}) {
         propertyId,
         categoryId,
         categoryType,
-        expensePaymentStatus,
       }),
     enabled: Boolean(user),
   });

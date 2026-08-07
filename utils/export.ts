@@ -56,13 +56,6 @@ function generateReportHTML(data: ReportData, t: TFunction, language: 'en' | 'hr
     )
     .join('');
 
-  const paymentStatusLabel =
-    data.expensePaymentStatus === 'paid'
-      ? t('reports.netPaidExpensesOnly')
-      : data.expensePaymentStatus === 'unpaid'
-        ? t('reports.netUnpaidExpensesOnly')
-        : null;
-
   const comparisonHtml = data.comparison
     ? `<p>${formatExportDeltaAbsolute(data.comparison.deltaAbsolute, data.currency, language)}${
         data.comparison.deltaPercent !== null
@@ -96,7 +89,6 @@ function generateReportHTML(data: ReportData, t: TFunction, language: 'en' | 'hr
     <h1>${t('reports.title')} — StanApp</h1>
     <p>${t('reports.generatedAt', { date: format(new Date(), 'dd.MM.yyyy HH:mm') })}</p>
     <p>${data.period.startDate} — ${data.period.endDate}</p>
-    ${paymentStatusLabel ? `<p>${paymentStatusLabel}</p>` : ''}
 
     <div class="summary">
       <div class="summary-card">

@@ -623,13 +623,7 @@
     "thisPeriod": "This period",
     "previousPeriod": "Previous period",
     "singlePeriodHint": "Choose a longer range to see the monthly trend.",
-    "expenseFilterHint": "Category and type filters apply to expenses only. Income is always shown in full.",
-    "filterPaymentStatus": "Expense payment",
-    "paymentStatusAll": "All",
-    "paymentStatusPaid": "Paid",
-    "paymentStatusUnpaid": "Unpaid",
-    "netPaidExpensesOnly": "Net · paid expenses only",
-    "netUnpaidExpensesOnly": "Net · unpaid expenses only"
+    "expenseFilterHint": "Category and type filters apply to expenses only. Income is always shown in full."
   },
   "settings": {
     "title": "Settings",

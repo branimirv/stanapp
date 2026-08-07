@@ -19,7 +19,6 @@ import type {
   PropertyReportSummary,
   ReportCategoryTypeFilter,
   ReportData,
-  ReportExpensePaymentStatus,
   ReportPeriod,
   ReportPeriodComparison,
   ReportPeriodPreset,
@@ -250,15 +249,6 @@ function resolveFilterId(value?: string): string | undefined {
   return value;
 }
 
-function matchesPaymentStatus(
-  expense: Pick<ExpenseRow, 'paid_at'>,
-  status: ReportExpensePaymentStatus,
-): boolean {
-  if (status === 'all') return true;
-  if (status === 'paid') return expense.paid_at != null;
-  return expense.paid_at == null;
-}
-
 function inBillingRange(billingDate: string, startDate: string, endDate: string): boolean {
   return billingDate >= startDate && billingDate <= endDate;
 }
@@ -303,7 +293,6 @@ export interface FetchReportDataParams {
   propertyId?: string;
   categoryId?: string;
   categoryType?: ReportCategoryTypeFilter;
-  expensePaymentStatus?: ReportExpensePaymentStatus;
 }
 
 export async function fetchReportData({
@@ -312,7 +301,6 @@ export async function fetchReportData({
   propertyId: rawPropertyId,
   categoryId: rawCategoryId,
   categoryType = 'all',
-  expensePaymentStatus = 'all',
 }: FetchReportDataParams): Promise<ReportData> {
   const propertyId = resolveFilterId(rawPropertyId);
   const categoryId = resolveFilterId(rawCategoryId);
@@ -375,14 +363,9 @@ export async function fetchReportData({
     allExpenses = allExpenses.filter((expense) => expense.property_id === propertyId);
   }
 
-  // Cash-flow expenses: payment status only (not category / type).
-  const cashFlowExpensesAllFetched = allExpenses.filter((expense) =>
-    matchesPaymentStatus(expense, expensePaymentStatus),
-  );
-
   if (period.preset === 'all_time') {
     const earliestTimestamps: number[] = [];
-    for (const expense of cashFlowExpensesAllFetched) {
+    for (const expense of allExpenses) {
       if (inBillingRange(expense.billing_date, period.startDate, endDate)) {
         earliestTimestamps.push(new Date(expense.billing_date).getTime());
       }
@@ -399,7 +382,7 @@ export async function fetchReportData({
   const effectiveEndDate = endDate;
 
   const rentInPeriod = rentInRange(allRent, start, end);
-  const cashFlowExpenses = cashFlowExpensesAllFetched.filter((expense) =>
+  const cashFlowExpenses = allExpenses.filter((expense) =>
     inBillingRange(expense.billing_date, effectiveStartDate, effectiveEndDate),
   );
 
@@ -499,7 +482,7 @@ export async function fetchReportData({
     const prevStart = new Date(previousPeriod.startDate);
     const prevEnd = new Date(previousPeriod.endDate);
     const prevRent = rentInRange(allRent, prevStart, prevEnd);
-    const prevExpenses = cashFlowExpensesAllFetched.filter((expense) =>
+    const prevExpenses = allExpenses.filter((expense) =>
       inBillingRange(expense.billing_date, previousPeriod.startDate, previousPeriod.endDate),
     );
     const previousNet = sumAmounts(prevRent) - sumAmounts(prevExpenses);
@@ -511,7 +494,6 @@ export async function fetchReportData({
     currency: defaultCurrency,
     hasMixedCurrencies,
     currenciesFound,
-    expensePaymentStatus,
     monthlyIncomeExpense,
     categoryBreakdown,
     propertySummaries,

@@ -8,7 +8,6 @@ import { FilterChipRow, type FilterChip } from '@/components/ui/FilterChipRow';
 import { buildReportPeriod } from '@/hooks/useReports';
 import type {
   ReportCategoryTypeFilter,
-  ReportExpensePaymentStatus,
   ReportPeriod,
   ReportPeriodPreset,
 } from '@/types/app.types';
@@ -31,8 +30,6 @@ export interface ReportFiltersStateProps {
   onCategoryFilterChange: (value: string) => void;
   categoryTypeFilter: ReportCategoryTypeFilter;
   onCategoryTypeFilterChange: (value: ReportCategoryTypeFilter) => void;
-  expensePaymentStatus: ReportExpensePaymentStatus;
-  onExpensePaymentStatusChange: (value: ReportExpensePaymentStatus) => void;
   propertyOptions: PickerOption[];
   categoryOptions: PickerOption[];
 }
@@ -64,7 +61,6 @@ export function countReportActiveFilters(
   _propertyFilter: string,
   categoryFilter: string,
   categoryTypeFilter: ReportCategoryTypeFilter,
-  _expensePaymentStatus: ReportExpensePaymentStatus = 'all',
 ): number {
   return countActiveFilters(period, categoryFilter, categoryTypeFilter);
 }
@@ -153,9 +149,6 @@ export function ReportFiltersSheetHost({
   onCategoryFilterChange,
   categoryTypeFilter,
   onCategoryTypeFilterChange,
-  expensePaymentStatus,
-  onExpensePaymentStatusChange,
-  propertyOptions,
   categoryOptions,
 }: ReportFiltersSheetHostProps) {
   const handleClearFilters = () => {
@@ -163,7 +156,6 @@ export function ReportFiltersSheetHost({
     onPropertyFilterChange('all');
     onCategoryFilterChange('all');
     onCategoryTypeFilterChange('all');
-    onExpensePaymentStatusChange('all');
   };
 
   return (

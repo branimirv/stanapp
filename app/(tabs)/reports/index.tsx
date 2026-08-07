@@ -26,6 +26,7 @@ import { APP_BOTTOM_SHEET_CLOSE_MS } from '@/components/ui/AppBottomSheet';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { DisplayAmount } from '@/components/ui/DisplayAmount';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { FLOATING_ACTIONS_ROW_HEIGHT } from '@/components/ui/FloatingScreenActions';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
@@ -44,7 +45,6 @@ import { formatMonthName, formatPeriod } from '@/utils/formatters';
 import type {
   Language,
   ReportCategoryTypeFilter,
-  ReportExpensePaymentStatus,
   ReportPeriod,
 } from '@/types/app.types';
 
@@ -100,8 +100,6 @@ export default function ReportsScreen() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [categoryTypeFilter, setCategoryTypeFilter] =
     useState<ReportCategoryTypeFilter>('all');
-  const [expensePaymentStatus, setExpensePaymentStatus] =
-    useState<ReportExpensePaymentStatus>('all');
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -111,7 +109,6 @@ export default function ReportsScreen() {
     propertyId: propertyFilter,
     categoryId: categoryFilter,
     categoryType: categoryTypeFilter,
-    expensePaymentStatus,
   });
   const language = (profile?.language ?? i18n.language ?? 'hr') as Language;
 
@@ -146,9 +143,8 @@ export default function ReportsScreen() {
         propertyFilter,
         categoryFilter,
         categoryTypeFilter,
-        expensePaymentStatus,
       ),
-    [categoryFilter, categoryTypeFilter, expensePaymentStatus, period, propertyFilter],
+    [categoryFilter, categoryTypeFilter, period, propertyFilter],
   );
 
   const downloadDisabled = !report || !hasData || exporting;
@@ -164,8 +160,6 @@ export default function ReportsScreen() {
     onCategoryFilterChange: setCategoryFilter,
     categoryTypeFilter,
     onCategoryTypeFilterChange: setCategoryTypeFilter,
-    expensePaymentStatus,
-    onExpensePaymentStatusChange: setExpensePaymentStatus,
     propertyOptions,
     categoryOptions,
   };
@@ -341,64 +335,15 @@ export default function ReportsScreen() {
         <ReportActiveFilterChips {...filterStateProps} />
 
         {!report || !hasData ? (
-          <View
-            style={[
-              styles.emptyCard,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.cardBd,
-                borderRadius: radius.xl,
-                ...elevation.card,
-              },
-            ]}
-          >
-            <View style={[styles.emptyIc, { backgroundColor: colors.primaryTint }]}>
-              <BarChart3 size={25} color={colors.primary} strokeWidth={2} />
-            </View>
-            <Text
-              style={{
-                fontFamily: displayFontFamily(theme.name),
-                fontSize: 23,
-                letterSpacing: -0.46,
-                color: colors.fg,
-                textAlign: 'center',
-                marginBottom: 8,
-              }}
-            >
-              {t('empty.noReports')}
-            </Text>
-            <Text
-              style={{
-                fontFamily: Fonts.sans.regular,
-                fontSize: 12.5,
-                lineHeight: 20,
-                color: colors.muted,
-                textAlign: 'center',
-                maxWidth: 230,
-                marginBottom: 22,
-              }}
-            >
-              {t('empty.noReportsHint')}
-            </Text>
-            <Pressable
-              onPress={handleAddExpense}
-              accessibilityRole="button"
-              accessibilityLabel={t('expenses.addNew')}
-              style={[styles.emptyCta, { backgroundColor: colors.primary }]}
-            >
-              <Plus size={18} color={colors.onPrimary} strokeWidth={2} />
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.semibold,
-                  fontSize: 14,
-                  letterSpacing: -0.14,
-                  color: colors.onPrimary,
-                }}
-              >
-                {t('expenses.addNew')}
-              </Text>
-            </Pressable>
-          </View>
+          <EmptyState
+            icon={BarChart3}
+            title={t('empty.noReports')}
+            subtitle={t('empty.noReportsHint')}
+            ctaLabel={t('expenses.addNew')}
+            ctaIcon={Plus}
+            onCtaPress={handleAddExpense}
+            style={styles.emptyState}
+          />
         ) : (
           <>
             {report.hasMixedCurrencies ? (
@@ -426,7 +371,6 @@ export default function ReportsScreen() {
               currency={report.currency}
               language={language}
               comparison={report.comparison}
-              expensePaymentStatus={report.expensePaymentStatus}
             />
 
             <View
@@ -571,29 +515,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyCard: {
-    paddingTop: 38,
-    paddingHorizontal: 20,
-    paddingBottom: 34,
-    alignItems: 'center',
-    borderWidth: 1,
+  emptyState: {
     marginTop: 4,
-  },
-  emptyIc: {
-    width: 60,
-    height: 60,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-  },
-  emptyCta: {
-    height: 44,
-    paddingHorizontal: 18,
-    borderRadius: 999,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
   },
   warningBanner: {
     borderRadius: 14,

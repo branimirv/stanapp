@@ -33,6 +33,7 @@ import { AppExpandableSearch } from '@/components/ui/AppExpandableSearch';
 import type { PickerOption } from '@/components/ui/AppPicker';
 import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { DisplayAmount } from '@/components/ui/DisplayAmount';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { FLOATING_ACTIONS_ROW_HEIGHT } from '@/components/ui/FloatingScreenActions';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
@@ -497,70 +498,26 @@ export default function ExpensesScreen() {
 
         {isEmptyList ? (
           <>
-            <View
-              style={[
-                styles.emptyCard,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.cardBd,
-                  borderRadius: radius.xl,
-                  ...elevation.card,
-                },
-              ]}
-            >
-              <View style={[styles.emptyIc, { backgroundColor: colors.primaryTint }]}>
-                <Receipt size={25} color={colors.primary} strokeWidth={2} />
-              </View>
-              <Text
-                style={{
-                  fontFamily: displayFontFamily(theme.name),
-                  fontSize: 23,
-                  letterSpacing: -0.46,
-                  color: colors.fg,
-                  textAlign: 'center',
-                  marginBottom: 8,
-                }}
-              >
-                {search || activeFilterCount > 0
+            <EmptyState
+              icon={Receipt}
+              title={
+                search || activeFilterCount > 0
                   ? t('empty.noResults')
-                  : t('empty.noExpenses')}
-              </Text>
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.regular,
-                  fontSize: 12.5,
-                  lineHeight: 20,
-                  color: colors.muted,
-                  textAlign: 'center',
-                  maxWidth: 210,
-                  marginBottom: 22,
-                }}
-              >
-                {search || activeFilterCount > 0
+                  : t('empty.noExpenses')
+              }
+              subtitle={
+                search || activeFilterCount > 0
                   ? t('empty.noResultsHint')
-                  : t('empty.noExpensesHint')}
-              </Text>
-              {!search && activeFilterCount === 0 ? (
-                <Pressable
-                  onPress={handleCreatePress}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('expenses.addNew')}
-                  style={[styles.emptyCta, { backgroundColor: colors.primary }]}
-                >
-                  <Plus size={18} color={colors.onPrimary} strokeWidth={2} />
-                  <Text
-                    style={{
-                      fontFamily: Fonts.sans.semibold,
-                      fontSize: 14,
-                      letterSpacing: -0.14,
-                      color: colors.onPrimary,
-                    }}
-                  >
-                    {t('expenses.addNew')}
-                  </Text>
-                </Pressable>
-              ) : null}
-            </View>
+                  : t('empty.noExpensesHint')
+              }
+              ctaLabel={
+                !search && activeFilterCount === 0 ? t('expenses.addNew') : undefined
+              }
+              ctaIcon={Plus}
+              onCtaPress={
+                !search && activeFilterCount === 0 ? handleCreatePress : undefined
+              }
+            />
             {lastExpenseShortDate ? (
               <Text
                 style={{
@@ -759,28 +716,5 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 8,
     paddingVertical: 8,
-  },
-  emptyCard: {
-    paddingTop: 38,
-    paddingHorizontal: 20,
-    paddingBottom: 34,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  emptyIc: {
-    width: 60,
-    height: 60,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-  },
-  emptyCta: {
-    height: 44,
-    paddingHorizontal: 18,
-    borderRadius: 999,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
   },
 });

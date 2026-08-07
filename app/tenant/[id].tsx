@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 
 import { RentPaymentCard } from '@/components/rent/RentPaymentCard';
 import { DetailScreenScaffold } from '@/components/ui/DetailScreenScaffold';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { StackHeaderActions } from '@/components/ui/StackHeaderActions';
@@ -485,69 +486,20 @@ export default function TenantDetailScreen() {
         }
         ListEmptyComponent={
           paymentsLoading ? null : (
-            <View
-              style={[
-                styles.emptyCard,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.cardBd,
-                  borderRadius: radius.xl,
-                  ...elevation.card,
-                },
-              ]}
-            >
-              <View style={[styles.emptyIc, { backgroundColor: colors.primaryTint }]}>
-                <ArrowDownToLine size={25} color={colors.primary} strokeWidth={2} />
-              </View>
-              <Text
-                style={{
-                  fontFamily: displayFontFamily(theme.name),
-                  fontSize: 23,
-                  letterSpacing: -0.46,
-                  color: colors.fg,
-                  textAlign: 'center',
-                  marginBottom: 8,
-                }}
-              >
-                {t('empty.noRentPayments')}
-              </Text>
-              <Text
-                style={{
-                  fontFamily: Fonts.sans.regular,
-                  fontSize: 12.5,
-                  lineHeight: 20,
-                  color: colors.muted,
-                  textAlign: 'center',
-                  maxWidth: 230,
-                  marginBottom: 22,
-                }}
-              >
-                {t('empty.noRentPaymentsHint')}
-              </Text>
-              <Pressable
-                onPress={() =>
-                  router.push({
-                    pathname: '/rent/new',
-                    params: { propertyId: tenant.property_id, tenantId: tenant.id },
-                  })
-                }
-                accessibilityRole="button"
-                accessibilityLabel={t('rent.addPayment')}
-                style={[styles.emptyCta, { backgroundColor: colors.primary }]}
-              >
-                <Plus size={18} color={colors.onPrimary} strokeWidth={2} />
-                <Text
-                  style={{
-                    fontFamily: Fonts.sans.semibold,
-                    fontSize: 14,
-                    letterSpacing: -0.14,
-                    color: colors.onPrimary,
-                  }}
-                >
-                  {t('rent.addPayment')}
-                </Text>
-              </Pressable>
-            </View>
+            <EmptyState
+              icon={ArrowDownToLine}
+              title={t('empty.noRentPayments')}
+              subtitle={t('empty.noRentPaymentsHint')}
+              ctaLabel={t('rent.addPayment')}
+              ctaIcon={Plus}
+              onCtaPress={() =>
+                router.push({
+                  pathname: '/rent/new',
+                  params: { propertyId: tenant.property_id, tenantId: tenant.id },
+                })
+              }
+              style={styles.emptyState}
+            />
           )
         }
         ListFooterComponent={
@@ -685,29 +637,8 @@ const styles = StyleSheet.create({
     gap: 13,
     paddingVertical: 13,
   },
-  emptyCard: {
-    paddingTop: 44,
-    paddingHorizontal: 22,
-    paddingBottom: 38,
-    alignItems: 'center',
+  emptyState: {
     marginBottom: 16,
-    borderWidth: 1,
-  },
-  emptyIc: {
-    width: 60,
-    height: 60,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-  },
-  emptyCta: {
-    height: 44,
-    paddingHorizontal: 18,
-    borderRadius: 999,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
   },
   footer: {
     marginTop: 8,
