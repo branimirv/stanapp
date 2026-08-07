@@ -296,7 +296,7 @@ export function RentPaymentForm({
         style={{ paddingBottom: Math.max(insets.bottom, 14) + 8 }}
       >
         <AppButton
-          mode="contained"
+          variant="default"
           loading={isSubmitting}
           onPress={handleSubmit(onSubmit)}
           className="h-11 w-full"

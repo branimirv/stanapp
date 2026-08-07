@@ -320,7 +320,7 @@ export function ExpenseForm({
         style={{ paddingBottom: Math.max(insets.bottom, 14) + 8 }}
       >
         <AppButton
-          mode="contained"
+          variant="default"
           loading={isSubmitting}
           onPress={handleSubmit(onSubmit)}
           className="h-11 w-full"
@@ -348,7 +348,7 @@ export function ExpenseForm({
           containerStyle={{ marginBottom: 16 }}
         />
         <AppButton
-          mode="contained"
+          variant="default"
           onPress={handleAddCustomCategory}
           loading={isCreatingCategory}
           className="h-11 w-full"

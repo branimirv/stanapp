@@ -73,7 +73,7 @@ export function GoogleSignInButton({
   return (
     <View>
       <AppButton
-        mode="outlined"
+        variant="outline"
         loading={isSubmitting}
         disabled={disabled || isSubmitting}
         onPress={handlePress}

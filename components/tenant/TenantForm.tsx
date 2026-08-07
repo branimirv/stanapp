@@ -210,7 +210,7 @@ export function TenantForm({
         style={{ paddingBottom: Math.max(insets.bottom, 14) + 8 }}
       >
         <AppButton
-          mode="contained"
+          variant="default"
           loading={isSubmitting}
           onPress={handleFormSubmit}
           className="h-11 w-full"

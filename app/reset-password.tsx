@@ -147,7 +147,7 @@ export default function ResetPasswordScreen() {
       />
 
       <AppButton
-        mode="contained"
+        variant="default"
         loading={isSubmitting}
         disabled={!isValid}
         onPress={handleSubmit(onSubmit)}

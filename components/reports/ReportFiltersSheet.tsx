@@ -1,19 +1,17 @@
-import { useMemo, type ReactNode } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { useMemo } from 'react';
+import { ScrollView, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { PeriodFilter } from '@/components/reports/PeriodFilter';
 import { AppBottomSheet } from '@/components/ui/AppBottomSheet';
+import { AppFilterSheetFooter } from '@/components/ui/AppFilterSheetFooter';
 import { AppPicker, type PickerOption } from '@/components/ui/AppPicker';
+import { FilterGroup } from '@/components/ui/FilterGroup';
+import {
+  FilterOptionChipRow,
+  type FilterOptionChip,
+} from '@/components/ui/FilterOptionChipRow';
 import { useEarliestReportActivity } from '@/hooks/useEarliestReportActivity';
-import { cn } from '@/lib/utils';
 import type { ReportCategoryTypeFilter, ReportPeriod } from '@/types/app.types';
 
 export interface ReportFiltersSheetProps {
@@ -29,74 +27,6 @@ export interface ReportFiltersSheetProps {
   onCategoryTypeFilterChange: (value: ReportCategoryTypeFilter) => void;
   categoryOptions: PickerOption[];
   onClearFilters: () => void;
-}
-
-interface FilterChipOption<T extends string> {
-  label: string;
-  value: T;
-}
-
-function FilterChipRow<T extends string>({
-  options,
-  value,
-  onChange,
-  className,
-}: {
-  options: FilterChipOption<T>[];
-  value: T;
-  onChange: (value: T) => void;
-  className?: string;
-}) {
-  return (
-    <View className={cn('flex-row flex-wrap gap-2', className)}>
-      {options.map((option) => {
-        const on = option.value === value;
-        return (
-          <Pressable
-            key={option.value}
-            onPress={() => onChange(option.value)}
-            className={cn(
-              'h-8.5 items-center justify-center rounded-full px-3.5',
-              on ? 'bg-primary-tint' : 'bg-surface-2',
-            )}
-            accessibilityRole="button"
-            accessibilityState={{ selected: on }}
-          >
-            <Text
-              className={cn(
-                'text-[12.5px] font-semibold tracking-[-0.12px]',
-                on ? 'text-primary' : 'text-muted',
-              )}
-              numberOfLines={1}
-            >
-              {option.label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
-
-function FilterGroup({
-  label,
-  children,
-  className,
-  style,
-}: {
-  label: string;
-  children: ReactNode;
-  className?: string;
-  style?: StyleProp<ViewStyle>;
-}) {
-  return (
-    <View className={cn('mb-4.5', className)} style={style}>
-      <Text className="text-muted mb-2.5 text-[11px] leading-3.5 font-semibold tracking-[1.54px] uppercase">
-        {label}
-      </Text>
-      {children}
-    </View>
-  );
 }
 
 /** Naslov report filters — BlurOverlay must be a sibling on the host screen. */
@@ -124,7 +54,7 @@ export function ReportFiltersSheet({
     return count;
   }, [categoryFilter, categoryTypeFilter, period.preset]);
 
-  const typeOptions: FilterChipOption<ReportCategoryTypeFilter>[] = [
+  const typeOptions: FilterOptionChip<ReportCategoryTypeFilter>[] = [
     { label: t('reports.typeAll'), value: 'all' },
     { label: t('reports.typeRegular'), value: 'regular' },
     { label: t('reports.typeIrregular'), value: 'irregular' },
@@ -166,7 +96,7 @@ export function ReportFiltersSheet({
         </FilterGroup>
 
         <FilterGroup label={t('reports.filterType')} className="mb-2.5">
-          <FilterChipRow
+          <FilterOptionChipRow
             options={typeOptions}
             value={categoryTypeFilter}
             onChange={onCategoryTypeFilterChange}
@@ -178,29 +108,12 @@ export function ReportFiltersSheet({
         </Text>
       </ScrollView>
 
-      <View className="flex-row gap-2.25">
-        <Pressable
-          onPress={handleClear}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.clearFilters')}
-          className="bg-surface-2 h-11 flex-1 flex-row items-center justify-center gap-1.5 rounded-full px-4"
-        >
-          <Text className="text-fg text-sm font-semibold tracking-[-0.14px]" numberOfLines={1}>
-            {t('common.clearFilters')}
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={onDismiss}
-          accessibilityRole="button"
-          accessibilityLabel={doneLabel}
-          className="bg-primary h-11 flex-2 flex-row items-center justify-center gap-1.5 rounded-full px-4"
-        >
-          <Text className="text-on-primary text-sm font-semibold tracking-[-0.14px]">
-            {doneLabel}
-          </Text>
-        </Pressable>
-      </View>
+      <AppFilterSheetFooter
+        clearLabel={t('common.clearFilters')}
+        doneLabel={doneLabel}
+        onClear={handleClear}
+        onDone={onDismiss}
+      />
     </AppBottomSheet>
   );
 }

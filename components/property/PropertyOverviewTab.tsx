@@ -256,7 +256,7 @@ function PropertyOverviewTabComponent({
       {isRented && canManage ? (
         <View className="mb-5.5 flex-row items-center gap-2.25">
           <AppButton
-            mode="contained"
+            variant="default"
             onPress={onRecordPayment}
             className="h-11 flex-1"
             accessibilityLabel={t('properties.recordPayment')}
@@ -281,7 +281,7 @@ function PropertyOverviewTabComponent({
       ) : canManage ? (
         <View className="mb-5.5 flex-row items-center gap-2.25">
           <AppButton
-            mode="contained"
+            variant="default"
             onPress={handleAddExpense}
             className="h-11 flex-1"
             accessibilityLabel={t('expenses.addNew')}

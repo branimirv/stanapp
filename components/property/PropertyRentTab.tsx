@@ -189,7 +189,7 @@ function PropertyRentTabComponent({
           style={[styles.ctaWrap, { paddingBottom: ctaBottom }]}
         >
           <AppButton
-            mode="contained"
+            variant="default"
             onPress={handleAddPayment}
             className="h-12 w-full"
             accessibilityLabel={t('rent.addPayment')}

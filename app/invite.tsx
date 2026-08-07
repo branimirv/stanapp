@@ -64,7 +64,7 @@ export default function InviteAcceptScreen() {
         <>
           <Text className="text-center text-lg font-semibold">{t('members.signInToAccept')}</Text>
           <AppButton
-            mode="contained"
+            variant="default"
             onPress={() =>
               router.replace({
                 pathname: routes.auth.login,
@@ -83,7 +83,7 @@ export default function InviteAcceptScreen() {
           <Text className="text-muted-foreground text-center text-sm">
             {t('members.acceptSuccessCount', { count: acceptedCount })}
           </Text>
-          <AppButton mode="contained" onPress={() => router.replace(routes.tabs.properties)}>
+          <AppButton variant="default" onPress={() => router.replace(routes.tabs.properties)}>
             {t('members.viewProperties')}
           </AppButton>
         </>
@@ -95,7 +95,7 @@ export default function InviteAcceptScreen() {
           {errorMessage ? (
             <Text className="text-destructive text-center text-sm">{errorMessage}</Text>
           ) : null}
-          <AppButton mode="contained" onPress={() => router.replace(routes.tabs.properties)}>
+          <AppButton variant="default" onPress={() => router.replace(routes.tabs.properties)}>
             {t('common.goHome')}
           </AppButton>
         </>

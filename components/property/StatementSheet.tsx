@@ -189,7 +189,7 @@ export function StatementSheet({
           </View>
         </View>
 
-        <AppButton mode="contained" loading={exporting} onPress={handleExport}>
+        <AppButton variant="default" loading={exporting} onPress={handleExport}>
           {t('statement.generate')}
         </AppButton>
       </View>

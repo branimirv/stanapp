@@ -165,7 +165,7 @@ export function LoginScreen() {
       </View>
 
       <AppButton
-        mode="contained"
+        variant="default"
         loading={isSubmitting}
         disabled={!isValid}
         onPress={handleSubmit(onSubmit)}

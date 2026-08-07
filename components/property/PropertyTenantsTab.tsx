@@ -157,7 +157,7 @@ function PropertyTenantsTabComponent({
           style={[styles.ctaWrap, { paddingBottom: ctaBottom }]}
         >
           <AppButton
-            mode="contained"
+            variant="default"
             onPress={handleAddTenant}
             className="h-12 w-full"
             accessibilityLabel={t('tenants.addNew')}

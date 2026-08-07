@@ -265,7 +265,7 @@ function PropertyExpensesTabComponent({
           style={[styles.ctaWrap, { paddingBottom: ctaBottom }]}
         >
           <AppButton
-            mode="contained"
+            variant="default"
             onPress={handleAddExpense}
             className="h-12 w-full"
             accessibilityLabel={t('dashboard.addExpense')}

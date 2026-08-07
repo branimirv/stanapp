@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { Text } from '@/components/ui/text';
-import { Colors } from '@/constants/theme';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { cn } from '@/lib/utils';
 
 export interface ErrorStateProps {
@@ -23,6 +23,7 @@ export function ErrorState({
   className,
 }: ErrorStateProps) {
   const { t } = useTranslation();
+  const { theme } = useAppTheme();
 
   const displayMessage = message ?? t('errors.loadFailed');
   const displayRetryLabel = retryLabel ?? t('common.retry');
@@ -33,7 +34,7 @@ export function ErrorState({
       style={style}
     >
       <View className="mb-6 h-20 w-20 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/40">
-        <AlertCircle size={40} color={Colors.danger} strokeWidth={1.75} />
+        <AlertCircle size={40} color={theme.colors.neg} strokeWidth={1.75} />
       </View>
 
       <Text className="mb-2 text-center text-lg font-semibold">{t('common.error')}</Text>
@@ -43,7 +44,7 @@ export function ErrorState({
       <Text className="text-muted-foreground mb-6 text-center text-xs">{t('errors.retryHint')}</Text>
 
       {onRetry ? (
-        <AppButton mode="contained" onPress={onRetry} className="min-w-36">
+        <AppButton variant="default" onPress={onRetry} className="min-w-36">
           {displayRetryLabel}
         </AppButton>
       ) : null}

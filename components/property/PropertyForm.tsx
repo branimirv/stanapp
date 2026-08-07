@@ -322,7 +322,7 @@ export function PropertyForm({
         style={{ paddingBottom: Math.max(insets.bottom, 14) + 8 }}
       >
         <AppButton
-          mode="contained"
+          variant="default"
           loading={submitting}
           onPress={handleSubmit(onSubmit)}
           className="h-11 w-full"

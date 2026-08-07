@@ -177,11 +177,11 @@ export function QuickAddExpenseSheet({
           />
 
           <View className="mt-4 flex-row items-center justify-between">
-            <AppButton mode="text" onPress={handleMoreDetails}>
+            <AppButton variant="ghost" onPress={handleMoreDetails}>
               {t('expenses.moreDetails')}
             </AppButton>
             <AppButton
-              mode="contained"
+              variant="default"
               loading={isSubmitting}
               disabled={!isValid || isSubmitting}
               onPress={handleSave}

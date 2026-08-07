@@ -4,7 +4,6 @@ import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import {
   Modal,
-  Platform,
   Pressable,
   Text,
   View,
@@ -14,6 +13,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/ui/AppButton';
+import { MODAL_SHEET_BOTTOM_PADDING } from '@/constants/sheet';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { displayFontFamily } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
@@ -161,7 +161,7 @@ export function DashboardPeriodFilter({
         <View className="flex-1 justify-end bg-black/45">
           <View
             className="bg-surface rounded-t-2xl px-6 pt-6"
-            style={{ paddingBottom: Platform.OS === 'ios' ? 40 : 32 }}
+            style={{ paddingBottom: MODAL_SHEET_BOTTOM_PADDING }}
           >
             <Text className="text-fg mb-4 text-center text-base font-semibold">
               {t('dashboard.selectPeriod')}
@@ -215,10 +215,10 @@ export function DashboardPeriodFilter({
             </View>
 
             <View className="flex-row items-center justify-end gap-1">
-              <AppButton mode="text" onPress={closePicker}>
+              <AppButton variant="ghost" onPress={closePicker}>
                 {t('common.cancel')}
               </AppButton>
-              <AppButton mode="contained" onPress={handleConfirm} disabled={!canConfirmMonth}>
+              <AppButton variant="default" onPress={handleConfirm} disabled={!canConfirmMonth}>
                 {t('common.done')}
               </AppButton>
             </View>

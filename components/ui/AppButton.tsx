@@ -6,9 +6,12 @@ import { Fonts } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
 
 type PaperMode = 'contained' | 'outlined' | 'text' | 'elevated' | 'contained-tonal';
+type ButtonVariant = 'default' | 'outline' | 'ghost' | 'secondary' | 'destructive';
 
 export interface AppButtonProps {
   mode?: PaperMode;
+  /** Preferred over Paper-compat `mode` when provided */
+  variant?: ButtonVariant;
   loading?: boolean;
   disabled?: boolean;
   children?: React.ReactNode;
@@ -21,10 +24,7 @@ export interface AppButtonProps {
   accessibilityLabel?: string;
 }
 
-function mapModeToVariant(
-  mode: PaperMode,
-  textColor?: string,
-): 'default' | 'outline' | 'ghost' | 'secondary' | 'destructive' {
+function mapModeToVariant(mode: PaperMode, textColor?: string): ButtonVariant {
   if (textColor) return 'destructive';
   switch (mode) {
     case 'outlined':
@@ -45,6 +45,7 @@ export function AppButton({
   disabled,
   children,
   mode = 'contained',
+  variant: variantProp,
   onPress,
   style,
   textColor,
@@ -53,7 +54,7 @@ export function AppButton({
 }: AppButtonProps) {
   const { theme } = useAppTheme();
   const isDisabled = disabled || loading;
-  const variant = mapModeToVariant(mode, textColor);
+  const variant = variantProp ?? mapModeToVariant(mode, textColor);
   const spinnerColor =
     variant === 'default' || variant === 'destructive'
       ? theme.colors.onPrimary
