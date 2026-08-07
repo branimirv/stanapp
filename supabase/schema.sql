@@ -404,7 +404,8 @@ CREATE POLICY "Users can view own or co-member profiles" ON profiles FOR SELECT 
 );
 CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 
-CREATE POLICY "Members can view properties" ON properties FOR SELECT USING (is_property_member(id));
+CREATE POLICY "Members can view properties" ON properties
+  FOR SELECT USING (auth.uid() = user_id OR is_property_member(id));
 CREATE POLICY "Users can insert own properties" ON properties FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Owners and managers can update properties" ON properties
   FOR UPDATE
