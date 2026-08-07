@@ -68,3 +68,7 @@ export function useExpandableSearchState() {
     listKeyboardProps,
   };
 }
+
+export type ExpandableSearchBarControlProps = ReturnType<
+  typeof useExpandableSearchState
+>['searchBarControlProps'];

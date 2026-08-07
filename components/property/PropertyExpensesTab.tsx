@@ -1,50 +1,44 @@
 import { format as formatDateFns, parseISO } from 'date-fns';
-import { ChevronRight, Plus, Receipt } from 'lucide-react-native';
+import { Plus, Receipt } from 'lucide-react-native';
 import { memo, useCallback, useMemo, useState } from 'react';
 import {
+  FlatList,
   Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { ExpenseListRow } from '@/components/expense/ExpenseListRow';
+import { ExpenseListCardRow } from '@/components/expense/ExpenseListCardRow';
 import { PROPERTY_SCENE_TOP_GAP } from '@/components/property/PropertyTabBar';
 import { AppButton } from '@/components/ui/AppButton';
 import { DisplayAmount } from '@/components/ui/DisplayAmount';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { listPerformanceProps } from '@/constants/list';
 import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useExpenseCategories } from '@/hooks/useExpenseCategories';
+import { useExpenses } from '@/hooks/useExpenses';
+import { useRefetchOnFocus } from '@/hooks/useRefetchOnFocus';
 import { displayFontFamily } from '@/lib/fonts';
+import { routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
-import type { Expense, ExpenseCategory, Language } from '@/types/app.types';
+import type { Expense, Language } from '@/types/app.types';
+import { getCurrentMonthRange, isDateInRange } from '@/utils/dateRange';
 import { formatPeriod } from '@/utils/formatters';
 
 type PeriodFilter = 'current_month' | 'all';
 
-const PREVIEW_COUNT = 3;
-
 export interface PropertyExpensesTabProps {
-  expenses: Expense[];
-  monthExpenses: Expense[];
-  monthExpenseTotal: number;
-  month: number;
-  year: number;
-  isLoading: boolean;
+  propertyId: string;
   canManage: boolean;
   currency: string;
   language: Language;
-  categoryMap: Map<string, ExpenseCategory>;
-  refreshing: boolean;
-  onRefresh: () => void;
-  onSelectExpense: (expenseId: string) => void;
-  onAddExpense: () => void;
-  /** Clears floating header + tabs; content still peeks under glass. */
   contentTopInset?: number;
 }
 
@@ -55,28 +49,62 @@ function capitalizePeriod(label: string, language: Language): string {
 }
 
 function PropertyExpensesTabComponent({
-  expenses,
-  monthExpenses,
-  monthExpenseTotal,
-  month,
-  year,
-  isLoading,
+  propertyId,
   canManage,
   currency,
   language,
-  categoryMap,
-  refreshing,
-  onRefresh,
-  onSelectExpense,
-  onAddExpense,
   contentTopInset = 0,
 }: PropertyExpensesTabProps) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
-  const { colors, elevation } = theme;
+  const { colors } = theme;
   const insets = useSafeAreaInsets();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('current_month');
-  const [expanded, setExpanded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const { expenses, isLoading, refetch: refetchExpenses } = useExpenses({ propertyId });
+  const { categories, refetch: refetchCategories } = useExpenseCategories();
+
+  const refetchAll = useCallback(async () => {
+    await Promise.all([refetchExpenses(), refetchCategories()]);
+  }, [refetchCategories, refetchExpenses]);
+
+  useRefetchOnFocus(refetchAll);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetchAll();
+    setRefreshing(false);
+  }, [refetchAll]);
+
+  const handleSelectExpense = useCallback((expenseId: string) => {
+    router.push(routes.expense.detail(expenseId));
+  }, []);
+
+  const handleAddExpense = useCallback(() => {
+    router.push({ pathname: routes.expense.new, params: { propertyId } });
+  }, [propertyId]);
+
+  const currentMonthRange = useMemo(() => getCurrentMonthRange(), []);
+  const { month, year } = currentMonthRange;
+
+  const categoryMap = useMemo(
+    () => new Map(categories.map((c) => [c.id, c])),
+    [categories],
+  );
+
+  const monthExpenses = useMemo(
+    () =>
+      expenses.filter((expense) =>
+        isDateInRange(expense.billing_date, currentMonthRange.start, currentMonthRange.end),
+      ),
+    [currentMonthRange.end, currentMonthRange.start, expenses],
+  );
+
+  const monthExpenseTotal = useMemo(
+    () => monthExpenses.reduce((sum, expense) => sum + expense.amount, 0),
+    [monthExpenses],
+  );
 
   const listTopPad = (contentTopInset || 0) + PROPERTY_SCENE_TOP_GAP;
   const ctaBottom = Math.max(insets.bottom, 12) + 10;
@@ -87,15 +115,8 @@ function PropertyExpensesTabComponent({
 
   const sourceList = periodFilter === 'current_month' ? monthExpenses : sortedAll;
   const isEmptyList = sourceList.length === 0;
-  const listBottomPad =
-    canManage && !isEmptyList ? 72 + ctaBottom : Spacing.xxl;
+  const listBottomPad = canManage && !isEmptyList ? 72 + ctaBottom : Spacing.xxl;
 
-  const visibleExpenses = useMemo(() => {
-    if (expanded || sourceList.length <= PREVIEW_COUNT) return sourceList;
-    return sourceList.slice(0, PREVIEW_COUNT);
-  }, [expanded, sourceList]);
-
-  const hasMore = sourceList.length > PREVIEW_COUNT;
   const headerTotal =
     periodFilter === 'current_month'
       ? monthExpenseTotal
@@ -116,8 +137,78 @@ function PropertyExpensesTabComponent({
 
   const handlePeriodChange = useCallback((next: PeriodFilter) => {
     setPeriodFilter(next);
-    setExpanded(false);
   }, []);
+
+  const keyExtractor = useCallback((item: Expense) => item.id, []);
+
+  const renderItem = useCallback(
+    ({ item, index }: { item: Expense; index: number }) => (
+      <ExpenseListCardRow
+        expense={item}
+        category={categoryMap.get(item.category_id)}
+        currency={currency}
+        language={language}
+        index={index}
+        total={sourceList.length}
+        onPress={handleSelectExpense}
+      />
+    ),
+    [categoryMap, currency, handleSelectExpense, language, sourceList.length],
+  );
+
+  const listHeader = (
+    <>
+      <View className="bg-surface-2 mb-4.5 min-h-10 flex-row gap-1.25 rounded-full p-1">
+        {(
+          [
+            { value: 'current_month' as const, label: t('properties.expensePeriodThisMonth') },
+            { value: 'all' as const, label: t('properties.expensePeriodAll') },
+          ] as const
+        ).map((seg) => {
+          const on = periodFilter === seg.value;
+          return (
+            <Pressable
+              key={seg.value}
+              onPress={() => handlePeriodChange(seg.value)}
+              className={cn(
+                'flex-1 items-center justify-center rounded-full px-1 py-2',
+                on && 'bg-surface-3',
+              )}
+              accessibilityRole="button"
+              accessibilityState={{ selected: on }}
+            >
+              <Text
+                className={cn(
+                  'text-center text-xs font-semibold tracking-[-0.12px]',
+                  on ? 'text-fg' : 'text-muted',
+                )}
+              >
+                {seg.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {!isEmptyList ? (
+        <View className="mb-3 flex-row items-baseline justify-between gap-3">
+          <Text
+            className="text-fg flex-1 text-[19px] tracking-[-0.4px]"
+            style={{ fontFamily: displayFontFamily(theme.name) }}
+            numberOfLines={1}
+          >
+            {headerTitle}
+          </Text>
+          <DisplayAmount
+            amount={headerTotal}
+            currency={currency}
+            language={language}
+            size={22}
+          />
+        </View>
+      ) : null}
+    </>
+  );
 
   if (isLoading) {
     return (
@@ -130,48 +221,22 @@ function PropertyExpensesTabComponent({
 
   return (
     <View className="flex-1">
-      <ScrollView
+      <FlatList
+        className="flex-1"
+        data={sourceList}
+        keyExtractor={keyExtractor}
+        {...listPerformanceProps}
         contentContainerStyle={{
           paddingHorizontal: Spacing.gutter,
           paddingTop: listTopPad,
           paddingBottom: listBottomPad,
+          ...(isEmptyList ? { flexGrow: 1 } : null),
         }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
-      >
-        <View className="bg-surface-2 mb-4.5 min-h-10 flex-row gap-1.25 rounded-full p-1">
-          {(
-            [
-              { value: 'current_month' as const, label: t('properties.expensePeriodThisMonth') },
-              { value: 'all' as const, label: t('properties.expensePeriodAll') },
-            ] as const
-          ).map((seg) => {
-            const on = periodFilter === seg.value;
-            return (
-              <Pressable
-                key={seg.value}
-                onPress={() => handlePeriodChange(seg.value)}
-                className={cn(
-                  'flex-1 items-center justify-center rounded-full px-1 py-2',
-                  on && 'bg-surface-3',
-                )}
-                accessibilityRole="button"
-                accessibilityState={{ selected: on }}
-              >
-                <Text
-                  className={cn(
-                    'text-center text-xs font-semibold tracking-[-0.12px]',
-                    on ? 'text-fg' : 'text-muted',
-                  )}
-                >
-                  {seg.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {isEmptyList ? (
+        ListHeaderComponent={listHeader}
+        renderItem={renderItem}
+        ListEmptyComponent={
           <>
             <EmptyState
               icon={Receipt}
@@ -183,7 +248,7 @@ function PropertyExpensesTabComponent({
               subtitle={t('empty.noExpensesHint')}
               ctaLabel={canManage ? t('expenses.addNew') : undefined}
               ctaIcon={canManage ? Plus : undefined}
-              onCtaPress={canManage ? onAddExpense : undefined}
+              onCtaPress={canManage ? handleAddExpense : undefined}
             />
             {lastExpenseShortDate ? (
               <Text className="text-muted mt-6 text-center text-[10px] font-semibold tracking-[0.8px] uppercase">
@@ -191,59 +256,8 @@ function PropertyExpensesTabComponent({
               </Text>
             ) : null}
           </>
-        ) : (
-          <>
-            <View className="mb-3 flex-row items-baseline justify-between gap-3">
-              <Text
-                className="text-fg flex-1 text-[19px] tracking-[-0.4px]"
-                style={{ fontFamily: displayFontFamily(theme.name) }}
-                numberOfLines={1}
-              >
-                {headerTitle}
-              </Text>
-              <DisplayAmount
-                amount={headerTotal}
-                currency={currency}
-                language={language}
-                size={22}
-              />
-            </View>
-
-            <View
-              className="border-card-bd bg-surface mb-3.5 rounded-xl border px-4.5 pt-1 pb-1.5"
-              style={elevation.card}
-            >
-              {visibleExpenses.map((expense, index) => (
-                <ExpenseListRow
-                  key={expense.id}
-                  expense={expense}
-                  category={categoryMap.get(expense.category_id)}
-                  currency={currency}
-                  language={language}
-                  showDivider={index > 0}
-                  onPress={onSelectExpense}
-                />
-              ))}
-            </View>
-
-            {hasMore ? (
-              <Pressable
-                onPress={() => setExpanded((current) => !current)}
-                className="bg-surface-2 mb-2 min-h-12 flex-row items-center justify-center gap-1.5 rounded-full px-4.5"
-                accessibilityRole="button"
-                accessibilityState={{ expanded }}
-              >
-                <Text className="text-fg text-sm font-semibold">
-                  {expanded ? t('common.showLess') : t('properties.seeAllExpenses')}
-                </Text>
-                {!expanded ? (
-                  <ChevronRight size={16} color={colors.fg} strokeWidth={2} />
-                ) : null}
-              </Pressable>
-            ) : null}
-          </>
-        )}
-      </ScrollView>
+        }
+      />
 
       {canManage && !isEmptyList ? (
         <View
@@ -252,7 +266,7 @@ function PropertyExpensesTabComponent({
         >
           <AppButton
             mode="contained"
-            onPress={onAddExpense}
+            onPress={handleAddExpense}
             className="h-12 w-full"
             accessibilityLabel={t('dashboard.addExpense')}
             style={styles.ctaShadow}
