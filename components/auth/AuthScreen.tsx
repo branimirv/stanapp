@@ -3,6 +3,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
   Text,
   View,
   type StyleProp,
@@ -22,7 +23,7 @@ import { routes } from '@/lib/routes';
 
 /**
  * Auth shell — flat Naslov `--bg` (no ScreenAmbient).
- * Uses RN Text so Uniwind `text-base` cannot override mockup sizes.
+ * Layout flex via StyleSheet so a Uniwind miss cannot collapse the screen.
  */
 export function AuthScreen({
   children,
@@ -37,10 +38,10 @@ export function AuthScreen({
   const { t } = useTranslation();
 
   return (
-    <View className="bg-bg flex-1">
-      <SafeAreaView className="flex-1" edges={['top', 'right', 'bottom', 'left']}>
+    <View style={[styles.fill, { backgroundColor: theme.colors.bg }]}>
+      <SafeAreaView style={styles.fill} edges={['top', 'right', 'bottom', 'left']}>
         <KeyboardAvoidingView
-          className="flex-1"
+          style={styles.fill}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <ScrollView
@@ -91,24 +92,43 @@ export function AuthTitleBlock({
   const titleTok = Typography.display.screenTitle;
 
   return (
-    <View className="mb-6.5 pt-1.5" style={style}>
+    <View style={[{ marginBottom: 26, paddingTop: 6 }, style]}>
       {eyebrow ? (
-        <Text className="text-primary mb-3 text-xs leading-4 font-semibold tracking-[1.68px] uppercase">
+        <Text
+          style={{
+            color: theme.colors.primary,
+            marginBottom: 12,
+            fontSize: 12,
+            lineHeight: 16,
+            fontWeight: '600',
+            letterSpacing: 1.68,
+            textTransform: 'uppercase',
+          }}
+        >
           {eyebrow}
         </Text>
       ) : null}
       <Text
-        className="text-fg mb-2.5"
         style={{
+          color: theme.colors.fg,
           fontFamily: displayFontFamily(theme.name),
           fontSize: titleTok.size,
           lineHeight: Math.round(titleTok.size * 1.1),
           letterSpacing: titleTok.letterSpacing,
+          marginBottom: 10,
         }}
       >
         {title}
       </Text>
-      <Text className="text-muted text-[15px] leading-5.5">{subtitle}</Text>
+      <Text
+        style={{
+          color: theme.colors.muted,
+          fontSize: 15,
+          lineHeight: 22,
+        }}
+      >
+        {subtitle}
+      </Text>
     </View>
   );
 }
@@ -122,18 +142,36 @@ export function AuthFooter({
   actionLabel: string;
   href: typeof routes.auth.login | typeof routes.auth.register;
 }) {
+  const { theme } = useAppTheme();
+
   return (
-    <View className="mt-6.5 flex-row flex-wrap items-center justify-center">
-      <Text className="text-muted text-sm leading-5">
+    <View style={styles.footer}>
+      <Text style={{ color: theme.colors.muted, fontSize: 14, lineHeight: 20 }}>
         {prompt}{' '}
       </Text>
       <Text
         onPress={() => router.push(href)}
         accessibilityRole="link"
-        className="text-primary text-sm leading-5 font-semibold"
+        style={{
+          color: theme.colors.primary,
+          fontSize: 14,
+          lineHeight: 20,
+          fontWeight: '600',
+        }}
       >
         {actionLabel}
       </Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  fill: { flex: 1 },
+  footer: {
+    marginTop: 26,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

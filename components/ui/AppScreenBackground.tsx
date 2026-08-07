@@ -7,17 +7,20 @@ import { useAppTheme } from '@/hooks/useAppTheme';
  * Solid Naslov `--bg` canvas for the app root and native tab scenes.
  * NativeTabs paints opaque scenes that hide the root fill, so each tab
  * layout wraps with this. Ambient brand wash removed — mockups are flat `--bg`.
+ *
+ * Layout uses StyleSheet `flex: 1` (not className). If Uniwind theme cache
+ * misses, `className="flex-1"` resolves to {} and the whole tree collapses
+ * to zero height — boot (absoluteFill) still shows, then a blank canvas.
  */
 export function AppScreenBackground({ children }: { children: ReactNode }) {
   const { theme } = useAppTheme();
 
   return (
     <View
-      className="flex-1"
       collapsable={false}
-      style={{ backgroundColor: theme.colors.bg }}
+      style={[styles.fill, { backgroundColor: theme.colors.bg }]}
     >
-      <View style={styles.content}>{children}</View>
+      <View style={styles.fill}>{children}</View>
     </View>
   );
 }
@@ -32,7 +35,7 @@ export function TabScreenBackground({ children }: { children: ReactNode }) {
 }
 
 const styles = StyleSheet.create({
-  content: {
+  fill: {
     flex: 1,
   },
 });

@@ -2,7 +2,7 @@ import '@/i18n';
 import '../global.css';
 
 import { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PortalHost } from '@rn-primitives/portal';
@@ -10,7 +10,6 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import Animated, { FadeOut } from 'react-native-reanimated';
 import 'react-native-reanimated';
 
 import i18n from '@/i18n';
@@ -48,16 +47,15 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <QueryClientProvider client={queryClient}>
-        <SafeAreaProvider>
+        <SafeAreaProvider style={styles.root}>
           <AppProviders>
             <RootStack isAuthenticated={isAuthenticated} />
             <Toast />
             <ConfirmDialog />
             {bootVisible ? (
-              <Animated.View
+              <View
                 style={[StyleSheet.absoluteFill, styles.bootOverlay]}
                 onLayout={onBootLaidOut}
-                exiting={FadeOut.duration(240)}
                 pointerEvents={boot.status === 'error' ? 'auto' : 'none'}
               >
                 {boot.status === 'error' ? (
@@ -65,7 +63,7 @@ export default function RootLayout() {
                 ) : (
                   <BootScreen />
                 )}
-              </Animated.View>
+              </View>
             ) : null}
           </AppProviders>
         </SafeAreaProvider>
