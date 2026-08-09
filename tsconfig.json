@@ -17,6 +17,7 @@
     "uniwind-types.d.ts"
   ],
   "exclude": [
-    "supabase/functions"
+    "supabase/functions",
+    "docs"
   ]
 }

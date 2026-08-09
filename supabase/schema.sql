@@ -198,6 +198,28 @@ CREATE TABLE property_status_history (
 CREATE INDEX idx_property_status_history_property
   ON property_status_history (property_id, started_at DESC);
 
+CREATE INDEX idx_expenses_property_billing_date
+  ON expenses (property_id, billing_date DESC);
+
+CREATE INDEX idx_expenses_property_due_unpaid
+  ON expenses (property_id, due_date)
+  WHERE paid_at IS NULL;
+
+CREATE INDEX idx_tenants_property_id
+  ON tenants (property_id);
+
+CREATE INDEX idx_tenants_property_active
+  ON tenants (property_id, is_active);
+
+CREATE INDEX idx_rent_payments_property_period
+  ON rent_payments (property_id, period_year DESC, period_month DESC);
+
+CREATE INDEX idx_rent_payments_tenant_id
+  ON rent_payments (tenant_id);
+
+CREATE INDEX idx_rent_payments_status_period
+  ON rent_payments (status, period_year, period_month);
+
 CREATE UNIQUE INDEX property_status_history_open_unique
   ON property_status_history (property_id)
   WHERE ended_at IS NULL;
@@ -508,7 +530,22 @@ GRANT EXECUTE ON FUNCTION accept_pending_invites_for_user() TO authenticated;
 INSERT INTO storage.buckets (id, name, public) VALUES ('receipts', 'receipts', false);
 INSERT INTO storage.buckets (id, name, public) VALUES ('property-photos', 'property-photos', true);
 
-CREATE POLICY "Authenticated users can upload receipts" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'receipts' AND auth.role() = 'authenticated');
-CREATE POLICY "Users can read own receipts" ON storage.objects FOR SELECT USING (bucket_id = 'receipts' AND auth.uid()::text = (storage.foldername(name))[1]);
-CREATE POLICY "Authenticated users can upload property photos" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'property-photos' AND auth.role() = 'authenticated');
-CREATE POLICY "Anyone can read property photos" ON storage.objects FOR SELECT USING (bucket_id = 'property-photos');
+CREATE POLICY "Users can upload own receipts" ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'receipts' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Users can read own receipts" ON storage.objects FOR SELECT
+  USING (bucket_id = 'receipts' AND auth.uid()::text = (storage.foldername(name))[1]);
+CREATE POLICY "Users can update own receipts" ON storage.objects FOR UPDATE TO authenticated
+  USING (bucket_id = 'receipts' AND (storage.foldername(name))[1] = auth.uid()::text)
+  WITH CHECK (bucket_id = 'receipts' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Users can delete own receipts" ON storage.objects FOR DELETE TO authenticated
+  USING (bucket_id = 'receipts' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+CREATE POLICY "Users can upload own property photos" ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'property-photos' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Anyone can read property photos" ON storage.objects FOR SELECT
+  USING (bucket_id = 'property-photos');
+CREATE POLICY "Users can update own property photos" ON storage.objects FOR UPDATE TO authenticated
+  USING (bucket_id = 'property-photos' AND (storage.foldername(name))[1] = auth.uid()::text)
+  WITH CHECK (bucket_id = 'property-photos' AND (storage.foldername(name))[1] = auth.uid()::text);
+CREATE POLICY "Users can delete own property photos" ON storage.objects FOR DELETE TO authenticated
+  USING (bucket_id = 'property-photos' AND (storage.foldername(name))[1] = auth.uid()::text);

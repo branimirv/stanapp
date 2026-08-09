@@ -6,6 +6,10 @@ import Svg, { Path } from 'react-native-svg';
 import { AppButton } from '@/components/ui/AppButton';
 import { signInWithGoogle } from '@/lib/auth';
 import { setPendingPostAuthRoute } from '@/lib/authDeepLinks';
+import {
+  clearPostAuthTransition,
+  markPostAuthTransition,
+} from '@/lib/postAuthTransition';
 import { routes } from '@/lib/routes';
 import { useUiStore } from '@/stores/uiStore';
 
@@ -50,12 +54,17 @@ export function GoogleSignInButton({
   const handlePress = async () => {
     setIsSubmitting(true);
     setPendingPostAuthRoute(returnTo);
+    markPostAuthTransition({ toastMessage: t('auth.loginSuccess') });
     const { error, cancelled } = await signInWithGoogle();
     setIsSubmitting(false);
 
-    if (cancelled) return;
+    if (cancelled) {
+      clearPostAuthTransition();
+      return;
+    }
 
     if (error) {
+      clearPostAuthTransition();
       if (__DEV__) {
         console.error('[GoogleSignIn]', error.message);
       }
@@ -65,9 +74,7 @@ export function GoogleSignInButton({
       });
       return;
     }
-
-    showToast({ message: t('auth.loginSuccess'), type: 'success' });
-    // Boot / auth Stack remount navigates via consumePendingPostAuthRoute.
+    // Success toast fires when the post-login BootScreen dismisses.
   };
 
   return (

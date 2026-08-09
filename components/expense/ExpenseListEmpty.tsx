@@ -7,6 +7,8 @@ import { EmptyState } from '@/components/ui/EmptyState';
 type ExpenseListEmptyProps = {
   search: string;
   activeFilterCount: number;
+  /** Property pill is outside the sheet filter count — still a scoped empty. */
+  isPropertyScoped?: boolean;
   lastExpenseShortDate: string | null;
   onCreatePress: () => void;
 };
@@ -15,11 +17,12 @@ type ExpenseListEmptyProps = {
 export function ExpenseListEmpty({
   search,
   activeFilterCount,
+  isPropertyScoped = false,
   lastExpenseShortDate,
   onCreatePress,
 }: ExpenseListEmptyProps) {
   const { t } = useTranslation();
-  const hasQuery = Boolean(search) || activeFilterCount > 0;
+  const hasQuery = Boolean(search) || activeFilterCount > 0 || isPropertyScoped;
 
   return (
     <>

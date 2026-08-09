@@ -39,7 +39,7 @@ export default function DashboardScreen() {
   const { t, i18n } = useTranslation();
   const { theme } = useAppTheme();
   const [period, setPeriod] = useState<DashboardPeriod>(getInitialPeriod);
-  const { stats, isLoading, error, refetch } = useDashboardStats(period);
+  const { stats, isLoading, isPeriodRefreshing, error, refetch } = useDashboardStats(period);
   const { properties, isLoading: propertiesLoading } = useProperties();
   const { profile } = useProfile();
   const [refreshing, setRefreshing] = useState(false);
@@ -143,98 +143,105 @@ export default function DashboardScreen() {
     >
       <DashboardHeader name={profile?.full_name} language={language} showAdd />
 
-      <DashboardPeriodFilter value={period} onChange={setPeriod} language={language} />
-
-      <NetIncomeCard
-        title={t('dashboard.netIncome')}
-        amount={stats.netIncome}
-        currency={stats.currency}
+      <DashboardPeriodFilter
+        value={period}
+        onChange={setPeriod}
         language={language}
-        deltaPct={stats.netDeltaPct}
-        previousAmount={previousNet}
+        isRefreshing={isPeriodRefreshing}
       />
 
-      <IncomeExpenseBays
-        incomeLabel={t('dashboard.income')}
-        incomeAmount={stats.totalRentIncome}
-        incomeDeltaPct={stats.incomeDeltaPct}
-        expenseLabel={t('dashboard.expenses')}
-        expenseAmount={stats.totalExpenses}
-        expenseDeltaPct={stats.expensesDeltaPct}
-        currency={stats.currency}
-        language={language}
-      />
-
-      <DashboardQuickActions />
-
-      {stats.expectedRent > 0 ? (
-        <RentCollectionCard
-          collected={stats.collectedRent}
-          expected={stats.expectedRent}
+      <View className={isPeriodRefreshing ? 'opacity-55' : undefined}>
+        <NetIncomeCard
+          title={t('dashboard.netIncome')}
+          amount={stats.netIncome}
           currency={stats.currency}
           language={language}
+          deltaPct={stats.netDeltaPct}
+          previousAmount={previousNet}
+        />
+
+        <IncomeExpenseBays
+          incomeLabel={t('dashboard.income')}
+          incomeAmount={stats.totalRentIncome}
+          incomeDeltaPct={stats.incomeDeltaPct}
+          expenseLabel={t('dashboard.expenses')}
+          expenseAmount={stats.totalExpenses}
+          expenseDeltaPct={stats.expensesDeltaPct}
+          currency={stats.currency}
+          language={language}
+        />
+
+        <DashboardQuickActions />
+
+        {stats.expectedRent > 0 ? (
+          <RentCollectionCard
+            collected={stats.collectedRent}
+            expected={stats.expectedRent}
+            currency={stats.currency}
+            language={language}
+            onPress={() => router.push(routes.tabs.properties)}
+          />
+        ) : null}
+
+        {stats.unpaidRentCount > 0 ? (
+          <DashboardAlertCard
+            tone="neg"
+            title={t('dashboard.unpaidRentCount', { count: stats.unpaidRentCount })}
+            subtitle={t('dashboard.unpaidRentAlert')}
+            onPress={() => router.push(routes.tabs.properties)}
+          />
+        ) : null}
+
+        {stats.overdueExpensesCount > 0 ? (
+          <DashboardAlertCard
+            tone="neg"
+            title={t('dashboard.overdueCount', { count: stats.overdueExpensesCount })}
+            subtitle={t('dashboard.overdueAlert')}
+            onPress={() =>
+              router.push({ pathname: routes.tabs.expenses, params: { filter: 'overdue' } })
+            }
+          />
+        ) : null}
+
+        {stats.upcomingDueCount > 0 ? (
+          <DashboardAlertCard
+            tone="warn"
+            title={t('dashboard.upcomingDueCount', { count: stats.upcomingDueCount })}
+            subtitle={t('dashboard.upcomingDueAlert')}
+            onPress={() =>
+              router.push({ pathname: routes.tabs.expenses, params: { filter: 'unpaid' } })
+            }
+          />
+        ) : null}
+
+        {stats.contractsExpiringCount > 0 ? (
+          <DashboardAlertCard
+            tone="primary"
+            title={t('dashboard.contractsExpiringCount', { count: stats.contractsExpiringCount })}
+            subtitle={t('dashboard.contractsExpiringAlert')}
+            onPress={() => router.push(routes.tabs.properties)}
+          />
+        ) : null}
+
+        <OccupancyCard
+          rentedCount={stats.rentedCount}
+          vacantCount={stats.vacantCount}
+          totalCount={stats.totalPropertiesCount}
           onPress={() => router.push(routes.tabs.properties)}
         />
-      ) : null}
 
-      {stats.unpaidRentCount > 0 ? (
-        <DashboardAlertCard
-          tone="neg"
-          title={t('dashboard.unpaidRentCount', { count: stats.unpaidRentCount })}
-          subtitle={t('dashboard.unpaidRentAlert')}
-          onPress={() => router.push(routes.tabs.properties)}
+        <RecentActivity
+          items={stats.recentActivity}
+          language={language}
+          onItemPress={(item) => {
+            if (item.type === 'rent_payment') {
+              router.push(routes.rent.detail(item.id));
+            } else {
+              router.push(routes.expense.detail(item.id));
+            }
+          }}
         />
-      ) : null}
-
-      {stats.overdueExpensesCount > 0 ? (
-        <DashboardAlertCard
-          tone="neg"
-          title={t('dashboard.overdueCount', { count: stats.overdueExpensesCount })}
-          subtitle={t('dashboard.overdueAlert')}
-          onPress={() =>
-            router.push({ pathname: routes.tabs.expenses, params: { filter: 'overdue' } })
-          }
-        />
-      ) : null}
-
-      {stats.upcomingDueCount > 0 ? (
-        <DashboardAlertCard
-          tone="warn"
-          title={t('dashboard.upcomingDueCount', { count: stats.upcomingDueCount })}
-          subtitle={t('dashboard.upcomingDueAlert')}
-          onPress={() =>
-            router.push({ pathname: routes.tabs.expenses, params: { filter: 'unpaid' } })
-          }
-        />
-      ) : null}
-
-      {stats.contractsExpiringCount > 0 ? (
-        <DashboardAlertCard
-          tone="primary"
-          title={t('dashboard.contractsExpiringCount', { count: stats.contractsExpiringCount })}
-          subtitle={t('dashboard.contractsExpiringAlert')}
-          onPress={() => router.push(routes.tabs.properties)}
-        />
-      ) : null}
-
-      <OccupancyCard
-        rentedCount={stats.rentedCount}
-        vacantCount={stats.vacantCount}
-        totalCount={stats.totalPropertiesCount}
-        onPress={() => router.push(routes.tabs.properties)}
-      />
-
-      <RecentActivity
-        items={stats.recentActivity}
-        language={language}
-        onItemPress={(item) => {
-          if (item.type === 'rent_payment') {
-            router.push(routes.rent.detail(item.id));
-          } else {
-            router.push(routes.expense.detail(item.id));
-          }
-        }}
-      />
+      </View>
     </ScrollView>,
     true,
   );

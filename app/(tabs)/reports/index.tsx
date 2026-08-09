@@ -56,15 +56,18 @@ export default function ReportsScreen() {
           propertyFilter={screen.propertyFilter}
           onPropertyPill={screen.handlePropertyPill}
           filterStateProps={screen.filterStateProps}
+          isFilterRefreshing={screen.isFilterRefreshing}
         />
 
-        <ReportBody
-          report={screen.report}
-          hasData={screen.hasData}
-          showPerProperty={screen.showPerProperty}
-          language={screen.language}
-          onAddExpense={screen.handleAddExpense}
-        />
+        <View className={screen.isFilterRefreshing ? 'opacity-55' : undefined}>
+          <ReportBody
+            report={screen.report}
+            hasData={screen.hasData}
+            showPerProperty={screen.showPerProperty}
+            language={screen.language}
+            onAddExpense={screen.handleAddExpense}
+          />
+        </View>
       </ScrollView>
 
       <ReportScreenActions

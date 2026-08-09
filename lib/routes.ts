@@ -49,4 +49,9 @@ export const routes = {
     new: '/rent/new',
     detail: (id: string) => `/rent/${id}` as const,
   },
+
+  /** Dev-only routes (registered under Stack.Protected when __DEV__). */
+  dev: {
+    navAudit: '/dev/nav-audit',
+  },
 } as const;

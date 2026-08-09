@@ -15,6 +15,10 @@ import { AppTextInput } from '@/components/ui/AppTextInput';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { signIn } from '@/lib/auth';
 import { resolveAuthReturnTo, setPendingPostAuthRoute } from '@/lib/authDeepLinks';
+import {
+  clearPostAuthTransition,
+  markPostAuthTransition,
+} from '@/lib/postAuthTransition';
 import { routes } from '@/lib/routes';
 import { useUiStore } from '@/stores/uiStore';
 import { translateFieldError } from '@/utils/formHelpers';
@@ -71,10 +75,14 @@ export function LoginScreen() {
   const onSubmit = async (values: LoginFormValues) => {
     setIsSubmitting(true);
     setPendingPostAuthRoute(returnTo);
+    // Mark before signIn so the auth listener can raise BootScreen in the
+    // same tick as setSession (avoids a tabs/skeleton flash).
+    markPostAuthTransition({ toastMessage: t('auth.loginSuccess') });
     const { error } = await signIn(values.email.trim(), values.password);
     setIsSubmitting(false);
 
     if (error) {
+      clearPostAuthTransition();
       showToast({ message: t('auth.loginFailed'), type: 'error' });
       return;
     }
@@ -83,9 +91,7 @@ export function LoginScreen() {
       rememberMe,
       email: rememberMe ? values.email.trim() : '',
     });
-
-    showToast({ message: t('auth.loginSuccess'), type: 'success' });
-    // Boot / auth Stack remount navigates via consumePendingPostAuthRoute.
+    // Success toast fires when the post-login BootScreen dismisses.
   };
 
   const { colors } = theme;

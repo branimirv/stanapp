@@ -56,10 +56,14 @@ CREATE TRIGGER protect_property_member_changes
   EXECUTE FUNCTION protect_property_member_changes();
 
 -- Membership role "tenant" is read-only co-access — no financial SELECT.
+-- Drop both names so re-runs are safe if schema.sql / a prior push already
+-- created the tighter policy.
 DROP POLICY IF EXISTS "Members can view expenses" ON expenses;
+DROP POLICY IF EXISTS "Owners and managers can view expenses" ON expenses;
 CREATE POLICY "Owners and managers can view expenses" ON expenses
   FOR SELECT USING (is_property_member(property_id, ARRAY['owner', 'manager']));
 
 DROP POLICY IF EXISTS "Members can view rent payments" ON rent_payments;
+DROP POLICY IF EXISTS "Owners and managers can view rent payments" ON rent_payments;
 CREATE POLICY "Owners and managers can view rent payments" ON rent_payments
   FOR SELECT USING (is_property_member(property_id, ARRAY['owner', 'manager']));

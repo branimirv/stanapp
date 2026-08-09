@@ -71,7 +71,10 @@ export function useExpensesScreen() {
   const expenseStatus = statusFilter === 'all' ? undefined : statusFilter;
   const propertyId = propertyFilter === 'all' ? undefined : propertyFilter;
 
-  const { expenses, isLoading, error, refetch } = useExpenses({
+  // Unfiltered list — keeps property pills / filter chrome visible when the
+  // active property (or status) filter returns zero rows.
+  const { expenses: accountExpenses } = useExpenses();
+  const { expenses, isLoading, isFilterRefreshing, error, refetch } = useExpenses({
     status: expenseStatus,
     propertyId,
   });
@@ -193,7 +196,7 @@ export function useExpensesScreen() {
     [currentMonth, currentYear, scopedExpenses],
   );
 
-  const hasAnyExpenses = expenses.length > 0;
+  const hasAnyExpenses = accountExpenses.length > 0;
   const isEmptyList = filteredExpenses.length === 0;
   const isTrueEmpty = !hasAnyExpenses;
   const periodLabel = formatExpensePeriodLabel(period, language, t);
@@ -201,21 +204,22 @@ export function useExpensesScreen() {
     propertyFilter === 'all'
       ? t('reports.allProperties')
       : (propertyMap.get(propertyFilter)?.name ?? t('reports.allProperties'));
-  const eyebrowText = isTrueEmpty
-    ? t('expenses.eyebrowScope', { period: periodLabel, scope: scopeLabel })
-    : t('expenses.eyebrow', {
-        period: periodLabel,
-        count: filteredExpenses.length,
-      });
+  const eyebrowText =
+    isTrueEmpty || propertyFilter !== 'all'
+      ? t('expenses.eyebrowScope', { period: periodLabel, scope: scopeLabel })
+      : t('expenses.eyebrow', {
+          period: periodLabel,
+          count: filteredExpenses.length,
+        });
 
   const lastExpenseShortDate = useMemo(() => {
-    if (expenses.length === 0) return null;
-    let latest = expenses[0].billing_date;
-    for (const expense of expenses) {
+    if (accountExpenses.length === 0) return null;
+    let latest = accountExpenses[0].billing_date;
+    for (const expense of accountExpenses) {
       if (expense.billing_date > latest) latest = expense.billing_date;
     }
     return formatDateFns(parseISO(latest), 'dd.MM.');
-  }, [expenses]);
+  }, [accountExpenses]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -262,12 +266,14 @@ export function useExpensesScreen() {
     expenses,
     filteredExpenses,
     isLoading,
+    isFilterRefreshing,
     error,
     refetch,
     properties,
     categoryMap,
     propertyMap,
     propertyFilter,
+    isPropertyScoped: propertyFilter !== 'all',
     language,
     currency,
     activeFilterCount,

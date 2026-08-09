@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { invalidateExpenseDomain } from '@/lib/queryInvalidation';
 import { queryKeys, type ExpenseListFilters } from '@/lib/queryKeys';
 import {
@@ -68,11 +68,15 @@ export function useExpenses(
     queryKey: queryKeys.expenses.list(filters),
     queryFn: () => fetchExpenses(filters),
     enabled: Boolean(user) && enabled,
+    // Keep the previous property/status list on screen while the next filter
+    // loads — avoids swapping Troškovi for skeletons on every pill tap.
+    placeholderData: keepPreviousData,
   });
 
   return {
     expenses: query.data ?? [],
     isLoading: query.isLoading,
+    isFilterRefreshing: query.isFetching && query.isPlaceholderData,
     error: queryErrorMessage(query.error),
     refetch: query.refetch,
     ...mutations,

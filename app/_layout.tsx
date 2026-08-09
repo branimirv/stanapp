@@ -1,8 +1,7 @@
-import '@/i18n';
 import '../global.css';
 
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PortalHost } from '@rn-primitives/portal';
@@ -23,6 +22,7 @@ import { useAuthDeepLinkSubscription } from '@/hooks/useAuthDeepLinkSubscription
 import { useAuthSessionGate } from '@/hooks/useAuthSessionGate';
 import { useProfile } from '@/hooks/useProfile';
 import { queryClient } from '@/lib/queryClient';
+import { Sentry } from '@/lib/sentry';
 import { NAV_THEME } from '@/lib/theme';
 
 export { ErrorBoundary } from 'expo-router';
@@ -40,7 +40,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 // Cross-fade the native layer out instead of cutting.
 SplashScreen.setOptions({ duration: 260, fade: true });
 
-export default function RootLayout() {
+function RootLayout() {
   const { boot, bootVisible, isAuthenticated, onBootLaidOut } = useAuthSessionGate();
   useAuthDeepLinkSubscription();
 
@@ -52,25 +52,33 @@ export default function RootLayout() {
             <RootStack isAuthenticated={isAuthenticated} />
             <Toast />
             <ConfirmDialog />
-            {bootVisible ? (
-              <View
-                style={[StyleSheet.absoluteFill, styles.bootOverlay]}
-                onLayout={onBootLaidOut}
-                pointerEvents={boot.status === 'error' ? 'auto' : 'none'}
-              >
+            {/*
+              Modal sits above NativeTabs (a sibling View cannot). Used for cold
+              start and the post-login handoff so skeletons never flash through.
+            */}
+            <Modal
+              visible={bootVisible}
+              animationType="fade"
+              presentationStyle="fullScreen"
+              statusBarTranslucent
+              onShow={onBootLaidOut}
+            >
+              <View style={styles.root} onLayout={onBootLaidOut}>
                 {boot.status === 'error' ? (
                   <BootError message={boot.error.message} onRetry={boot.retry} />
                 ) : (
                   <BootScreen />
                 )}
               </View>
-            ) : null}
+            </Modal>
           </AppProviders>
         </SafeAreaProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );
 }
+
+export default Sentry.wrap(RootLayout);
 
 function AppProviders({ children }: { children: React.ReactNode }) {
   const { profile } = useProfile();
@@ -131,9 +139,6 @@ function RootStack({ isAuthenticated }: { isAuthenticated: boolean }) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-  },
-  bootOverlay: {
-    zIndex: 10,
   },
   transparentScreen: {
     backgroundColor: 'transparent',
