@@ -101,6 +101,16 @@ export default function MeScreen() {
           onOpenPrivacy={() => Linking.openURL('https://stanapp.app/privacy')}
           onSignOut={me.handleSignOut}
         />
+
+        {__DEV__ ? (
+          <Text
+            className="text-muted mt-6 text-[11px] font-semibold tracking-[1.54px] uppercase"
+            onPress={() => router.push(routes.dev.navAudit)}
+            accessibilityRole="button"
+          >
+            Dev · Nav audit
+          </Text>
+        ) : null}
       </ScrollView>
 
       <FloatingScreenActions align="right">

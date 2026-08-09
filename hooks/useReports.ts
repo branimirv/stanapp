@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { fetchReportData } from '@/services/reports';
 import { useAuthStore } from '@/stores/authStore';
@@ -40,11 +40,15 @@ export function useReports(options: UseReportsOptions = {}) {
         categoryType,
       }),
     enabled: Boolean(user),
+    // Keep the previous period/property/category report on screen while the
+    // next filter loads — avoids swapping Analitika for skeletons on pill taps.
+    placeholderData: keepPreviousData,
   });
 
   return {
     report: query.data ?? null,
     isLoading: query.isLoading,
+    isFilterRefreshing: query.isFetching && query.isPlaceholderData,
     error: queryErrorMessage(query.error),
     refetch: query.refetch,
   };

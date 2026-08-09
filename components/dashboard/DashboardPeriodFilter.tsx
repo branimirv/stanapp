@@ -3,6 +3,7 @@ import { enUS, hr } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useCallback, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
   Text,
@@ -27,6 +28,8 @@ export interface DashboardPeriodFilterProps {
   value: DashboardPeriod;
   onChange: (period: DashboardPeriod) => void;
   language?: Language;
+  /** True while the newly selected period is still loading. */
+  isRefreshing?: boolean;
   style?: StyleProp<ViewStyle>;
   className?: string;
 }
@@ -50,6 +53,7 @@ export function DashboardPeriodFilter({
   value,
   onChange,
   language = 'hr',
+  isRefreshing = false,
   style,
   className,
 }: DashboardPeriodFilterProps) {
@@ -130,9 +134,10 @@ export function DashboardPeriodFilter({
 
         <Pressable
           onPress={openPicker}
-          className="bg-surface-2 flex-1 items-center justify-center rounded-full py-2.25"
+          className="bg-surface-2 relative flex-1 items-center justify-center rounded-full py-2.25"
           accessibilityRole="button"
           accessibilityLabel={t('dashboard.selectPeriod')}
+          accessibilityState={{ busy: isRefreshing }}
         >
           <Text
             className="text-fg text-center text-[15px] tracking-[-0.3px]"
@@ -141,6 +146,11 @@ export function DashboardPeriodFilter({
           >
             {displayLabel}
           </Text>
+          {isRefreshing ? (
+            <View className="absolute right-3 top-0 bottom-0 justify-center">
+              <ActivityIndicator size="small" color={colors.muted} />
+            </View>
+          ) : null}
         </Pressable>
 
         <Pressable

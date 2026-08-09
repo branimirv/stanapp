@@ -39,7 +39,7 @@ export function useReportsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  const { report, isLoading, error, refetch } = useReports({
+  const { report, isLoading, isFilterRefreshing, error, refetch } = useReports({
     period,
     propertyId: propertyFilter,
     categoryId: categoryFilter,
@@ -155,6 +155,7 @@ export function useReportsScreen() {
     properties,
     report,
     isLoading,
+    isFilterRefreshing,
     error,
     refetch,
     hasData,

@@ -76,3 +76,5 @@ docs/**
 !docs/optimization-plan.md
 CONTEXT.md
 .cursor/
+
+.env.local

@@ -1,5 +1,4 @@
-import type { ComponentProps } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -28,6 +27,8 @@ type ExpenseScreenListHeaderProps = {
   currency: string;
   language: Language;
   isEmptyList: boolean;
+  /** True while a new property/status query is still loading. */
+  isFilterRefreshing?: boolean;
 };
 
 /** Title, search, property pills, active chips, and summary bays for Troškovi. */
@@ -44,9 +45,11 @@ export function ExpenseScreenListHeader({
   currency,
   language,
   isEmptyList,
+  isFilterRefreshing = false,
 }: ExpenseScreenListHeaderProps) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
+  const { colors } = theme;
 
   return (
     <View>
@@ -123,21 +126,28 @@ export function ExpenseScreenListHeader({
                 </Pressable>
               );
             })}
+            {isFilterRefreshing ? (
+              <View className="h-8.5 w-8.5 items-center justify-center">
+                <ActivityIndicator size="small" color={colors.muted} />
+              </View>
+            ) : null}
           </ScrollView>
 
           <ExpenseActiveFilterChips {...filterStateProps} />
         </>
       ) : null}
 
-      <ExpenseSummaryBays
-        thisMonthLabel={t('expenses.thisMonthBay')}
-        thisMonthTotal={thisMonthTotal}
-        averageLabel={t('expenses.avgSixMonthsBay')}
-        sixMonthAverage={sixMonthAverage}
-        currency={currency}
-        language={language}
-        className={cn(isEmptyList ? 'mb-6.5' : 'mb-3.5')}
-      />
+      <View className={isFilterRefreshing ? 'opacity-55' : undefined}>
+        <ExpenseSummaryBays
+          thisMonthLabel={t('expenses.thisMonthBay')}
+          thisMonthTotal={thisMonthTotal}
+          averageLabel={t('expenses.avgSixMonthsBay')}
+          sixMonthAverage={sixMonthAverage}
+          currency={currency}
+          language={language}
+          className={cn(isEmptyList ? 'mb-6.5' : 'mb-3.5')}
+        />
+      </View>
     </View>
   );
 }

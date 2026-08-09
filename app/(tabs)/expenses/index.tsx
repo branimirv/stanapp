@@ -24,22 +24,25 @@ export default function ExpensesScreen() {
 
   const renderItem = useCallback(
     ({ item, index }: { item: Expense; index: number }) => (
-      <ExpenseListCardRow
-        expense={item}
-        category={screen.categoryMap.get(item.category_id)}
-        propertyName={screen.propertyMap.get(item.property_id)?.name}
-        currency={screen.currency}
-        language={screen.language}
-        index={index}
-        total={screen.filteredExpenses.length}
-        onPress={screen.handleExpensePress}
-      />
+      <View className={screen.isFilterRefreshing ? 'opacity-55' : undefined}>
+        <ExpenseListCardRow
+          expense={item}
+          category={screen.categoryMap.get(item.category_id)}
+          propertyName={screen.propertyMap.get(item.property_id)?.name}
+          currency={screen.currency}
+          language={screen.language}
+          index={index}
+          total={screen.filteredExpenses.length}
+          onPress={screen.handleExpensePress}
+        />
+      </View>
     ),
     [
       screen.categoryMap,
       screen.currency,
       screen.filteredExpenses.length,
       screen.handleExpensePress,
+      screen.isFilterRefreshing,
       screen.language,
       screen.propertyMap,
     ],
@@ -59,6 +62,7 @@ export default function ExpensesScreen() {
       currency={screen.currency}
       language={screen.language}
       isEmptyList={screen.isEmptyList}
+      isFilterRefreshing={screen.isFilterRefreshing}
     />
   );
 
@@ -115,6 +119,7 @@ export default function ExpensesScreen() {
           <ExpenseListEmpty
             search={screen.search}
             activeFilterCount={screen.activeFilterCount}
+            isPropertyScoped={screen.isPropertyScoped}
             lastExpenseShortDate={screen.lastExpenseShortDate}
             onCreatePress={screen.handleCreatePress}
           />

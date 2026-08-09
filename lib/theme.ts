@@ -27,7 +27,7 @@ export interface AppTheme {
   colors: Palette;
   radius: typeof Radius;
   spacing: typeof Spacing;
-  elevation: (typeof Elevation)['dark'];
+  elevation: (typeof Elevation)[ThemeName];
   typography: Omit<typeof Typography, 'displayWeight'> & {
     /** Already resolved for the active theme — '500' dark, '600' light. */
     displayWeight: '500' | '600';

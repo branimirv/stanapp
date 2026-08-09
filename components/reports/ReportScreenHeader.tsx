@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -17,6 +17,8 @@ type ReportScreenHeaderProps = {
   propertyFilter: string;
   onPropertyPill: (propertyId: string) => void;
   filterStateProps: ReportFiltersStateProps;
+  /** True while a new property/period/category query is still loading. */
+  isFilterRefreshing?: boolean;
 };
 
 /** Floating spacer, title, property pills, and active filter chips for Analitika. */
@@ -26,9 +28,11 @@ export function ReportScreenHeader({
   propertyFilter,
   onPropertyPill,
   filterStateProps,
+  isFilterRefreshing = false,
 }: ReportScreenHeaderProps) {
   const { t } = useTranslation();
   const { theme } = useAppTheme();
+  const { colors } = theme;
 
   return (
     <View>
@@ -54,7 +58,7 @@ export function ReportScreenHeader({
         showsHorizontalScrollIndicator={false}
         className="mb-3.5 grow-0"
         style={{ marginHorizontal: -theme.spacing.gutter }}
-        contentContainerClassName="flex-row gap-2 pb-px"
+        contentContainerClassName="flex-row items-center gap-2 pb-px"
         contentContainerStyle={{ paddingHorizontal: theme.spacing.gutter }}
       >
         <Pressable
@@ -97,6 +101,11 @@ export function ReportScreenHeader({
             </Pressable>
           );
         })}
+        {isFilterRefreshing ? (
+          <View className="h-8.5 w-8.5 items-center justify-center">
+            <ActivityIndicator size="small" color={colors.muted} />
+          </View>
+        ) : null}
       </ScrollView>
 
       <ReportActiveFilterChips {...filterStateProps} />

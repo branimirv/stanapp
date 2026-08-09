@@ -12,6 +12,10 @@ import { AppButton } from '@/components/ui/AppButton';
 import { AppTextInput } from '@/components/ui/AppTextInput';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { signUp } from '@/lib/auth';
+import {
+  clearPostAuthTransition,
+  markPostAuthTransition,
+} from '@/lib/postAuthTransition';
 import { routes } from '@/lib/routes';
 import { useUiStore } from '@/stores/uiStore';
 import { translateFieldError } from '@/utils/formHelpers';
@@ -42,6 +46,8 @@ export default function RegisterScreen() {
 
   const onSubmit = async (values: RegisterFormValues) => {
     setIsSubmitting(true);
+    // Mark before signUp so an immediate session can raise BootScreen in-sync.
+    markPostAuthTransition({ toastMessage: t('auth.registerSuccess') });
     const { error, needsEmailConfirmation } = await signUp(
       values.email.trim(),
       values.password,
@@ -50,14 +56,16 @@ export default function RegisterScreen() {
     setIsSubmitting(false);
 
     if (error) {
+      clearPostAuthTransition();
       showToast({ message: t('auth.registerFailed'), type: 'error' });
       return;
     }
 
     if (needsEmailConfirmation) {
+      clearPostAuthTransition();
       showToast({ message: t('auth.emailConfirmationNotice'), type: 'info' });
-    } else {
-      showToast({ message: t('auth.registerSuccess'), type: 'success' });
+      router.replace(routes.home);
+      return;
     }
 
     router.replace(routes.home);

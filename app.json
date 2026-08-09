@@ -74,10 +74,25 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.617435136110-gprog41jt73f6k3ms2v16ll8iu5t0a1m"
         }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://de.sentry.io/",
+          "project": "react-native",
+          "organization": "branimir-valentin"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f672e1e0-515a-471c-8956-984f1af72283"
+      },
+      "router": {}
+    },
+    "owner": "branimirv"
   }
 }

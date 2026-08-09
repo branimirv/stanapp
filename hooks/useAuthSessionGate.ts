@@ -1,16 +1,34 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 
 import { useBootstrap, type BootState } from '@/hooks/useBootstrap';
 import { onAuthStateChange } from '@/lib/auth';
 import { consumePendingPostAuthRoute } from '@/lib/authDeepLinks';
+import {
+  clearPostAuthTransition,
+  hasPostAuthTransition,
+  takePostAuthTransition,
+} from '@/lib/postAuthTransition';
+import { prefetchHomeData } from '@/lib/prefetchHomeData';
 import { routes } from '@/lib/routes';
 import { syncPendingInvites } from '@/lib/syncPendingInvites';
 import { useAuthStore } from '@/stores/authStore';
+import { useBootOverlayStore } from '@/stores/bootOverlayStore';
+import { useUiStore } from '@/stores/uiStore';
 
 /** Routes that signed-out users may stay on (no boot eject to login). */
 const PUBLIC_ROOT_SEGMENTS = new Set(['(auth)', 'invite', 'reset-password']);
+
+/** Floor so a warm prefetch doesn't make BootScreen flash and vanish. */
+const POST_AUTH_MIN_MS = 450;
+
+/** Cap so a dead network can't hold the overlay forever. */
+const POST_AUTH_MAX_MS = 6000;
+
+/** Let the signed-in stack paint under the Modal before we dismiss it. */
+const POST_AUTH_SETTLE_MS = 64;
 
 export interface AuthSessionGate {
   boot: BootState & { retry: () => void };
@@ -19,9 +37,13 @@ export interface AuthSessionGate {
   onBootLaidOut: () => void;
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * Keeps the auth store in sync, routes after bootstrap, and owns boot overlay
- * visibility. Does not change auth behavior — extracted from root layout.
+ * visibility (cold start + interactive post-login handoff).
  */
 export function useAuthSessionGate(): AuthSessionGate {
   const setSession = useAuthStore((state) => state.setSession);
@@ -29,26 +51,91 @@ export function useAuthSessionGate(): AuthSessionGate {
   const boot = useBootstrap();
   const router = useRouter();
   const segments = useSegments();
-  const [bootVisible, setBootVisible] = useState(true);
+  const bootVisible = useBootOverlayStore((state) => state.visible);
+  const showBoot = useBootOverlayStore((state) => state.show);
+  const hideBoot = useBootOverlayStore((state) => state.hide);
 
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = onAuthStateChange(async (_event, nextSession) => {
-      setSession(nextSession);
-      void syncPendingInvites(nextSession);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [setSession]);
+  const coldBootReleasedRef = useRef(false);
+  const postAuthGenerationRef = useRef(0);
 
   /** BootScreen has painted, so the native layer can go. */
   const onBootLaidOut = useCallback(() => {
     SplashScreen.hideAsync().catch(() => {});
   }, []);
 
-  /** Route once ready, then release the overlay. */
+  const finishPostAuthHandoff = useCallback(
+    async (nextSession: Session, toastMessage: string | null, startedAt: number) => {
+      const generation = ++postAuthGenerationRef.current;
+
+      try {
+        await Promise.race([prefetchHomeData(nextSession.user.id), sleep(POST_AUTH_MAX_MS)]);
+      } catch {
+        // Reveal anyway — home can show its own error/skeleton if needed.
+      }
+
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < POST_AUTH_MIN_MS) {
+        await sleep(POST_AUTH_MIN_MS - elapsed);
+      }
+
+      if (generation !== postAuthGenerationRef.current) return;
+
+      // Apply session only after prefetch so NativeTabs mount onto a warm cache.
+      setSession(nextSession);
+      void syncPendingInvites(nextSession);
+
+      await sleep(POST_AUTH_SETTLE_MS);
+      if (generation !== postAuthGenerationRef.current) return;
+      if (!useAuthStore.getState().session) return;
+
+      hideBoot();
+      if (toastMessage) {
+        useUiStore.getState().showToast({ message: toastMessage, type: 'success' });
+      }
+    },
+    [hideBoot, setSession],
+  );
+
   useEffect(() => {
+    const {
+      data: { subscription },
+    } = onAuthStateChange(async (_event, nextSession) => {
+      const hadSession = Boolean(useAuthStore.getState().session);
+      const signingIn = Boolean(nextSession) && !hadSession;
+      const signingOut = !nextSession && hadSession;
+
+      // Prefetch under the Modal *before* setSession — NativeTabs paint above
+      // a sibling View, so delaying the remount keeps the handoff covered.
+      if (coldBootReleasedRef.current && signingIn && nextSession && hasPostAuthTransition()) {
+        const transition = takePostAuthTransition();
+        showBoot();
+        useUiStore.getState().hideToast();
+        void finishPostAuthHandoff(
+          nextSession,
+          transition?.toastMessage ?? null,
+          Date.now(),
+        );
+        return;
+      }
+
+      if (signingOut) {
+        postAuthGenerationRef.current += 1;
+        clearPostAuthTransition();
+        if (coldBootReleasedRef.current) {
+          hideBoot();
+        }
+      }
+
+      setSession(nextSession);
+      void syncPendingInvites(nextSession);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [finishPostAuthHandoff, hideBoot, setSession, showBoot]);
+
+  /** Cold-start route once ready, then release the overlay (once). */
+  useEffect(() => {
+    if (coldBootReleasedRef.current) return;
     if (boot.status === 'loading') return;
 
     const root = segments[0];
@@ -67,13 +154,17 @@ export function useAuthSessionGate(): AuthSessionGate {
 
     // One frame of overlap so the routed screen is mounted underneath before
     // the boot screen fades; otherwise you see the app's background flash.
-    const id = setTimeout(() => setBootVisible(false), 32);
+    const id = setTimeout(() => {
+      coldBootReleasedRef.current = true;
+      hideBoot();
+    }, 32);
     return () => clearTimeout(id);
   }, [
     boot.status,
     boot.status === 'ready' ? boot.authenticated : false,
     segments,
     router,
+    hideBoot,
   ]);
 
   return {
