@@ -18,7 +18,7 @@ import { AppExpandableSearch } from '@/components/ui/AppExpandableSearch';
 import { BlurOverlay } from '@/components/ui/BlurOverlay';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { FLOATING_ACTIONS_ROW_HEIGHT } from '@/components/ui/FloatingScreenActions';
+import { useFloatingActionsInset } from '@/components/ui/FloatingScreenActions';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { listPerformanceProps } from '@/constants/list';
 import { useMyMemberships } from '@/hooks/useMembers';
@@ -53,6 +53,7 @@ export default function PropertiesScreen() {
 
   useRefetchOnFocus(refetchTenants);
   const { profile } = useProfile();
+  const floatingInset = useFloatingActionsInset();
 
   const membershipByProperty = useMemo(() => {
     const map = new Map<string, (typeof memberships)[number]>();
@@ -248,7 +249,7 @@ export default function PropertiesScreen() {
 
   const listHeader = (
     <View>
-      <View style={{ height: FLOATING_ACTIONS_ROW_HEIGHT }} />
+      <View style={{ height: floatingInset }} />
 
       <View className="mb-4">
         <Text className="text-muted mb-2.5 text-[11px] leading-3.5 font-semibold tracking-[1.54px] uppercase">

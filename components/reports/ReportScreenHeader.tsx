@@ -5,7 +5,7 @@ import {
   ReportActiveFilterChips,
   type ReportFiltersStateProps,
 } from '@/components/reports/ReportFilters';
-import { FLOATING_ACTIONS_ROW_HEIGHT } from '@/components/ui/FloatingScreenActions';
+import { useFloatingActionsInset } from '@/components/ui/FloatingScreenActions';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { displayFontFamily } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
@@ -33,10 +33,11 @@ export function ReportScreenHeader({
   const { t } = useTranslation();
   const { theme } = useAppTheme();
   const { colors } = theme;
+  const floatingInset = useFloatingActionsInset();
 
   return (
     <View>
-      <View style={{ height: FLOATING_ACTIONS_ROW_HEIGHT }} />
+      <View style={{ height: floatingInset }} />
 
       <View className="mb-4">
         <Text className="text-muted mb-2.5 text-[11px] leading-3.5 font-semibold tracking-[1.54px] uppercase">

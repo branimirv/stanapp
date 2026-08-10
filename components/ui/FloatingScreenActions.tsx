@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import { View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Platform, View } from 'react-native';
 
 import { HEADER_ACTION_SLOT, HEADER_EDGE_INSET } from '@/constants/header';
+import { useScreenTopInset } from '@/hooks/useScreenTopInset';
 
 interface FloatingScreenActionsProps {
   children?: ReactNode;
@@ -13,10 +13,18 @@ interface FloatingScreenActionsProps {
 /** Vertical space reserved under the status bar for floating actions (+ gap before titles). */
 export const FLOATING_ACTIONS_ROW_HEIGHT = HEADER_ACTION_SLOT + 24;
 
-/** Top padding so scroll content clears the floating action row. */
+/**
+ * Top padding so scroll content clears the floating action row.
+ * iOS tab ScrollViews already apply the status-bar inset via
+ * `contentInsetAdjustmentBehavior="automatic"` — only reserve the action row.
+ * Android needs the status-bar height included explicitly.
+ */
 export function useFloatingActionsInset() {
-  const insets = useSafeAreaInsets();
-  return insets.top + FLOATING_ACTIONS_ROW_HEIGHT;
+  const topInset = useScreenTopInset();
+  if (Platform.OS === 'ios') {
+    return FLOATING_ACTIONS_ROW_HEIGHT;
+  }
+  return topInset + FLOATING_ACTIONS_ROW_HEIGHT;
 }
 
 /**
@@ -27,7 +35,7 @@ export function FloatingScreenActions({
   children,
   align = 'right',
 }: FloatingScreenActionsProps) {
-  const insets = useSafeAreaInsets();
+  const topInset = useScreenTopInset();
 
   if (!children) return null;
 
@@ -36,7 +44,7 @@ export function FloatingScreenActions({
       pointerEvents="box-none"
       className="absolute z-20"
       style={{
-        top: insets.top + 4,
+        top: topInset + 4,
         elevation: 20,
         ...(align === 'left'
           ? { left: HEADER_EDGE_INSET }

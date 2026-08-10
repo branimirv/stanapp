@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HeaderBackButton } from '@/components/ui/HeaderBackButton';
 import { Text } from '@/components/ui/text';
 import { HEADER_ACTION_SLOT, HEADER_EDGE_INSET } from '@/constants/header';
+import { useScreenTopInset } from '@/hooks/useScreenTopInset';
 
 interface FloatingStackHeaderProps {
   title?: string;
@@ -23,8 +23,8 @@ const SIDE_SLOT = HEADER_ACTION_SLOT * 3 + 8;
 export const FLOATING_STACK_HEADER_HEIGHT = HEADER_ACTION_SLOT + 24;
 
 export function useFloatingStackHeaderInset() {
-  const insets = useSafeAreaInsets();
-  return insets.top + FLOATING_STACK_HEADER_HEIGHT;
+  const topInset = useScreenTopInset();
+  return topInset + FLOATING_STACK_HEADER_HEIGHT;
 }
 
 /**
@@ -36,7 +36,7 @@ export function FloatingStackHeader({
   hideTitle = true,
   right,
 }: FloatingStackHeaderProps) {
-  const insets = useSafeAreaInsets();
+  const topInset = useScreenTopInset();
   const showTitle = Boolean(title) && !hideTitle;
 
   return (
@@ -45,7 +45,7 @@ export function FloatingStackHeader({
       style={[
         styles.container,
         {
-          paddingTop: insets.top + 4,
+          paddingTop: topInset + 4,
           paddingHorizontal: HEADER_EDGE_INSET,
         },
       ]}

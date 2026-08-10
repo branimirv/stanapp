@@ -7,7 +7,7 @@ import {
 } from '@/components/expense/ExpenseFilters';
 import { ExpenseSummaryBays } from '@/components/expense/ExpenseSummaryBays';
 import { AppExpandableSearch } from '@/components/ui/AppExpandableSearch';
-import { FLOATING_ACTIONS_ROW_HEIGHT } from '@/components/ui/FloatingScreenActions';
+import { useFloatingActionsInset } from '@/components/ui/FloatingScreenActions';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import type { ExpandableSearchBarControlProps } from '@/hooks/useExpandableSearch';
 import { displayFontFamily } from '@/lib/fonts';
@@ -50,10 +50,11 @@ export function ExpenseScreenListHeader({
   const { t } = useTranslation();
   const { theme } = useAppTheme();
   const { colors } = theme;
+  const floatingInset = useFloatingActionsInset();
 
   return (
     <View>
-      <View style={{ height: FLOATING_ACTIONS_ROW_HEIGHT }} />
+      <View style={{ height: floatingInset }} />
 
       <View className="mb-3.5">
         <Text className="text-muted mb-2.5 text-[11px] leading-3.5 font-semibold tracking-[1.54px] uppercase">

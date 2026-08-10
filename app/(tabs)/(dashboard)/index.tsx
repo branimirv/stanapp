@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import { RefreshControl, ScrollView, View } from 'react-native';
+import { Platform, RefreshControl, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { DashboardAlertCard } from '@/components/dashboard/DashboardAlertCard';
@@ -26,6 +26,7 @@ import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { DashboardCreateActions } from '@/hooks/useDashboardCreateHeader';
 import { useProfile } from '@/hooks/useProfile';
 import { useProperties } from '@/hooks/useProperties';
+import { useScreenTopInset } from '@/hooks/useScreenTopInset';
 import { useTabBarStore } from '@/stores/tabBarStore';
 import { routes } from '@/lib/routes';
 import type { DashboardPeriod, Language } from '@/types/app.types';
@@ -38,6 +39,7 @@ function getInitialPeriod(): DashboardPeriod {
 export default function DashboardScreen() {
   const { t, i18n } = useTranslation();
   const { theme } = useAppTheme();
+  const topInset = useScreenTopInset();
   const [period, setPeriod] = useState<DashboardPeriod>(getInitialPeriod);
   const { stats, isLoading, isPeriodRefreshing, error, refetch } = useDashboardStats(period);
   const { properties, isLoading: propertiesLoading } = useProperties();
@@ -91,6 +93,8 @@ export default function DashboardScreen() {
   const contentPad = {
     paddingHorizontal: theme.spacing.gutter,
     paddingBottom: theme.spacing.scrollBottom,
+    // iOS uses contentInsetAdjustmentBehavior; Android needs explicit top inset.
+    ...(Platform.OS === 'android' ? { paddingTop: topInset } : null),
   };
 
   if ((isLoading || propertiesLoading) && !stats && !hasNoProperties) {

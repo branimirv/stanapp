@@ -1,7 +1,6 @@
 import { router, Stack } from 'expo-router';
 import { Bell } from 'lucide-react-native';
 import { Linking, Platform, RefreshControl, ScrollView, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   MePreferenceSheets,
@@ -20,10 +19,11 @@ import { HEADER_ACTION_SLOT, HEADER_ICON_SIZE, tabRootScreenOptions } from '@/co
 import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useMeScreen } from '@/hooks/useMeScreen';
+import { useScreenTopInset } from '@/hooks/useScreenTopInset';
 import { routes } from '@/lib/routes';
 
 export default function MeScreen() {
-  const insets = useSafeAreaInsets();
+  const topInset = useScreenTopInset();
   const { theme } = useAppTheme();
   const { colors } = theme;
   const me = useMeScreen();
@@ -56,7 +56,7 @@ export default function MeScreen() {
         contentContainerStyle={{
           flexGrow: 1,
           paddingHorizontal: theme.spacing.gutter,
-          paddingTop: Platform.OS === 'ios' ? Spacing.sm : insets.top + Spacing.sm,
+          paddingTop: Platform.OS === 'ios' ? Spacing.sm : topInset + Spacing.sm,
           paddingBottom: Spacing.scrollBottom,
         }}
         refreshControl={
