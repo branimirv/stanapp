@@ -20,7 +20,14 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(),
 }));
 
-jest.mock('react-native-get-random-values', () => ({}));
+jest.mock('expo-crypto', () => ({
+  getRandomValues: jest.fn((array: Uint8Array) => {
+    for (let i = 0; i < array.length; i += 1) {
+      array[i] = (i * 17) % 256;
+    }
+    return array;
+  }),
+}));
 
 const asyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 const secureStore = SecureStore as jest.Mocked<typeof SecureStore>;
@@ -55,18 +62,6 @@ describe('LargeSecureStore', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Deterministic AES key material for encrypt path.
-    jest.spyOn(globalThis.crypto, 'getRandomValues').mockImplementation((array) => {
-      const view = array as Uint8Array;
-      for (let i = 0; i < view.length; i += 1) {
-        view[i] = (i * 17) % 256;
-      }
-      return array;
-    });
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
   });
 
   it('encrypts on setItem and round-trips through getItem', async () => {

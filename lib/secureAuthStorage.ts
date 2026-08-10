@@ -1,8 +1,7 @@
-import 'react-native-get-random-values';
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { SupportedStorage } from '@supabase/supabase-js';
 import * as aesjs from 'aes-js';
+import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 
 const SECURE_STORE_OPTIONS: SecureStore.SecureStoreOptions = {
@@ -71,7 +70,7 @@ export function looksLikePlaintextSession(value: string): boolean {
 }
 
 async function encryptAndPersistKey(key: string, value: string): Promise<string> {
-  const encryptionKey = crypto.getRandomValues(new Uint8Array(256 / 8));
+  const encryptionKey = Crypto.getRandomValues(new Uint8Array(256 / 8));
   const cipher = new aesjs.ModeOfOperation.ctr(encryptionKey, new aesjs.Counter(1));
   const encryptedBytes = cipher.encrypt(aesjs.utils.utf8.toBytes(value));
 
