@@ -1,3 +1,5 @@
+import { useAppTheme } from '@/hooks/useAppTheme';
+
 export type AppHeaderVariant = 'tabRoot' | 'stack';
 
 interface UseAppHeaderOptionsParams {
@@ -7,15 +9,18 @@ interface UseAppHeaderOptionsParams {
 /**
  * Native header is hidden for both tab roots and pushed stacks.
  * Screens render FloatingScreenActions / FloatingStackHeader instead.
- * Screen fill stays transparent so root `ScreenAmbient` shows through.
+ * Screen cards use solid `--bg` so iOS push/pop doesn't ghost through
+ * transparent stack layers (property ↔ rent ↔ tenant).
  */
 export function useAppHeaderOptions({
   variant: _variant = 'stack',
 }: UseAppHeaderOptionsParams = {}) {
+  const { theme } = useAppTheme();
+
   return {
     headerShown: false,
     contentStyle: {
-      backgroundColor: 'transparent',
+      backgroundColor: theme.colors.bg,
     },
   };
 }

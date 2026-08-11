@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/FloatingStackHeader';
 import { GlassSurface } from '@/components/ui/GlassSurface';
 import { ScreenPageTitle } from '@/components/ui/ScreenPageTitle';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 /** When set, scroll shells should pad content under the floating header. */
 const StackChromeEdgeInsetContext = createContext<number | null>(null);
@@ -39,7 +40,7 @@ interface StackScreenChromeProps {
  * Titles live in content by default so long strings can wrap.
  * With `edgeToEdge`, the page title becomes a sticky liquid-glass bar so form
  * fields can scroll underneath and stay readable.
- * Ambient brand wash comes from root / tab `AppScreenBackground`.
+ * Solid `--bg` fill so stack transitions don't ghost the previous screen.
  */
 export function StackScreenChrome({
   title,
@@ -49,6 +50,7 @@ export function StackScreenChrome({
   chromeHidden = false,
   children,
 }: StackScreenChromeProps) {
+  const { theme } = useAppTheme();
   const inset = useFloatingStackHeaderInset();
   const showPageTitle = !hideHeaderTitle;
   const [stickyTitleHeight, setStickyTitleHeight] = useState(STICKY_TITLE_FALLBACK);
@@ -61,7 +63,10 @@ export function StackScreenChrome({
 
   return (
     <StackChromeEdgeInsetContext.Provider value={scrollEdgeInset}>
-      <View className="flex-1 bg-transparent" collapsable={false}>
+      <View
+        collapsable={false}
+        style={[styles.fill, { backgroundColor: theme.colors.bg }]}
+      >
         {!chromeHidden ? (
           <FloatingStackHeader title={title} hideTitle right={right} />
         ) : null}
@@ -100,6 +105,9 @@ export function StackScreenChrome({
 }
 
 const styles = StyleSheet.create({
+  fill: {
+    flex: 1,
+  },
   stickyTitle: {
     position: 'absolute',
     left: 0,

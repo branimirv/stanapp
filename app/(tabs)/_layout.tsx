@@ -64,6 +64,8 @@ export default function TabLayout() {
           | 'labeled'
           | 'unlabeled',
         disableIndicator: true,
+        // Kill Material press ripple (the light oval splash on tab tap).
+        rippleColor: 'transparent' as const,
         iconColor: {
           default: theme.colors.onSurfaceVariant,
           selected: theme.colors.primary,

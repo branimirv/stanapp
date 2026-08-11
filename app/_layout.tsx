@@ -102,6 +102,8 @@ function AppProviders({ children }: { children: React.ReactNode }) {
 }
 
 function RootStack({ isAuthenticated }: { isAuthenticated: boolean }) {
+  const { theme } = useAppTheme();
+
   return (
     <Stack
       // Force a clean navigator when auth flips. NativeTabs does not leave
@@ -109,7 +111,9 @@ function RootStack({ isAuthenticated }: { isAuthenticated: boolean }) {
       key={isAuthenticated ? 'signed-in' : 'signed-out'}
       screenOptions={{
         headerShown: false,
-        contentStyle: styles.transparentScreen,
+        // Opaque cards — transparent contentStyle ghosts property/rent/tenant
+        // through each other during iOS stack transitions.
+        contentStyle: { backgroundColor: theme.colors.bg },
       }}
     >
       {/* Fallback when app routes are protected — renders LoginScreen if signed out */}
@@ -139,8 +143,5 @@ function RootStack({ isAuthenticated }: { isAuthenticated: boolean }) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-  },
-  transparentScreen: {
-    backgroundColor: 'transparent',
   },
 });

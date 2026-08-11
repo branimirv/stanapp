@@ -25,6 +25,7 @@
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundColor": "#2563EB"
       },
+      "backgroundColor": "#0B0B0D",
       "package": "com.stanapp.mobile",
       "permissions": [
         "CAMERA",
