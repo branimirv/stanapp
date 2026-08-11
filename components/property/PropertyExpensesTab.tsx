@@ -220,11 +220,12 @@ function PropertyExpensesTabComponent({
   }
 
   return (
-    <View className="flex-1">
+    <View style={[styles.scene, { backgroundColor: colors.bg }]} collapsable={false}>
       <FlatList
         className="flex-1"
         data={sourceList}
         keyExtractor={keyExtractor}
+        style={{ backgroundColor: colors.bg }}
         {...listPerformanceProps}
         contentContainerStyle={{
           paddingHorizontal: Spacing.gutter,
@@ -287,6 +288,10 @@ function PropertyExpensesTabComponent({
 export const PropertyExpensesTab = memo(PropertyExpensesTabComponent);
 
 const styles = StyleSheet.create({
+  scene: {
+    width: '100%',
+    height: '100%',
+  },
   ctaWrap: {
     position: 'absolute',
     left: 0,

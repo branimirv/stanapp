@@ -1,5 +1,4 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import type { NavigationState, SceneRendererProps } from 'react-native-tab-view';
 
 import { GlassSurface } from '@/components/ui/GlassSurface';
 import { Text } from '@/components/ui/text';
@@ -7,8 +6,15 @@ import { Spacing } from '@/constants/theme';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { Fonts } from '@/lib/fonts';
 
-export interface PropertyTabBarProps extends SceneRendererProps {
-  navigationState: NavigationState<{ key: string; title?: string }>;
+export interface PropertyTabRoute {
+  key: string;
+  title?: string;
+}
+
+export interface PropertyTabBarProps {
+  routes: PropertyTabRoute[];
+  index: number;
+  onIndexChange: (index: number) => void;
 }
 
 /** Height of the floating segs row (padding + track). */
@@ -18,10 +24,9 @@ export const PROPERTY_TAB_BAR_HEIGHT = 40 + Spacing.sm * 2 + Spacing.xs;
 export const PROPERTY_SCENE_TOP_GAP = Spacing.md;
 
 /** Naslov `.segs` nav — liquid-glass track, surface3 selected (not picker primary). */
-export function PropertyTabBar({ navigationState, jumpTo }: PropertyTabBarProps) {
+export function PropertyTabBar({ routes, index, onIndexChange }: PropertyTabBarProps) {
   const { theme } = useAppTheme();
   const { colors } = theme;
-  const { routes, index: selectedIndex } = navigationState;
 
   return (
     <View pointerEvents="box-none" style={styles.wrap}>
@@ -32,11 +37,11 @@ export function PropertyTabBar({ navigationState, jumpTo }: PropertyTabBarProps)
         contentStyle={styles.trackContent}
       >
         {routes.map((route, routeIndex) => {
-          const isFocused = selectedIndex === routeIndex;
+          const isFocused = index === routeIndex;
           return (
             <Pressable
               key={route.key}
-              onPress={() => jumpTo(route.key)}
+              onPress={() => onIndexChange(routeIndex)}
               style={[
                 styles.seg,
                 isFocused ? { backgroundColor: colors.surface3 } : null,

@@ -174,6 +174,7 @@ function PropertyOverviewTabComponent({
 
   return (
     <ScrollView
+      style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={{
         paddingTop: listTopPad,
         paddingHorizontal: theme.spacing.gutter,

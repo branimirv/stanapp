@@ -114,10 +114,11 @@ function PropertyTenantsTabComponent({
   }
 
   return (
-    <View className="flex-1">
+    <View style={[styles.scene, { backgroundColor: colors.bg }]} collapsable={false}>
       <FlatList
         data={visibleTenants}
         keyExtractor={keyExtractor}
+        style={{ backgroundColor: colors.bg }}
         renderItem={renderTenant}
         contentContainerStyle={{
           paddingHorizontal: Spacing.gutter,
@@ -179,6 +180,10 @@ function PropertyTenantsTabComponent({
 export const PropertyTenantsTab = memo(PropertyTenantsTabComponent);
 
 const styles = StyleSheet.create({
+  scene: {
+    width: '100%',
+    height: '100%',
+  },
   ctaWrap: {
     position: 'absolute',
     left: 0,

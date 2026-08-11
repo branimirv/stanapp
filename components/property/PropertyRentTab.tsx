@@ -129,10 +129,11 @@ function PropertyRentTabComponent({
   }
 
   return (
-    <View className="flex-1">
+    <View style={[styles.scene, { backgroundColor: colors.bg }]} collapsable={false}>
       <FlatList
         data={visiblePayments}
         keyExtractor={keyExtractor}
+        style={{ backgroundColor: colors.bg }}
         renderItem={renderPayment}
         contentContainerStyle={{
           paddingHorizontal: Spacing.gutter,
@@ -211,6 +212,10 @@ function PropertyRentTabComponent({
 export const PropertyRentTab = memo(PropertyRentTabComponent);
 
 const styles = StyleSheet.create({
+  scene: {
+    width: '100%',
+    height: '100%',
+  },
   ctaWrap: {
     position: 'absolute',
     left: 0,
