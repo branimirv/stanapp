@@ -22,6 +22,7 @@ import {
   Fraunces_600SemiBold,
 } from '@expo-google-fonts/fraunces';
 
+import { prefetchHomeDataBounded } from '@/lib/prefetchHomeData';
 import { supabase } from '@/lib/supabase';
 import { syncPendingInvites } from '@/lib/syncPendingInvites';
 import { useAuthStore } from '@/stores/authStore';
@@ -118,11 +119,22 @@ export function useBootstrap(): BootState & { retry: () => void } {
         failure = e instanceof Error ? e : new Error(getErrorMessage(e, 'Session restore failed'));
       }
 
-      // Hold the floor.
+      // Brand floor + home warm-up in parallel for returning users so the
+      // splash covers prefetch "for free" when the network is quick.
       const elapsed = Date.now() - startedAt.current;
-      if (elapsed < MIN_VISIBLE_MS) {
-        await new Promise((r) => setTimeout(r, MIN_VISIBLE_MS - elapsed));
-      }
+      const remainingFloorMs = Math.max(0, MIN_VISIBLE_MS - elapsed);
+      const userId = useAuthStore.getState().session?.user.id;
+      const warmHome =
+        !failure && authenticated && userId
+          ? prefetchHomeDataBounded(userId)
+          : Promise.resolve();
+
+      await Promise.all([
+        remainingFloorMs > 0
+          ? new Promise<void>((r) => setTimeout(r, remainingFloorMs))
+          : Promise.resolve(),
+        warmHome,
+      ]);
 
       if (cancelled) return;
 

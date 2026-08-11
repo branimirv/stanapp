@@ -11,7 +11,7 @@ import {
   hasPostAuthTransition,
   takePostAuthTransition,
 } from '@/lib/postAuthTransition';
-import { prefetchHomeData } from '@/lib/prefetchHomeData';
+import { prefetchHomeDataBounded } from '@/lib/prefetchHomeData';
 import { routes } from '@/lib/routes';
 import { syncPendingInvites } from '@/lib/syncPendingInvites';
 import { useAuthStore } from '@/stores/authStore';
@@ -23,9 +23,6 @@ const PUBLIC_ROOT_SEGMENTS = new Set(['(auth)', 'invite', 'reset-password']);
 
 /** Floor so a warm prefetch doesn't make BootScreen flash and vanish. */
 const POST_AUTH_MIN_MS = 450;
-
-/** Cap so a dead network can't hold the overlay forever. */
-const POST_AUTH_MAX_MS = 6000;
 
 /** Let the signed-in stack paint under the Modal before we dismiss it. */
 const POST_AUTH_SETTLE_MS = 64;
@@ -67,11 +64,7 @@ export function useAuthSessionGate(): AuthSessionGate {
     async (nextSession: Session, toastMessage: string | null, startedAt: number) => {
       const generation = ++postAuthGenerationRef.current;
 
-      try {
-        await Promise.race([prefetchHomeData(nextSession.user.id), sleep(POST_AUTH_MAX_MS)]);
-      } catch {
-        // Reveal anyway — home can show its own error/skeleton if needed.
-      }
+      await prefetchHomeDataBounded(nextSession.user.id);
 
       const elapsed = Date.now() - startedAt;
       if (elapsed < POST_AUTH_MIN_MS) {
