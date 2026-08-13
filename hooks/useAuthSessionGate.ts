@@ -127,6 +127,8 @@ export function useAuthSessionGate(): AuthSessionGate {
   }, [finishPostAuthHandoff, hideBoot, setSession, showBoot]);
 
   /** Cold-start route once ready, then release the overlay (once). */
+  const bootAuthenticated = boot.status === 'ready' && boot.authenticated;
+
   useEffect(() => {
     if (coldBootReleasedRef.current) return;
     if (boot.status === 'loading') return;
@@ -135,9 +137,9 @@ export function useAuthSessionGate(): AuthSessionGate {
     const inAuthGroup = root === '(auth)';
     const isPublicRoot = typeof root === 'string' && PUBLIC_ROOT_SEGMENTS.has(root);
 
-    if (boot.status === 'ready' && boot.authenticated && inAuthGroup) {
+    if (boot.status === 'ready' && bootAuthenticated && inAuthGroup) {
       router.replace(consumePendingPostAuthRoute() as typeof routes.tabs.dashboard);
-    } else if (boot.status === 'ready' && !boot.authenticated && !isPublicRoot) {
+    } else if (boot.status === 'ready' && !bootAuthenticated && !isPublicRoot) {
       router.replace(routes.auth.login);
     } else if (boot.status === 'error') {
       // Restore failed — do not pretend they are signed out. The error panel
@@ -152,13 +154,7 @@ export function useAuthSessionGate(): AuthSessionGate {
       hideBoot();
     }, 32);
     return () => clearTimeout(id);
-  }, [
-    boot.status,
-    boot.status === 'ready' ? boot.authenticated : false,
-    segments,
-    router,
-    hideBoot,
-  ]);
+  }, [boot.status, bootAuthenticated, segments, router, hideBoot]);
 
   return {
     boot,
