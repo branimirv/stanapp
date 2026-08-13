@@ -103,7 +103,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:ci": "jest --ci --coverage=false",
-    "quality": "pnpm typecheck && pnpm lint && pnpm test:ci"
+    "quality": "pnpm typecheck && pnpm lint && pnpm test:ci",
+    "gen:types": "npx supabase gen types typescript --local --schema public > types/database.types.ts"
   },
   "private": true,
   "pnpm": {

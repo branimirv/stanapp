@@ -13,9 +13,11 @@ A mobile-first personal property management app for owners who manage multiple p
 ```bash
 pnpm install
 cp .env.example .env   # add Supabase (+ optional Google) keys
-# run supabase/schema.sql (and migrations) in your Supabase project
+# apply DB via migrations only: npx supabase db push  (or db reset locally)
 pnpm start
 ```
+
+See [docs/getting-started.md](docs/getting-started.md) for the full database setup.
 
 ---
 
