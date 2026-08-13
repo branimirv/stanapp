@@ -379,6 +379,13 @@ export type Database = {
             referencedRelation: 'users';
             referencedColumns: ['id'];
           },
+          {
+            foreignKeyName: 'property_members_profile_fkey',
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
         ];
       };
       property_invites: {
@@ -501,6 +508,13 @@ export type Database = {
       accept_pending_invites_for_user: {
         Args: Record<string, never>;
         Returns: number;
+      };
+      /** service_role only — used by invite-to-properties edge function */
+      auth_user_id_by_email: {
+        Args: {
+          p_email: string;
+        };
+        Returns: string | null;
       };
     };
     Enums: {
