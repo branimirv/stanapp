@@ -7,42 +7,45 @@ import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { Text } from '@/components/ui/text';
-import { queryKeys } from '@/lib/queryKeys';
+import { invalidateAcceptInvitesDomain } from '@/lib/queryInvalidation';
 import { routes } from '@/lib/routes';
 import { acceptPendingInvites } from '@/services/invites';
 import { useAuthStore } from '@/stores/authStore';
 import { getErrorMessage } from '@/utils/errors';
+
+type AcceptResult =
+  | { status: 'success'; count: number }
+  | { status: 'error'; message: string };
 
 export default function InviteAcceptScreen() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const session = useAuthStore((s) => s.session);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
-  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'auth'>('loading');
-  const [acceptedCount, setAcceptedCount] = useState(0);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [acceptResult, setAcceptResult] = useState<AcceptResult | null>(null);
+
+  const status: 'loading' | 'success' | 'error' | 'auth' = isAuthLoading
+    ? 'loading'
+    : !session
+      ? 'auth'
+      : (acceptResult?.status ?? 'loading');
 
   useEffect(() => {
-    if (isAuthLoading) return;
-
-    if (!session) {
-      setStatus('auth');
-      return;
-    }
+    if (isAuthLoading || !session) return;
 
     let cancelled = false;
     (async () => {
       try {
         const count = await acceptPendingInvites();
         if (cancelled) return;
-        await queryClient.invalidateQueries({ queryKey: queryKeys.properties.all });
-        await queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
-        setAcceptedCount(count);
-        setStatus('success');
+        invalidateAcceptInvitesDomain(queryClient);
+        setAcceptResult({ status: 'success', count });
       } catch (err) {
         if (cancelled) return;
-        setErrorMessage(getErrorMessage(err, t('members.acceptFailed')));
-        setStatus('error');
+        setAcceptResult({
+          status: 'error',
+          message: getErrorMessage(err, t('members.acceptFailed')),
+        });
       }
     })();
 
@@ -81,7 +84,9 @@ export default function InviteAcceptScreen() {
         <>
           <Text className="text-center text-lg font-semibold">{t('members.acceptSuccess')}</Text>
           <Text className="text-muted-foreground text-center text-sm">
-            {t('members.acceptSuccessCount', { count: acceptedCount })}
+            {t('members.acceptSuccessCount', {
+              count: acceptResult?.status === 'success' ? acceptResult.count : 0,
+            })}
           </Text>
           <AppButton variant="default" onPress={() => router.replace(routes.tabs.properties)}>
             {t('members.viewProperties')}
@@ -92,8 +97,8 @@ export default function InviteAcceptScreen() {
       {status === 'error' ? (
         <>
           <Text className="text-center text-lg font-semibold">{t('members.acceptFailed')}</Text>
-          {errorMessage ? (
-            <Text className="text-destructive text-center text-sm">{errorMessage}</Text>
+          {acceptResult?.status === 'error' && acceptResult.message ? (
+            <Text className="text-destructive text-center text-sm">{acceptResult.message}</Text>
           ) : null}
           <AppButton variant="default" onPress={() => router.replace(routes.tabs.properties)}>
             {t('common.goHome')}

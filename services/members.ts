@@ -9,30 +9,24 @@ import { throwQueryError } from '@/utils/errors';
 export async function fetchPropertyMembers(
   propertyId: string,
 ): Promise<PropertyMemberWithProfile[]> {
-  const { data: members, error } = await supabase
+  const { data, error } = await supabase
     .from('property_members')
-    .select('*')
+    .select('*, profile:profiles!property_members_profile_fkey(id, full_name)')
     .eq('property_id', propertyId)
     .eq('status', 'active')
     .order('created_at', { ascending: true });
 
   if (error) throwQueryError(error);
-  if (!members?.length) return [];
 
-  const userIds = members.map((member) => member.user_id);
-  const { data: profiles, error: profilesError } = await supabase
-    .from('profiles')
-    .select('id, full_name')
-    .in('id', userIds);
-
-  if (profilesError) throwQueryError(profilesError);
-
-  const profileMap = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
-
-  return members.map((member) => ({
-    ...member,
-    profile: profileMap.get(member.user_id) ?? null,
-  }));
+  return (data ?? []).map((row) => {
+    const { profile, ...member } = row as PropertyMember & {
+      profile: PropertyMemberWithProfile['profile'] | PropertyMemberWithProfile['profile'][];
+    };
+    return {
+      ...member,
+      profile: Array.isArray(profile) ? profile[0] ?? null : profile ?? null,
+    };
+  });
 }
 
 export async function fetchMyMemberships(): Promise<PropertyMember[]> {

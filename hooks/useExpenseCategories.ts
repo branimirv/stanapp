@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { invalidateCategoryDomain } from '@/lib/queryInvalidation';
 import { queryKeys } from '@/lib/queryKeys';
 import {
   createCustomCategory as createCustomCategoryService,
@@ -25,7 +26,7 @@ export function useExpenseCategories(options: { enabled?: boolean } = {}) {
       return createCustomCategoryService(user.id, name);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.expenseCategories.all });
+      invalidateCategoryDomain(queryClient);
     },
   });
 

@@ -1,19 +1,9 @@
 import { addDays, format, subMonths } from 'date-fns';
 import { supabase } from '@/lib/supabase';
+import { calcDeltaPct, getMonthRange } from '@/utils/dashboardPeriod';
 import { resolveCurrency } from '@/utils/currency';
 import type { DashboardPeriod, DashboardStats, RecentActivityItem } from '@/types/app.types';
 import { throwQueryError } from '@/utils/errors';
-
-function calcDeltaPct(current: number, previous: number): number | null {
-  if (previous === 0) return null;
-  return ((current - previous) / previous) * 100;
-}
-
-function getMonthRange(month: number, year: number) {
-  const monthStart = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
-  const monthEnd = format(new Date(year, month, 0), 'yyyy-MM-dd');
-  return { monthStart, monthEnd };
-}
 
 export async function fetchDashboardStats(
   userId: string,
@@ -65,7 +55,6 @@ export async function fetchDashboardStats(
     prevExpensesResult,
     propertiesResult,
     tenantsResult,
-    rentedPropertiesResult,
     monthPaymentsResult,
     overdueResult,
     upcomingResult,
@@ -78,18 +67,16 @@ export async function fetchDashboardStats(
     expensesQuery,
     prevRentQuery,
     prevExpensesQuery,
-    supabase.from('properties').select('id, usage_status').eq('is_archived', false),
+    supabase
+      .from('properties')
+      .select('id, usage_status, rent_amount, currency')
+      .eq('is_archived', false),
     supabase
       .from('tenants')
       .select('id, property_id, properties!inner(usage_status, is_archived)')
       .eq('is_active', true)
       .eq('properties.usage_status', 'rented')
       .eq('properties.is_archived', false),
-    supabase
-      .from('properties')
-      .select('id, rent_amount, currency')
-      .eq('is_archived', false)
-      .eq('usage_status', 'rented'),
     supabase
       .from('rent_payments')
       .select('property_id, status')
@@ -135,7 +122,6 @@ export async function fetchDashboardStats(
     prevExpensesResult.error ??
     propertiesResult.error ??
     tenantsResult.error ??
-    rentedPropertiesResult.error ??
     monthPaymentsResult.error ??
     overdueResult.error ??
     upcomingResult.error ??
@@ -156,13 +142,14 @@ export async function fetchDashboardStats(
   const netIncome = totalRentIncome - totalExpenses;
 
   const properties = propertiesResult.data ?? [];
-  const rentedCount = properties.filter((p) => p.usage_status === 'rented').length;
+  const rentedProperties = properties.filter((p) => p.usage_status === 'rented');
+  const rentedCount = rentedProperties.length;
   const vacantCount = properties.filter((p) => p.usage_status === 'vacant').length;
   const totalPropertiesCount = properties.length;
 
   const activeTenantPropertyIds = new Set((tenantsResult.data ?? []).map((t) => t.property_id));
 
-  const expectedRent = (rentedPropertiesResult.data ?? [])
+  const expectedRent = rentedProperties
     .filter((p) => activeTenantPropertyIds.has(p.id))
     .reduce((sum, p) => sum + Number(p.rent_amount), 0);
 
@@ -170,7 +157,7 @@ export async function fetchDashboardStats(
     (monthPaymentsResult.data ?? []).filter((p) => p.status === 'paid').map((p) => p.property_id),
   );
 
-  const unpaidRentCount = (rentedPropertiesResult.data ?? []).filter(
+  const unpaidRentCount = rentedProperties.filter(
     (p) => activeTenantPropertyIds.has(p.id) && !paidPropertyIds.has(p.id),
   ).length;
 
