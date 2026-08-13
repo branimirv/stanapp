@@ -103,6 +103,7 @@ Deno.serve(async (req) => {
     let authInviteSent = false;
     if (!existingUser) {
       const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+        // Must match `deepLinks.invite` in lib/routes.ts and supabase/config.toml.
         redirectTo: 'stanapp://invite',
       });
 

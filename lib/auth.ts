@@ -7,6 +7,7 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 
+import { deepLinks } from '@/lib/routes';
 import { supabase } from '@/lib/supabase';
 
 export interface AuthResult {
@@ -140,7 +141,7 @@ export async function signOut(): Promise<AuthResult> {
 
 export async function resetPassword(email: string): Promise<AuthResult> {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: 'stanapp://reset-password',
+    redirectTo: deepLinks.resetPassword,
   });
   return { error };
 }

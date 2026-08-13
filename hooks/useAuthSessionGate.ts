@@ -12,14 +12,14 @@ import {
   takePostAuthTransition,
 } from '@/lib/postAuthTransition';
 import { prefetchHomeDataBounded } from '@/lib/prefetchHomeData';
-import { routes } from '@/lib/routes';
+import { deepLinkPaths, routes } from '@/lib/routes';
 import { syncPendingInvites } from '@/lib/syncPendingInvites';
 import { useAuthStore } from '@/stores/authStore';
 import { useBootOverlayStore } from '@/stores/bootOverlayStore';
 import { useUiStore } from '@/stores/uiStore';
 
 /** Routes that signed-out users may stay on (no boot eject to login). */
-const PUBLIC_ROOT_SEGMENTS = new Set(['(auth)', 'invite', 'reset-password']);
+const PUBLIC_ROOT_SEGMENTS = new Set(['(auth)', deepLinkPaths.invite, deepLinkPaths.resetPassword]);
 
 /** Floor so a warm prefetch doesn't make BootScreen flash and vanish. */
 const POST_AUTH_MIN_MS = 450;

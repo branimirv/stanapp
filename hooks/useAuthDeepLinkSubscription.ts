@@ -5,7 +5,7 @@ import {
   setPendingPostAuthRoute,
   subscribeToAuthDeepLinks,
 } from '@/lib/authDeepLinks';
-import { routes } from '@/lib/routes';
+import { deepLinkPaths, routes } from '@/lib/routes';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 
@@ -21,9 +21,9 @@ export function useAuthDeepLinkSubscription() {
         showToast({ message: result.error, type: 'error' });
       }
 
-      if (result.path === 'reset-password') {
+      if (result.path === deepLinkPaths.resetPassword) {
         setPendingPostAuthRoute(routes.resetPassword);
-      } else if (result.path === 'invite' || url.includes('invite')) {
+      } else if (result.path === deepLinkPaths.invite || url.includes(deepLinkPaths.invite)) {
         setPendingPostAuthRoute(routes.invite);
       }
 
@@ -33,11 +33,11 @@ export function useAuthDeepLinkSubscription() {
         setSession(result.session);
       }
 
-      if (result.path === 'reset-password') {
+      if (result.path === deepLinkPaths.resetPassword) {
         router.replace(routes.resetPassword);
         return;
       }
-      if (result.path === 'invite' || url.includes('invite')) {
+      if (result.path === deepLinkPaths.invite || url.includes(deepLinkPaths.invite)) {
         router.replace(routes.invite);
       }
     });

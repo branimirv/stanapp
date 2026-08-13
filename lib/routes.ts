@@ -55,3 +55,25 @@ export const routes = {
     navAudit: '/dev/nav-audit',
   },
 } as const;
+
+/** Must match `expo.scheme` in app.json. */
+export const APP_SCHEME = 'stanapp';
+
+function pathSlug<P extends string>(path: P): P extends `/${infer Rest}` ? Rest : P {
+  return (path.startsWith('/') ? path.slice(1) : path) as P extends `/${infer Rest}` ? Rest : P;
+}
+
+/** Host/path used in `stanapp://…` auth callbacks (and Expo Router root segments). */
+export const deepLinkPaths = {
+  invite: pathSlug(routes.invite),
+  resetPassword: pathSlug(routes.resetPassword),
+} as const;
+
+/**
+ * Outbound auth redirects. Must match `additional_redirect_urls` in
+ * supabase/config.toml (that file cannot import this module).
+ */
+export const deepLinks = {
+  invite: `${APP_SCHEME}://${deepLinkPaths.invite}`,
+  resetPassword: `${APP_SCHEME}://${deepLinkPaths.resetPassword}`,
+} as const;

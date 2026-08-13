@@ -1,10 +1,10 @@
 import * as Linking from 'expo-linking';
 import type { Session } from '@supabase/supabase-js';
 
-import { routes } from '@/lib/routes';
+import { deepLinkPaths, routes } from '@/lib/routes';
 import { supabase } from '@/lib/supabase';
 
-export type AuthDeepLinkPath = 'invite' | 'reset-password' | null;
+export type AuthDeepLinkPath = (typeof deepLinkPaths)[keyof typeof deepLinkPaths] | null;
 
 export interface AuthDeepLinkResult {
   session: Session | null;
@@ -34,10 +34,10 @@ function parseCallbackUrl(url: string) {
 
   const pathCandidate = (parsed.path ?? parsed.hostname ?? '').replace(/^\//, '');
   const path: AuthDeepLinkPath =
-    pathCandidate === 'reset-password' || pathCandidate === 'invite'
+    pathCandidate === deepLinkPaths.resetPassword || pathCandidate === deepLinkPaths.invite
       ? pathCandidate
       : query.type === 'recovery'
-        ? 'reset-password'
+        ? deepLinkPaths.resetPassword
         : null;
 
   return { path, query };
@@ -77,7 +77,7 @@ export async function createSessionFromUrl(url: string): Promise<AuthDeepLinkRes
     return { session: data.session, path, error: null };
   }
 
-  // Path-only deep links (e.g. stanapp://invite) need no token exchange.
+  // Path-only deep links (e.g. deepLinks.invite) need no token exchange.
   return { session: null, path, error: null };
 }
 
