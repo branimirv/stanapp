@@ -1,9 +1,9 @@
-import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import type { SupabaseClient, User } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { createAdminClient } from '../_shared/admin.ts';
+import { requireUser } from '../_shared/auth.ts';
+import { handleCorsOptions } from '../_shared/cors.ts';
+import { clientErrorMessage, jsonResponse, requirePost } from '../_shared/http.ts';
 
 type MembershipRole = 'owner' | 'manager' | 'tenant';
 
@@ -13,47 +13,37 @@ interface InviteBody {
   propertyIds?: string[];
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ROLES: MembershipRole[] = ['owner', 'manager', 'tenant'];
+
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  const cors = handleCorsOptions(req);
+  if (cors) return cors;
+
+  const methodError = requirePost(req);
+  if (methodError) return methodError;
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const authed = await requireUser(req);
+    if (authed instanceof Response) return authed;
 
-    if (!supabaseUrl || !supabaseAnonKey || !serviceRoleKey) {
-      return jsonResponse({ error: 'Server misconfigured' }, 500);
+    const { userClient, user, supabaseUrl } = authed;
+
+    let body: InviteBody;
+    try {
+      body = (await req.json()) as InviteBody;
+    } catch {
+      return jsonResponse({ error: 'Invalid JSON body' }, 400);
     }
 
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return jsonResponse({ error: 'Missing authorization' }, 401);
-    }
-
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const {
-      data: { user },
-      error: userError,
-    } = await userClient.auth.getUser();
-
-    if (userError || !user) {
-      return jsonResponse({ error: 'Unauthorized' }, 401);
-    }
-
-    const body = (await req.json()) as InviteBody;
     const email = body.email?.trim().toLowerCase() ?? '';
     const role = body.role;
     const propertyIds = Array.from(new Set(body.propertyIds ?? []));
 
-    if (!email || !email.includes('@')) {
+    if (!email || !EMAIL_RE.test(email)) {
       return jsonResponse({ error: 'Valid email is required' }, 400);
     }
-    if (!role || !['owner', 'manager', 'tenant'].includes(role)) {
+    if (!role || !ROLES.includes(role)) {
       return jsonResponse({ error: 'Valid role is required' }, 400);
     }
     if (propertyIds.length === 0) {
@@ -73,17 +63,22 @@ Deno.serve(async (req) => {
       .in('property_id', propertyIds);
 
     if (ownershipError) {
-      return jsonResponse({ error: ownershipError.message }, 400);
+      return jsonResponse(
+        { error: clientErrorMessage(ownershipError, 'Could not verify ownership') },
+        400,
+      );
     }
 
-    const ownedIds = new Set((ownedRows ?? []).map((row) => row.property_id));
+    const ownedIds = new Set((ownedRows ?? []).map((row) => row.property_id as string));
     const unauthorized = propertyIds.filter((id) => !ownedIds.has(id));
     if (unauthorized.length > 0) {
       return jsonResponse({ error: 'You must be an owner of every selected property' }, 403);
     }
 
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
-    const existingUser = await findUserByEmail(adminClient, email);
+    const admin = createAdminClient(supabaseUrl);
+    if ('response' in admin) return admin.response;
+
+    const existingUser = await findUserByEmail(admin.client, email);
 
     const batchId = crypto.randomUUID();
     const inviteRows = propertyIds.map((propertyId) => ({
@@ -97,19 +92,25 @@ Deno.serve(async (req) => {
 
     const { error: insertError } = await userClient.from('property_invites').insert(inviteRows);
     if (insertError) {
-      return jsonResponse({ error: insertError.message }, 400);
+      return jsonResponse(
+        { error: clientErrorMessage(insertError, 'Could not create invites') },
+        400,
+      );
     }
 
     let authInviteSent = false;
     if (!existingUser) {
-      const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+      const { error: inviteError } = await admin.client.auth.admin.inviteUserByEmail(email, {
         // Must match `deepLinks.invite` in lib/routes.ts and supabase/config.toml.
         redirectTo: 'stanapp://invite',
       });
 
       if (inviteError) {
         await userClient.from('property_invites').delete().eq('batch_id', batchId);
-        return jsonResponse({ error: inviteError.message }, 400);
+        return jsonResponse(
+          { error: clientErrorMessage(inviteError, 'Could not send invite email') },
+          400,
+        );
       }
 
       authInviteSent = true;
@@ -121,32 +122,25 @@ Deno.serve(async (req) => {
       authInviteSent,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unexpected error';
-    return jsonResponse({ error: message }, 500);
+    return jsonResponse(
+      { error: clientErrorMessage(error, 'Unexpected error') },
+      500,
+    );
   }
 });
 
-async function findUserByEmail(adminClient: SupabaseClient, email: string) {
-  let page = 1;
-  const perPage = 1000;
-
-  while (page <= 10) {
-    const { data, error } = await adminClient.auth.admin.listUsers({ page, perPage });
-    if (error) throw error;
-
-    const match = data.users.find((candidate) => candidate.email?.toLowerCase() === email);
-    if (match) return match;
-
-    if (data.users.length < perPage) break;
-    page += 1;
-  }
-
-  return null;
-}
-
-function jsonResponse(body: Record<string, unknown>, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+/** Prefer RPC lookup over paging Auth Admin listUsers. */
+async function findUserByEmail(
+  adminClient: SupabaseClient,
+  email: string,
+): Promise<Pick<User, 'id'> | null> {
+  const { data, error } = await adminClient.rpc('auth_user_id_by_email', {
+    p_email: email,
   });
+
+  if (error) throw error;
+  if (typeof data === 'string' && data.length > 0) {
+    return { id: data };
+  }
+  return null;
 }

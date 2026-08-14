@@ -29,7 +29,7 @@ stanapp/
 ├── utils/                    # Pure domain helpers (formatters, validators, export)
 ├── constants/                # Theme tokens (JS mirror), static config
 ├── global.css                # Uniwind / Naslov CSS variables (source of truth for hex)
-├── supabase/                 # schema.sql, migrations, Edge Functions
+├── supabase/                 # migrations (source of truth), Edge Functions, reference schema dump
 ├── docs/                     # Product & engineering docs (often local / gitignored)
 ├── screenshots/              # Durable before/after captures
 ├── tmp/                      # Throwaway scratch (gitignored) — not app structure

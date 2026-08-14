@@ -40,6 +40,7 @@ Execute **one plan at a time**. Each is scoped for 1–2 PRs. Shared rules live 
 | 6 | [State & data layer](./06-state-data-layer.md) | ✅ |
 | 7 | [Root hygiene](./07-root-hygiene.md) | ✅ |
 | 8 | [Architecture extras](./08-architecture-extras.md) | ✅ |
+| 9 | [Backend modularization](./09-backend.md) | ✅ |
 
 All plans complete. Optional polish leftovers (chart memo isolation, broader expo-image, Material typography retirement) are noted inside individual plan docs.
 

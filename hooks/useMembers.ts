@@ -1,5 +1,10 @@
 import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  invalidateAcceptInvitesDomain,
+  invalidateInviteDomain,
+  invalidateMemberDomain,
+} from '@/lib/queryInvalidation';
 import { queryKeys } from '@/lib/queryKeys';
 import {
   acceptPendingInvites,
@@ -77,9 +82,7 @@ export function usePropertyMembers(propertyId: string | undefined) {
 
   const invalidate = useCallback(() => {
     if (!propertyId) return;
-    queryClient.invalidateQueries({ queryKey: queryKeys.members.list(propertyId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.members.mine() });
-    queryClient.invalidateQueries({ queryKey: queryKeys.members.forProperty(propertyId) });
+    invalidateMemberDomain(queryClient, propertyId);
   }, [propertyId, queryClient]);
 
   const revokeMutation = useMutation({
@@ -110,17 +113,14 @@ function useInviteMutations(onRevokeSuccess?: () => void) {
   const inviteMutation = useMutation({
     mutationFn: (input: InviteToPropertiesInput) => inviteToProperties(input),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.invites.all });
-      for (const id of variables.propertyIds) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.invites.list(id) });
-      }
+      invalidateInviteDomain(queryClient, variables.propertyIds);
     },
   });
 
   const revokeMutation = useMutation({
     mutationFn: (inviteId: string) => revokeInvite(inviteId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.invites.all });
+      invalidateInviteDomain(queryClient);
       onRevokeSuccess?.();
     },
   });
@@ -178,10 +178,7 @@ export function useAcceptInvites() {
   return useMutation({
     mutationFn: acceptPendingInvites,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.properties.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.members.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.invites.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      invalidateAcceptInvitesDomain(queryClient);
     },
   });
 }

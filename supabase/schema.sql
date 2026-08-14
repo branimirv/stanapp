@@ -1,4 +1,7 @@
--- Run in Supabase SQL Editor in order
+-- REFERENCE DUMP ONLY — do not apply on top of migrations.
+-- Source of truth: supabase/migrations/ (supabase db push / db reset).
+-- Regenerate after schema PRs: supabase db dump --schema public > supabase/schema.sql
+-- (Then re-add this header comment.)
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -85,6 +88,11 @@ CREATE UNIQUE INDEX property_members_property_user_active_unique
 
 CREATE INDEX idx_property_members_user_id ON property_members (user_id);
 CREATE INDEX idx_property_members_property_id ON property_members (property_id);
+
+-- PostgREST embed path for member → profile (also references auth.users via user_id)
+ALTER TABLE property_members
+  ADD CONSTRAINT property_members_profile_fkey
+  FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE;
 
 CREATE TABLE property_invites (
   id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -225,12 +233,15 @@ CREATE UNIQUE INDEX property_status_history_open_unique
   WHERE ended_at IS NULL;
 
 CREATE OR REPLACE FUNCTION handle_updated_at()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE TRIGGER set_updated_at_profiles BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
 CREATE TRIGGER set_updated_at_properties BEFORE UPDATE ON properties FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
@@ -527,6 +538,25 @@ GRANT EXECUTE ON FUNCTION is_property_member(UUID, TEXT[]) TO authenticated;
 GRANT EXECUTE ON FUNCTION is_property_owner(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION accept_pending_invites_for_user() TO authenticated;
 
+-- service-role only: edge invite-to-properties (see auth_user_id_by_email)
+CREATE OR REPLACE FUNCTION public.auth_user_id_by_email(p_email TEXT)
+RETURNS UUID
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT u.id
+  FROM auth.users u
+  WHERE lower(u.email) = lower(trim(p_email))
+  LIMIT 1;
+$$;
+
+REVOKE ALL ON FUNCTION public.auth_user_id_by_email(TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.auth_user_id_by_email(TEXT) FROM anon;
+REVOKE ALL ON FUNCTION public.auth_user_id_by_email(TEXT) FROM authenticated;
+GRANT EXECUTE ON FUNCTION public.auth_user_id_by_email(TEXT) TO service_role;
+
 INSERT INTO storage.buckets (id, name, public) VALUES ('receipts', 'receipts', false);
 INSERT INTO storage.buckets (id, name, public) VALUES ('property-photos', 'property-photos', true);
 
@@ -542,6 +572,7 @@ CREATE POLICY "Users can delete own receipts" ON storage.objects FOR DELETE TO a
 
 CREATE POLICY "Users can upload own property photos" ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'property-photos' AND (storage.foldername(name))[1] = auth.uid()::text);
+-- Intentional: public bucket reads (matches property-photos.public = true). Use signed URLs if tightening later.
 CREATE POLICY "Anyone can read property photos" ON storage.objects FOR SELECT
   USING (bucket_id = 'property-photos');
 CREATE POLICY "Users can update own property photos" ON storage.objects FOR UPDATE TO authenticated
